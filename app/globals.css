@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,800;1,400;1,700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --teal: #1E6B63;
+    --teal-lt: #267D74;
+    --teal-dk: #175650;
+    --gold: #C8A86E;
+    --gold-lt: #D4B97E;
+    --dark: #0F1F1D;
+    --dark-lt: #162A27;
+    --cream: #F0ECE4;
+    --cream-w: #F5F1EA;
+    --charcoal: #2C2C2C;
+    --stone: #7A756D;
+  }
+}
+
+@layer components {
+  .text-display-xl {
+    @apply font-serif text-5xl font-bold tracking-tight;
+  }
+
+  .text-display-lg {
+    @apply font-serif text-4xl font-bold tracking-tight;
+  }
+
+  .text-display-md {
+    @apply font-serif text-3xl font-semibold;
+  }
+
+  .text-heading-lg {
+    @apply font-sans text-2xl font-semibold;
+  }
+
+  .text-heading-md {
+    @apply font-sans text-xl font-semibold;
+  }
+
+  .text-heading-sm {
+    @apply font-sans text-lg font-medium;
+  }
+
+  .text-body-lg {
+    @apply font-sans text-base leading-relaxed;
+  }
+
+  .text-body-md {
+    @apply font-sans text-sm leading-relaxed;
+  }
+
+  .text-body-sm {
+    @apply font-sans text-xs;
+  }
+
+  .text-label {
+    @apply font-sans text-sm font-medium uppercase tracking-wide;
+  }
+
+  /* Corner marks for hero sections */
+  .corner-mark {
+    @apply absolute w-[60px] h-[60px] border-gold/15 border-solid pointer-events-none;
+  }
+
+  .corner-mark-tl {
+    @apply top-20 left-6 border-t-2 border-l-2;
+  }
+
+  .corner-mark-br {
+    @apply bottom-6 right-6 border-b-2 border-r-2;
+  }
+
+  /* Gradient top border for cards */
+  .card-gradient-border {
+    @apply relative overflow-hidden;
+  }
+
+  .card-gradient-border::before {
+    content: '';
+    @apply absolute top-0 left-0 w-full h-[3px] bg-gradient-teal-gold;
+  }
+
+  /* Radial glow effect */
+  .radial-glow {
+    @apply relative;
+  }
+
+  .radial-glow::before {
+    content: '';
+    @apply absolute -top-[40%] -right-[25%] w-[70%] h-[120%] pointer-events-none;
+    background: radial-gradient(ellipse, rgba(30, 107, 99, 0.07) 0%, transparent 70%);
+  }
+
+  /* Section divider */
+  .section-divider {
+    @apply h-px;
+    background: linear-gradient(90deg, transparent, rgba(200, 168, 110, 0.2), transparent);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-cream;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-stone/30 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-stone/50;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+  @apply bg-teal/20;
+}
