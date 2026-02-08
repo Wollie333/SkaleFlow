@@ -11,7 +11,7 @@ export const linkedinAdapter: PlatformAdapter = {
       client_id: process.env.LINKEDIN_CLIENT_ID!,
       redirect_uri: redirectUri,
       state,
-      scope: 'openid email w_member_social',
+      scope: 'w_member_social openid',
     });
     return `https://www.linkedin.com/oauth/v2/authorization?${params}`;
   },
