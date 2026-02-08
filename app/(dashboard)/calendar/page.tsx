@@ -17,6 +17,7 @@ import type { FunnelStage, StoryBrandStage, TimeSlot, ContentStatus, OrgMemberRo
 interface ContentItem {
   id: string;
   scheduled_date: string;
+  scheduled_time: string | null;
   time_slot: TimeSlot;
   funnel_stage: FunnelStage;
   storybrand_stage: StoryBrandStage;

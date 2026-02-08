@@ -22,6 +22,7 @@ import { generateUTMParams, buildTrackedUrl, type UTMParams } from '@/lib/utm/ge
 interface ContentItem {
   id: string;
   scheduled_date: string;
+  scheduled_time: string | null;
   time_slot: TimeSlot;
   funnel_stage: FunnelStage;
   storybrand_stage: StoryBrandStage;
@@ -194,7 +195,7 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
         <div>
           <h2 className="text-heading-md text-charcoal">Edit Content</h2>
           <p className="text-sm text-stone">
-            {format(new Date(item.scheduled_date), 'EEEE, MMMM d')} • {item.time_slot}
+            {format(new Date(item.scheduled_date), 'EEEE, MMMM d')} • {item.scheduled_time || item.time_slot}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -659,12 +660,20 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
             Reschedule
           </button>
           {showReschedule && (
-            <input
-              type="date"
-              value={formData.scheduled_date}
-              onChange={e => updateField('scheduled_date', e.target.value)}
-              className="mt-2 w-full px-4 py-3 rounded-xl border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20"
-            />
+            <div className="mt-2 flex gap-2">
+              <input
+                type="date"
+                value={formData.scheduled_date}
+                onChange={e => updateField('scheduled_date', e.target.value)}
+                className="flex-1 px-4 py-3 rounded-xl border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20"
+              />
+              <input
+                type="time"
+                value={formData.scheduled_time || ''}
+                onChange={e => updateField('scheduled_time', e.target.value || null)}
+                className="w-36 px-4 py-3 rounded-xl border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20"
+              />
+            </div>
           )}
         </div>
 
@@ -743,7 +752,7 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
         )}
 
         {/* Publish Section */}
-        {['edited', 'scheduled', 'approved', 'designed', 'filmed'].includes(formData.status) && (
+        {['idea', 'scripted', 'edited', 'scheduled', 'approved', 'designed', 'filmed'].includes(formData.status) && (
           <div className="border-t border-stone/10 pt-6 space-y-4">
             <h3 className="font-medium text-charcoal">Publish to Social Media</h3>
 

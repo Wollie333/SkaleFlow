@@ -126,6 +126,7 @@ export default function ContentCreatePage() {
   const [generated, setGenerated] = useState<GeneratedContent | null>(null);
   const [showBrandPanel, setShowBrandPanel] = useState(false);
   const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -544,6 +545,7 @@ export default function ContentCreatePage() {
             storybrand_stage: storybrandStage,
             platforms,
             scheduled_date: scheduleDate || format(new Date(), 'yyyy-MM-dd'),
+            scheduled_time: scheduleTime || null,
             ai_generated: false,
             status: pushToSchedule && scheduleDate ? 'scheduled' : 'scripted',
             ...updateBody,
@@ -562,6 +564,7 @@ export default function ContentCreatePage() {
 
       if (pushToSchedule && scheduleDate) {
         updateBody.scheduled_date = scheduleDate;
+        updateBody.scheduled_time = scheduleTime || null;
         updateBody.status = 'scheduled';
 
         if (organizationId) {
@@ -1224,14 +1227,25 @@ export default function ContentCreatePage() {
       {/* Actions */}
       <Card>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div className="flex-1">
-            <label className="block text-xs font-medium text-stone mb-1">Schedule Date (optional)</label>
-            <input
-              type="date"
-              value={scheduleDate}
-              onChange={e => setScheduleDate(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-            />
+          <div className="flex-1 flex gap-2">
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-stone mb-1">Schedule Date (optional)</label>
+              <input
+                type="date"
+                value={scheduleDate}
+                onChange={e => setScheduleDate(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+              />
+            </div>
+            <div className="w-32">
+              <label className="block text-xs font-medium text-stone mb-1">Time</label>
+              <input
+                type="time"
+                value={scheduleTime}
+                onChange={e => setScheduleTime(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+              />
+            </div>
           </div>
           <div className="flex gap-2 sm:pt-4">
             <Button onClick={() => handleSave(false)} variant="ghost" disabled={isSaving}>

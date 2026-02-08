@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isToday, startOfWeek, endOfWeek, isSameMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import {
   DndContext,
   DragOverlay,
@@ -71,12 +71,13 @@ function SelectablePost({
   isSelected: boolean;
   onToggle: (id: string) => void;
 }) {
+  const isPublished = item.status === 'published';
   return (
     <button
       onClick={() => onToggle(item.id)}
       className={cn(
         'w-full text-left px-2 py-1 rounded text-xs truncate transition-colors',
-        FUNNEL_COLORS[item.funnel_stage],
+        isPublished ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 ring-1 ring-emerald-300' : FUNNEL_COLORS[item.funnel_stage],
         isSelected && 'ring-2 ring-teal ring-offset-1'
       )}
     >
@@ -88,6 +89,7 @@ function SelectablePost({
           onClick={(e) => e.stopPropagation()}
           className="rounded border-stone/30 w-3 h-3 shrink-0"
         />
+        {isPublished && <CheckCircleIcon className="w-3 h-3 shrink-0 text-emerald-600" />}
         <span className="font-medium">{item.time_slot}</span>
         <span className="truncate flex-1">
           {item.topic || item.format.replace(/_/g, ' ')}
@@ -102,6 +104,7 @@ function DraggablePost({ item, onItemClick }: { item: BaseContentItem; onItemCli
     id: item.id,
     data: { item },
   });
+  const isPublished = item.status === 'published';
 
   return (
     <button
@@ -111,11 +114,12 @@ function DraggablePost({ item, onItemClick }: { item: BaseContentItem; onItemCli
       onClick={() => onItemClick(item)}
       className={cn(
         'w-full text-left px-2 py-1 rounded text-xs truncate transition-colors',
-        FUNNEL_COLORS[item.funnel_stage],
+        isPublished ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 ring-1 ring-emerald-300' : FUNNEL_COLORS[item.funnel_stage],
         isDragging && 'opacity-30'
       )}
     >
       <div className="flex items-center gap-1">
+        {isPublished && <CheckCircleIcon className="w-3 h-3 shrink-0 text-emerald-600" />}
         <span className="font-medium">{item.time_slot}</span>
         <span className="truncate flex-1">
           {item.topic || item.format.replace(/_/g, ' ')}
@@ -359,6 +363,10 @@ export function CalendarView({ items, onItemClick, onMonthChange, onMovePost, on
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-orange-100" />
             <span className="text-xs text-stone">Conversion</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-emerald-100 ring-1 ring-emerald-300" />
+            <span className="text-xs text-stone">Published</span>
           </div>
           <div className="ml-auto flex items-center gap-3">
             {Object.entries(PLATFORM_DOTS).map(([p, color]) => (

@@ -12,6 +12,7 @@ interface QuickCreateModalProps {
   onClose: () => void;
   onCreate: (data: {
     scheduled_date: string;
+    scheduled_time?: string;
     format: ContentFormat;
     funnel_stage: FunnelStage;
     storybrand_stage: StoryBrandStage;
@@ -47,6 +48,12 @@ export function QuickCreateModal({ date, onClose, onCreate }: QuickCreateModalPr
   const [funnelStage, setFunnelStage] = useState<FunnelStage>('awareness');
   const [storybrandStage, setStorybrandStage] = useState<StoryBrandStage>('character');
   const [platforms, setPlatforms] = useState<string[]>(['linkedin']);
+  const [scheduledTime, setScheduledTime] = useState(() => {
+    const now = new Date();
+    const mins = Math.ceil(now.getMinutes() / 15) * 15;
+    now.setMinutes(mins, 0, 0);
+    return format(now, 'HH:mm');
+  });
   const [isCreating, setIsCreating] = useState(false);
 
   const togglePlatform = (p: string) => {
@@ -60,6 +67,7 @@ export function QuickCreateModal({ date, onClose, onCreate }: QuickCreateModalPr
     try {
       await onCreate({
         scheduled_date: format(date, 'yyyy-MM-dd'),
+        scheduled_time: scheduledTime,
         format: selectedFormat,
         funnel_stage: funnelStage,
         storybrand_stage: storybrandStage,
@@ -84,6 +92,15 @@ export function QuickCreateModal({ date, onClose, onCreate }: QuickCreateModalPr
           <button onClick={onClose} className="p-2 hover:bg-cream-warm rounded-lg"><XMarkIcon className="w-5 h-5 text-stone" /></button>
         </div>
         <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-charcoal mb-1">Time</label>
+            <input
+              type="time"
+              value={scheduledTime}
+              onChange={e => setScheduledTime(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+            />
+          </div>
           <div>
             <label className="block text-sm font-medium text-charcoal mb-1">Format</label>
             <select value={selectedFormat} onChange={e => setSelectedFormat(e.target.value as ContentFormat)} className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal">

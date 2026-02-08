@@ -22,6 +22,7 @@ import {
   RocketLaunchIcon,
   PhotoIcon,
   CurrencyDollarIcon,
+  ClipboardDocumentCheckIcon,
 } from '@heroicons/react/24/outline';
 
 interface NavItem {
@@ -52,6 +53,7 @@ const salesNavigation: NavItem[] = [
 const contentNavigation: NavItem[] = [
   { name: 'Content Calendar', href: '/calendar', icon: CalendarDaysIcon },
   { name: 'Content Reviews', href: '/content/reviews', icon: InboxArrowDownIcon },
+  { name: 'Publish Log', href: '/content/publish-log', icon: ClipboardDocumentCheckIcon },
   { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
   { name: 'Create Post', href: '/content/create', icon: PencilSquareIcon },
 ];
