@@ -1,0 +1,85 @@
+import { NextResponse } from 'next/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { listCalendars } from '@/lib/google-calendar';
+
+export async function GET() {
+  try {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (userData?.role !== 'super_admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const calendars = await listCalendars(user.id);
+
+    // Also fetch the currently saved calendar_id
+    const serviceClient = createServiceClient();
+    const { data: integration } = await serviceClient
+      .from('google_integrations')
+      .select('calendar_id')
+      .eq('user_id', user.id)
+      .single();
+
+    return NextResponse.json({
+      calendars,
+      selectedCalendarId: integration?.calendar_id || 'primary',
+    });
+  } catch (error) {
+    console.error('List calendars error:', error);
+    return NextResponse.json({ error: 'Failed to list calendars' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (userData?.role !== 'super_admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { calendarId } = await request.json();
+
+    if (!calendarId || typeof calendarId !== 'string') {
+      return NextResponse.json({ error: 'calendarId is required' }, { status: 400 });
+    }
+
+    const serviceClient = createServiceClient();
+    const { error } = await serviceClient
+      .from('google_integrations')
+      .update({ calendar_id: calendarId, updated_at: new Date().toISOString() })
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Update calendar_id error:', error);
+      return NextResponse.json({ error: 'Failed to update calendar' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, calendarId });
+  } catch (error) {
+    console.error('PATCH calendars error:', error);
+    return NextResponse.json({ error: 'Failed to update calendar' }, { status: 500 });
+  }
+}

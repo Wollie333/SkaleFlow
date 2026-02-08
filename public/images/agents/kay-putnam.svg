@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <circle cx="24" cy="24" r="24" fill="#DB2777"/>
+  <circle cx="24" cy="24" r="22" fill="url(#kp-grad)"/>
+  <circle cx="24" cy="18" r="8" fill="#FFF" opacity="0.9"/>
+  <path d="M12 38c0-6.627 5.373-12 12-12s12 5.373 12 12" fill="#FFF" opacity="0.9"/>
+  <text x="24" y="22" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" font-weight="bold" fill="#DB2777">KP</text>
+  <defs>
+    <radialGradient id="kp-grad" cx="0.3" cy="0.3" r="0.7">
+      <stop offset="0%" stop-color="#F9A8D4"/>
+      <stop offset="100%" stop-color="#BE185D"/>
+    </radialGradient>
+  </defs>
+</svg>

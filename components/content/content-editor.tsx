@@ -1,11 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 import { Button, Input, Textarea, Badge, StatusBadge } from '@/components/ui';
-import { XMarkIcon, SparklesIcon } from '@heroicons/react/24/outline';
-import type { FunnelStage, StoryBrandStage, TimeSlot, ContentStatus } from '@/types/database';
+import { XMarkIcon, SparklesIcon, PaperAirplaneIcon, ArrowTopRightOnSquareIcon, CalendarIcon, ArrowPathIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
+import type { FunnelStage, StoryBrandStage, TimeSlot, ContentStatus, SocialPlatform } from '@/types/database';
+import { PlatformSelector } from './platform-selector';
+import { PLATFORM_CONFIG } from '@/lib/social/types';
+import { CreativeAssetSpecs } from './creative-asset-specs';
+import { ScriptTemplateBadge } from './script-template-badge';
+import { PlatformOverrideTabs } from './platform-override-tabs';
+import { MediaUpload, type UploadedFile } from './media-upload';
+import { CommentThread } from './comment-thread';
+import { TagSelector } from './tag-selector';
+import { ContentBrief } from './content-brief';
+import { getFormatCategory, getAvailableTemplates, type ContentFormat } from '@/config/script-frameworks';
+import { generateUTMParams, buildTrackedUrl, type UTMParams } from '@/lib/utm/generate-utm';
 
 interface ContentItem {
   id: string;
@@ -21,7 +33,32 @@ interface ContentItem {
   caption: string | null;
   hashtags: string[] | null;
   platforms: string[];
+  platform_specs?: Record<string, { caption?: string; hashtags?: string[]; customized?: boolean }>;
   status: ContentStatus;
+  media_urls?: string[] | null;
+  script_template?: string | null;
+  hook_template?: string | null;
+  cta_template?: string | null;
+  filming_notes?: string | null;
+  context_section?: string | null;
+  teaching_points?: string | null;
+  reframe?: string | null;
+  problem_expansion?: string | null;
+  case_study?: string | null;
+  framework_teaching?: string | null;
+  rejection_reason?: string | null;
+  review_comment?: string | null;
+  assigned_to?: string | null;
+  generation_week?: number | null;
+  target_url?: string | null;
+  utm_parameters?: Record<string, string> | null;
+  [key: string]: unknown;
+}
+
+interface PublishedPost {
+  platform: string;
+  post_url: string | null;
+  publish_status: string;
 }
 
 interface ContentEditorProps {
@@ -29,12 +66,59 @@ interface ContentEditorProps {
   onSave: (item: ContentItem) => Promise<void>;
   onClose: () => void;
   onGenerate: (itemId: string) => Promise<Partial<ContentItem>>;
+  onApprove?: (itemId: string, comment?: string) => Promise<void>;
+  onReject?: (itemId: string, comment: string) => Promise<void>;
+  onRequestRevision?: (itemId: string, comment: string) => Promise<void>;
+  onResubmit?: (itemId: string) => Promise<void>;
+  canApprove?: boolean;
+  organizationId?: string;
 }
 
-export function ContentEditor({ item, onSave, onClose, onGenerate }: ContentEditorProps) {
+export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, onReject, onRequestRevision, onResubmit, canApprove, organizationId }: ContentEditorProps) {
   const [formData, setFormData] = useState(item);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<SocialPlatform[]>([]);
+  const [publishResults, setPublishResults] = useState<Array<{ platform: string; success: boolean; postUrl?: string; error?: string }>>([]);
+  const [publishedPosts] = useState<PublishedPost[]>([]);
+  const [reviewComment, setReviewComment] = useState('');
+  const [showReschedule, setShowReschedule] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [teamMembers, setTeamMembers] = useState<Array<{ user_id: string; full_name: string; role: string }>>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(
+    (item.media_urls || []).map(url => ({
+      url,
+      fileName: url.split('/').pop() || 'file',
+      fileType: url.match(/\.(mp4|mov|webm)$/i) ? 'video/mp4' : url.match(/\.pdf$/i) ? 'application/pdf' : 'image/jpeg',
+      fileSize: 0,
+    }))
+  );
+
+  // Load team members for assignment
+  useEffect(() => {
+    if (!organizationId) return;
+    const orgId = organizationId;
+    const supabase = createClient();
+    async function loadTeam() {
+      const { data } = await supabase
+        .from('org_members')
+        .select('user_id, role, users(full_name)')
+        .eq('organization_id', orgId);
+      if (data) {
+        setTeamMembers(data.map((m: Record<string, unknown>) => ({
+          user_id: m.user_id as string,
+          full_name: ((m.users as Record<string, unknown>)?.full_name as string) || 'Unknown',
+          role: m.role as string,
+        })));
+      }
+    }
+    loadTeam();
+  }, [organizationId]);
+
+  const formatCategory = getFormatCategory(item.format as ContentFormat);
+  const availableTemplates = getAvailableTemplates(item.format as ContentFormat);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -50,7 +134,11 @@ export function ContentEditor({ item, onSave, onClose, onGenerate }: ContentEdit
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await onSave(formData);
+      const saveData = {
+        ...formData,
+        media_urls: uploadedFiles.length > 0 ? uploadedFiles.map(f => f.url) : null,
+      };
+      await onSave(saveData);
       onClose();
     } catch (error) {
       console.error('Save failed:', error);
@@ -58,9 +146,46 @@ export function ContentEditor({ item, onSave, onClose, onGenerate }: ContentEdit
     setIsSaving(false);
   };
 
+  const handlePublish = async () => {
+    if (selectedPlatforms.length === 0) return;
+    setIsPublishing(true);
+    setPublishResults([]);
+    try {
+      const res = await fetch('/api/content/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contentItemId: item.id,
+          platforms: selectedPlatforms,
+        }),
+      });
+      const data = await res.json();
+      if (data.results) {
+        setPublishResults(data.results);
+        const anySuccess = data.results.some((r: { success: boolean }) => r.success);
+        if (anySuccess) {
+          setFormData(prev => ({ ...prev, status: 'published' }));
+        }
+      }
+    } catch (error) {
+      console.error('Publish failed:', error);
+    }
+    setIsPublishing(false);
+  };
+
   const updateField = <K extends keyof ContentItem>(field: K, value: ContentItem[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  // Parse carousel slides from script_body
+  const carouselSlides = formatCategory === 'carousel'
+    ? (() => { try { return JSON.parse(formData.script_body || '[]'); } catch { return []; } })()
+    : [];
+
+  // Parse static content from script_body
+  const staticContent = formatCategory === 'static'
+    ? (() => { try { return JSON.parse(formData.script_body || '{}'); } catch { return {}; } })()
+    : {};
 
   return (
     <div className="fixed inset-y-0 right-0 w-[600px] bg-white shadow-2xl border-l border-stone/10 overflow-y-auto z-50">
@@ -72,12 +197,14 @@ export function ContentEditor({ item, onSave, onClose, onGenerate }: ContentEdit
             {format(new Date(item.scheduled_date), 'EEEE, MMMM d')} • {item.time_slot}
           </p>
         </div>
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-cream-warm rounded-lg transition-colors"
-        >
-          <XMarkIcon className="w-5 h-5 text-stone" />
-        </button>
+        <div className="flex items-center gap-2">
+          {organizationId && (
+            <ContentBrief item={formData} organizationId={organizationId} />
+          )}
+          <button onClick={onClose} className="p-2 hover:bg-cream-warm rounded-lg transition-colors">
+            <XMarkIcon className="w-5 h-5 text-stone" />
+          </button>
+        </div>
       </div>
 
       {/* Metadata badges */}
@@ -85,21 +212,80 @@ export function ContentEditor({ item, onSave, onClose, onGenerate }: ContentEdit
         <Badge variant={item.funnel_stage}>{item.funnel_stage}</Badge>
         <Badge>{item.storybrand_stage.replace(/_/g, ' ')}</Badge>
         <Badge>{item.format.replace(/_/g, ' ')}</Badge>
-        <StatusBadge status={item.status} />
+        <StatusBadge status={formData.status} />
       </div>
+
+      {/* Script template badges */}
+      {(item.script_template || item.hook_template || item.cta_template) && (
+        <div className="px-6 py-3 border-b border-stone/5">
+          <ScriptTemplateBadge
+            scriptTemplate={item.script_template}
+            hookTemplate={item.hook_template}
+            ctaTemplate={item.cta_template}
+          />
+        </div>
+      )}
+
+      {/* Rejection reason */}
+      {formData.status === 'rejected' && formData.rejection_reason && (
+        <div className="mx-6 mt-4 p-3 rounded-lg bg-red-50 border border-red-200">
+          <p className="text-sm font-medium text-red-800">Rejected</p>
+          <p className="text-sm text-red-700 mt-1">{formData.rejection_reason}</p>
+        </div>
+      )}
 
       {/* Form */}
       <div className="p-6 space-y-6">
         {/* Generate button */}
-        <Button
-          onClick={handleGenerate}
-          disabled={isGenerating}
-          className="w-full"
-          variant="secondary"
-        >
-          <SparklesIcon className="w-5 h-5 mr-2" />
-          {isGenerating ? 'Generating...' : 'Generate with AI'}
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleGenerate} disabled={isGenerating} className="flex-1" variant="secondary">
+            <SparklesIcon className="w-5 h-5 mr-2" />
+            {isGenerating ? 'Generating...' : 'Generate with AI'}
+          </Button>
+          {formData.script_template && availableTemplates && (
+            <select
+              className="px-3 py-2 rounded-xl border border-stone/20 text-sm"
+              value={formData.script_template || ''}
+              onChange={e => updateField('script_template', e.target.value)}
+            >
+              {availableTemplates.map(t => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {/* Creative asset specs */}
+        <CreativeAssetSpecs
+          format={item.format as ContentFormat}
+          platforms={item.platforms}
+        />
+
+        {/* Platform selector */}
+        <div>
+          <label className="block text-sm font-medium text-charcoal mb-2">Target Platforms</label>
+          <div className="flex flex-wrap gap-2">
+            {['linkedin', 'facebook', 'instagram', 'twitter', 'tiktok'].map(p => (
+              <button
+                key={p}
+                onClick={() => {
+                  const platforms = formData.platforms.includes(p)
+                    ? formData.platforms.filter(x => x !== p)
+                    : [...formData.platforms, p];
+                  updateField('platforms', platforms);
+                }}
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors',
+                  formData.platforms.includes(p)
+                    ? 'bg-teal text-white'
+                    : 'bg-stone/5 text-stone hover:bg-stone/10'
+                )}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Topic */}
         <Input
@@ -109,58 +295,339 @@ export function ContentEditor({ item, onSave, onClose, onGenerate }: ContentEdit
           placeholder="Content topic..."
         />
 
-        {/* Hook */}
-        <Textarea
-          label="Hook"
-          hint="First 3 seconds / first line that stops the scroll"
-          value={formData.hook || ''}
-          onChange={(e) => updateField('hook', e.target.value)}
-          placeholder="Attention-grabbing opening..."
-          rows={2}
-        />
-        <p className="text-xs text-stone -mt-4">
-          {(formData.hook || '').length}/100 characters
-        </p>
+        {/* FORMAT-SPECIFIC FIELDS */}
 
-        {/* Script Body */}
-        <Textarea
-          label="Script Body"
-          value={formData.script_body || ''}
-          onChange={(e) => updateField('script_body', e.target.value)}
-          placeholder="Main content..."
-          rows={6}
-        />
+        {/* SHORT-FORM: Hook, Script Body, CTA, Filming Notes */}
+        {formatCategory === 'short' && (
+          <>
+            <Textarea
+              label="Hook"
+              hint="First 3 seconds / first line that stops the scroll"
+              value={formData.hook || ''}
+              onChange={(e) => updateField('hook', e.target.value)}
+              placeholder="Attention-grabbing opening..."
+              rows={2}
+            />
+            <p className="text-xs text-stone -mt-4">{(formData.hook || '').length}/100 characters</p>
 
-        {/* CTA */}
-        <Input
-          label="Call to Action"
-          value={formData.cta || ''}
-          onChange={(e) => updateField('cta', e.target.value)}
-          placeholder="What should they do next?"
-        />
+            <Textarea
+              label="Script Body"
+              value={formData.script_body || ''}
+              onChange={(e) => updateField('script_body', e.target.value)}
+              placeholder="Main content..."
+              rows={6}
+            />
 
-        {/* Caption */}
-        <Textarea
-          label="Platform Caption"
-          value={formData.caption || ''}
-          onChange={(e) => updateField('caption', e.target.value)}
-          placeholder="Caption with hashtags..."
-          rows={4}
-        />
+            <Input
+              label="Call to Action"
+              value={formData.cta || ''}
+              onChange={(e) => updateField('cta', e.target.value)}
+              placeholder="What should they do next?"
+            />
 
-        {/* Hashtags */}
-        <Input
-          label="Hashtags"
-          value={(formData.hashtags || []).join(' ')}
-          onChange={(e) => updateField('hashtags', e.target.value.split(/\s+/).filter(Boolean))}
-          placeholder="#content #marketing #strategy"
-        />
+            <Textarea
+              label="Filming Notes"
+              hint="Visual directions for the creator"
+              value={formData.filming_notes || ''}
+              onChange={(e) => updateField('filming_notes', e.target.value)}
+              placeholder="Camera angles, B-roll, visual cues..."
+              rows={3}
+            />
+          </>
+        )}
+
+        {/* MEDIUM-FORM: Hook, Context, Teaching Points, Reframe, CTA, Filming Notes */}
+        {formatCategory === 'medium' && (
+          <>
+            <Textarea label="Hook" hint="0-10 seconds" value={formData.hook || ''} onChange={e => updateField('hook', e.target.value)} placeholder="Opening hook..." rows={2} />
+            <Textarea label="Context Section" hint="10-30 seconds. Who this is for and what's at stake." value={formData.context_section || ''} onChange={e => updateField('context_section', e.target.value)} placeholder="Set up the context..." rows={3} />
+            <Textarea label="Teaching Points" hint="Core teaching body" value={formData.teaching_points || ''} onChange={e => updateField('teaching_points', e.target.value)} placeholder="Main teaching content..." rows={8} />
+            <Textarea label="Reframe" value={formData.reframe || ''} onChange={e => updateField('reframe', e.target.value)} placeholder="Tie everything together..." rows={3} />
+            <Input label="Call to Action" value={formData.cta || ''} onChange={e => updateField('cta', e.target.value)} placeholder="CTA..." />
+            <Textarea label="Filming Notes" value={formData.filming_notes || ''} onChange={e => updateField('filming_notes', e.target.value)} placeholder="Visual/B-roll directions..." rows={3} />
+          </>
+        )}
+
+        {/* LONG-FORM: Hook, Context, Problem Expansion, Framework Teaching, Case Study, Reframe, CTA, Filming Notes */}
+        {formatCategory === 'long' && (
+          <>
+            <Textarea label="Hook" hint="0-30 seconds" value={formData.hook || ''} onChange={e => updateField('hook', e.target.value)} placeholder="Bold opening..." rows={3} />
+            <Textarea label="Context Section" hint="30s-2min. Authority and framing." value={formData.context_section || ''} onChange={e => updateField('context_section', e.target.value)} placeholder="Context..." rows={4} />
+            <Textarea label="Problem Expansion" hint="Deep dive into the problem landscape" value={formData.problem_expansion || ''} onChange={e => updateField('problem_expansion', e.target.value)} placeholder="Problem analysis..." rows={6} />
+            <Textarea label="Framework Teaching" hint="Core framework content" value={formData.framework_teaching || ''} onChange={e => updateField('framework_teaching', e.target.value)} placeholder="Framework/teaching content..." rows={10} />
+            <Textarea label="Case Study" value={formData.case_study || ''} onChange={e => updateField('case_study', e.target.value)} placeholder="Real-world example..." rows={6} />
+            <Textarea label="Reframe" value={formData.reframe || ''} onChange={e => updateField('reframe', e.target.value)} placeholder="Synthesis and worldview shift..." rows={3} />
+            <Input label="Call to Action" value={formData.cta || ''} onChange={e => updateField('cta', e.target.value)} placeholder="CTA..." />
+            <Textarea label="Filming Notes" value={formData.filming_notes || ''} onChange={e => updateField('filming_notes', e.target.value)} placeholder="Visual/production directions..." rows={4} />
+          </>
+        )}
+
+        {/* CAROUSEL: Slides editor */}
+        {formatCategory === 'carousel' && (
+          <>
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-charcoal">Slides</label>
+              {carouselSlides.map((slide: { slide_number: number; text: string; visual_direction: string }, idx: number) => (
+                <div key={idx} className="p-3 bg-cream-warm rounded-lg space-y-2">
+                  <p className="text-xs font-medium text-charcoal">Slide {slide.slide_number || idx + 1}</p>
+                  <Textarea
+                    value={slide.text || ''}
+                    onChange={e => {
+                      const updated = [...carouselSlides];
+                      updated[idx] = { ...updated[idx], text: e.target.value };
+                      updateField('script_body', JSON.stringify(updated));
+                    }}
+                    rows={2}
+                    placeholder="Slide text..."
+                  />
+                  <Input
+                    value={slide.visual_direction || ''}
+                    onChange={e => {
+                      const updated = [...carouselSlides];
+                      updated[idx] = { ...updated[idx], visual_direction: e.target.value };
+                      updateField('script_body', JSON.stringify(updated));
+                    }}
+                    placeholder="Visual direction..."
+                  />
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* STATIC: Headline, Body Text, Visual Direction */}
+        {formatCategory === 'static' && (
+          <>
+            <Input
+              label="Headline"
+              value={staticContent.headline || ''}
+              onChange={e => {
+                const updated = { ...staticContent, headline: e.target.value };
+                updateField('script_body', JSON.stringify(updated));
+              }}
+              placeholder="Bold headline/stat..."
+            />
+            <Textarea
+              label="Body Text"
+              value={staticContent.body_text || ''}
+              onChange={e => {
+                const updated = { ...staticContent, body_text: e.target.value };
+                updateField('script_body', JSON.stringify(updated));
+              }}
+              rows={4}
+              placeholder="Supporting text..."
+            />
+            <Textarea
+              label="Visual Direction"
+              value={staticContent.visual_direction || ''}
+              onChange={e => {
+                const updated = { ...staticContent, visual_direction: e.target.value };
+                updateField('script_body', JSON.stringify(updated));
+              }}
+              rows={3}
+              placeholder="Design directions..."
+            />
+          </>
+        )}
+
+        {/* Post Description */}
+        <div className="border-t border-stone/10 pt-6 space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-charcoal mb-1">Post Description</label>
+            <p className="text-xs text-stone mb-2">The text posted alongside your content on social media</p>
+            <Textarea
+              value={formData.caption || ''}
+              onChange={(e) => updateField('caption', e.target.value)}
+              placeholder="Write the social media description that appears with your post..."
+              rows={4}
+            />
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-xs text-stone">{(formData.caption || '').length} characters</p>
+              <div className="flex gap-2 text-xs text-stone">
+                <span className={(formData.caption || '').length <= 150 ? 'text-teal' : 'text-stone'}>Twitter: 150</span>
+                <span className={(formData.caption || '').length <= 300 ? 'text-teal' : 'text-stone'}>IG/TikTok: 300</span>
+                <span className={(formData.caption || '').length <= 500 ? 'text-teal' : 'text-stone'}>LinkedIn: 500</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Target URL & UTM Parameters */}
+        <div className="border-t border-stone/10 pt-6 space-y-4">
+          <Input
+            label="Target URL"
+            value={formData.target_url || ''}
+            onChange={(e) => {
+              updateField('target_url', e.target.value || null);
+              // Auto-generate UTM params when URL is entered and no UTM exists yet
+              if (e.target.value && (!formData.utm_parameters || Object.keys(formData.utm_parameters).length === 0)) {
+                const utm = generateUTMParams({
+                  platform: formData.platforms[0] || 'social',
+                  funnelStage: formData.funnel_stage,
+                  format: formData.format,
+                  topic: formData.topic,
+                  scheduledDate: formData.scheduled_date,
+                });
+                updateField('utm_parameters', utm as unknown as Record<string, string>);
+              }
+            }}
+            placeholder="https://example.com/landing-page"
+          />
+
+          {formData.target_url && (
+            <div className="space-y-3 bg-cream-warm rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium text-charcoal">UTM Parameters</h4>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const utm = generateUTMParams({
+                      platform: formData.platforms[0] || 'social',
+                      funnelStage: formData.funnel_stage,
+                      format: formData.format,
+                      topic: formData.topic,
+                      scheduledDate: formData.scheduled_date,
+                    });
+                    updateField('utm_parameters', utm as unknown as Record<string, string>);
+                  }}
+                  className="text-xs text-teal hover:text-teal/80 font-medium"
+                >
+                  Auto-generate
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="Source"
+                  value={(formData.utm_parameters as Record<string, string>)?.utm_source || ''}
+                  onChange={e => updateField('utm_parameters', { ...(formData.utm_parameters || {}), utm_source: e.target.value } as Record<string, string>)}
+                  placeholder="e.g. linkedin"
+                />
+                <Input
+                  label="Medium"
+                  value={(formData.utm_parameters as Record<string, string>)?.utm_medium || ''}
+                  onChange={e => updateField('utm_parameters', { ...(formData.utm_parameters || {}), utm_medium: e.target.value } as Record<string, string>)}
+                  placeholder="e.g. social"
+                />
+                <Input
+                  label="Campaign"
+                  value={(formData.utm_parameters as Record<string, string>)?.utm_campaign || ''}
+                  onChange={e => updateField('utm_parameters', { ...(formData.utm_parameters || {}), utm_campaign: e.target.value } as Record<string, string>)}
+                  placeholder="e.g. 2026-02-awareness"
+                />
+                <Input
+                  label="Content"
+                  value={(formData.utm_parameters as Record<string, string>)?.utm_content || ''}
+                  onChange={e => updateField('utm_parameters', { ...(formData.utm_parameters || {}), utm_content: e.target.value } as Record<string, string>)}
+                  placeholder="e.g. short-video-topic"
+                />
+                <div className="col-span-2">
+                  <Input
+                    label="Term (optional)"
+                    value={(formData.utm_parameters as Record<string, string>)?.utm_term || ''}
+                    onChange={e => updateField('utm_parameters', { ...(formData.utm_parameters || {}), utm_term: e.target.value } as Record<string, string>)}
+                    placeholder="Optional keyword term"
+                  />
+                </div>
+              </div>
+              {formData.target_url && formData.utm_parameters && (
+                <div className="mt-2">
+                  <p className="text-xs font-medium text-stone mb-1">Full tracked URL:</p>
+                  <p className="text-xs text-teal bg-white rounded-lg px-3 py-2 break-all border border-stone/10">
+                    {buildTrackedUrl(formData.target_url, formData.utm_parameters as unknown as UTMParams)}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Platform Overrides */}
+        <div className="border-t border-stone/10 pt-6 space-y-4">
+          <h3 className="font-medium text-charcoal text-sm">Platform Overrides</h3>
+          <PlatformOverrideTabs
+            platforms={formData.platforms}
+            universalCaption={formData.caption || ''}
+            universalHashtags={formData.hashtags || []}
+            platformSpecs={(formData.platform_specs || {}) as Record<string, { caption?: string; hashtags?: string[]; customized?: boolean }>}
+            onUniversalChange={(caption, hashtags) => {
+              setFormData(prev => ({ ...prev, caption, hashtags }));
+            }}
+            onPlatformChange={(platform, caption, hashtags) => {
+              setFormData(prev => ({
+                ...prev,
+                platform_specs: {
+                  ...((prev.platform_specs || {}) as Record<string, { caption?: string; hashtags?: string[]; customized?: boolean }>),
+                  [platform]: { caption, hashtags, customized: true },
+                },
+              }));
+            }}
+          />
+        </div>
+
+        {/* Creative Assets */}
+        {organizationId && (
+          <div className="border-t border-stone/10 pt-6 space-y-3">
+            <h3 className="font-medium text-charcoal text-sm">Creative Assets</h3>
+            <MediaUpload
+              organizationId={organizationId}
+              contentItemId={item.id}
+              uploadedFiles={uploadedFiles}
+              onFilesChange={setUploadedFiles}
+            />
+          </div>
+        )}
+
+        {/* Content Tags */}
+        {organizationId && (
+          <div className="border-t border-stone/10 pt-6 space-y-3">
+            <h3 className="font-medium text-charcoal text-sm">Content Tags</h3>
+            <p className="text-xs text-stone -mt-1">Internal labels for organizing your content (not posted to social media)</p>
+            <TagSelector
+              organizationId={organizationId}
+              selectedTagIds={selectedTagIds}
+              onTagsChange={setSelectedTagIds}
+            />
+          </div>
+        )}
+
+        {/* Comments */}
+        <div className="border-t border-stone/10 pt-6">
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className="flex items-center gap-2 text-sm font-medium text-charcoal hover:text-teal transition-colors"
+          >
+            <ChatBubbleLeftIcon className="w-4 h-4" />
+            {showComments ? 'Hide Comments' : 'Show Comments'}
+          </button>
+          {showComments && (
+            <div className="mt-3">
+              <CommentThread contentItemId={item.id} />
+            </div>
+          )}
+        </div>
+
+        {/* Assigned To */}
+        {organizationId && teamMembers.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-charcoal mb-2">Assigned To</label>
+            <select
+              value={formData.assigned_to || ''}
+              onChange={(e) => updateField('assigned_to', e.target.value || null)}
+              className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+            >
+              <option value="">Unassigned</option>
+              {teamMembers.map(m => (
+                <option key={m.user_id} value={m.user_id}>
+                  {m.full_name} ({m.role})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Status */}
         <div>
-          <label className="block text-sm font-medium text-charcoal mb-2">
-            Status
-          </label>
+          <label className="block text-sm font-medium text-charcoal mb-2">Status</label>
           <select
             value={formData.status}
             onChange={(e) => updateField('status', e.target.value as ContentStatus)}
@@ -168,7 +635,9 @@ export function ContentEditor({ item, onSave, onClose, onGenerate }: ContentEdit
           >
             <option value="idea">Idea</option>
             <option value="scripted">Scripted</option>
+            <option value="pending_review">Pending Review</option>
             <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
             <option value="filming">Filming</option>
             <option value="filmed">Filmed</option>
             <option value="designing">Designing</option>
@@ -179,24 +648,163 @@ export function ContentEditor({ item, onSave, onClose, onGenerate }: ContentEdit
             <option value="published">Published</option>
           </select>
         </div>
+
+        {/* Reschedule */}
+        <div>
+          <button
+            onClick={() => setShowReschedule(!showReschedule)}
+            className="flex items-center gap-2 text-sm text-teal hover:text-teal/80"
+          >
+            <CalendarIcon className="w-4 h-4" />
+            Reschedule
+          </button>
+          {showReschedule && (
+            <input
+              type="date"
+              value={formData.scheduled_date}
+              onChange={e => updateField('scheduled_date', e.target.value)}
+              className="mt-2 w-full px-4 py-3 rounded-xl border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20"
+            />
+          )}
+        </div>
+
+        {/* Revision Feedback Banner */}
+        {(formData.status === 'revision_requested' || formData.status === 'rejected') && formData.review_comment && (
+          <div className={cn(
+            'border-t pt-6',
+            formData.status === 'revision_requested' ? 'border-amber-200' : 'border-red-200'
+          )}>
+            <div className={cn(
+              'rounded-lg p-4',
+              formData.status === 'revision_requested' ? 'bg-amber-50 border border-amber-200' : 'bg-red-50 border border-red-200'
+            )}>
+              <h3 className={cn(
+                'text-sm font-medium mb-1',
+                formData.status === 'revision_requested' ? 'text-amber-800' : 'text-red-800'
+              )}>
+                {formData.status === 'revision_requested' ? 'Revisions Requested' : 'Rejected'}
+              </h3>
+              <p className={cn(
+                'text-sm',
+                formData.status === 'revision_requested' ? 'text-amber-700' : 'text-red-700'
+              )}>
+                {formData.review_comment}
+              </p>
+            </div>
+            {onResubmit && (
+              <Button
+                onClick={() => onResubmit(item.id)}
+                className="mt-3 w-full bg-teal hover:bg-teal/90"
+              >
+                <ArrowPathIcon className="w-4 h-4 mr-2" />
+                Resubmit for Review
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Approval UI */}
+        {formData.status === 'pending_review' && canApprove && onApprove && onReject && (
+          <div className="border-t border-stone/10 pt-6 space-y-3">
+            <h3 className="font-medium text-charcoal">Review</h3>
+            <Textarea
+              value={reviewComment}
+              onChange={e => setReviewComment(e.target.value)}
+              placeholder="Add a comment (optional for approval, required for rejection/revision)..."
+              rows={2}
+            />
+            <div className="flex gap-3">
+              <Button onClick={() => onApprove(item.id, reviewComment)} className="flex-1 bg-green-600 hover:bg-green-700">
+                Approve
+              </Button>
+              {onRequestRevision && (
+                <Button
+                  onClick={() => {
+                    if (reviewComment.trim()) {
+                      onRequestRevision(item.id, reviewComment);
+                    }
+                  }}
+                  variant="ghost"
+                  className="flex-1 text-amber-600 border border-amber-200 hover:bg-amber-50"
+                  disabled={!reviewComment.trim()}
+                >
+                  Request Revisions
+                </Button>
+              )}
+              <Button
+                onClick={() => onReject(item.id, reviewComment || 'No reason provided')}
+                variant="ghost"
+                className="flex-1 text-red-600 border border-red-200 hover:bg-red-50"
+              >
+                Reject
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Publish Section */}
+        {['edited', 'scheduled', 'approved', 'designed', 'filmed'].includes(formData.status) && (
+          <div className="border-t border-stone/10 pt-6 space-y-4">
+            <h3 className="font-medium text-charcoal">Publish to Social Media</h3>
+
+            <PlatformSelector
+              selectedPlatforms={selectedPlatforms}
+              onSelectionChange={setSelectedPlatforms}
+              contentItem={{ media_urls: item.media_urls || null }}
+            />
+
+            {selectedPlatforms.length > 0 && (
+              <Button onClick={handlePublish} disabled={isPublishing} className="w-full">
+                <PaperAirplaneIcon className="w-4 h-4 mr-2" />
+                {isPublishing ? 'Publishing...' : `Publish Now to ${selectedPlatforms.length} platform${selectedPlatforms.length > 1 ? 's' : ''}`}
+              </Button>
+            )}
+
+            {publishResults.length > 0 && (
+              <div className="space-y-2">
+                {publishResults.map((result, i) => (
+                  <div key={i} className={cn('p-3 rounded-lg text-sm', result.success ? 'bg-teal/10 border border-teal/20 text-teal' : 'bg-red-50 border border-red-200 text-red-700')}>
+                    <span className="font-medium">{PLATFORM_CONFIG[result.platform as SocialPlatform]?.name || result.platform}:</span>{' '}
+                    {result.success ? (
+                      <>Published successfully
+                        {result.postUrl && (
+                          <a href={result.postUrl} target="_blank" rel="noopener noreferrer" className="ml-2 inline-flex items-center gap-1 underline">
+                            View post <ArrowTopRightOnSquareIcon className="w-3 h-3" />
+                          </a>
+                        )}
+                      </>
+                    ) : (result.error || 'Failed')}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Published posts summary */}
+        {formData.status === 'published' && publishedPosts.length > 0 && (
+          <div className="border-t border-stone/10 pt-6 space-y-2">
+            <h3 className="font-medium text-charcoal">Published Posts</h3>
+            {publishedPosts.map((post, i) => (
+              <div key={i} className="flex items-center justify-between p-3 bg-cream-warm rounded-lg">
+                <span className="text-sm font-medium text-charcoal">
+                  {PLATFORM_CONFIG[post.platform as SocialPlatform]?.name || post.platform}
+                </span>
+                {post.post_url && (
+                  <a href={post.post_url} target="_blank" rel="noopener noreferrer" className="text-sm text-teal hover:underline inline-flex items-center gap-1">
+                    View <ArrowTopRightOnSquareIcon className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Footer */}
       <div className="sticky bottom-0 bg-white border-t border-stone/10 px-6 py-4 flex gap-3">
-        <Button
-          onClick={onClose}
-          variant="ghost"
-          className="flex-1"
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={handleSave}
-          isLoading={isSaving}
-          className="flex-1"
-        >
-          Save Changes
-        </Button>
+        <Button onClick={onClose} variant="ghost" className="flex-1">Cancel</Button>
+        <Button onClick={handleSave} isLoading={isSaving} className="flex-1">Save Changes</Button>
       </div>
     </div>
   );

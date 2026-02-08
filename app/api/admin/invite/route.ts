@@ -69,7 +69,7 @@ export async function POST(request: Request) {
       .from('invitations')
       .insert({
         email,
-        organization_id: org.id,
+        organization_name: org.name,
         token,
         expires_at: expiresAt.toISOString(),
         invited_by: user.id,

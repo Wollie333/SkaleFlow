@@ -1,6 +1,6 @@
 'use client';
 
-import { Card } from '@/components/ui';
+import { Card, PageHeader } from '@/components/ui';
 import {
   QuestionMarkCircleIcon,
   BookOpenIcon,
@@ -58,12 +58,11 @@ const guides = [
 export default function HelpPage() {
   return (
     <div className="space-y-8 max-w-4xl">
-      <header>
-        <h1 className="text-display-md text-charcoal">Help Center</h1>
-        <p className="text-body-lg text-stone mt-1">
-          Get answers to common questions and learn how to use SkaleFlow
-        </p>
-      </header>
+      <PageHeader
+        icon={QuestionMarkCircleIcon}
+        title="Help Center"
+        subtitle="Get answers to common questions and learn how to use SkaleFlow"
+      />
 
       {/* Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

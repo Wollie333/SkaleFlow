@@ -46,6 +46,13 @@ export async function POST(request: Request) {
         organization_id: membership.organization_id,
         tier_id: tier.id,
         user_id: user.id,
+        type: 'subscription',
+        tierName: tier.name,
+        monthly_credits: tier.monthly_credits,
+        custom_fields: [
+          { display_name: 'Plan', variable_name: 'plan', value: tier.name },
+          { display_name: 'Monthly Credits', variable_name: 'monthly_credits', value: String(tier.monthly_credits) },
+        ],
       },
     });
 

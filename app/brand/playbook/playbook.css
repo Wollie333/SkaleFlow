@@ -1,0 +1,117 @@
+/* Playbook layout */
+.playbook-layout {
+  background: white !important;
+}
+
+.playbook-container {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Pulse animation for skeleton loading demos */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Search result highlight */
+.playbook-highlight {
+  animation: playbook-flash 2s ease-out;
+}
+@keyframes playbook-flash {
+  0%, 15% { background-color: rgba(var(--playbook-primary-rgb, 30, 107, 99), 0.12); }
+  100% { background-color: transparent; }
+}
+
+/* Print styles */
+@media print {
+  @page {
+    size: A4;
+    margin: 18mm 14mm;
+  }
+
+  .playbook-sidebar {
+    display: none !important;
+  }
+
+  .print\:ml-0 {
+    margin-left: 0 !important;
+  }
+
+  .print\:\!left-0 {
+    left: 0 !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  .playbook-toolbar {
+    display: none !important;
+  }
+
+  .print\:pt-0 {
+    padding-top: 0 !important;
+  }
+
+  .playbook-cover {
+    min-height: 100vh;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .break-before-page {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  .break-inside-avoid {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  p { orphans: 3; widows: 3; }
+  h2, h3, h4 { page-break-after: avoid; break-after: avoid; }
+
+  .shadow, .shadow-lg, .shadow-xl {
+    box-shadow: none !important;
+  }
+
+  .backdrop-blur-sm {
+    backdrop-filter: none !important;
+  }
+
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .playbook-section {
+    page-break-inside: auto;
+  }
+
+  a {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+
+  .playbook-back-cover {
+    page-break-before: always;
+    break-before: page;
+  }
+}
+
+/* Subtle entrance on screen */
+@media screen {
+  .playbook-section {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}

@@ -1,0 +1,135 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { publishToConnection } from '@/lib/social/publish';
+import type { ConnectionWithTokens } from '@/lib/social/token-manager';
+import type { SocialPlatform } from '@/lib/social/types';
+import type { Json } from '@/types/database';
+
+export async function POST(request: NextRequest) {
+  const supabase = createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const { contentItemId, platforms } = body as { contentItemId: string; platforms: string[] };
+
+  if (!contentItemId || !platforms || platforms.length === 0) {
+    return NextResponse.json({ error: 'contentItemId and platforms are required' }, { status: 400 });
+  }
+
+  // Get user's org
+  const { data: membership } = await supabase
+    .from('org_members')
+    .select('organization_id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!membership) {
+    return NextResponse.json({ error: 'No organization found' }, { status: 404 });
+  }
+
+  // Get content item
+  const { data: contentItem, error: itemError } = await supabase
+    .from('content_items')
+    .select('*')
+    .eq('id', contentItemId)
+    .eq('organization_id', membership.organization_id)
+    .single();
+
+  if (itemError || !contentItem) {
+    return NextResponse.json({ error: 'Content item not found' }, { status: 404 });
+  }
+
+  // Get connections for requested platforms
+  const { data: connections } = await supabase
+    .from('social_media_connections')
+    .select('*')
+    .eq('organization_id', membership.organization_id)
+    .eq('is_active', true)
+    .in('platform', platforms as SocialPlatform[]);
+
+  if (!connections || connections.length === 0) {
+    return NextResponse.json({ error: 'No active connections found for selected platforms' }, { status: 400 });
+  }
+
+  const results: Array<{
+    platform: string;
+    success: boolean;
+    postUrl?: string;
+    error?: string;
+  }> = [];
+
+  for (const connection of connections) {
+    // Create published_posts record as 'publishing'
+    const { data: publishedPost } = await supabase
+      .from('published_posts')
+      .insert({
+        content_item_id: contentItemId,
+        organization_id: membership.organization_id,
+        connection_id: connection.id,
+        platform: connection.platform as SocialPlatform,
+        publish_status: 'publishing',
+      })
+      .select('id')
+      .single();
+
+    // Publish
+    const publishResult = await publishToConnection(
+      connection as unknown as ConnectionWithTokens,
+      contentItem
+    );
+
+    if (publishResult.result.success) {
+      // Update to published
+      await supabase
+        .from('published_posts')
+        .update({
+          publish_status: 'published',
+          platform_post_id: publishResult.result.platformPostId || null,
+          post_url: publishResult.result.postUrl || null,
+          published_at: new Date().toISOString(),
+          metadata: (publishResult.result.metadata || {}) as unknown as Json,
+        })
+        .eq('id', publishedPost!.id);
+
+      results.push({
+        platform: connection.platform,
+        success: true,
+        postUrl: publishResult.result.postUrl,
+      });
+    } else {
+      // Update to failed
+      await supabase
+        .from('published_posts')
+        .update({
+          publish_status: 'failed',
+          error_message: publishResult.result.error || 'Unknown error',
+          retry_count: 0,
+        })
+        .eq('id', publishedPost!.id);
+
+      results.push({
+        platform: connection.platform,
+        success: false,
+        error: publishResult.result.error,
+      });
+    }
+  }
+
+  // If at least one platform succeeded, update content item status
+  const anySuccess = results.some(r => r.success);
+  if (anySuccess) {
+    await supabase
+      .from('content_items')
+      .update({
+        status: 'published',
+        published_at: new Date().toISOString(),
+      })
+      .eq('id', contentItemId);
+  }
+
+  return NextResponse.json({ results });
+}

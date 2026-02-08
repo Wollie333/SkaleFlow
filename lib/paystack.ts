@@ -84,6 +84,7 @@ export async function verifyTransaction(reference: string): Promise<{
   reference: string;
   amount: number;
   customer: PaystackCustomer;
+  metadata?: Record<string, unknown>;
   authorization?: {
     authorization_code: string;
     card_type: string;

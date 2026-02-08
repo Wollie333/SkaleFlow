@@ -30,6 +30,12 @@ yarn-error.log*
 # Vercel
 .vercel
 
+# Supabase temp files
+supabase/.temp/
+
+# Windows artifacts
+nul
+
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts

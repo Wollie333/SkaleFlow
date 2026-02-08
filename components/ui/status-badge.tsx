@@ -4,7 +4,10 @@ import type { ContentStatus } from '@/types/database';
 const statusStyles: Record<ContentStatus, string> = {
   idea: 'bg-stone/10 text-stone',
   scripted: 'bg-yellow-100 text-yellow-800',
+  pending_review: 'bg-amber-100 text-amber-800',
+  revision_requested: 'bg-amber-100 text-amber-800',
   approved: 'bg-blue-100 text-blue-800',
+  rejected: 'bg-red-100 text-red-800',
   filming: 'bg-purple-100 text-purple-800',
   filmed: 'bg-purple-100 text-purple-800',
   designing: 'bg-pink-100 text-pink-800',
@@ -30,7 +33,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
         className
       )}
     >
-      {status.replace('_', ' ')}
+      {status.replace(/_/g, ' ')}
     </span>
   );
 }

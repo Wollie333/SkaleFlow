@@ -5,9 +5,10 @@ export interface CardProps {
   className?: string;
   variant?: 'default' | 'dark' | 'gradient';
   hover?: boolean;
+  onClick?: () => void;
 }
 
-export function Card({ children, className, variant = 'default', hover = false }: CardProps) {
+export function Card({ children, className, variant = 'default', hover = false, onClick }: CardProps) {
   const variants = {
     default: 'bg-white border border-teal/8',
     dark: 'bg-dark-light border border-teal/12 text-cream',
@@ -20,8 +21,10 @@ export function Card({ children, className, variant = 'default', hover = false }
         'rounded-xl p-6 transition-all duration-300',
         variants[variant],
         hover && 'hover:-translate-y-1 hover:shadow-lg hover:shadow-dark/5',
+        onClick && 'cursor-pointer',
         className
       )}
+      onClick={onClick}
     >
       {children}
     </div>

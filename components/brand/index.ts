@@ -1,3 +1,12 @@
 export { ProgressTracker } from './progress-tracker';
 export { ChatInterface } from './chat-interface';
 export { PhaseOutputs } from './phase-outputs';
+export { ImportPlaybookModal } from './import-playbook-modal';
+export { LogoUpload } from './logo-upload';
+export { QuestionPanel } from './question-panel';
+export { ExpertChatPanel } from './expert-chat-panel';
+export { PhaseNavDropdown } from './phase-nav-dropdown';
+export { QuestionStepper } from './question-stepper';
+export { VariablePreviewCard } from './variable-preview-card';
+export { MobileTabToggle } from './mobile-tab-toggle';
+export type { MobileTab } from './mobile-tab-toggle';

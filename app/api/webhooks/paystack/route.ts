@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
-import { verifyWebhookSignature, getSubscription } from '@/lib/paystack';
+import { verifyWebhookSignature } from '@/lib/paystack';
+import { createInvoice } from '@/lib/billing/invoice-service';
+import { addTopupCredits, initializeCreditBalance } from '@/lib/ai/credits';
 
 export async function POST(request: Request) {
   try {
@@ -42,9 +44,13 @@ export async function POST(request: Request) {
       }
 
       case 'charge.success': {
-        // Payment successful (could be subscription renewal)
+        // Payment successful — could be subscription renewal or topup
         const transaction = event.data;
-        if (transaction.plan) {
+        const metadata = transaction.metadata || {};
+
+        if (metadata.type === 'topup') {
+          await handleTopupPayment(supabase, transaction);
+        } else if (transaction.plan) {
           await handlePaymentSuccess(supabase, transaction);
         }
         break;
@@ -77,7 +83,7 @@ async function handleSubscriptionCreated(
   subscription: {
     subscription_code: string;
     customer: { email: string };
-    plan: { plan_code: string };
+    plan: { plan_code: string; name: string; amount: number };
     next_payment_date: string;
   }
 ) {
@@ -108,7 +114,7 @@ async function handleSubscriptionCreated(
   // Find subscription tier
   const { data: tier } = await supabase
     .from('subscription_tiers')
-    .select('id')
+    .select('id, monthly_credits, name, price_monthly')
     .eq('paystack_plan_code', subscription.plan.plan_code)
     .single();
 
@@ -134,6 +140,25 @@ async function handleSubscriptionCreated(
   if (error) {
     console.error('Failed to create subscription:', error);
   }
+
+  // Initialize credit balance for the org
+  if (tier.monthly_credits > 0) {
+    await initializeCreditBalance(membership.organization_id, tier.monthly_credits);
+  }
+
+  // Create subscription invoice
+  await createInvoice({
+    organizationId: membership.organization_id,
+    invoiceType: 'subscription',
+    lineItems: [{
+      description: `${tier.name} Plan — Monthly Subscription`,
+      quantity: 1,
+      unit_price_cents: tier.price_monthly,
+      total_cents: tier.price_monthly,
+    }],
+    billingEmail: subscription.customer.email,
+    creditsGranted: tier.monthly_credits,
+  });
 }
 
 async function handleSubscriptionCancelled(
@@ -160,7 +185,7 @@ async function handleSubscriptionDisabled(
   const { error } = await supabase
     .from('subscriptions')
     .update({
-      status: 'inactive',
+      status: 'cancelled',
       updated_at: new Date().toISOString(),
     })
     .eq('paystack_subscription_code', subscription.subscription_code);
@@ -176,6 +201,7 @@ async function handlePaymentSuccess(
     customer: { email: string };
     plan: { plan_code: string };
     reference: string;
+    amount: number;
   }
 ) {
   // Find user and update subscription period
@@ -207,6 +233,86 @@ async function handlePaymentSuccess(
       updated_at: new Date().toISOString(),
     })
     .eq('organization_id', membership.organization_id);
+
+  // Get tier for monthly credits
+  const { data: sub } = await supabase
+    .from('subscriptions')
+    .select('tier_id')
+    .eq('organization_id', membership.organization_id)
+    .single();
+
+  if (sub?.tier_id) {
+    const { data: tier } = await supabase
+      .from('subscription_tiers')
+      .select('monthly_credits, name, price_monthly')
+      .eq('id', sub.tier_id)
+      .single();
+
+    if (tier) {
+      // Reset monthly credits
+      await supabase.rpc('reset_monthly_credits', { p_org_id: membership.organization_id });
+
+      // Create subscription renewal invoice
+      await createInvoice({
+        organizationId: membership.organization_id,
+        invoiceType: 'subscription',
+        lineItems: [{
+          description: `${tier.name} Plan — Monthly Subscription`,
+          quantity: 1,
+          unit_price_cents: tier.price_monthly,
+          total_cents: tier.price_monthly,
+        }],
+        paystackReference: transaction.reference,
+        billingEmail: transaction.customer.email,
+        creditsGranted: tier.monthly_credits,
+      });
+    }
+  }
+}
+
+async function handleTopupPayment(
+  supabase: ReturnType<typeof createServiceClient>,
+  transaction: {
+    customer: { email: string };
+    reference: string;
+    amount: number;
+    metadata: {
+      type: string;
+      packSlug: string;
+      packName: string;
+      credits: number;
+      organizationId: string;
+      userId: string;
+    };
+  }
+) {
+  const { metadata } = transaction;
+  const orgId = metadata.organizationId;
+  const credits = metadata.credits;
+
+  // Create invoice
+  const invoiceId = await createInvoice({
+    organizationId: orgId,
+    invoiceType: 'topup',
+    lineItems: [{
+      description: `${metadata.packName} — ${credits.toLocaleString()} AI Credits`,
+      quantity: 1,
+      unit_price_cents: transaction.amount,
+      total_cents: transaction.amount,
+    }],
+    paystackReference: transaction.reference,
+    billingEmail: transaction.customer.email,
+    creditsGranted: credits,
+  });
+
+  // Add topup credits
+  await addTopupCredits(
+    orgId,
+    metadata.userId,
+    credits,
+    invoiceId,
+    `${metadata.packName} — ${credits.toLocaleString()} credits`
+  );
 }
 
 async function handlePaymentFailed(
@@ -218,7 +324,7 @@ async function handlePaymentFailed(
   const { error } = await supabase
     .from('subscriptions')
     .update({
-      status: 'past_due',
+      status: 'paused',
       updated_at: new Date().toISOString(),
     })
     .eq('paystack_subscription_code', invoice.subscription.subscription_code);
