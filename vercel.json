@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/content/publish/scheduled",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/content/analytics/sync",
@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/bookings/sync",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 7 * * *"
     },
     {
       "path": "/api/billing/credit-reset",
@@ -18,15 +18,15 @@
     },
     {
       "path": "/api/automations/process",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 9 * * *"
     },
     {
       "path": "/api/content/generate/queue/process",
-      "schedule": "*/2 * * * *"
+      "schedule": "0 10 * * *"
     },
     {
       "path": "/api/marketing/analytics/sync",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 5 * * *"
     }
   ]
 }
