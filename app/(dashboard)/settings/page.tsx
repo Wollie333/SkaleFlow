@@ -153,16 +153,20 @@ export default function SettingsPage() {
           setSocialConnections(connMap);
         }
 
-        // Load Google Drive connection
-        const { data: driveConn } = await supabase
-          .from('google_drive_connections')
-          .select('id, drive_email, is_active, connected_at, token_expires_at')
-          .eq('organization_id', org.id)
-          .eq('is_active', true)
-          .single();
+        // Load Google Drive connection (table may not exist yet)
+        try {
+          const { data: driveConn } = await supabase
+            .from('google_drive_connections')
+            .select('id, drive_email, is_active, connected_at, token_expires_at')
+            .eq('organization_id', org.id)
+            .eq('is_active', true)
+            .single();
 
-        if (driveConn) {
-          setDriveConnection(driveConn);
+          if (driveConn) {
+            setDriveConnection(driveConn);
+          }
+        } catch {
+          // Table doesn't exist yet — skip silently
         }
       }
 

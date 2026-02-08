@@ -65,7 +65,7 @@ export default async function DashboardLayout({
         .single(),
       supabase
         .from('subscriptions')
-        .select('subscription_tiers ( name )')
+        .select('*, tier:subscription_tiers(name)')
         .eq('organization_id', orgId)
         .limit(1)
         .single(),
@@ -85,7 +85,7 @@ export default async function DashboardLayout({
 
     contentEngineEnabled = orgResult.data?.content_engine_enabled ?? false;
 
-    const tierData = subscriptionResult.data?.subscription_tiers as { name: string } | null;
+    const tierData = (subscriptionResult.data as Record<string, unknown>)?.tier as { name: string } | null;
     tierName = tierData?.name ?? undefined;
 
     const phases = phasesResult.data;
