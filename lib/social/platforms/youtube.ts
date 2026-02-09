@@ -7,7 +7,7 @@ export const youtubeAdapter: PlatformAdapter = {
 
   getAuthUrl(state: string, redirectUri: string): string {
     const params = new URLSearchParams({
-      client_id: process.env.GOOGLE_YOUTUBE_CLIENT_ID!,
+      client_id: process.env.GOOGLE_CLIENT_ID!,
       redirect_uri: redirectUri,
       response_type: 'code',
       scope: 'https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtube.force-ssl',
@@ -24,8 +24,8 @@ export const youtubeAdapter: PlatformAdapter = {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         code,
-        client_id: process.env.GOOGLE_YOUTUBE_CLIENT_ID!,
-        client_secret: process.env.GOOGLE_YOUTUBE_CLIENT_SECRET!,
+        client_id: process.env.GOOGLE_CLIENT_ID!,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET!,
         redirect_uri: redirectUri,
         grant_type: 'authorization_code',
       }),
@@ -65,8 +65,8 @@ export const youtubeAdapter: PlatformAdapter = {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        client_id: process.env.GOOGLE_YOUTUBE_CLIENT_ID!,
-        client_secret: process.env.GOOGLE_YOUTUBE_CLIENT_SECRET!,
+        client_id: process.env.GOOGLE_CLIENT_ID!,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET!,
         grant_type: 'refresh_token',
         refresh_token: refreshToken,
       }),
