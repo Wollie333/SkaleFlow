@@ -244,6 +244,33 @@ export default function ContentReviewsPage() {
         />
       </div>
 
+      {/* Stats summary pills */}
+      {notifications.length > 0 && (
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {unreadCount > 0 && (
+            <span className="bg-teal/10 text-teal px-3 py-1 rounded-full text-xs font-medium">
+              {unreadCount} Unread
+            </span>
+          )}
+          {(() => {
+            const pendingCount = notifications.filter(n => n.type === 'content_submitted').length;
+            return pendingCount > 0 ? (
+              <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-medium">
+                {pendingCount} Pending
+              </span>
+            ) : null;
+          })()}
+          {(() => {
+            const contentCount = notifications.filter(n => ['content_approved', 'content_rejected', 'revision_requested'].includes(n.type)).length;
+            return contentCount > 0 ? (
+              <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
+                {contentCount} Updates
+              </span>
+            ) : null;
+          })()}
+        </div>
+      )}
+
       {/* Filter tabs */}
       <div className="flex gap-1 mb-6 bg-cream-warm rounded-lg p-1">
         {tabs.map(tab => (
@@ -266,18 +293,18 @@ export default function ContentReviewsPage() {
         <div className="text-center py-20">
           <div className="w-16 h-16 mx-auto rounded-full bg-teal/10 flex items-center justify-center mb-4">
             {activeTab === 'all' ? (
-              <InboxIcon className="w-8 h-8 text-teal/50" />
+              <CheckCircleIcon className="w-8 h-8 text-teal" />
             ) : (
               <FunnelIcon className="w-8 h-8 text-teal/50" />
             )}
           </div>
           <h3 className="text-lg font-medium text-charcoal mb-1">
-            {activeTab === 'all' ? "You're all caught up" : 'No reviews here'}
+            {activeTab === 'all' ? 'All caught up!' : 'Nothing here yet'}
           </h3>
           <p className="text-sm text-stone">
             {activeTab === 'all'
-              ? 'No content reviews to show.'
-              : `No ${activeTab === 'unread' ? 'unread' : activeTab === 'approvals' ? 'approval' : 'content'} reviews.`}
+              ? 'No content reviews to show. Great work!'
+              : "Try switching to the 'All' tab to see everything."}
           </p>
         </div>
       ) : (

@@ -15,8 +15,10 @@ import {
   PaperAirplaneIcon,
   SparklesIcon,
   LinkIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import type { SocialPlatform, ContentStatus, FunnelStage, StoryBrandStage } from '@/types/database';
 import type { UTMParams } from '@/lib/utm/generate-utm';
 
@@ -116,6 +118,9 @@ export default function PostEditPage() {
   const [showPostActionPopup, setShowPostActionPopup] = useState(false);
   const [utmParams, setUtmParams] = useState<UTMParams | null>(null);
   const [showUtmModal, setShowUtmModal] = useState(false);
+  const [showAdvancedFields, setShowAdvancedFields] = useState(false);
+  const [showTargetUrlSection, setShowTargetUrlSection] = useState(false);
+  const [showMediaSection, setShowMediaSection] = useState(false);
 
   useEffect(() => {
     async function loadItem() {
@@ -147,14 +152,17 @@ export default function PostEditPage() {
         if (loadedItem.utm_parameters) {
           setUtmParams(loadedItem.utm_parameters as unknown as UTMParams);
         }
-        setUploadedFiles(
-          (loadedItem.media_urls || []).map((url: string) => ({
-            url,
-            fileName: url.split('/').pop() || 'file',
-            fileType: 'image/jpeg',
-            fileSize: 0,
-          }))
-        );
+        const loadedMedia = (loadedItem.media_urls || []).map((url: string) => ({
+          url,
+          fileName: url.split('/').pop() || 'file',
+          fileType: 'image/jpeg',
+          fileSize: 0,
+        }));
+        setUploadedFiles(loadedMedia);
+        // Auto-expand sections that have data
+        if (loadedItem.target_url || loadedItem.utm_parameters) setShowTargetUrlSection(true);
+        if (loadedMedia.length > 0) setShowMediaSection(true);
+        if (loadedItem.filming_notes) setShowAdvancedFields(true);
 
         // Get user name for preview
         const { data: { user } } = await supabase.auth.getUser();
@@ -418,7 +426,7 @@ export default function PostEditPage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* LEFT: Edit Form (60%) */}
         <div className="lg:col-span-3 space-y-5">
-          {/* Topic & Hook */}
+          {/* Card 1: Content */}
           <Card className="p-5 space-y-4">
             <h3 className="text-sm font-semibold text-charcoal">Content</h3>
 
@@ -474,160 +482,210 @@ export default function PostEditPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-stone mb-1.5">Filming Notes</label>
-              <textarea
-                value={filmingNotes}
-                onChange={e => setFilmingNotes(e.target.value)}
-                rows={2}
-                className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none resize-y"
-                placeholder="Notes for filming / content creation"
-              />
-            </div>
-          </Card>
-
-          {/* Hashtags */}
-          <Card className="p-5 space-y-3">
-            <h3 className="text-sm font-semibold text-charcoal">Hashtags</h3>
-            <div className="flex flex-wrap gap-2">
-              {hashtags.map(tag => (
-                <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-teal/10 text-teal text-xs font-medium">
-                  {tag}
-                  <button onClick={() => removeHashtag(tag)} className="hover:text-red-500">&times;</button>
-                </span>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <input
-                value={hashtagInput}
-                onChange={e => setHashtagInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addHashtag())}
-                className="flex-1 px-3 py-2 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
-                placeholder="Add hashtag"
-              />
-              <Button size="sm" onClick={addHashtag}>Add</Button>
-            </div>
-          </Card>
-
-          {/* Target URL */}
-          <Card className="p-5 space-y-3">
-            <h3 className="text-sm font-semibold text-charcoal">Target URL &amp; Tracking</h3>
-            <input
-              value={targetUrl}
-              onChange={e => setTargetUrl(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
-              placeholder="https://your-link.com"
-            />
+            {/* Advanced fields toggle */}
             <button
-              onClick={() => setShowUtmModal(true)}
+              onClick={() => setShowAdvancedFields(prev => !prev)}
               className="flex items-center gap-1.5 text-xs font-medium text-teal hover:underline"
             >
-              <LinkIcon className="w-3.5 h-3.5" />
-              {utmParams ? 'Edit UTM Parameters' : 'Build UTM Parameters'}
+              <ChevronDownIcon className={cn("w-3.5 h-3.5 transition-transform", showAdvancedFields && "rotate-180")} />
+              {showAdvancedFields ? 'Hide advanced fields' : 'Show filming notes & more'}
             </button>
-            {utmParams && (utmParams.utm_source || utmParams.utm_campaign) && (
-              <div className="bg-cream-warm rounded-lg p-2.5">
-                <p className="text-xs text-stone">
-                  {[
-                    utmParams.utm_source && `source: ${utmParams.utm_source}`,
-                    utmParams.utm_medium && `medium: ${utmParams.utm_medium}`,
-                    utmParams.utm_campaign && `campaign: ${utmParams.utm_campaign}`,
-                  ].filter(Boolean).join(' · ')}
-                </p>
+            {showAdvancedFields && (
+              <div className="pt-3 border-t border-stone/10">
+                <label className="block text-xs font-medium text-stone mb-1.5">Filming Notes</label>
+                <textarea
+                  value={filmingNotes}
+                  onChange={e => setFilmingNotes(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none resize-y"
+                  placeholder="Notes for filming / content creation"
+                />
               </div>
             )}
           </Card>
 
-          {/* Platforms */}
-          <Card className="p-5 space-y-3">
-            <h3 className="text-sm font-semibold text-charcoal">Platforms</h3>
-            <div className="flex flex-wrap gap-2">
-              {PLATFORM_OPTIONS.map(p => (
-                <button
-                  key={p}
-                  onClick={() => togglePlatform(p)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
-                    platforms.includes(p)
-                      ? 'bg-teal text-white'
-                      : 'bg-stone/5 text-stone hover:bg-stone/10'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </Card>
+          {/* Card 2: Details (Hashtags + Platforms + Strategy) */}
+          <Card className="p-5 space-y-0">
+            <h3 className="text-sm font-semibold text-charcoal mb-4">Details</h3>
 
-          {/* Strategy */}
-          <Card className="p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-charcoal">Strategy</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-stone mb-1.5">Funnel Stage</label>
-                <select
-                  value={funnelStage}
-                  onChange={e => setFunnelStage(e.target.value as FunnelStage)}
-                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
-                >
-                  {FUNNEL_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+            {/* Hashtags section */}
+            <div>
+              <h4 className="text-xs font-semibold text-stone uppercase tracking-wider mb-2">Hashtags</h4>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {hashtags.map(tag => (
+                  <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-teal/10 text-teal text-xs font-medium">
+                    {tag}
+                    <button onClick={() => removeHashtag(tag)} className="hover:text-red-500">&times;</button>
+                  </span>
+                ))}
               </div>
-              <div>
-                <label className="block text-xs font-medium text-stone mb-1.5">StoryBrand Stage</label>
-                <select
-                  value={storybrandStage}
-                  onChange={e => setStorybrandStage(e.target.value as StoryBrandStage)}
-                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
-                >
-                  {STORYBRAND_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </Card>
-
-          {/* Schedule */}
-          <Card className="p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-charcoal">Schedule</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-stone mb-1.5">
-                  <CalendarDaysIcon className="w-3.5 h-3.5 inline mr-1" />
-                  Date
-                </label>
+              <div className="flex gap-2">
                 <input
-                  type="date"
-                  value={scheduledDate}
-                  onChange={e => setScheduledDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
+                  value={hashtagInput}
+                  onChange={e => setHashtagInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addHashtag())}
+                  className="flex-1 px-3 py-2 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
+                  placeholder="Add hashtag"
                 />
+                <Button size="sm" onClick={addHashtag}>Add</Button>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-stone mb-1.5">
-                  <ClockIcon className="w-3.5 h-3.5 inline mr-1" />
-                  Time
-                </label>
-                <input
-                  type="time"
-                  value={scheduledTime}
-                  onChange={e => setScheduledTime(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
-                />
+            </div>
+
+            {/* Platforms section */}
+            <div className="border-t border-stone/10 pt-4 mt-4">
+              <h4 className="text-xs font-semibold text-stone uppercase tracking-wider mb-2">Platforms</h4>
+              <div className="flex flex-wrap gap-2">
+                {PLATFORM_OPTIONS.map(p => (
+                  <button
+                    key={p}
+                    onClick={() => togglePlatform(p)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
+                      platforms.includes(p)
+                        ? 'bg-teal text-white'
+                        : 'bg-stone/5 text-stone hover:bg-stone/10'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Strategy section */}
+            <div className="border-t border-stone/10 pt-4 mt-4">
+              <h4 className="text-xs font-semibold text-stone uppercase tracking-wider mb-2">Strategy</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-stone mb-1.5">Funnel Stage</label>
+                  <select
+                    value={funnelStage}
+                    onChange={e => setFunnelStage(e.target.value as FunnelStage)}
+                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
+                  >
+                    {FUNNEL_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-stone mb-1.5">StoryBrand Stage</label>
+                  <select
+                    value={storybrandStage}
+                    onChange={e => setStorybrandStage(e.target.value as StoryBrandStage)}
+                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
+                  >
+                    {STORYBRAND_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </Card>
 
-          {/* Media */}
-          <Card className="p-5 space-y-3">
-            <h3 className="text-sm font-semibold text-charcoal">Media</h3>
-            <MediaUpload
-              uploadedFiles={uploadedFiles}
-              onFilesChange={setUploadedFiles}
-              organizationId={item.organization_id}
-            />
+          {/* Card 3: Publishing (Schedule + Target URL + Media) */}
+          <Card className="p-5 space-y-0">
+            <h3 className="text-sm font-semibold text-charcoal mb-4">Publishing</h3>
+
+            {/* Schedule section */}
+            <div>
+              <h4 className="text-xs font-semibold text-stone uppercase tracking-wider mb-2">Schedule</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-stone mb-1.5">
+                    <CalendarDaysIcon className="w-3.5 h-3.5 inline mr-1" />
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    value={scheduledDate}
+                    onChange={e => setScheduledDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-stone mb-1.5">
+                    <ClockIcon className="w-3.5 h-3.5 inline mr-1" />
+                    Time
+                  </label>
+                  <input
+                    type="time"
+                    value={scheduledTime}
+                    onChange={e => setScheduledTime(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Target URL section — collapsed if empty */}
+            <div className="border-t border-stone/10 pt-4 mt-4">
+              <button
+                onClick={() => setShowTargetUrlSection(prev => !prev)}
+                className="flex items-center justify-between w-full text-left"
+              >
+                <h4 className="text-xs font-semibold text-stone uppercase tracking-wider">Target URL &amp; Tracking</h4>
+                <div className="flex items-center gap-2">
+                  {targetUrl && !showTargetUrlSection && (
+                    <span className="text-xs text-teal bg-teal/10 px-2 py-0.5 rounded-full truncate max-w-[200px]">{targetUrl}</span>
+                  )}
+                  <ChevronDownIcon className={cn("w-4 h-4 text-stone transition-transform", showTargetUrlSection && "rotate-180")} />
+                </div>
+              </button>
+              {showTargetUrlSection && (
+                <div className="mt-3 space-y-2">
+                  <input
+                    value={targetUrl}
+                    onChange={e => setTargetUrl(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
+                    placeholder="https://your-link.com"
+                  />
+                  <button
+                    onClick={() => setShowUtmModal(true)}
+                    className="flex items-center gap-1.5 text-xs font-medium text-teal hover:underline"
+                  >
+                    <LinkIcon className="w-3.5 h-3.5" />
+                    {utmParams ? 'Edit UTM Parameters' : 'Build UTM Parameters'}
+                  </button>
+                  {utmParams && (utmParams.utm_source || utmParams.utm_campaign) && (
+                    <div className="bg-cream-warm rounded-lg p-2.5">
+                      <p className="text-xs text-stone">
+                        {[
+                          utmParams.utm_source && `source: ${utmParams.utm_source}`,
+                          utmParams.utm_medium && `medium: ${utmParams.utm_medium}`,
+                          utmParams.utm_campaign && `campaign: ${utmParams.utm_campaign}`,
+                        ].filter(Boolean).join(' · ')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Media section — collapsed if empty */}
+            <div className="border-t border-stone/10 pt-4 mt-4">
+              <button
+                onClick={() => setShowMediaSection(prev => !prev)}
+                className="flex items-center justify-between w-full text-left"
+              >
+                <h4 className="text-xs font-semibold text-stone uppercase tracking-wider">Media</h4>
+                <div className="flex items-center gap-2">
+                  {uploadedFiles.length > 0 && !showMediaSection && (
+                    <span className="text-xs text-teal bg-teal/10 px-2 py-0.5 rounded-full">{uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''}</span>
+                  )}
+                  <ChevronDownIcon className={cn("w-4 h-4 text-stone transition-transform", showMediaSection && "rotate-180")} />
+                </div>
+              </button>
+              {showMediaSection && (
+                <div className="mt-3">
+                  <MediaUpload
+                    uploadedFiles={uploadedFiles}
+                    onFilesChange={setUploadedFiles}
+                    organizationId={item.organization_id}
+                  />
+                </div>
+              )}
+            </div>
           </Card>
         </div>
 
@@ -650,8 +708,9 @@ export default function PostEditPage() {
       </div>
 
       {/* Footer Actions */}
-      <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-stone/10 -mx-6 px-6 py-4 flex items-center justify-between z-30">
-        <div className="flex items-center gap-2">
+      <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-stone/10 -mx-6 px-6 py-4 flex flex-wrap items-center justify-between gap-3 z-30">
+        <div className="flex items-center gap-2 flex-wrap">
+          <StatusBadge status={item.status} />
           {/* Review actions (for admins/owners) */}
           {canApprove && (item.status === 'pending_review' || item.status === 'revision_requested') && (
             <>
@@ -669,7 +728,7 @@ export default function PostEditPage() {
                 onClick={() => handleReview('request_revision', 'Please review and update')}
               >
                 <ArrowPathIcon className="w-4 h-4 mr-1" />
-                Request Revision
+                Revision
               </Button>
               <Button
                 size="sm"
@@ -682,29 +741,24 @@ export default function PostEditPage() {
               </Button>
             </>
           )}
-
-          {/* Resubmit (for content creator when revision requested) */}
           {item.status === 'revision_requested' && (
             <Button
               size="sm"
               onClick={() => handleSave('pending_review')}
               isLoading={isSaving}
             >
-              <PaperAirplaneIcon className="w-4 h-4 mr-1" />
-              Resubmit for Review
+              Resubmit
             </Button>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={() => setShowPostActionPopup(true)}
-            isLoading={isSaving}
-          >
-            <PaperAirplaneIcon className="w-4 h-4 mr-1" />
-            Save &amp; Publish
-          </Button>
-        </div>
+        <Button
+          onClick={() => setShowPostActionPopup(true)}
+          isLoading={isSaving}
+        >
+          <PaperAirplaneIcon className="w-4 h-4 mr-1" />
+          Save &amp; Publish
+        </Button>
       </div>
 
       {/* UTM Builder Modal */}

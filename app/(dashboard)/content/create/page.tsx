@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button, Card, Badge, Textarea, PageHeader, ActionModal } from '@/components/ui';
-import { BrandVariablesPanel, ScriptTemplateBadge, CreativeAssetSpecs, PlatformOverrideTabs, MediaUpload, GenerationBatchTracker, SocialPreviewTabs, UTMBuilderModal, PostActionPopup, type UploadedFile, type PublishResult } from '@/components/content';
+import { BrandVariablesPanel, ScriptTemplateBadge, CreativeAssetSpecs, PlatformOverrideTabs, MediaUpload, GenerationBatchTracker, SocialPreviewTabs, UTMBuilderModal, PostActionPopup, AIModelPicker, type UploadedFile, type PublishResult } from '@/components/content';
 import { DriveFilePicker } from '@/components/content/drive-file-picker';
 import {
   SparklesIcon,
@@ -209,6 +209,9 @@ export default function ContentCreatePage() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
     new Set(BRAND_VARIABLE_CATEGORIES.map(c => c.key))
   );
+  const [showAdvancedFields, setShowAdvancedFields] = useState(false);
+  const [showTargetUrl, setShowTargetUrl] = useState(false);
+  const [engineSectionsCollapsed, setEngineSectionsCollapsed] = useState<Set<string>>(new Set(['ai_model']));
 
   useEffect(() => {
     async function loadData() {
@@ -303,25 +306,31 @@ export default function ContentCreatePage() {
   const frameworkInfo = getScriptFramework(selectedFormat, funnelStage, storybrandStage);
   const formatCategory = getFormatCategory(selectedFormat);
 
+  // Primary field keys — always visible
+  const PRIMARY_FIELDS = new Set(['topic', 'hook', 'script_body', 'cta', 'caption']);
+
   // Get fields to display based on format category
-  const getFieldsForFormat = (cat: FormatCategory): { key: string; label: string; rows?: number }[] => {
+  const getFieldsForFormat = (cat: FormatCategory): { key: string; label: string; rows?: number; advanced?: boolean }[] => {
     const common = [
       { key: 'caption', label: 'Caption', rows: 3 },
-      { key: 'hashtags', label: 'Hashtags (comma-separated)', rows: 1 },
+      { key: 'hashtags', label: 'Hashtags (comma-separated)', rows: 1, advanced: true },
     ];
+
+    const markAdvanced = (fields: { key: string; label: string; rows?: number }[]) =>
+      fields.map(f => ({ ...f, advanced: !PRIMARY_FIELDS.has(f.key) }));
 
     switch (cat) {
       case 'short':
-        return [
+        return markAdvanced([
           { key: 'topic', label: 'Topic', rows: 1 },
           { key: 'hook', label: 'Hook (0-3s)', rows: 2 },
           { key: 'script_body', label: 'Script Body', rows: 6 },
           { key: 'cta', label: 'CTA (last 2-3s)', rows: 2 },
           { key: 'filming_notes', label: 'Filming Notes', rows: 3 },
           ...common,
-        ];
+        ]);
       case 'medium':
-        return [
+        return markAdvanced([
           { key: 'topic', label: 'Topic', rows: 1 },
           { key: 'hook', label: 'Hook (0-10s)', rows: 2 },
           { key: 'context_section', label: 'Context (10-30s)', rows: 4 },
@@ -330,9 +339,9 @@ export default function ContentCreatePage() {
           { key: 'cta', label: 'CTA', rows: 2 },
           { key: 'filming_notes', label: 'Filming Notes', rows: 3 },
           ...common,
-        ];
+        ]);
       case 'long':
-        return [
+        return markAdvanced([
           { key: 'topic', label: 'Topic', rows: 1 },
           { key: 'hook', label: 'Hook (0-30s)', rows: 3 },
           { key: 'context_section', label: 'Context (30s-2min)', rows: 4 },
@@ -343,19 +352,19 @@ export default function ContentCreatePage() {
           { key: 'cta', label: 'CTA', rows: 2 },
           { key: 'filming_notes', label: 'Filming Notes', rows: 3 },
           ...common,
-        ];
+        ]);
       case 'carousel':
-        return [
+        return markAdvanced([
           { key: 'topic', label: 'Topic', rows: 1 },
           { key: 'script_body', label: 'Slides (JSON)', rows: 10 },
           ...common,
-        ];
+        ]);
       case 'static':
-        return [
+        return markAdvanced([
           { key: 'topic', label: 'Topic', rows: 1 },
           { key: 'script_body', label: 'Content (headline, body, visual direction)', rows: 8 },
           ...common,
-        ];
+        ]);
     }
   };
 
@@ -1373,6 +1382,10 @@ export default function ContentCreatePage() {
   );
 
   // Shared content fields + upload + actions panel
+  const allFields = getFieldsForFormat(formatCategory);
+  const primaryFields = allFields.filter(f => !f.advanced);
+  const advancedFields = allFields.filter(f => f.advanced);
+
   const renderContentPanel = () => (
     <>
       {/* Script Content fields */}
@@ -1388,7 +1401,7 @@ export default function ContentCreatePage() {
         </div>
 
         <div className="space-y-4">
-          {getFieldsForFormat(formatCategory).map(field => (
+          {primaryFields.map(field => (
             <div key={field.key}>
               <label className="block text-sm font-medium text-charcoal mb-1">{field.label}</label>
               <Textarea
@@ -1401,6 +1414,35 @@ export default function ContentCreatePage() {
             </div>
           ))}
         </div>
+
+        {/* Advanced fields toggle */}
+        {advancedFields.length > 0 && (
+          <>
+            <button
+              onClick={() => setShowAdvancedFields(prev => !prev)}
+              className="mt-4 flex items-center gap-1.5 text-xs font-medium text-teal hover:underline"
+            >
+              <ChevronDownIcon className={cn("w-3.5 h-3.5 transition-transform", showAdvancedFields && "rotate-180")} />
+              {showAdvancedFields ? 'Show fewer fields' : `Show more fields (${advancedFields.length})`}
+            </button>
+            {showAdvancedFields && (
+              <div className="space-y-4 mt-4 pt-4 border-t border-stone/10">
+                {advancedFields.map(field => (
+                  <div key={field.key}>
+                    <label className="block text-sm font-medium text-charcoal mb-1">{field.label}</label>
+                    <Textarea
+                      value={editFields[field.key] || ''}
+                      onChange={e => updateField(field.key, e.target.value)}
+                      rows={field.rows || 3}
+                      className="text-sm"
+                      placeholder={mode === 'manual' ? `Enter ${field.label.toLowerCase()}...` : undefined}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </Card>
 
       {/* Template info bar (AI mode only, when generated) */}
@@ -1447,34 +1489,44 @@ export default function ContentCreatePage() {
         </Card>
       )}
 
-      {/* Target URL & UTM */}
-      <Card>
-        <h3 className="text-heading-sm text-charcoal mb-3">Target URL &amp; Tracking</h3>
-        <input
-          value={targetUrl}
-          onChange={e => setTargetUrl(e.target.value)}
-          className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-          placeholder="https://your-link.com"
-        />
+      {/* Target URL & UTM — collapsible when empty */}
+      {(showTargetUrl || targetUrl || utmParams) ? (
+        <Card>
+          <h3 className="text-heading-sm text-charcoal mb-3">Target URL &amp; Tracking</h3>
+          <input
+            value={targetUrl}
+            onChange={e => setTargetUrl(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+            placeholder="https://your-link.com"
+          />
+          <button
+            onClick={() => setShowUtmModal(true)}
+            className="mt-2 flex items-center gap-1.5 text-xs font-medium text-teal hover:underline"
+          >
+            <LinkIcon className="w-3.5 h-3.5" />
+            {utmParams ? 'Edit UTM Parameters' : 'Build UTM Parameters'}
+          </button>
+          {utmParams && (utmParams.utm_source || utmParams.utm_campaign) && (
+            <div className="mt-2 bg-cream-warm rounded-lg p-2.5">
+              <p className="text-xs text-stone">
+                {[
+                  utmParams.utm_source && `source: ${utmParams.utm_source}`,
+                  utmParams.utm_medium && `medium: ${utmParams.utm_medium}`,
+                  utmParams.utm_campaign && `campaign: ${utmParams.utm_campaign}`,
+                ].filter(Boolean).join(' · ')}
+              </p>
+            </div>
+          )}
+        </Card>
+      ) : (
         <button
-          onClick={() => setShowUtmModal(true)}
-          className="mt-2 flex items-center gap-1.5 text-xs font-medium text-teal hover:underline"
+          onClick={() => setShowTargetUrl(true)}
+          className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-stone/20 text-sm text-stone hover:border-teal/30 hover:text-teal transition-colors w-full"
         >
-          <LinkIcon className="w-3.5 h-3.5" />
-          {utmParams ? 'Edit UTM Parameters' : 'Build UTM Parameters'}
+          <LinkIcon className="w-4 h-4" />
+          Add Link Tracking
         </button>
-        {utmParams && (utmParams.utm_source || utmParams.utm_campaign) && (
-          <div className="mt-2 bg-cream-warm rounded-lg p-2.5">
-            <p className="text-xs text-stone">
-              {[
-                utmParams.utm_source && `source: ${utmParams.utm_source}`,
-                utmParams.utm_medium && `medium: ${utmParams.utm_medium}`,
-                utmParams.utm_campaign && `campaign: ${utmParams.utm_campaign}`,
-              ].filter(Boolean).join(' · ')}
-            </p>
-          </div>
-        )}
-      </Card>
+      )}
 
       {/* Actions */}
       <Card>
@@ -1504,6 +1556,12 @@ export default function ContentCreatePage() {
           mode === 'manual' ? 'Write a post manually' :
           mode === 'engine' ? 'Targeted content with brand variable control' :
           'Plan multiple posts with AI'}
+        action={
+          <Button onClick={() => setShowBrandPanel(true)} variant="ghost" size="sm">
+            <BeakerIcon className="w-4 h-4 mr-2" />
+            Brand DNA
+          </Button>
+        }
       />
 
       {/* Mode selector cards */}
@@ -1541,13 +1599,6 @@ export default function ContentCreatePage() {
             )}
           </button>
         ))}
-      </div>
-
-      <div className="flex items-center justify-end">
-        <Button onClick={() => setShowBrandPanel(true)} variant="ghost" size="sm">
-          <BeakerIcon className="w-4 h-4 mr-2" />
-          Brand DNA
-        </Button>
       </div>
 
       {/* ============================================================ */}
@@ -1720,46 +1771,12 @@ export default function ContentCreatePage() {
             {/* AI Model Selection */}
             <div className="mt-4">
               <label className="block text-sm font-medium text-charcoal mb-2">AI Model</label>
-              <div className="space-y-2">
-                {models.map(model => (
-                  <button
-                    key={model.id}
-                    onClick={() => setBulkModelId(model.id)}
-                    className={cn(
-                      'w-full text-left p-3 rounded-xl border-2 transition-all',
-                      bulkEffectiveModelId === model.id
-                        ? 'border-teal bg-teal/5 shadow-sm'
-                        : 'border-stone/15 hover:border-stone/30 bg-white'
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
-                        {model.isFree ? (
-                          <BoltIcon className="w-4 h-4 text-teal shrink-0" />
-                        ) : (
-                          <SparklesIcon className="w-4 h-4 text-gold shrink-0" />
-                        )}
-                        <div>
-                          <p className="text-sm font-medium text-charcoal">{model.name}</p>
-                          <p className="text-xs text-stone capitalize">{model.provider}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={cn(
-                          'text-xs font-medium px-2 py-0.5 rounded-full',
-                          model.isFree ? 'bg-teal/10 text-teal' : 'bg-gold/10 text-gold'
-                        )}>
-                          {model.isFree ? 'Free' : `~${model.estimatedCreditsPerMessage} cr/post`}
-                        </span>
-                        {bulkEffectiveModelId === model.id && (
-                          <CheckCircleIcon className="w-5 h-5 text-teal shrink-0" />
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
+              <AIModelPicker
+                models={models}
+                selectedModelId={bulkEffectiveModelId}
+                onSelect={setBulkModelId}
+                costLabelFn={m => m.isFree ? 'Free' : `~${m.estimatedCreditsPerMessage} cr/post`}
+              />
             </div>
 
             <Button
@@ -2012,46 +2029,12 @@ export default function ContentCreatePage() {
               {/* AI Model Selection */}
               <div className="mt-4">
                 <label className="block text-sm font-medium text-charcoal mb-2">AI Model</label>
-                <div className="space-y-2">
-                  {models.map(model => (
-                    <button
-                      key={model.id}
-                      onClick={() => setEngineModelId(model.id)}
-                      className={cn(
-                        'w-full text-left p-3 rounded-xl border-2 transition-all',
-                        engineEffectiveModelId === model.id
-                          ? 'border-teal bg-teal/5 shadow-sm'
-                          : 'border-stone/15 hover:border-stone/30 bg-white'
-                      )}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
-                          {model.isFree ? (
-                            <BoltIcon className="w-4 h-4 text-teal shrink-0" />
-                          ) : (
-                            <SparklesIcon className="w-4 h-4 text-gold shrink-0" />
-                          )}
-                          <div>
-                            <p className="text-sm font-medium text-charcoal">{model.name}</p>
-                            <p className="text-xs text-stone capitalize">{model.provider}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={cn(
-                            'text-xs font-medium px-2 py-0.5 rounded-full',
-                            model.isFree ? 'bg-teal/10 text-teal' : 'bg-gold/10 text-gold'
-                          )}>
-                            {model.isFree ? 'Free' : `~${model.estimatedCreditsPerMessage * engineVariationCount} cr total`}
-                          </span>
-                          {engineEffectiveModelId === model.id && (
-                            <CheckCircleIcon className="w-5 h-5 text-teal shrink-0" />
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                <AIModelPicker
+                  models={models}
+                  selectedModelId={engineEffectiveModelId}
+                  onSelect={setEngineModelId}
+                  costLabelFn={m => m.isFree ? 'Free' : `~${m.estimatedCreditsPerMessage * engineVariationCount} cr total`}
+                />
               </div>
 
               {/* Cost estimate */}
@@ -2286,46 +2269,11 @@ export default function ContentCreatePage() {
 
             <div className="space-y-4">
               {/* Model cards */}
-              <div className="space-y-2">
-                {models.map(model => (
-                  <button
-                    key={model.id}
-                    onClick={() => setSelectedModelId(model.id)}
-                    className={cn(
-                      'w-full text-left p-3 rounded-xl border-2 transition-all',
-                      effectiveModelId === model.id
-                        ? 'border-teal bg-teal/5 shadow-sm'
-                        : 'border-stone/15 hover:border-stone/30 bg-white'
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
-                        {model.isFree ? (
-                          <BoltIcon className="w-4 h-4 text-teal shrink-0" />
-                        ) : (
-                          <SparklesIcon className="w-4 h-4 text-gold shrink-0" />
-                        )}
-                        <div>
-                          <p className="text-sm font-medium text-charcoal">{model.name}</p>
-                          <p className="text-xs text-stone capitalize">{model.provider}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={cn(
-                          'text-xs font-medium px-2 py-0.5 rounded-full',
-                          model.isFree ? 'bg-teal/10 text-teal' : 'bg-gold/10 text-gold'
-                        )}>
-                          {model.isFree ? 'Free' : `~${model.estimatedCreditsPerMessage} cr`}
-                        </span>
-                        {effectiveModelId === model.id && (
-                          <CheckCircleIcon className="w-5 h-5 text-teal shrink-0" />
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
+              <AIModelPicker
+                models={models}
+                selectedModelId={effectiveModelId}
+                onSelect={setSelectedModelId}
+              />
 
               {/* Cost estimate */}
               {selectedModel && !selectedModel.isFree && (

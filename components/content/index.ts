@@ -24,3 +24,5 @@ export { GenerationBatchTracker, type BatchStatus } from './generation-batch-tra
 export { SocialPreview, SocialPreviewTabs } from './social-preview';
 export { UTMBuilderModal } from './utm-builder-modal';
 export { PostActionPopup, type PublishResult } from './post-action-popup';
+export { CreateCalendarModal } from './create-calendar-modal';
+export { AIModelPicker } from './ai-model-picker';

@@ -9,6 +9,7 @@ import {
   CheckCircleIcon,
   ClockIcon,
   SignalIcon,
+  ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import type { SocialPlatform, PublishStatus } from '@/types/database';
@@ -129,12 +130,45 @@ export default function PublishLogPage() {
     return acc;
   }, {} as Record<string, number>);
 
+  // Computed stats
+  const publishedCount = statusCounts['published'] || 0;
+  const failedCount = statusCounts['failed'] || 0;
+  const totalFinished = publishedCount + failedCount;
+  const successRate = totalFinished > 0 ? Math.round((publishedCount / totalFinished) * 100) : 0;
+  const platformCounts = records.reduce((acc, r) => {
+    acc[r.platform] = (acc[r.platform] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  const topPlatform = Object.entries(platformCounts).sort((a, b) => b[1] - a[1])[0];
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Publish Log"
         subtitle="Monitor your social media publishing activity and troubleshoot errors"
       />
+
+      {/* Stats Summary Cards */}
+      {records.length > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="bg-white rounded-xl border border-stone/10 p-4">
+            <p className="text-xs text-stone font-medium mb-1">Published</p>
+            <p className="text-2xl font-bold text-emerald-600">{publishedCount}</p>
+          </div>
+          <div className="bg-white rounded-xl border border-stone/10 p-4">
+            <p className="text-xs text-stone font-medium mb-1">Failed</p>
+            <p className="text-2xl font-bold text-red-500">{failedCount}</p>
+          </div>
+          <div className="bg-white rounded-xl border border-stone/10 p-4">
+            <p className="text-xs text-stone font-medium mb-1">Success Rate</p>
+            <p className="text-2xl font-bold text-teal">{successRate}%</p>
+          </div>
+          <div className="bg-white rounded-xl border border-stone/10 p-4">
+            <p className="text-xs text-stone font-medium mb-1">Top Platform</p>
+            <p className="text-2xl font-bold text-blue-600 capitalize">{topPlatform ? topPlatform[0] : '—'}</p>
+          </div>
+        </div>
+      )}
 
       {/* Status Tabs */}
       <div className="flex items-center gap-2 border-b border-stone/10 pb-0">
@@ -181,119 +215,155 @@ export default function PublishLogPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-stone/10 overflow-hidden">
-        {isLoading ? (
-          <div className="p-12 text-center text-stone">Loading publish records...</div>
-        ) : records.length === 0 ? (
-          <div className="p-12 text-center">
-            <ClockIcon className="w-10 h-10 text-stone/30 mx-auto mb-3" />
-            <p className="text-stone">No publish records found</p>
-            <p className="text-sm text-stone/60 mt-1">Published posts will appear here</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-stone/10 bg-cream-warm/50">
-                  <th className="text-left px-4 py-3 font-medium text-charcoal">Post</th>
-                  <th className="text-left px-4 py-3 font-medium text-charcoal">Platform</th>
-                  <th className="text-left px-4 py-3 font-medium text-charcoal">Status</th>
-                  <th className="text-left px-4 py-3 font-medium text-charcoal">Scheduled</th>
-                  <th className="text-left px-4 py-3 font-medium text-charcoal">Published</th>
-                  <th className="text-left px-4 py-3 font-medium text-charcoal">Post URL</th>
-                  <th className="text-left px-4 py-3 font-medium text-charcoal">Error</th>
-                  <th className="text-left px-4 py-3 font-medium text-charcoal">Retries</th>
-                  <th className="text-left px-4 py-3 font-medium text-charcoal">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {records.map(record => {
-                  const statusInfo = STATUS_CONFIG[record.publish_status];
-                  const StatusIcon = statusInfo.icon;
-                  const contentItem = record.content_items;
-                  const title = contentItem?.topic || contentItem?.caption?.slice(0, 50) || contentItem?.format?.replace(/_/g, ' ') || 'Untitled';
-                  const scheduledDisplay = contentItem?.scheduled_date
-                    ? `${contentItem.scheduled_date}${contentItem.scheduled_time ? ' ' + contentItem.scheduled_time : ''}`
-                    : '—';
+      {/* Content area */}
+      {isLoading ? (
+        <div className="p-12 text-center text-stone">Loading publish records...</div>
+      ) : records.length === 0 ? (
+        <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
+          <ClockIcon className="w-10 h-10 text-stone/30 mx-auto mb-3" />
+          <p className="text-stone">No publish records found</p>
+          <p className="text-sm text-stone/60 mt-1">Published posts will appear here</p>
+        </div>
+      ) : (
+        <>
+          {/* Desktop table */}
+          <div className="hidden lg:block bg-white rounded-xl border border-stone/10 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-stone/10 bg-cream-warm/50">
+                    <th className="text-left px-4 py-3 font-medium text-charcoal">Post</th>
+                    <th className="text-left px-4 py-3 font-medium text-charcoal">Platform</th>
+                    <th className="text-left px-4 py-3 font-medium text-charcoal">Status</th>
+                    <th className="text-left px-4 py-3 font-medium text-charcoal">Published</th>
+                    <th className="text-left px-4 py-3 font-medium text-charcoal">Error</th>
+                    <th className="text-left px-4 py-3 font-medium text-charcoal">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {records.map(record => {
+                    const statusInfo = STATUS_CONFIG[record.publish_status];
+                    const StatusIcon = statusInfo.icon;
+                    const contentItem = record.content_items;
+                    const title = contentItem?.topic || contentItem?.caption?.slice(0, 50) || contentItem?.format?.replace(/_/g, ' ') || 'Untitled';
 
-                  return (
-                    <tr key={record.id} className="border-b border-stone/5 hover:bg-cream-warm/30 transition-colors">
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-charcoal truncate max-w-[200px]" title={title}>
-                          {title}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={cn('px-2 py-1 rounded-md text-xs font-medium capitalize', PLATFORM_COLORS[record.platform] || 'bg-stone/10 text-stone')}>
-                          {record.platform}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={cn('inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium', statusInfo.color)}>
-                          <StatusIcon className="w-3.5 h-3.5" />
-                          {statusInfo.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-stone whitespace-nowrap">{scheduledDisplay}</td>
-                      <td className="px-4 py-3 text-stone whitespace-nowrap">{formatDateTime(record.published_at)}</td>
-                      <td className="px-4 py-3">
-                        {record.post_url ? (
-                          <a
-                            href={record.post_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-teal hover:underline text-xs"
-                          >
-                            View <ArrowTopRightOnSquareIcon className="w-3 h-3" />
-                          </a>
-                        ) : (
-                          <span className="text-stone/40">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        {record.error_message ? (
-                          <span className="text-red-600 text-xs max-w-[200px] truncate block" title={record.error_message}>
-                            {record.error_message}
+                    return (
+                      <tr key={record.id} className="border-b border-stone/5 hover:bg-cream-warm/30 transition-colors">
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-charcoal truncate max-w-[200px]" title={title}>
+                            {title}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={cn('px-2 py-1 rounded-md text-xs font-medium capitalize', PLATFORM_COLORS[record.platform] || 'bg-stone/10 text-stone')}>
+                            {record.platform}
                           </span>
-                        ) : (
-                          <span className="text-stone/40">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center text-stone">
-                        {record.retry_count > 0 ? record.retry_count : '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        {record.publish_status === 'failed' && (
-                          <button
-                            onClick={() => handleRetry(record)}
-                            disabled={isRetrying === record.id}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-teal bg-teal/10 hover:bg-teal/20 transition-colors disabled:opacity-50"
-                          >
-                            <ArrowPathIcon className={cn('w-3 h-3', isRetrying === record.id && 'animate-spin')} />
-                            {isRetrying === record.id ? 'Retrying...' : 'Retry'}
-                          </button>
-                        )}
-                        {record.publish_status === 'published' && record.post_url && (
-                          <a
-                            href={record.post_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-stone bg-stone/5 hover:bg-stone/10 transition-colors"
-                          >
-                            <ArrowTopRightOnSquareIcon className="w-3 h-3" />
-                            View
-                          </a>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={cn('inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium', statusInfo.color)}>
+                            <StatusIcon className="w-3.5 h-3.5" />
+                            {statusInfo.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-stone whitespace-nowrap">{formatDateTime(record.published_at)}</td>
+                        <td className="px-4 py-3">
+                          {record.error_message ? (
+                            <ExclamationCircleIcon
+                              className="w-5 h-5 text-red-500 cursor-help"
+                              title={record.error_message}
+                            />
+                          ) : (
+                            <span className="text-stone/40">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          {record.publish_status === 'failed' && (
+                            <button
+                              onClick={() => handleRetry(record)}
+                              disabled={isRetrying === record.id}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-teal bg-teal/10 hover:bg-teal/20 transition-colors disabled:opacity-50"
+                            >
+                              <ArrowPathIcon className={cn('w-3 h-3', isRetrying === record.id && 'animate-spin')} />
+                              {isRetrying === record.id ? 'Retrying...' : 'Retry'}
+                            </button>
+                          )}
+                          {record.publish_status === 'published' && record.post_url && (
+                            <a
+                              href={record.post_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-stone bg-stone/5 hover:bg-stone/10 transition-colors"
+                            >
+                              <ArrowTopRightOnSquareIcon className="w-3 h-3" />
+                              View
+                            </a>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-        )}
-      </div>
+
+          {/* Mobile card layout */}
+          <div className="lg:hidden space-y-3">
+            {records.map(record => {
+              const statusInfo = STATUS_CONFIG[record.publish_status];
+              const StatusIcon = statusInfo.icon;
+              const contentItem = record.content_items;
+              const title = contentItem?.topic || contentItem?.caption?.slice(0, 50) || contentItem?.format?.replace(/_/g, ' ') || 'Untitled';
+
+              return (
+                <div key={record.id} className="bg-white rounded-xl border border-stone/10 p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-medium text-charcoal text-sm line-clamp-1">{title}</p>
+                    <span className={cn('inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium shrink-0', statusInfo.color)}>
+                      <StatusIcon className="w-3.5 h-3.5" />
+                      {statusInfo.label}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={cn('px-2 py-1 rounded-md text-xs font-medium capitalize', PLATFORM_COLORS[record.platform] || 'bg-stone/10 text-stone')}>
+                      {record.platform}
+                    </span>
+                    <span className="text-xs text-stone">{formatDateTime(record.published_at)}</span>
+                    {record.error_message && (
+                      <span className="text-xs text-red-600 line-clamp-1" title={record.error_message}>
+                        {record.error_message}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    {record.publish_status === 'failed' && (
+                      <button
+                        onClick={() => handleRetry(record)}
+                        disabled={isRetrying === record.id}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-teal bg-teal/10 hover:bg-teal/20 transition-colors disabled:opacity-50"
+                      >
+                        <ArrowPathIcon className={cn('w-3 h-3', isRetrying === record.id && 'animate-spin')} />
+                        {isRetrying === record.id ? 'Retrying...' : 'Retry'}
+                      </button>
+                    )}
+                    {record.publish_status === 'published' && record.post_url && (
+                      <a
+                        href={record.post_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-stone bg-stone/5 hover:bg-stone/10 transition-colors"
+                      >
+                        <ArrowTopRightOnSquareIcon className="w-3 h-3" />
+                        View Post
+                      </a>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }
