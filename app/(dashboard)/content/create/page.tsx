@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button, Card, Badge, Textarea, PageHeader, ActionModal } from '@/components/ui';
-import { BrandVariablesPanel, ScriptTemplateBadge, CreativeAssetSpecs, PlatformOverrideTabs, MediaUpload, GenerationBatchTracker, SocialPreviewTabs, UTMBuilderModal, PostActionPopup, AIModelPicker, type UploadedFile, type PublishResult } from '@/components/content';
+import { BrandVariablesPanel, ScriptTemplateBadge, CreativeAssetSpecs, PlatformOverrideTabs, MediaUpload, GenerationBatchTracker, UTMBuilderModal, PostActionPopup, AIModelPicker, type UploadedFile, type PublishResult } from '@/components/content';
 import { DriveFilePicker } from '@/components/content/drive-file-picker';
-import PlatformPlacementSelector from '@/components/content/platform-placement-selector';
+import { PreviewPanel } from '@/components/content/preview-panel';
 import ScriptModal, { type ScriptData } from '@/components/content/script-modal';
 import ConfigModal, { ConfigSummaryChip, type ContentConfig } from '@/components/content/config-modal';
 import { createDefaultPlacementsMap, getSelectedPlacements, getEnabledPlatforms, type PlatformPlacementsMap } from '@/config/placement-types';
@@ -221,6 +221,7 @@ export default function ContentCreatePage() {
   const [platformPlacements, setPlatformPlacements] = useState<PlatformPlacementsMap>(
     createDefaultPlacementsMap(['linkedin'])
   );
+  const [platformSpecs, setPlatformSpecs] = useState<Record<string, { caption?: string; hashtags?: string[] }>>({});
   const [showScriptModal, setShowScriptModal] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [scriptData, setScriptData] = useState<ScriptData>({
@@ -568,6 +569,7 @@ export default function ContentCreatePage() {
         caption: editFields.caption || null,
         hashtags: editFields.hashtags ? editFields.hashtags.split(',').map(h => h.trim()).filter(Boolean) : null,
         media_urls: uploadedFiles.length > 0 ? uploadedFiles.map(f => f.url) : null,
+        platform_specs: Object.keys(platformSpecs).length > 0 ? platformSpecs : null,
         ...buildScriptFields(),
       };
 
@@ -1082,6 +1084,7 @@ export default function ContentCreatePage() {
         media_urls: uploadedFiles.length > 0 ? uploadedFiles.map(f => f.url) : null,
         target_url: targetUrl || null,
         utm_parameters: utmParams || null,
+        platform_specs: Object.keys(platformSpecs).length > 0 ? platformSpecs : null,
         ...buildScriptFields(),
       };
 
@@ -1163,6 +1166,7 @@ export default function ContentCreatePage() {
         media_urls: uploadedFiles.length > 0 ? uploadedFiles.map(f => f.url) : null,
         target_url: targetUrl || null,
         utm_parameters: utmParams || null,
+        platform_specs: Object.keys(platformSpecs).length > 0 ? platformSpecs : null,
         scheduled_date: date,
         scheduled_time: time || null,
         status: 'scheduled',
@@ -1351,8 +1355,6 @@ export default function ContentCreatePage() {
 
   // Single/Manual mode: new 2-column caption-first layout
   const renderSingleManualLayout = () => {
-    const enabledPlatformsList = getEnabledPlatforms(platformPlacements);
-
     return (
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Left column: Post content (3/5) */}
@@ -1412,16 +1414,6 @@ export default function ContentCreatePage() {
                 placeholder="Brief topic summary"
               />
             </div>
-          </Card>
-
-          {/* Platform & Placements */}
-          <Card>
-            <PlatformPlacementSelector
-              value={platformPlacements}
-              onChange={setPlatformPlacements}
-              mediaUploaded={uploadedFiles.length > 0}
-              videoUploaded={uploadedFiles.some(f => f.fileType?.startsWith('video/'))}
-            />
           </Card>
 
           {/* Creative Assets */}
@@ -1539,17 +1531,22 @@ export default function ContentCreatePage() {
           )}
         </div>
 
-        {/* Right column: Live Preview (2/5) */}
+        {/* Right column: Preview Panel (2/5) */}
         <div className="lg:col-span-2">
           <div className="sticky top-6">
             <Card className="p-5">
-              <h3 className="text-sm font-semibold text-charcoal mb-4">Live Preview</h3>
-              <SocialPreviewTabs
-                platforms={enabledPlatformsList as SocialPlatform[]}
-                caption={editFields.caption || 'Your content will preview here...'}
+              <PreviewPanel
+                platformPlacements={platformPlacements}
+                onPlatformPlacementsChange={setPlatformPlacements}
+                caption={editFields.caption || ''}
                 hashtags={(editFields.hashtags || '').split(',').map(t => t.trim()).filter(Boolean)}
                 mediaUrls={uploadedFiles.map(f => f.url)}
+                targetUrl={targetUrl}
                 userName={userName}
+                platformSpecs={platformSpecs}
+                onPlatformSpecsChange={setPlatformSpecs}
+                hasMedia={uploadedFiles.length > 0}
+                hasVideo={uploadedFiles.some(f => f.fileType?.startsWith('video/'))}
               />
             </Card>
           </div>
