@@ -45,7 +45,7 @@ import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import type { FunnelStage, StoryBrandStage, ContentStatus, Json, SocialPlatform } from '@/types/database';
 import type { UTMParams } from '@/lib/utm/generate-utm';
 
-type CreateMode = 'single' | 'manual' | 'bulk' | 'engine';
+type CreateMode = 'single' | 'engine';
 
 interface GeneratedContent {
   id?: string;
@@ -555,10 +555,10 @@ export default function ContentCreatePage() {
 
   // Save edits (works for both single/AI and manual modes)
   const handleSave = async (pushToSchedule: boolean) => {
-    const itemId = mode === 'manual' ? manualItemId : generated?.id;
+    const itemId = generated?.id;
     setIsSaving(true);
 
-    const activePlatforms = (mode === 'single' || mode === 'manual')
+    const activePlatforms = (mode === 'single')
       ? getEnabledPlatforms(platformPlacements) as string[]
       : platforms;
 
@@ -1047,18 +1047,7 @@ export default function ContentCreatePage() {
   // Reset when switching modes
   const handleModeChange = (newMode: CreateMode) => {
     setMode(newMode);
-    if (newMode === 'manual') {
-      setGenerated(null);
-      setManualItemId(null);
-      setEditFields({});
-      setUploadedFiles([]);
-      setSaveSuccess(false);
-      setScriptData({
-        hook: null, script_body: null, cta: null, filming_notes: null,
-        context_section: null, teaching_points: null, reframe: null,
-        problem_expansion: null, framework_teaching: null, case_study: null,
-      });
-    } else if (newMode === 'single') {
+    if (newMode === 'single') {
       setManualItemId(null);
       setGenerated(null);
       setEditFields({});
@@ -1078,10 +1067,10 @@ export default function ContentCreatePage() {
 
   // Save and return item ID (for post action popup)
   const handleSaveAndReturnId = async (status?: ContentStatus): Promise<string | null> => {
-    const itemId = mode === 'manual' ? manualItemId : generated?.id;
+    const itemId = generated?.id;
     setIsSaving(true);
 
-    const activePlatforms = (mode === 'single' || mode === 'manual')
+    const activePlatforms = (mode === 'single')
       ? getEnabledPlatforms(platformPlacements) as string[]
       : platforms;
 
@@ -1159,10 +1148,10 @@ export default function ContentCreatePage() {
     setScheduleDate(date);
     setScheduleTime(time);
     // Need to use the date/time directly since setState is async
-    const itemId = mode === 'manual' ? manualItemId : generated?.id;
+    const itemId = generated?.id;
     setIsSaving(true);
 
-    const activePlatforms = (mode === 'single' || mode === 'manual')
+    const activePlatforms = (mode === 'single')
       ? getEnabledPlatforms(platformPlacements) as string[]
       : platforms;
 
@@ -1252,7 +1241,7 @@ export default function ContentCreatePage() {
   };
 
   // Current content item ID (for media upload)
-  const currentItemId = mode === 'manual' ? manualItemId : generated?.id;
+  const currentItemId = generated?.id;
 
   if (isLoading) {
     return (
@@ -1580,9 +1569,7 @@ export default function ContentCreatePage() {
           { label: 'Create' },
         ]}
         subtitle={mode === 'single' ? 'Generate a single post with AI' :
-          mode === 'manual' ? 'Write a post manually' :
-          mode === 'engine' ? 'Targeted content with brand variable control' :
-          'Plan multiple posts with AI'}
+          'Targeted content with brand variable control'}
         action={
           <Button onClick={() => setShowBrandPanel(true)} variant="ghost" size="sm">
             <BeakerIcon className="w-4 h-4 mr-2" />
@@ -1592,11 +1579,9 @@ export default function ContentCreatePage() {
       />
 
       {/* Mode selector cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {([
           { key: 'single' as CreateMode, icon: SparklesIcon, label: 'Single AI Post', desc: 'Generate one post with AI' },
-          { key: 'manual' as CreateMode, icon: PencilSquareIcon, label: 'Manual Create', desc: 'Write your own content' },
-          { key: 'bulk' as CreateMode, icon: CalendarDaysIcon, label: 'Campaign Planner', desc: 'Plan a multi-day campaign' },
           { key: 'engine' as CreateMode, icon: BoltIcon, label: 'Content Engine', desc: 'Advanced brand-controlled generation' },
         ]).map(tab => (
           <button
@@ -1634,203 +1619,7 @@ export default function ContentCreatePage() {
       {mode === 'single' && renderSingleManualLayout()}
 
       {/* ============================================================ */}
-      {/* MODE 2: MANUAL CREATE — New caption-first layout */}
-      {/* ============================================================ */}
-      {mode === 'manual' && renderSingleManualLayout()}
-
-      {/* ============================================================ */}
-      {/* MODE 3: BULK AI PLANNER */}
-      {/* ============================================================ */}
-      {mode === 'bulk' && (
-        <div className="space-y-6">
-          <Card>
-            <h3 className="text-heading-sm text-charcoal mb-4">Campaign Configuration</h3>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-charcoal mb-1">Campaign Name</label>
-              <input
-                type="text"
-                value={bulkCampaignName}
-                onChange={e => setBulkCampaignName(e.target.value)}
-                placeholder="e.g. February Launch Campaign"
-                className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-1">Start Date</label>
-                <input
-                  type="date"
-                  value={bulkStartDate}
-                  onChange={e => setBulkStartDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-1">End Date</label>
-                <input
-                  type="date"
-                  value={bulkEndDate}
-                  onChange={e => setBulkEndDate(e.target.value)}
-                  min={bulkStartDate}
-                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-1">Frequency</label>
-                <select
-                  value={bulkFrequency}
-                  onChange={e => setBulkFrequency(e.target.value as 'aggressive' | 'moderate' | 'light')}
-                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                >
-                  <option value="aggressive">Aggressive (3-4/day)</option>
-                  <option value="moderate">Moderate (1-2/day)</option>
-                  <option value="light">Light (~1/day)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-1">Funnel Focus</label>
-                <select
-                  value={bulkFunnelFocus}
-                  onChange={e => setBulkFunnelFocus(e.target.value as FunnelStage | 'balanced')}
-                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                >
-                  <option value="balanced">Balanced</option>
-                  <option value="awareness">Focus: Awareness</option>
-                  <option value="consideration">Focus: Consideration</option>
-                  <option value="conversion">Focus: Conversion</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-charcoal mb-1">Platforms</label>
-              <div className="flex flex-wrap gap-2">
-                {PLATFORM_OPTIONS.map(p => (
-                  <button
-                    key={p}
-                    onClick={() => toggleBulkPlatform(p)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
-                      bulkPlatforms.includes(p) ? 'bg-teal text-white' : 'bg-stone/5 text-stone hover:bg-stone/10'
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* AI Model Selection */}
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-charcoal mb-2">AI Model</label>
-              <AIModelPicker
-                models={models}
-                selectedModelId={bulkEffectiveModelId}
-                onSelect={setBulkModelId}
-                costLabelFn={m => m.isFree ? 'Free' : `~${m.estimatedCreditsPerMessage} cr/post`}
-              />
-            </div>
-
-            <Button
-              onClick={handleBulkPlan}
-              isLoading={isBulkPlanning}
-              disabled={!bulkCampaignName.trim() || !bulkEndDate || bulkPlatforms.length === 0 || !bulkEffectiveModelId}
-              className="mt-4"
-            >
-              <SparklesIcon className="w-4 h-4 mr-2" />
-              {isBulkPlanning ? 'Creating Campaign...' : 'Create Campaign & Generate'}
-            </Button>
-          </Card>
-
-          {/* Generation progress tracker */}
-          {bulkBatchId && (
-            <GenerationBatchTracker
-              batchId={bulkBatchId}
-              onComplete={handleBulkBatchComplete}
-              onCancel={handleBulkBatchCancel}
-            />
-          )}
-
-          {/* Bulk items grid */}
-          {bulkItems.length > 0 && (
-            <>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <h3 className="text-heading-sm text-charcoal">
-                    Planned Posts ({bulkItems.length})
-                  </h3>
-                  <button onClick={selectAllBulk} className="text-xs text-teal hover:underline">
-                    {bulkItems.every(i => i.selected) ? 'Deselect all' : 'Select all'}
-                  </button>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleBulkPush}
-                    isLoading={isBulkPushing}
-                    disabled={bulkItems.filter(i => i.selected).length === 0}
-                  >
-                    <CalendarDaysIcon className="w-4 h-4 mr-1" />
-                    Push {bulkItems.filter(i => i.selected).length} to Schedule
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {bulkItems.map((item, idx) => (
-                  <div
-                    key={item.id || idx}
-                    className={`p-4 rounded-xl border transition-colors cursor-pointer ${
-                      item.selected
-                        ? 'border-teal bg-teal/5'
-                        : 'border-stone/10 hover:border-stone/20'
-                    }`}
-                    onClick={() => toggleBulkSelect(idx)}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={item.selected}
-                          onChange={() => toggleBulkSelect(idx)}
-                          onClick={e => e.stopPropagation()}
-                          className="rounded border-stone/30 text-teal focus:ring-teal"
-                        />
-                        <span className="text-xs text-stone">{format(new Date(item.scheduled_date), 'EEE, MMM d')}</span>
-                        <span className="text-xs text-stone/50">{item.time_slot}</span>
-                      </div>
-                      <Badge className={FUNNEL_COLORS[item.funnel_stage]}>
-                        {item.funnel_stage}
-                      </Badge>
-                    </div>
-
-                    <p className="text-sm font-medium text-charcoal mb-1">
-                      {item.topic || FORMAT_LABELS[item.format] || item.format.replace(/_/g, ' ')}
-                    </p>
-
-                    {item.hook && (
-                      <p className="text-xs text-stone line-clamp-2">{item.hook}</p>
-                    )}
-
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-xs text-stone/60">{FORMAT_LABELS[item.format]}</span>
-                      <span className="text-xs text-stone/40">|</span>
-                      <div className="flex gap-1">
-                        {item.platforms.slice(0, 3).map(p => (
-                          <span key={p} className="text-xs text-stone/60 capitalize">{p.slice(0, 2)}</span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* ============================================================ */}
-      {/* MODE 4: CONTENT ENGINE */}
+      {/* MODE 2: CONTENT ENGINE */}
       {/* ============================================================ */}
       {mode === 'engine' && (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -2292,7 +2081,7 @@ export default function ContentCreatePage() {
         initialParams={utmParams}
         onApply={setUtmParams}
         autoGenerateContext={{
-          platform: (mode === 'single' || mode === 'manual')
+          platform: (mode === 'single')
             ? (getEnabledPlatforms(platformPlacements)[0] || 'linkedin')
             : (platforms[0] || 'linkedin'),
           funnelStage,
@@ -2306,7 +2095,7 @@ export default function ContentCreatePage() {
       <PostActionPopup
         open={showPostActionPopup}
         onClose={() => setShowPostActionPopup(false)}
-        platforms={(mode === 'single' || mode === 'manual')
+        platforms={(mode === 'single')
           ? getEnabledPlatforms(platformPlacements) as string[]
           : platforms}
         onSaveDraft={handlePopupSaveDraft}
