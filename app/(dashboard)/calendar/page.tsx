@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { CalendarView, ContentEditor, TableView, ViewToggle, ApprovalQueue, BrandVariablesPanel, QuickCreateModal, KanbanView, GenerateWeekModal, DeleteConfirmationModal, ContentFilterBar, applyContentFilters, EMPTY_FILTERS, GenerationBatchTracker, type BatchStatus, type ViewMode, type ContentFilters } from '@/components/content';
 import { Button, Card, PageHeader } from '@/components/ui';
@@ -61,6 +62,7 @@ interface Calendar {
 
 export default function CalendarPage() {
   const supabase = createClient();
+  const router = useRouter();
 
   const [items, setItems] = useState<ContentItem[]>([]);
   const [calendars, setCalendars] = useState<Calendar[]>([]);
@@ -142,6 +144,12 @@ export default function CalendarPage() {
             ...c,
             generation_progress: c.generation_progress as { weeks_generated: number; total_weeks: number } | null,
           }));
+          // Sort "Default" calendar first, then by created_at desc
+          parsedCalendars.sort((a, b) => {
+            if (a.name === 'Default') return -1;
+            if (b.name === 'Default') return 1;
+            return 0; // keep original order for others
+          });
           setCalendars(parsedCalendars);
           setCurrentCalendar(parsedCalendars[0]);
 
@@ -317,9 +325,15 @@ export default function CalendarPage() {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleItemClick = useCallback((item: any) => {
-    setSelectedItem(item as ContentItem);
-  }, []);
+  const handleItemClick = useCallback((item: any, event?: React.MouseEvent) => {
+    // Shift+Click opens sidebar for quick editing
+    if (event?.shiftKey) {
+      setSelectedItem(item as ContentItem);
+      return;
+    }
+    // Normal click navigates to full edit page
+    router.push(`/content/${item.id}`);
+  }, [router]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSaveItem = async (updatedItem: any) => {
@@ -612,7 +626,7 @@ export default function CalendarPage() {
       />
 
       {/* Calendar selector */}
-      {calendars.length > 1 && (
+      {calendars.length > 0 && (
         <div className="flex gap-2">
           {calendars.map(cal => (
             <button

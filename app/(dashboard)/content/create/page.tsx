@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Button, Card, Badge, Textarea, PageHeader } from '@/components/ui';
-import { BrandVariablesPanel, ScriptTemplateBadge, CreativeAssetSpecs, PlatformOverrideTabs, MediaUpload, GenerationBatchTracker, type UploadedFile } from '@/components/content';
+import { Button, Card, Badge, Textarea, PageHeader, ActionModal } from '@/components/ui';
+import { BrandVariablesPanel, ScriptTemplateBadge, CreativeAssetSpecs, PlatformOverrideTabs, MediaUpload, GenerationBatchTracker, SocialPreviewTabs, type UploadedFile } from '@/components/content';
 import { DriveFilePicker } from '@/components/content/drive-file-picker';
 import {
   SparklesIcon,
@@ -109,6 +110,7 @@ const FUNNEL_COLORS: Record<FunnelStage, string> = {
 
 export default function ContentCreatePage() {
   const supabase = createClient();
+  const router = useRouter();
 
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [contentEngineEnabled, setContentEngineEnabled] = useState(false);
@@ -161,6 +163,16 @@ export default function ContentCreatePage() {
   const [bulkBatchId, setBulkBatchId] = useState<string | null>(null);
   const [bulkCalendarId, setBulkCalendarId] = useState<string | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [userName, setUserName] = useState('');
+
+  // ActionModal state
+  const [showActionModal, setShowActionModal] = useState(false);
+  const [actionModalConfig, setActionModalConfig] = useState<{
+    variant: 'success' | 'error' | 'info';
+    title: string;
+    subtitle?: string;
+    savedItemId?: string;
+  }>({ variant: 'success', title: '' });
 
   // Engine tab state
   const [engineFunnelStage, setEngineFunnelStage] = useState<FunnelStage>('awareness');
@@ -205,14 +217,17 @@ export default function ContentCreatePage() {
         const orgData = membership.organizations as { content_engine_enabled: boolean } | null;
         setContentEngineEnabled(orgData?.content_engine_enabled || false);
 
-        // Check if user is super_admin
+        // Check if user is super_admin + get name
         const { data: userData } = await supabase
           .from('users')
-          .select('role')
+          .select('role, full_name')
           .eq('id', user.id)
           .single();
         if (userData?.role === 'super_admin') {
           setIsSuperAdmin(true);
+        }
+        if (userData?.full_name) {
+          setUserName(userData.full_name);
         }
 
         // Check for Google Drive connection
@@ -555,9 +570,15 @@ export default function ContentCreatePage() {
         const createData = await createRes.json();
         if (createData.error) throw new Error(createData.error);
 
-        setManualItemId(createData.item?.id || null);
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
+        const newId = createData.item?.id || null;
+        setManualItemId(newId);
+        setActionModalConfig({
+          variant: 'success',
+          title: pushToSchedule ? 'Post Scheduled!' : 'Post Saved as Draft',
+          subtitle: pushToSchedule && scheduleDate ? `Scheduled for ${format(new Date(scheduleDate + 'T00:00:00'), 'MMM d, yyyy')}` : undefined,
+          savedItemId: newId || undefined,
+        });
+        setShowActionModal(true);
         setIsSaving(false);
         return;
       }
@@ -601,11 +622,19 @@ export default function ContentCreatePage() {
       });
 
       if (res.ok) {
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
+        const savedData = await res.json();
+        setActionModalConfig({
+          variant: 'success',
+          title: pushToSchedule ? 'Post Scheduled!' : 'Post Saved',
+          subtitle: pushToSchedule && scheduleDate ? `Scheduled for ${format(new Date(scheduleDate + 'T00:00:00'), 'MMM d, yyyy')}` : undefined,
+          savedItemId: itemId || savedData?.item?.id,
+        });
+        setShowActionModal(true);
       }
     } catch (error) {
       console.error('Save failed:', error);
+      setActionModalConfig({ variant: 'error', title: 'Save Failed', subtitle: 'Please try again' });
+      setShowActionModal(true);
     }
 
     setIsSaving(false);
@@ -1270,12 +1299,7 @@ export default function ContentCreatePage() {
           </div>
         </div>
 
-        {saveSuccess && (
-          <div className="mt-3 flex items-center gap-2 text-sm text-teal">
-            <CheckIcon className="w-4 h-4" />
-            Saved successfully!
-          </div>
-        )}
+        {/* ActionModal handles save feedback now */}
       </Card>
     </>
   );
@@ -1296,65 +1320,61 @@ export default function ContentCreatePage() {
           'Plan multiple posts with AI'}
       />
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {/* Mode toggle tabs */}
-          <div className="flex gap-1 bg-cream-warm rounded-lg p-1">
-            <button
-              onClick={() => handleModeChange('single')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
-                mode === 'single' ? 'bg-white text-charcoal shadow-sm' : 'text-stone hover:text-charcoal'
-              }`}
-            >
-              <SparklesIcon className="w-4 h-4" />
-              Single Post
-            </button>
-            <button
-              onClick={() => handleModeChange('manual')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
-                mode === 'manual' ? 'bg-white text-charcoal shadow-sm' : 'text-stone hover:text-charcoal'
-              }`}
-            >
-              <PencilSquareIcon className="w-4 h-4" />
-              Manual Create
-            </button>
-            <button
-              onClick={() => handleModeChange('bulk')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                mode === 'bulk' ? 'bg-white text-charcoal shadow-sm' : 'text-stone hover:text-charcoal'
-              }`}
-            >
-              Bulk AI Planner
-            </button>
-            <button
-              onClick={() => handleModeChange('engine')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
-                mode === 'engine' ? 'bg-white text-charcoal shadow-sm' : 'text-stone hover:text-charcoal'
-              }`}
-            >
-              <BoltIcon className="w-4 h-4" />
-              Content Engine
-            </button>
-          </div>
+      {/* Mode selector cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {([
+          { key: 'single' as CreateMode, icon: SparklesIcon, label: 'Single AI Post', desc: 'Generate one post with AI' },
+          { key: 'manual' as CreateMode, icon: PencilSquareIcon, label: 'Manual Create', desc: 'Write your own content' },
+          { key: 'bulk' as CreateMode, icon: CalendarDaysIcon, label: 'Campaign Planner', desc: 'Plan a multi-day campaign' },
+          { key: 'engine' as CreateMode, icon: BoltIcon, label: 'Content Engine', desc: 'Advanced brand-controlled generation' },
+        ]).map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => handleModeChange(tab.key)}
+            className={cn(
+              'relative flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all',
+              mode === tab.key
+                ? 'border-teal bg-teal/5 shadow-sm'
+                : 'border-stone/10 bg-white hover:border-stone/25'
+            )}
+          >
+            <div className={cn(
+              'shrink-0 p-2 rounded-lg',
+              mode === tab.key ? 'bg-teal/10 text-teal' : 'bg-stone/5 text-stone'
+            )}>
+              <tab.icon className="w-5 h-5" />
+            </div>
+            <div>
+              <p className={cn('text-sm font-semibold', mode === tab.key ? 'text-teal' : 'text-charcoal')}>{tab.label}</p>
+              <p className="text-xs text-stone mt-0.5">{tab.desc}</p>
+            </div>
+            {mode === tab.key && (
+              <div className="absolute top-2 right-2">
+                <CheckCircleIcon className="w-4 h-4 text-teal" />
+              </div>
+            )}
+          </button>
+        ))}
+      </div>
 
-          <Button onClick={() => setShowBrandPanel(true)} variant="ghost" size="sm">
-            <BeakerIcon className="w-4 h-4 mr-2" />
-            Brand DNA
-          </Button>
-        </div>
+      <div className="flex items-center justify-end">
+        <Button onClick={() => setShowBrandPanel(true)} variant="ghost" size="sm">
+          <BeakerIcon className="w-4 h-4 mr-2" />
+          Brand DNA
+        </Button>
       </div>
 
       {/* ============================================================ */}
       {/* MODE 1: SINGLE POST (AI) */}
       {/* ============================================================ */}
       {mode === 'single' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Left: Configuration */}
           <div className="lg:col-span-1 space-y-4">
             {renderConfigPanel()}
           </div>
 
-          {/* Right: Generated content / Preview */}
+          {/* Center: Generated content */}
           <div className="lg:col-span-2 space-y-4">
             {!generated && !isGenerating && (
               <Card className="text-center py-16">
@@ -1374,6 +1394,23 @@ export default function ContentCreatePage() {
 
             {generated && renderContentPanel()}
           </div>
+
+          {/* Right: Live social preview */}
+          <div className="lg:col-span-2">
+            <div className="sticky top-6">
+              <Card className="p-5">
+                <h3 className="text-sm font-semibold text-charcoal mb-4">Live Preview</h3>
+                <SocialPreviewTabs
+                  platforms={platforms as unknown as import('@/types/database').SocialPlatform[]}
+                  caption={generated ? (editFields['caption'] || generated.caption || generated.script_body || generated.hook || '') : 'Your generated content will preview here...'}
+                  hashtags={generated?.hashtags || []}
+                  mediaUrls={uploadedFiles.map(f => f.url)}
+                  targetUrl={undefined}
+                  userName={userName}
+                />
+              </Card>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1381,15 +1418,32 @@ export default function ContentCreatePage() {
       {/* MODE 2: MANUAL CREATE */}
       {/* ============================================================ */}
       {mode === 'manual' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Left: Configuration + AI Enhance */}
           <div className="lg:col-span-1 space-y-4">
             {renderConfigPanel()}
           </div>
 
-          {/* Right: Editable fields (always visible) */}
+          {/* Center: Editable fields (always visible) */}
           <div className="lg:col-span-2 space-y-4">
             {renderContentPanel()}
+          </div>
+
+          {/* Right: Live social preview */}
+          <div className="lg:col-span-2">
+            <div className="sticky top-6">
+              <Card className="p-5">
+                <h3 className="text-sm font-semibold text-charcoal mb-4">Live Preview</h3>
+                <SocialPreviewTabs
+                  platforms={platforms as unknown as import('@/types/database').SocialPlatform[]}
+                  caption={editFields['caption'] || editFields['script_body'] || editFields['hook'] || editFields['topic'] || 'Start typing to see a preview...'}
+                  hashtags={(editFields['hashtags'] || '').split(',').map(t => t.trim()).filter(Boolean)}
+                  mediaUrls={uploadedFiles.map(f => f.url)}
+                  targetUrl={undefined}
+                  userName={userName}
+                />
+              </Card>
+            </div>
           </div>
         </div>
       )}
@@ -2142,6 +2196,22 @@ export default function ContentCreatePage() {
           </div>
         </div>
       )}
+
+      {/* Action Modal — shown after save/schedule */}
+      <ActionModal
+        open={showActionModal}
+        onClose={() => setShowActionModal(false)}
+        variant={actionModalConfig.variant}
+        title={actionModalConfig.title}
+        subtitle={actionModalConfig.subtitle}
+        actions={actionModalConfig.variant === 'error' ? [
+          { label: 'Try Again', onClick: () => setShowActionModal(false), variant: 'primary' },
+        ] : [
+          { label: 'View in Calendar', onClick: () => router.push('/calendar'), variant: 'primary' },
+          ...(actionModalConfig.savedItemId ? [{ label: 'Edit Post', onClick: () => router.push(`/content/${actionModalConfig.savedItemId}`), variant: 'ghost' as const }] : []),
+          { label: 'Create Another', onClick: () => { setShowActionModal(false); handleModeChange(mode); }, variant: 'ghost' as const },
+        ]}
+      />
     </div>
   );
 }

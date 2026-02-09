@@ -5,3 +5,4 @@ export { Badge, type BadgeProps } from './badge';
 export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, type CardProps } from './card';
 export { StatusBadge, type StatusBadgeProps } from './status-badge';
 export { PageHeader, type PageHeaderProps, type BreadcrumbItem } from './page-header';
+export { ActionModal, type ActionModalProps, type ActionModalAction } from './action-modal';

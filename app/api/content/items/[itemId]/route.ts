@@ -2,6 +2,47 @@ import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { notifyApprovers } from '@/lib/notifications';
 
+export async function GET(
+  request: Request,
+  { params }: { params: { itemId: string } }
+) {
+  try {
+    const supabase = createClient();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { data: item, error } = await supabase
+      .from('content_items')
+      .select('*')
+      .eq('id', params.itemId)
+      .single();
+
+    if (error || !item) {
+      return NextResponse.json({ error: 'Content item not found' }, { status: 404 });
+    }
+
+    // Verify org membership
+    const { data: membership } = await supabase
+      .from('org_members')
+      .select('id, role')
+      .eq('organization_id', item.organization_id)
+      .eq('user_id', user.id)
+      .single();
+
+    if (!membership) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+
+    return NextResponse.json({ item, role: membership.role });
+  } catch (error) {
+    console.error('Get content item error:', error);
+    return NextResponse.json({ error: 'Failed to get content item' }, { status: 500 });
+  }
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: { itemId: string } }

@@ -7,13 +7,7 @@ import type { Json } from '@/types/database';
 
 const MAX_RETRIES = 3;
 
-export async function POST(request: NextRequest) {
-  // Verify cron secret
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+async function runScheduledPublish() {
   const supabase = createServiceClient();
   const now = new Date().toISOString();
 
@@ -25,7 +19,7 @@ export async function POST(request: NextRequest) {
     .lte('scheduled_date', now.split('T')[0]); // scheduled_date <= today
 
   if (error || !scheduledItems || scheduledItems.length === 0) {
-    return NextResponse.json({ message: 'No items to publish', count: 0 });
+    return { message: 'No items to publish', itemsProcessed: 0, publishedCount: 0, failedCount: 0 };
   }
 
   // Filter items where scheduled_date + scheduled_time <= now
@@ -105,6 +99,7 @@ export async function POST(request: NextRequest) {
             .eq('id', newPost.id);
           publishedCount++;
         } else {
+          console.error(`[Scheduled Publish] Failed for item ${item.id} on ${connection.platform}:`, result.result.error);
           await supabase
             .from('published_posts')
             .update({
@@ -140,6 +135,7 @@ export async function POST(request: NextRequest) {
             .eq('id', publishedPostId);
           publishedCount++;
         } else {
+          console.error(`[Scheduled Publish] Retry failed for item ${item.id} on ${connection.platform}:`, result.result.error);
           await supabase
             .from('published_posts')
             .update({
@@ -171,10 +167,32 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({
+  return {
     message: 'Scheduled publish complete',
     itemsProcessed: readyItems.length,
     publishedCount,
     failedCount,
-  });
+  };
+}
+
+// Vercel crons send GET requests
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const result = await runScheduledPublish();
+  return NextResponse.json(result);
+}
+
+// Keep POST for backward compatibility
+export async function POST(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const result = await runScheduledPublish();
+  return NextResponse.json(result);
 }

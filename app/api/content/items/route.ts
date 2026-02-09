@@ -58,11 +58,43 @@ export async function POST(request: Request) {
     const defaultStatus: ContentStatus = !ai_generated && hasContent ? 'scripted' : 'idea';
     const status = (requestedStatus || defaultStatus) as ContentStatus;
 
+    // Auto-create or find "Default" calendar when calendarId is not provided
+    let resolvedCalendarId = calendarId || null;
+    if (!resolvedCalendarId && organizationId) {
+      // Look for existing Default calendar
+      const { data: defaultCal } = await supabase
+        .from('content_calendars')
+        .select('id')
+        .eq('organization_id', organizationId)
+        .eq('name', 'Default')
+        .maybeSingle();
+
+      if (defaultCal) {
+        resolvedCalendarId = defaultCal.id;
+      } else {
+        // Create a Default calendar that spans all time
+        const { data: newCal } = await supabase
+          .from('content_calendars')
+          .insert({
+            name: 'Default',
+            organization_id: organizationId,
+            start_date: '2025-01-01',
+            end_date: '2030-12-31',
+          })
+          .select('id')
+          .single();
+
+        if (newCal) {
+          resolvedCalendarId = newCal.id;
+        }
+      }
+    }
+
     const { data: item, error } = await supabase
       .from('content_items')
       .insert({
         organization_id: organizationId,
-        calendar_id: calendarId || null,
+        calendar_id: resolvedCalendarId,
         scheduled_date: scheduled_date || new Date().toISOString().split('T')[0],
         time_slot,
         scheduled_time,

@@ -1,6 +1,6 @@
 import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData } from '../types';
 
-const LINKEDIN_API_BASE = 'https://api.linkedin.com/v2';
+const LINKEDIN_API_BASE = 'https://api.linkedin.com';
 
 export const linkedinAdapter: PlatformAdapter = {
   platform: 'linkedin',
@@ -36,7 +36,7 @@ export const linkedinAdapter: PlatformAdapter = {
     }
 
     // Get user profile
-    const profileRes = await fetch(`${LINKEDIN_API_BASE}/userinfo`, {
+    const profileRes = await fetch(`${LINKEDIN_API_BASE}/v2/userinfo`, {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
     const profileData = await profileRes.json();
@@ -84,69 +84,80 @@ export const linkedinAdapter: PlatformAdapter = {
     const authorUrn = `urn:li:person:${tokens.platformUserId}`;
 
     try {
+      // Build post body using LinkedIn's new Posts API (replaces deprecated ugcPosts)
       const postBody: Record<string, unknown> = {
         author: authorUrn,
+        commentary: buildLinkedInText(post),
+        visibility: 'PUBLIC',
+        distribution: {
+          feedDistribution: 'MAIN_FEED',
+          targetEntities: [],
+          thirdPartyDistributionChannels: [],
+        },
         lifecycleState: 'PUBLISHED',
-        specificContent: {
-          'com.linkedin.ugc.ShareContent': {
-            shareCommentary: {
-              text: buildLinkedInText(post),
-            },
-            shareMediaCategory: 'NONE',
-          },
-        },
-        visibility: {
-          'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
-        },
       };
 
-      // If there's a link, add it as article
+      // If there's a link, add as article content
       if (post.link) {
-        const content = postBody.specificContent as Record<string, Record<string, unknown>>;
-        content['com.linkedin.ugc.ShareContent'].shareMediaCategory = 'ARTICLE';
-        content['com.linkedin.ugc.ShareContent'].media = [
-          {
-            status: 'READY',
-            originalUrl: post.link,
+        postBody.content = {
+          article: {
+            source: post.link,
+            title: post.text?.slice(0, 200) || 'Shared link',
           },
-        ];
+        };
       }
 
-      // If there are media URLs, add as images
+      // If there are media URLs (images), add as multi-image content
+      // Note: For direct image uploads, a 2-step register+upload flow is needed.
+      // External image URLs are added as article links as a fallback.
       if (post.mediaUrls && post.mediaUrls.length > 0 && !post.link) {
-        const content = postBody.specificContent as Record<string, Record<string, unknown>>;
-        content['com.linkedin.ugc.ShareContent'].shareMediaCategory = 'IMAGE';
-        content['com.linkedin.ugc.ShareContent'].media = post.mediaUrls.map(url => ({
-          status: 'READY',
-          originalUrl: url,
-        }));
+        // LinkedIn Posts API supports external media via article source
+        postBody.content = {
+          article: {
+            source: post.mediaUrls[0],
+            title: post.text?.slice(0, 200) || 'Shared media',
+          },
+        };
       }
 
-      const res = await fetch(`${LINKEDIN_API_BASE}/ugcPosts`, {
+      const res = await fetch(`${LINKEDIN_API_BASE}/rest/posts`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${tokens.accessToken}`,
           'Content-Type': 'application/json',
+          'LinkedIn-Version': '202401',
           'X-Restli-Protocol-Version': '2.0.0',
         },
         body: JSON.stringify(postBody),
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        return { success: false, error: errorData.message || `LinkedIn API error: ${res.status}` };
+        const errorText = await res.text();
+        let errorMessage = `LinkedIn API error: ${res.status}`;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        console.error('[LinkedIn Publish] Failed:', { status: res.status, error: errorMessage, authorUrn });
+        return { success: false, error: errorMessage };
       }
 
-      const postId = res.headers.get('x-restli-id') || '';
-      const activityUrn = postId.replace('urn:li:share:', '');
+      // The new Posts API returns the post URN in the x-restli-id header
+      const postUrn = res.headers.get('x-restli-id') || '';
+      // Extract activity ID for the post URL
+      const activityMatch = postUrn.match(/urn:li:share:(\d+)/);
+      const activityId = activityMatch ? activityMatch[1] : postUrn;
 
       return {
         success: true,
-        platformPostId: postId,
-        postUrl: `https://www.linkedin.com/feed/update/${activityUrn}`,
-        metadata: { urn: postId },
+        platformPostId: postUrn,
+        postUrl: activityId ? `https://www.linkedin.com/feed/update/urn:li:activity:${activityId}` : undefined,
+        metadata: { urn: postUrn },
       };
     } catch (error) {
+      console.error('[LinkedIn Publish] Exception:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Publishing failed' };
     }
   },
@@ -154,7 +165,7 @@ export const linkedinAdapter: PlatformAdapter = {
   async getPostAnalytics(tokens: TokenData, postId: string): Promise<AnalyticsData> {
     try {
       const res = await fetch(
-        `${LINKEDIN_API_BASE}/socialActions/${encodeURIComponent(postId)}?fields=likesSummary,commentsSummary,shareStatistics`,
+        `${LINKEDIN_API_BASE}/v2/socialActions/${encodeURIComponent(postId)}?fields=likesSummary,commentsSummary,shareStatistics`,
         {
           headers: {
             Authorization: `Bearer ${tokens.accessToken}`,
@@ -186,7 +197,8 @@ export const linkedinAdapter: PlatformAdapter = {
         engagementRate: Math.round(engagementRate * 100) / 100,
         metadata: data,
       };
-    } catch {
+    } catch (error) {
+      console.error('[LinkedIn Analytics] Failed to fetch:', error);
       return { likes: 0, comments: 0, shares: 0, saves: 0, impressions: 0, reach: 0, clicks: 0, videoViews: 0, engagementRate: 0 };
     }
   },
