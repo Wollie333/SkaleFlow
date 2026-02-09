@@ -51,10 +51,17 @@ export const facebookAdapter: PlatformAdapter = {
     // Get pages the user manages
     const pagesRes = await fetch(`${GRAPH_API_BASE}/me/accounts?access_token=${longLivedData.access_token}`);
     const pagesData = await pagesRes.json();
-    const firstPage = pagesData.data?.[0];
+    const pages = (pagesData.data || []).map((p: { id: string; name: string; access_token: string; category?: string }) => ({
+      id: p.id,
+      name: p.name,
+      access_token: p.access_token,
+      category: p.category || null,
+    }));
 
+    // Return user's long-lived token as the profile connection.
+    // Don't auto-select a page — user picks pages via the page selector.
     return {
-      accessToken: firstPage?.access_token || longLivedData.access_token,
+      accessToken: longLivedData.access_token,
       refreshToken: null, // Facebook long-lived tokens don't have refresh tokens
       expiresAt: longLivedData.expires_in
         ? new Date(Date.now() + longLivedData.expires_in * 1000)
@@ -62,9 +69,10 @@ export const facebookAdapter: PlatformAdapter = {
       scopes: tokenData.scope?.split(',') || [],
       platformUserId: userData.id,
       platformUsername: userData.name,
-      platformPageId: firstPage?.id || null,
-      platformPageName: firstPage?.name || null,
-      metadata: { pages: pagesData.data || [] },
+      platformPageId: undefined,
+      platformPageName: undefined,
+      accountType: 'profile',
+      metadata: { pages },
     };
   },
 

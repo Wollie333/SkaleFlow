@@ -15,6 +15,7 @@ export interface ConnectionWithTokens {
   platform_username: string | null;
   platform_page_id: string | null;
   platform_page_name: string | null;
+  account_type: string;
   is_active: boolean;
 }
 

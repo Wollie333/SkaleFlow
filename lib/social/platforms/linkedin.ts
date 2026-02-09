@@ -6,12 +6,17 @@ export const linkedinAdapter: PlatformAdapter = {
   platform: 'linkedin',
 
   getAuthUrl(state: string, redirectUri: string): string {
+    let scope = 'openid profile w_member_social';
+    // Optionally request org scopes for company page posting
+    if (process.env.LINKEDIN_ORG_SCOPE_ENABLED === 'true') {
+      scope += ' r_organization_social w_organization_social';
+    }
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: process.env.LINKEDIN_CLIENT_ID!,
       redirect_uri: redirectUri,
       state,
-      scope: 'openid profile w_member_social',
+      scope,
     });
     return `https://www.linkedin.com/oauth/v2/authorization?${params}`;
   },
@@ -41,6 +46,38 @@ export const linkedinAdapter: PlatformAdapter = {
     });
     const profileData = await profileRes.json();
 
+    // Try to fetch managed organizations (requires org scopes)
+    const pages: Array<{ id: string; name: string; access_token: string; category: string | null }> = [];
+    try {
+      const orgsRes = await fetch(
+        `${LINKEDIN_API_BASE}/rest/organizationAcls?q=roleAssignee&role=ADMINISTRATOR&projection=(elements*(organization~(id,localizedName)))`,
+        {
+          headers: {
+            Authorization: `Bearer ${tokenData.access_token}`,
+            'LinkedIn-Version': '202601',
+            'X-Restli-Protocol-Version': '2.0.0',
+          },
+        }
+      );
+      if (orgsRes.ok) {
+        const orgsData = await orgsRes.json();
+        const elements = orgsData.elements || [];
+        for (const el of elements) {
+          const org = el['organization~'];
+          if (org) {
+            pages.push({
+              id: String(org.id),
+              name: org.localizedName || 'Organization',
+              access_token: tokenData.access_token, // same token used for org posting
+              category: 'Company Page',
+            });
+          }
+        }
+      }
+    } catch {
+      // Org scope not granted — personal profile still works
+    }
+
     return {
       accessToken: tokenData.access_token,
       refreshToken: tokenData.refresh_token || null,
@@ -50,6 +87,8 @@ export const linkedinAdapter: PlatformAdapter = {
       scopes: tokenData.scope?.split(' ') || [],
       platformUserId: profileData.sub,
       platformUsername: profileData.name || `${profileData.given_name} ${profileData.family_name}`,
+      accountType: 'profile',
+      metadata: pages.length > 0 ? { pages } : undefined,
     };
   },
 
@@ -81,7 +120,10 @@ export const linkedinAdapter: PlatformAdapter = {
   },
 
   async publishPost(tokens: TokenData, post: PostPayload): Promise<PublishResult> {
-    const authorUrn = `urn:li:person:${tokens.platformUserId}`;
+    // Use organization URN when platformPageId is set (company page), else personal profile
+    const authorUrn = tokens.platformPageId
+      ? `urn:li:organization:${tokens.platformPageId}`
+      : `urn:li:person:${tokens.platformUserId}`;
 
     try {
       // Build post body using LinkedIn's new Posts API (replaces deprecated ugcPosts)

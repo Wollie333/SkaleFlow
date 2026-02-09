@@ -8,6 +8,8 @@ import { getApprovalSettings, DEFAULT_APPROVAL_SETTINGS, type ApprovalSettings }
 import { useSearchParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { SocialConnectionCard } from '@/components/integrations/social-connection-card';
+import type { SocialConnectionRow } from '@/components/integrations/social-connection-card';
+import { PageSelectionModal } from '@/components/integrations/page-selection-modal';
 import { GoogleDriveConnectionCard } from '@/components/integrations/google-drive-connection-card';
 import type { SocialPlatform, Json } from '@/types/database';
 
@@ -48,8 +50,9 @@ export default function SettingsPage() {
   const [googleConnected, setGoogleConnected] = useState(false);
   const [userRole, setUserRole] = useState<string>('');
   const [googleStatus, setGoogleStatus] = useState<string | null>(null);
-  const [socialConnections, setSocialConnections] = useState<Record<string, { id: string; platform: SocialPlatform; platform_username: string | null; platform_page_name: string | null; is_active: boolean; connected_at: string; token_expires_at: string | null }>>({});
+  const [socialConnections, setSocialConnections] = useState<SocialConnectionRow[]>([]);
   const [socialStatus, setSocialStatus] = useState<string | null>(null);
+  const [pageSelectPlatform, setPageSelectPlatform] = useState<SocialPlatform | null>(null);
   const [driveConnection, setDriveConnection] = useState<{ id: string; drive_email: string | null; is_active: boolean; connected_at: string; token_expires_at: string | null } | null>(null);
   const [driveStatus, setDriveStatus] = useState<string | null>(null);
   const [orgRole, setOrgRole] = useState<string>('');
@@ -142,15 +145,11 @@ export default function SettingsPage() {
         // Load social media connections
         const { data: connections } = await supabase
           .from('social_media_connections')
-          .select('id, platform, platform_username, platform_page_name, is_active, connected_at, token_expires_at')
+          .select('id, platform, platform_username, platform_page_name, platform_page_id, account_type, is_active, connected_at, token_expires_at')
           .eq('organization_id', org.id);
 
         if (connections) {
-          const connMap: typeof socialConnections = {};
-          connections.forEach(c => {
-            connMap[c.platform] = c as typeof connMap[string];
-          });
-          setSocialConnections(connMap);
+          setSocialConnections(connections as SocialConnectionRow[]);
         }
 
         // Load Google Drive connection (table may not exist yet)
@@ -186,6 +185,13 @@ export default function SettingsPage() {
     const socialParam = searchParams.get('social');
     if (socialParam) {
       setSocialStatus(socialParam);
+      // Auto-open page selector if redirected after OAuth with pages available
+      if (socialParam === 'select') {
+        const platformParam = searchParams.get('platform') as SocialPlatform | null;
+        if (platformParam) {
+          setPageSelectPlatform(platformParam);
+        }
+      }
     }
 
     // Check for Google Drive callback status
@@ -257,14 +263,18 @@ export default function SettingsPage() {
   };
 
   const handleDisconnectSocial = async (connectionId: string) => {
+    // Find the connection being disconnected
+    const conn = socialConnections.find(c => c.id === connectionId);
     const res = await fetch(`/api/integrations/social/connections/${connectionId}`, {
       method: 'DELETE',
     });
     if (res.ok) {
       setSocialConnections(prev => {
-        const updated = { ...prev };
-        const platform = Object.keys(updated).find(k => updated[k].id === connectionId);
-        if (platform) delete updated[platform];
+        let updated = prev.filter(c => c.id !== connectionId);
+        // If disconnecting a profile, also remove its page connections
+        if (conn?.account_type === 'profile') {
+          updated = updated.filter(c => !(c.platform === conn.platform && c.account_type === 'page'));
+        }
         return updated;
       });
     }
@@ -514,6 +524,11 @@ export default function SettingsPage() {
               Social account connected successfully!
             </div>
           )}
+          {socialStatus === 'select' && (
+            <div className="mb-4 p-3 bg-teal/10 border border-teal/20 rounded-lg text-sm text-teal font-medium">
+              Account connected! Select which pages to connect below.
+            </div>
+          )}
           {socialStatus === 'error' && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
               Failed to connect social account. {searchParams.get('message') || 'Please try again.'}
@@ -525,11 +540,32 @@ export default function SettingsPage() {
               <SocialConnectionCard
                 key={platform}
                 platform={platform}
-                connection={socialConnections[platform] || null}
+                connections={socialConnections.filter(c => c.platform === platform)}
                 onDisconnect={handleDisconnectSocial}
+                onManagePages={(p) => setPageSelectPlatform(p)}
               />
             ))}
           </div>
+
+          {pageSelectPlatform && (
+            <PageSelectionModal
+              platform={pageSelectPlatform}
+              isOpen={!!pageSelectPlatform}
+              onClose={() => setPageSelectPlatform(null)}
+              onPagesAdded={async () => {
+                // Reload connections
+                if (organization) {
+                  const { data: freshConns } = await supabase
+                    .from('social_media_connections')
+                    .select('id, platform, platform_username, platform_page_name, platform_page_id, account_type, is_active, connected_at, token_expires_at')
+                    .eq('organization_id', organization.id);
+                  if (freshConns) {
+                    setSocialConnections(freshConns as SocialConnectionRow[]);
+                  }
+                }
+              }}
+            />
+          )}
         </Card>
       )}
 

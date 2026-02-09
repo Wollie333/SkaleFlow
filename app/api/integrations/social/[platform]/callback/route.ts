@@ -65,32 +65,44 @@ export async function GET(
     const redirectUri = getRedirectUri(platform);
     const tokenData = await exchangeCode(platform, code, redirectUri, codeVerifier);
 
-    // Upsert connection (one per platform per org)
-    const { error: upsertError } = await supabase
+    // Delete existing profile connection for this org+platform (replace with fresh one)
+    await supabase
       .from('social_media_connections')
-      .upsert(
-        {
-          organization_id: orgId,
-          user_id: user.id,
-          platform,
-          access_token: tokenData.accessToken,
-          refresh_token: tokenData.refreshToken,
-          token_expires_at: tokenData.expiresAt?.toISOString() || null,
-          platform_user_id: tokenData.platformUserId || null,
-          platform_username: tokenData.platformUsername || null,
-          platform_page_id: tokenData.platformPageId || null,
-          platform_page_name: tokenData.platformPageName || null,
-          scopes: tokenData.scopes || null,
-          is_active: true,
-          connected_at: new Date().toISOString(),
-          metadata: (tokenData.metadata || {}) as Json,
-        },
-        { onConflict: 'organization_id,platform' }
-      );
+      .delete()
+      .eq('organization_id', orgId)
+      .eq('platform', platform)
+      .is('platform_page_id', null);
 
-    if (upsertError) {
-      console.error('Failed to save social connection:', upsertError);
+    // Insert fresh profile connection
+    const { error: insertError } = await supabase
+      .from('social_media_connections')
+      .insert({
+        organization_id: orgId,
+        user_id: user.id,
+        platform,
+        access_token: tokenData.accessToken,
+        refresh_token: tokenData.refreshToken,
+        token_expires_at: tokenData.expiresAt?.toISOString() || null,
+        platform_user_id: tokenData.platformUserId || null,
+        platform_username: tokenData.platformUsername || null,
+        platform_page_id: tokenData.platformPageId || null,
+        platform_page_name: tokenData.platformPageName || null,
+        account_type: tokenData.accountType || 'profile',
+        scopes: tokenData.scopes || null,
+        is_active: true,
+        connected_at: new Date().toISOString(),
+        metadata: (tokenData.metadata || {}) as Json,
+      });
+
+    if (insertError) {
+      console.error('Failed to save social connection:', insertError);
       return NextResponse.redirect(`${baseUrl}/settings?social=error&message=Failed+to+save+connection`);
+    }
+
+    // If pages are available, redirect to page selector
+    const pages = (tokenData.metadata?.pages as unknown[]) || [];
+    if (pages.length > 0) {
+      return NextResponse.redirect(`${baseUrl}/settings?social=select&platform=${platform}`);
     }
 
     return NextResponse.redirect(`${baseUrl}/settings?social=connected&platform=${platform}`);

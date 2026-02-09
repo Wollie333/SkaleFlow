@@ -2,15 +2,17 @@
 
 import { useState } from 'react';
 import { Button, Badge } from '@/components/ui';
-import { LinkIcon, XMarkIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { LinkIcon, XMarkIcon, ExclamationTriangleIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import type { SocialPlatform } from '@/types/database';
 import { PLATFORM_CONFIG } from '@/lib/social/types';
 
-interface SocialConnection {
+export interface SocialConnectionRow {
   id: string;
   platform: SocialPlatform;
   platform_username: string | null;
   platform_page_name: string | null;
+  platform_page_id: string | null;
+  account_type: string;
   is_active: boolean;
   connected_at: string;
   token_expires_at: string | null;
@@ -18,8 +20,9 @@ interface SocialConnection {
 
 interface SocialConnectionCardProps {
   platform: SocialPlatform;
-  connection: SocialConnection | null;
+  connections: SocialConnectionRow[];
   onDisconnect: (connectionId: string) => Promise<void>;
+  onManagePages?: (platform: SocialPlatform) => void;
 }
 
 const platformIcons: Record<SocialPlatform, React.ReactNode> = {
@@ -55,82 +58,141 @@ const platformIcons: Record<SocialPlatform, React.ReactNode> = {
   ),
 };
 
-export function SocialConnectionCard({ platform, connection, onDisconnect }: SocialConnectionCardProps) {
-  const [isDisconnecting, setIsDisconnecting] = useState(false);
+export function SocialConnectionCard({ platform, connections, onDisconnect, onManagePages }: SocialConnectionCardProps) {
+  const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
   const config = PLATFORM_CONFIG[platform];
-  const isExpired = connection?.token_expires_at &&
-    new Date(connection.token_expires_at) < new Date();
-  const isInactive = connection && (!connection.is_active || isExpired);
+
+  const profileConn = connections.find(c => c.account_type === 'profile');
+  const pageConns = connections.filter(c => c.account_type === 'page');
+  const hasAnyConnection = connections.length > 0;
+
+  // Platforms that support pages
+  const supportsPages = ['facebook', 'linkedin'].includes(platform);
 
   const handleConnect = () => {
     window.location.href = `/api/integrations/social/${platform}/auth`;
   };
 
-  const handleDisconnect = async () => {
-    if (!connection) return;
-    if (!confirm(`Disconnect ${config.name}? You will need to reconnect to publish.`)) return;
+  const handleDisconnect = async (connectionId: string, label: string) => {
+    if (!confirm(`Disconnect ${label}? You will need to reconnect to publish.`)) return;
 
-    setIsDisconnecting(true);
+    setDisconnectingId(connectionId);
     try {
-      await onDisconnect(connection.id);
+      await onDisconnect(connectionId);
     } finally {
-      setIsDisconnecting(false);
+      setDisconnectingId(null);
     }
   };
 
-  return (
-    <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-stone/10">
-          {platformIcons[platform]}
-        </div>
-        <div>
-          <h3 className="font-medium text-charcoal">{config.name}</h3>
-          {connection ? (
-            <p className="text-sm text-stone">
-              {connection.platform_username || connection.platform_page_name || 'Connected'}
-            </p>
-          ) : (
-            <p className="text-sm text-stone">Not connected</p>
-          )}
-        </div>
-      </div>
+  const isExpired = (conn: SocialConnectionRow) =>
+    conn.token_expires_at && new Date(conn.token_expires_at) < new Date();
 
-      {connection ? (
+  const isInactive = (conn: SocialConnectionRow) =>
+    !conn.is_active || isExpired(conn);
+
+  return (
+    <div className="space-y-1">
+      {/* Main platform row */}
+      <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
         <div className="flex items-center gap-3">
-          {isInactive ? (
-            <>
-              <div className="flex items-center gap-1.5">
-                <ExclamationTriangleIcon className="w-4 h-4 text-amber-500" />
-                <span className="text-xs text-amber-600 font-medium">Expired</span>
-              </div>
+          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-stone/10">
+            {platformIcons[platform]}
+          </div>
+          <div>
+            <h3 className="font-medium text-charcoal">{config.name}</h3>
+            {profileConn ? (
+              <p className="text-sm text-stone">
+                Profile: {profileConn.platform_username || 'Connected'}
+              </p>
+            ) : hasAnyConnection ? (
+              <p className="text-sm text-stone">
+                {pageConns.length} page{pageConns.length !== 1 ? 's' : ''} connected
+              </p>
+            ) : (
+              <p className="text-sm text-stone">Not connected</p>
+            )}
+          </div>
+        </div>
+
+        {hasAnyConnection ? (
+          <div className="flex items-center gap-2">
+            {profileConn && isInactive(profileConn) ? (
+              <>
+                <div className="flex items-center gap-1.5">
+                  <ExclamationTriangleIcon className="w-4 h-4 text-amber-500" />
+                  <span className="text-xs text-amber-600 font-medium">Expired</span>
+                </div>
+                <Button onClick={handleConnect} variant="secondary" className="text-sm">
+                  Reconnect
+                </Button>
+              </>
+            ) : (
+              <Badge variant="awareness">Connected</Badge>
+            )}
+            {supportsPages && profileConn && onManagePages && (
               <Button
-                onClick={handleConnect}
                 variant="secondary"
                 className="text-sm"
+                onClick={() => onManagePages(platform)}
               >
-                Reconnect
+                <Cog6ToothIcon className="w-4 h-4 mr-1" />
+                Manage Pages
               </Button>
-            </>
-          ) : (
-            <Badge variant="awareness">Connected</Badge>
-          )}
-          <Button
-            variant="ghost"
-            className="text-red-600 hover:bg-red-50 text-sm"
-            onClick={handleDisconnect}
-            isLoading={isDisconnecting}
-          >
-            <XMarkIcon className="w-4 h-4 mr-1" />
-            Disconnect
+            )}
+            {profileConn && (
+              <Button
+                variant="ghost"
+                className="text-red-600 hover:bg-red-50 text-sm"
+                onClick={() => handleDisconnect(profileConn.id, config.name)}
+                isLoading={disconnectingId === profileConn.id}
+              >
+                <XMarkIcon className="w-4 h-4 mr-1" />
+                Disconnect
+              </Button>
+            )}
+          </div>
+        ) : (
+          <Button onClick={handleConnect}>
+            <LinkIcon className="w-4 h-4 mr-2" />
+            Connect
           </Button>
+        )}
+      </div>
+
+      {/* Page sub-cards */}
+      {pageConns.map(pageConn => (
+        <div
+          key={pageConn.id}
+          className="flex items-center justify-between p-3 ml-8 bg-white border border-stone/10 rounded-xl"
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-teal" />
+            <div>
+              <p className="text-sm font-medium text-charcoal">
+                Page: {pageConn.platform_page_name || pageConn.platform_page_id}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {isInactive(pageConn) ? (
+              <div className="flex items-center gap-1.5">
+                <ExclamationTriangleIcon className="w-3 h-3 text-amber-500" />
+                <span className="text-xs text-amber-600">Expired</span>
+              </div>
+            ) : (
+              <span className="text-xs text-teal font-medium">Active</span>
+            )}
+            <Button
+              variant="ghost"
+              className="text-red-600 hover:bg-red-50 text-xs px-2 py-1"
+              onClick={() => handleDisconnect(pageConn.id, pageConn.platform_page_name || 'page')}
+              isLoading={disconnectingId === pageConn.id}
+            >
+              <XMarkIcon className="w-3 h-3" />
+            </Button>
+          </div>
         </div>
-      ) : (
-        <Button onClick={handleConnect}>
-          <LinkIcon className="w-4 h-4 mr-2" />
-          Connect
-        </Button>
-      )}
+      ))}
     </div>
   );
 }

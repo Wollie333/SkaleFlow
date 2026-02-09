@@ -50,7 +50,18 @@ export async function DELETE(
     console.warn('Failed to revoke platform access (continuing with deletion):', err);
   }
 
-  // Delete the connection
+  // If disconnecting a profile connection, also delete its page connections
+  // (page tokens come from the profile's OAuth grant — they're invalid without it)
+  if (connection.account_type === 'profile' || !connection.platform_page_id) {
+    await supabase
+      .from('social_media_connections')
+      .delete()
+      .eq('organization_id', connection.organization_id)
+      .eq('platform', connection.platform)
+      .eq('account_type', 'page');
+  }
+
+  // Delete the connection itself
   const { error: deleteError } = await supabase
     .from('social_media_connections')
     .delete()

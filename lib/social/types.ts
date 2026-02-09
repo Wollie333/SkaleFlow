@@ -11,6 +11,7 @@ export interface TokenData {
   platformUsername?: string;
   platformPageId?: string;
   platformPageName?: string;
+  accountType?: 'profile' | 'page';
   metadata?: Record<string, unknown>;
 }
 

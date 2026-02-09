@@ -49,12 +49,12 @@ async function runScheduledPublish() {
       : connections;
 
     for (const connection of targetPlatforms) {
-      // Check if already published to this platform
+      // Check if already published via this connection
       const { data: existing } = await supabase
         .from('published_posts')
         .select('id, publish_status, retry_count')
         .eq('content_item_id', item.id)
-        .eq('platform', connection.platform)
+        .eq('connection_id', connection.id)
         .single();
 
       // Skip if already published successfully

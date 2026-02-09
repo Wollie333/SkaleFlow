@@ -14,10 +14,14 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { contentItemId, platforms } = body as { contentItemId: string; platforms: string[] };
+  const { contentItemId, platforms, connectionIds } = body as {
+    contentItemId: string;
+    platforms?: string[];
+    connectionIds?: string[];
+  };
 
-  if (!contentItemId || !platforms || platforms.length === 0) {
-    return NextResponse.json({ error: 'contentItemId and platforms are required' }, { status: 400 });
+  if (!contentItemId || (!platforms?.length && !connectionIds?.length)) {
+    return NextResponse.json({ error: 'contentItemId and platforms (or connectionIds) are required' }, { status: 400 });
   }
 
   // Get user's org
@@ -43,13 +47,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Content item not found' }, { status: 404 });
   }
 
-  // Get connections for requested platforms
-  const { data: connections } = await supabase
+  // Get connections — by specific IDs or by platform
+  let connectionsQuery = supabase
     .from('social_media_connections')
     .select('*')
     .eq('organization_id', membership.organization_id)
-    .eq('is_active', true)
-    .in('platform', platforms as SocialPlatform[]);
+    .eq('is_active', true);
+
+  if (connectionIds && connectionIds.length > 0) {
+    connectionsQuery = connectionsQuery.in('id', connectionIds);
+  } else if (platforms && platforms.length > 0) {
+    connectionsQuery = connectionsQuery.in('platform', platforms as SocialPlatform[]);
+  }
+
+  const { data: connections } = await connectionsQuery;
 
   if (!connections || connections.length === 0) {
     return NextResponse.json({ error: 'No active connections found for selected platforms' }, { status: 400 });
