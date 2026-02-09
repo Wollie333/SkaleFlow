@@ -11,6 +11,8 @@ import {
   XCircleIcon,
   ArrowPathIcon,
   SparklesIcon,
+  CurrencyDollarIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/solid';
 import { useCreditBalance } from '@/hooks/useCreditBalance';
 import type { NotificationType } from '@/types/database';
@@ -35,6 +37,12 @@ const notificationIcons: Record<NotificationType, React.ComponentType<{ classNam
   content_rejected: XCircleIcon,
   revision_requested: ArrowPathIcon,
   generation_completed: SparklesIcon,
+  change_request_submitted: DocumentTextIcon,
+  change_request_approved: CheckCircleIcon,
+  change_request_rejected: XCircleIcon,
+  change_request_revision: ArrowPathIcon,
+  credits_allocated: CurrencyDollarIcon,
+  credits_low: ExclamationTriangleIcon,
 };
 
 const notificationColors: Record<NotificationType, string> = {
@@ -43,6 +51,12 @@ const notificationColors: Record<NotificationType, string> = {
   content_rejected: 'text-red-500',
   revision_requested: 'text-amber-500',
   generation_completed: 'text-teal',
+  change_request_submitted: 'text-blue-500',
+  change_request_approved: 'text-green-500',
+  change_request_rejected: 'text-red-500',
+  change_request_revision: 'text-amber-500',
+  credits_allocated: 'text-teal',
+  credits_low: 'text-amber-500',
 };
 
 interface Notification {
@@ -241,7 +255,7 @@ export function Header({ user, initialUnreadCount = 0, organizationId }: HeaderP
                 {/* Footer */}
                 <div className="px-4 py-2.5 border-t border-stone/10">
                   <Link
-                    href="/content/reviews"
+                    href="/reviews"
                     onClick={() => setIsOpen(false)}
                     className="text-sm text-teal hover:text-teal/80 font-medium flex items-center justify-center gap-1.5"
                   >

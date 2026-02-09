@@ -199,7 +199,7 @@ async function applyBrandVariableChange(cr: Record<string, unknown>) {
     .upsert(
       {
         organization_id: cr.organization_id as string,
-        phase_id: (metadata.phase_id as string) || null,
+        phase_id: (metadata.phase_id as string) || '',
         output_key: cr.entity_id as string,
         output_value: proposed.value as string,
         is_locked: false,

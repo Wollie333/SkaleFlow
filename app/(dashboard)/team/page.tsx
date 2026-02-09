@@ -10,9 +10,11 @@ import { MemberDetailPanel } from '@/components/team/member-detail-panel';
 import { TeamCreditSummary } from '@/components/team/team-credit-summary';
 import { cn } from '@/lib/utils';
 
+type OrgMemberRole = 'owner' | 'admin' | 'member' | 'viewer';
+
 interface TeamMember {
   id: string;
-  role: string;
+  role: OrgMemberRole;
   joined_at: string;
   user_id: string;
   users: {
@@ -44,7 +46,7 @@ interface FeaturePermissions {
 interface MemberPermissions {
   userId: string;
   role: string;
-  user: { full_name: string; email: string } | null;
+  user: { full_name: string | null; email: string };
   permissions: Record<string, FeaturePermissions>;
 }
 
@@ -57,7 +59,6 @@ interface CreditAllocation {
   users?: { full_name: string; email: string } | null;
 }
 
-type OrgMemberRole = 'owner' | 'admin' | 'member' | 'viewer';
 type TabId = 'members' | 'permissions' | 'credits';
 
 const roleBadgeColors: Record<OrgMemberRole, string> = {

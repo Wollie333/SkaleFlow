@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/server';
-import type { FeatureType, OrgMemberRole } from '@/types/database';
+import type { FeatureType, OrgMemberRole, Json } from '@/types/database';
 
 export interface FeaturePermissions {
   access?: boolean;
@@ -140,7 +140,7 @@ export async function setTeamPermissions(
         organization_id: orgId,
         user_id: userId,
         feature,
-        permissions: permissions as Record<string, unknown>,
+        permissions: permissions as unknown as Json,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'organization_id,user_id,feature' }

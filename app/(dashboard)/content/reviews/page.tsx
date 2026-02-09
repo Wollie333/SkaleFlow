@@ -18,6 +18,8 @@ import {
   XCircleIcon,
   ArrowPathIcon,
   SparklesIcon,
+  CurrencyDollarIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/solid';
 import type { NotificationType } from '@/types/database';
 
@@ -41,6 +43,12 @@ const notificationIcons: Record<NotificationType, React.ComponentType<{ classNam
   content_rejected: XCircleIcon,
   revision_requested: ArrowPathIcon,
   generation_completed: SparklesIcon,
+  change_request_submitted: DocumentTextIcon,
+  change_request_approved: CheckCircleIcon,
+  change_request_rejected: XCircleIcon,
+  change_request_revision: ArrowPathIcon,
+  credits_allocated: CurrencyDollarIcon,
+  credits_low: ExclamationTriangleIcon,
 };
 
 const notificationColors: Record<NotificationType, { icon: string; bg: string }> = {
@@ -49,6 +57,12 @@ const notificationColors: Record<NotificationType, { icon: string; bg: string }>
   content_rejected: { icon: 'text-red-500', bg: 'bg-red-50' },
   revision_requested: { icon: 'text-amber-500', bg: 'bg-amber-50' },
   generation_completed: { icon: 'text-teal', bg: 'bg-teal/10' },
+  change_request_submitted: { icon: 'text-blue-500', bg: 'bg-blue-50' },
+  change_request_approved: { icon: 'text-green-600', bg: 'bg-green-50' },
+  change_request_rejected: { icon: 'text-red-500', bg: 'bg-red-50' },
+  change_request_revision: { icon: 'text-amber-500', bg: 'bg-amber-50' },
+  credits_allocated: { icon: 'text-teal', bg: 'bg-teal/10' },
+  credits_low: { icon: 'text-amber-500', bg: 'bg-amber-50' },
 };
 
 type FilterTab = 'all' | 'unread' | 'approvals' | 'my_content';
