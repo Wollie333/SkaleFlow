@@ -9,6 +9,7 @@ import {
   LockOpenIcon,
   CheckIcon,
   XMarkIcon,
+  ClockIcon,
 } from '@heroicons/react/24/outline';
 import { formatOutputKey } from '@/lib/brand/format-utils';
 import type { Json } from '@/types/database';
@@ -24,6 +25,7 @@ interface VariablePreviewCardProps {
   onUnlock?: (outputKey: string) => void;
   isSaving?: boolean;
   isLocking?: boolean;
+  pendingApproval?: { status: string; proposedValue: unknown };
 }
 
 export function VariablePreviewCard({
@@ -37,6 +39,7 @@ export function VariablePreviewCard({
   onUnlock,
   isSaving,
   isLocking,
+  pendingApproval,
 }: VariablePreviewCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -71,23 +74,37 @@ export function VariablePreviewCard({
     setSaveError(null);
   };
 
+  const hasPending = !!pendingApproval;
+  const pendingStatus = pendingApproval?.status;
+
   return (
     <div
       className={cn(
         'rounded-lg p-3 transition-all duration-200',
-        isEditing
-          ? 'bg-cream-warm border border-teal/20'
-          : isEmpty
-            ? 'border border-dashed border-stone/20 bg-white'
-            : isLocked
-              ? 'bg-teal/5 border border-teal/15'
-              : 'bg-cream-warm border border-cream-warm'
+        hasPending
+          ? 'bg-amber-50/50 border border-amber-200/50'
+          : isEditing
+            ? 'bg-cream-warm border border-teal/20'
+            : isEmpty
+              ? 'border border-dashed border-stone/20 bg-white'
+              : isLocked
+                ? 'bg-teal/5 border border-teal/15'
+                : 'bg-cream-warm border border-cream-warm'
       )}
     >
       {/* Header with name + action icons */}
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold text-charcoal">
+        <span className="text-xs font-semibold text-charcoal flex items-center gap-1.5">
           {formatOutputKey(outputKey)}
+          {hasPending && (
+            <span className={cn(
+              'inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full',
+              pendingStatus === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-orange-100 text-orange-700'
+            )}>
+              <ClockIcon className="w-3 h-3" />
+              {pendingStatus === 'pending' ? 'Pending Approval' : 'Revision Requested'}
+            </span>
+          )}
         </span>
 
         <div className="flex items-center gap-1 flex-shrink-0">

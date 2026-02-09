@@ -23,7 +23,20 @@ import {
   PhotoIcon,
   CurrencyDollarIcon,
   ClipboardDocumentCheckIcon,
+  EyeIcon,
 } from '@heroicons/react/24/outline';
+
+interface FeaturePermissions {
+  access?: boolean;
+  chat?: boolean;
+  edit_variables?: boolean;
+  create?: boolean;
+  edit?: boolean;
+  schedule?: boolean;
+  publish?: boolean;
+  manage_contacts?: boolean;
+  send_emails?: boolean;
+}
 
 interface NavItem {
   name: string;
@@ -32,12 +45,6 @@ interface NavItem {
   badge?: string;
   disabled?: boolean;
 }
-
-const baseNavigation: NavItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Brand Engine', href: '/brand', icon: SparklesIcon },
-  { name: 'My Team', href: '/team', icon: UserGroupIcon },
-];
 
 const marketingNavigation: NavItem[] = [
   { name: 'Ads Dashboard', href: '/marketing', icon: MegaphoneIcon },
@@ -52,16 +59,9 @@ const salesNavigation: NavItem[] = [
 
 const contentNavigation: NavItem[] = [
   { name: 'Content Calendar', href: '/calendar', icon: CalendarDaysIcon },
-  { name: 'Content Reviews', href: '/content/reviews', icon: InboxArrowDownIcon },
   { name: 'Publish Log', href: '/content/publish-log', icon: ClipboardDocumentCheckIcon },
   { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
   { name: 'Create Post', href: '/content/create', icon: PencilSquareIcon },
-];
-
-const bottomNavigation: NavItem[] = [
-  { name: 'Billing', href: '/billing', icon: CreditCardIcon },
-  { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
-  { name: 'Help', href: '/help', icon: QuestionMarkCircleIcon },
 ];
 
 const adminNavigation: NavItem[] = [
@@ -82,14 +82,54 @@ interface SidebarProps {
     pending?: number;
   };
   userRole?: string;
+  orgRole?: string | null;
   tierName?: string;
   pipelineCount?: number;
   contentEngineEnabled?: boolean;
   notificationCount?: number;
+  pendingReviewCount?: number;
+  teamPermissions?: Record<string, FeaturePermissions>;
 }
 
-export function Sidebar({ brandProgress, contentStats, userRole, tierName, pipelineCount, contentEngineEnabled, notificationCount }: SidebarProps) {
+export function Sidebar({
+  brandProgress,
+  contentStats,
+  userRole,
+  orgRole,
+  tierName,
+  pipelineCount,
+  contentEngineEnabled,
+  notificationCount,
+  pendingReviewCount,
+  teamPermissions = {},
+}: SidebarProps) {
   const pathname = usePathname();
+
+  const isOwnerOrAdmin = orgRole === 'owner' || orgRole === 'admin';
+  const isSuperAdmin = userRole === 'super_admin';
+
+  // Permission helpers
+  const canAccessBrandEngine = isSuperAdmin || isOwnerOrAdmin || teamPermissions?.brand_engine?.access === true;
+  const canAccessContentEngine = contentEngineEnabled && (isSuperAdmin || isOwnerOrAdmin || teamPermissions?.content_engine?.access === true);
+  const canAccessTeam = isSuperAdmin || isOwnerOrAdmin;
+  const canAccessBilling = isSuperAdmin || isOwnerOrAdmin;
+  const canAccessReviews = isSuperAdmin || isOwnerOrAdmin;
+
+  // Build base navigation dynamically
+  const baseNavItems: NavItem[] = [
+    { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
+  ];
+
+  if (canAccessBrandEngine) {
+    baseNavItems.push({ name: 'Brand Engine', href: '/brand', icon: SparklesIcon });
+  }
+
+  if (canAccessTeam) {
+    baseNavItems.push({ name: 'My Team', href: '/team', icon: UserGroupIcon });
+  }
+
+  // Total pending reviews = change_requests + content pending_review notifications
+  const totalPendingReviews = (pendingReviewCount || 0);
 
   return (
     <aside className="fixed left-0 top-16 bottom-0 w-60 bg-white border-r border-stone/10 flex flex-col">
@@ -104,18 +144,18 @@ export function Sidebar({ brandProgress, contentStats, userRole, tierName, pipel
             ) : (
               <span className={cn(
                 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider',
-                userRole === 'super_admin'
+                isSuperAdmin
                   ? 'bg-gold/15 text-gold'
                   : 'bg-teal/15 text-teal'
               )}>
-                {userRole === 'super_admin' ? 'Super Admin' : 'Team Member'}
+                {isSuperAdmin ? 'Super Admin' : orgRole === 'owner' ? 'Owner' : orgRole === 'admin' ? 'Admin' : orgRole === 'member' ? 'Member' : orgRole === 'viewer' ? 'Viewer' : 'Team Member'}
               </span>
             )}
           </div>
         )}
 
         <div className="space-y-1">
-          {baseNavigation.map((item) => {
+          {baseNavItems.map((item) => {
             const isActive = pathname === item.href ||
               (item.href !== '/dashboard' && pathname.startsWith(item.href));
 
@@ -137,17 +177,41 @@ export function Sidebar({ brandProgress, contentStats, userRole, tierName, pipel
           })}
         </div>
 
+        {/* Reviews — owner/admin only */}
+        {canAccessReviews && (
+          <div className="mt-4">
+            <div className="space-y-1">
+              <Link
+                href="/reviews"
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                  pathname.startsWith('/reviews')
+                    ? 'bg-teal/10 text-teal'
+                    : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                )}
+              >
+                <EyeIcon className="w-5 h-5" />
+                Reviews
+                {totalPendingReviews > 0 && (
+                  <span className="ml-auto text-xs bg-gold/15 text-gold px-2 py-0.5 rounded-full font-semibold">
+                    {totalPendingReviews}
+                  </span>
+                )}
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Content Engine Section */}
         <div className="mt-6">
           <h4 className="px-3 text-xs font-semibold text-teal-dark uppercase tracking-wider mb-2 flex items-center gap-2">
             Content Engine
-            {!contentEngineEnabled && <LockClosedIcon className="w-3 h-3 text-stone/40" />}
+            {!canAccessContentEngine && <LockClosedIcon className="w-3 h-3 text-stone/40" />}
           </h4>
           <div className="space-y-1">
-            {contentEngineEnabled ? (
+            {canAccessContentEngine ? (
               contentNavigation.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href);
-                const showReviewsBadge = item.href === '/content/reviews' && notificationCount !== undefined && notificationCount > 0;
                 return (
                   <Link
                     key={item.name}
@@ -161,11 +225,6 @@ export function Sidebar({ brandProgress, contentStats, userRole, tierName, pipel
                   >
                     <item.icon className="w-5 h-5" />
                     {item.name}
-                    {showReviewsBadge ? (
-                      <span className="ml-auto text-xs bg-teal/15 text-teal px-2 py-0.5 rounded-full font-semibold">
-                        {notificationCount}
-                      </span>
-                    ) : null}
                   </Link>
                 );
               })
@@ -187,10 +246,10 @@ export function Sidebar({ brandProgress, contentStats, userRole, tierName, pipel
         <div className="mt-6">
           <h4 className="px-3 text-xs font-semibold text-teal-dark uppercase tracking-wider mb-2 flex items-center gap-2">
             Marketing
-            {userRole !== 'super_admin' && <LockClosedIcon className="w-3 h-3 text-stone/40" />}
+            {!isSuperAdmin && <LockClosedIcon className="w-3 h-3 text-stone/40" />}
           </h4>
           <div className="space-y-1">
-            {userRole === 'super_admin' ? (
+            {isSuperAdmin ? (
               marketingNavigation.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
                 return (
@@ -227,10 +286,10 @@ export function Sidebar({ brandProgress, contentStats, userRole, tierName, pipel
         <div className="mt-6">
           <h4 className="px-3 text-xs font-semibold text-teal-dark uppercase tracking-wider mb-2 flex items-center gap-2">
             Sales
-            {userRole !== 'super_admin' && <LockClosedIcon className="w-3 h-3 text-stone/40" />}
+            {!isSuperAdmin && <LockClosedIcon className="w-3 h-3 text-stone/40" />}
           </h4>
           <div className="space-y-1">
-            {userRole === 'super_admin' ? (
+            {isSuperAdmin ? (
               salesNavigation.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
                 return (
@@ -264,7 +323,7 @@ export function Sidebar({ brandProgress, contentStats, userRole, tierName, pipel
         </div>
 
         {/* Admin Navigation */}
-        {userRole === 'super_admin' && (
+        {isSuperAdmin && (
           <div className="mt-6">
             <h4 className="px-3 text-xs font-semibold text-teal-dark uppercase tracking-wider mb-2">
               Admin
@@ -303,25 +362,44 @@ export function Sidebar({ brandProgress, contentStats, userRole, tierName, pipel
       {/* Bottom navigation */}
       <div className="p-4 border-t border-stone/10">
         <div className="space-y-1">
-          {bottomNavigation.map((item) => {
-            const isActive = pathname === item.href;
-
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-teal/10 text-teal'
-                    : 'text-stone hover:bg-cream-warm hover:text-charcoal'
-                )}
-              >
-                <item.icon className="w-5 h-5" />
-                {item.name}
-              </Link>
-            );
-          })}
+          {canAccessBilling && (
+            <Link
+              href="/billing"
+              className={cn(
+                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                pathname === '/billing'
+                  ? 'bg-teal/10 text-teal'
+                  : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+              )}
+            >
+              <CreditCardIcon className="w-5 h-5" />
+              Billing
+            </Link>
+          )}
+          <Link
+            href="/settings"
+            className={cn(
+              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+              pathname === '/settings'
+                ? 'bg-teal/10 text-teal'
+                : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+            )}
+          >
+            <Cog6ToothIcon className="w-5 h-5" />
+            Settings
+          </Link>
+          <Link
+            href="/help"
+            className={cn(
+              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+              pathname === '/help'
+                ? 'bg-teal/10 text-teal'
+                : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+            )}
+          >
+            <QuestionMarkCircleIcon className="w-5 h-5" />
+            Help
+          </Link>
         </div>
       </div>
     </aside>

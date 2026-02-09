@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { getPhaseTemplate } from '@/config/phases';
 import { isPhaseAccessible } from '@/lib/phase-access';
+import { isOrgOwnerOrAdmin } from '@/lib/permissions';
 
 export async function POST(request: Request) {
   try {
@@ -17,13 +18,41 @@ export async function POST(request: Request) {
 
     const { data: membership } = await supabase
       .from('org_members')
-      .select('id')
+      .select('id, role')
       .eq('organization_id', organizationId)
       .eq('user_id', user.id)
       .single();
 
     if (!membership) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+
+    // Team member: check for pending change requests on this question's variables
+    const isAdmin = await isOrgOwnerOrAdmin(organizationId, user.id);
+    if (!isAdmin) {
+      const phaseTemplatePre = getPhaseTemplate(
+        (await supabase.from('brand_phases').select('phase_number').eq('id', phaseId).single()).data?.phase_number || ''
+      );
+      if (phaseTemplatePre) {
+        const outputKeysForQuestion = phaseTemplatePre.questionOutputMap[questionIndex] || [];
+        if (outputKeysForQuestion.length > 0) {
+          const serviceClient = createServiceClient();
+          const { count } = await serviceClient
+            .from('change_requests')
+            .select('*', { count: 'exact', head: true })
+            .eq('organization_id', organizationId)
+            .eq('entity_type', 'brand_variable')
+            .in('entity_id', outputKeysForQuestion)
+            .in('status', ['pending', 'revision_requested']);
+
+          if (count && count > 0) {
+            return NextResponse.json({
+              error: 'Pending changes must be reviewed before advancing. Please wait for your changes to be approved.',
+              pendingChangeRequests: count,
+            }, { status: 400 });
+          }
+        }
+      }
     }
 
     // Get the phase record

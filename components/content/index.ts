@@ -22,3 +22,5 @@ export { DeleteConfirmationModal } from './delete-confirmation-modal';
 export { ContentFilterBar, applyContentFilters, EMPTY_FILTERS, type ContentFilters } from './content-filters';
 export { GenerationBatchTracker, type BatchStatus } from './generation-batch-tracker';
 export { SocialPreview, SocialPreviewTabs } from './social-preview';
+export { UTMBuilderModal } from './utm-builder-modal';
+export { PostActionPopup, type PublishResult } from './post-action-popup';

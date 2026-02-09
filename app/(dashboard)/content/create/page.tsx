@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button, Card, Badge, Textarea, PageHeader, ActionModal } from '@/components/ui';
-import { BrandVariablesPanel, ScriptTemplateBadge, CreativeAssetSpecs, PlatformOverrideTabs, MediaUpload, GenerationBatchTracker, SocialPreviewTabs, type UploadedFile } from '@/components/content';
+import { BrandVariablesPanel, ScriptTemplateBadge, CreativeAssetSpecs, PlatformOverrideTabs, MediaUpload, GenerationBatchTracker, SocialPreviewTabs, UTMBuilderModal, PostActionPopup, type UploadedFile, type PublishResult } from '@/components/content';
 import { DriveFilePicker } from '@/components/content/drive-file-picker';
 import {
   SparklesIcon,
@@ -16,6 +16,8 @@ import {
   BoltIcon,
   CheckCircleIcon,
   XMarkIcon,
+  LinkIcon,
+  PaperAirplaneIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import {
@@ -37,6 +39,7 @@ import {
 } from '@/lib/content-engine/brand-variable-categories';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import type { FunnelStage, StoryBrandStage, ContentStatus, Json } from '@/types/database';
+import type { UTMParams } from '@/lib/utm/generate-utm';
 
 type CreateMode = 'single' | 'manual' | 'bulk' | 'engine';
 
@@ -173,6 +176,12 @@ export default function ContentCreatePage() {
     subtitle?: string;
     savedItemId?: string;
   }>({ variant: 'success', title: '' });
+
+  // Post action popup + UTM state
+  const [showPostActionPopup, setShowPostActionPopup] = useState(false);
+  const [utmParams, setUtmParams] = useState<UTMParams | null>(null);
+  const [showUtmModal, setShowUtmModal] = useState(false);
+  const [targetUrl, setTargetUrl] = useState('');
 
   // Engine tab state
   const [engineFunnelStage, setEngineFunnelStage] = useState<FunnelStage>('awareness');
@@ -1043,6 +1052,191 @@ export default function ContentCreatePage() {
     }
   };
 
+  // Save and return item ID (for post action popup)
+  const handleSaveAndReturnId = async (status?: ContentStatus): Promise<string | null> => {
+    const itemId = mode === 'manual' ? manualItemId : generated?.id;
+    setIsSaving(true);
+
+    try {
+      const updateBody: Record<string, unknown> = {
+        topic: editFields.topic || null,
+        hook: editFields.hook || null,
+        script_body: editFields.script_body || null,
+        cta: editFields.cta || null,
+        caption: editFields.caption || null,
+        hashtags: editFields.hashtags ? editFields.hashtags.split(',').map(h => h.trim()).filter(Boolean) : null,
+        filming_notes: editFields.filming_notes || null,
+        context_section: editFields.context_section || null,
+        teaching_points: editFields.teaching_points || null,
+        reframe: editFields.reframe || null,
+        problem_expansion: editFields.problem_expansion || null,
+        framework_teaching: editFields.framework_teaching || null,
+        case_study: editFields.case_study || null,
+        media_urls: uploadedFiles.length > 0 ? uploadedFiles.map(f => f.url) : null,
+        target_url: targetUrl || null,
+        utm_parameters: utmParams || null,
+      };
+
+      if (status) updateBody.status = status;
+
+      if (!itemId) {
+        const createRes = await fetch('/api/content/items', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            organizationId,
+            format: selectedFormat,
+            funnel_stage: funnelStage,
+            storybrand_stage: storybrandStage,
+            platforms,
+            scheduled_date: scheduleDate || format(new Date(), 'yyyy-MM-dd'),
+            scheduled_time: scheduleTime || null,
+            ai_generated: false,
+            status: status || 'scripted',
+            ...updateBody,
+          }),
+        });
+        const createData = await createRes.json();
+        if (createData.error) throw new Error(createData.error);
+        const newId = createData.item?.id || null;
+        setManualItemId(newId);
+        return newId;
+      }
+
+      if (status === 'scheduled' && scheduleDate) {
+        updateBody.scheduled_date = scheduleDate;
+        updateBody.scheduled_time = scheduleTime || null;
+      }
+
+      const res = await fetch(`/api/content/items/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateBody),
+      });
+
+      if (!res.ok) throw new Error('Save failed');
+      return itemId;
+    } catch (error) {
+      console.error('Save failed:', error);
+      setActionModalConfig({ variant: 'error', title: 'Save Failed', subtitle: 'Please try again' });
+      setShowActionModal(true);
+      return null;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Post action popup handlers
+  const handlePopupSaveDraft = async (): Promise<string | null> => {
+    const id = await handleSaveAndReturnId('scripted');
+    if (id) {
+      setActionModalConfig({ variant: 'success', title: 'Post Saved as Draft', savedItemId: id });
+      setShowActionModal(true);
+    }
+    return id;
+  };
+
+  const handlePopupSchedule = async (date: string, time: string): Promise<string | null> => {
+    setScheduleDate(date);
+    setScheduleTime(time);
+    // Need to use the date/time directly since setState is async
+    const itemId = mode === 'manual' ? manualItemId : generated?.id;
+    setIsSaving(true);
+
+    try {
+      const updateBody: Record<string, unknown> = {
+        topic: editFields.topic || null,
+        hook: editFields.hook || null,
+        script_body: editFields.script_body || null,
+        cta: editFields.cta || null,
+        caption: editFields.caption || null,
+        hashtags: editFields.hashtags ? editFields.hashtags.split(',').map(h => h.trim()).filter(Boolean) : null,
+        filming_notes: editFields.filming_notes || null,
+        context_section: editFields.context_section || null,
+        teaching_points: editFields.teaching_points || null,
+        reframe: editFields.reframe || null,
+        problem_expansion: editFields.problem_expansion || null,
+        framework_teaching: editFields.framework_teaching || null,
+        case_study: editFields.case_study || null,
+        media_urls: uploadedFiles.length > 0 ? uploadedFiles.map(f => f.url) : null,
+        target_url: targetUrl || null,
+        utm_parameters: utmParams || null,
+        scheduled_date: date,
+        scheduled_time: time || null,
+        status: 'scheduled',
+      };
+
+      if (!itemId) {
+        const createRes = await fetch('/api/content/items', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            organizationId,
+            format: selectedFormat,
+            funnel_stage: funnelStage,
+            storybrand_stage: storybrandStage,
+            platforms,
+            ...updateBody,
+          }),
+        });
+        const createData = await createRes.json();
+        if (createData.error) throw new Error(createData.error);
+        const newId = createData.item?.id || null;
+        setManualItemId(newId);
+        setActionModalConfig({
+          variant: 'success',
+          title: 'Post Scheduled!',
+          subtitle: `Scheduled for ${format(new Date(date + 'T00:00:00'), 'MMM d, yyyy')} at ${time}`,
+          savedItemId: newId || undefined,
+        });
+        setShowActionModal(true);
+        return newId;
+      }
+
+      const res = await fetch(`/api/content/items/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateBody),
+      });
+
+      if (!res.ok) throw new Error('Save failed');
+      setActionModalConfig({
+        variant: 'success',
+        title: 'Post Scheduled!',
+        subtitle: `Scheduled for ${format(new Date(date + 'T00:00:00'), 'MMM d, yyyy')} at ${time}`,
+        savedItemId: itemId,
+      });
+      setShowActionModal(true);
+      return itemId;
+    } catch (error) {
+      console.error('Schedule failed:', error);
+      setActionModalConfig({ variant: 'error', title: 'Schedule Failed', subtitle: 'Please try again' });
+      setShowActionModal(true);
+      return null;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePopupPublishNow = async (publishPlatforms: string[]): Promise<PublishResult[]> => {
+    // Save first
+    const savedId = await handleSaveAndReturnId();
+    if (!savedId) return [{ platform: 'all', success: false, error: 'Could not save post' }];
+
+    try {
+      const res = await fetch('/api/content/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentItemId: savedId, platforms: publishPlatforms }),
+      });
+      const data = await res.json();
+      if (!res.ok) return [{ platform: 'all', success: false, error: data.error || 'Publish failed' }];
+      return data.results || [];
+    } catch (error) {
+      return [{ platform: 'all', success: false, error: 'Publish failed. Please try again.' }];
+    }
+  };
+
   // Current content item ID (for media upload)
   const currentItemId = mode === 'manual' ? manualItemId : generated?.id;
 
@@ -1253,53 +1447,45 @@ export default function ContentCreatePage() {
         </Card>
       )}
 
+      {/* Target URL & UTM */}
+      <Card>
+        <h3 className="text-heading-sm text-charcoal mb-3">Target URL &amp; Tracking</h3>
+        <input
+          value={targetUrl}
+          onChange={e => setTargetUrl(e.target.value)}
+          className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+          placeholder="https://your-link.com"
+        />
+        <button
+          onClick={() => setShowUtmModal(true)}
+          className="mt-2 flex items-center gap-1.5 text-xs font-medium text-teal hover:underline"
+        >
+          <LinkIcon className="w-3.5 h-3.5" />
+          {utmParams ? 'Edit UTM Parameters' : 'Build UTM Parameters'}
+        </button>
+        {utmParams && (utmParams.utm_source || utmParams.utm_campaign) && (
+          <div className="mt-2 bg-cream-warm rounded-lg p-2.5">
+            <p className="text-xs text-stone">
+              {[
+                utmParams.utm_source && `source: ${utmParams.utm_source}`,
+                utmParams.utm_medium && `medium: ${utmParams.utm_medium}`,
+                utmParams.utm_campaign && `campaign: ${utmParams.utm_campaign}`,
+              ].filter(Boolean).join(' · ')}
+            </p>
+          </div>
+        )}
+      </Card>
+
       {/* Actions */}
       <Card>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div className="flex-1 flex gap-2">
-            <div className="flex-1">
-              <label className="block text-xs font-medium text-stone mb-1">Schedule Date (optional)</label>
-              <input
-                type="date"
-                value={scheduleDate}
-                onChange={e => setScheduleDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-              />
-            </div>
-            <div className="w-32">
-              <label className="block text-xs font-medium text-stone mb-1">Time</label>
-              <input
-                type="time"
-                value={scheduleTime}
-                onChange={e => setScheduleTime(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2 sm:pt-4">
-            <Button onClick={() => handleSave(false)} variant="ghost" disabled={isSaving}>
-              Save as Draft
-            </Button>
-            {mode === 'manual' && (
-              <Button
-                onClick={() => {
-                  // Save with status 'pending_review'
-                  handleSave(false);
-                }}
-                variant="ghost"
-                disabled={isSaving}
-              >
-                Submit for Review
-              </Button>
-            )}
-            <Button onClick={() => handleSave(true)} disabled={isSaving || !scheduleDate}>
-              <CalendarDaysIcon className="w-4 h-4 mr-1" />
-              {isSaving ? 'Saving...' : 'Push to Schedule'}
-            </Button>
-          </div>
-        </div>
-
-        {/* ActionModal handles save feedback now */}
+        <Button
+          onClick={() => setShowPostActionPopup(true)}
+          className="w-full"
+          disabled={isSaving}
+        >
+          <PaperAirplaneIcon className="w-4 h-4 mr-2" />
+          Save &amp; Publish
+        </Button>
       </Card>
     </>
   );
@@ -2196,6 +2382,35 @@ export default function ContentCreatePage() {
           </div>
         </div>
       )}
+
+      {/* UTM Builder Modal */}
+      <UTMBuilderModal
+        open={showUtmModal}
+        onClose={() => setShowUtmModal(false)}
+        baseUrl={targetUrl}
+        initialParams={utmParams}
+        onApply={setUtmParams}
+        autoGenerateContext={{
+          platform: platforms[0] || 'linkedin',
+          funnelStage,
+          format: selectedFormat,
+          topic: editFields.topic || null,
+          scheduledDate: scheduleDate || format(new Date(), 'yyyy-MM-dd'),
+        }}
+      />
+
+      {/* Post Action Popup */}
+      <PostActionPopup
+        open={showPostActionPopup}
+        onClose={() => setShowPostActionPopup(false)}
+        platforms={platforms}
+        onSaveDraft={handlePopupSaveDraft}
+        onSchedule={handlePopupSchedule}
+        onPublishNow={handlePopupPublishNow}
+        isLoading={isSaving}
+        defaultScheduleDate={scheduleDate}
+        defaultScheduleTime={scheduleTime}
+      />
 
       {/* Action Modal — shown after save/schedule */}
       <ActionModal

@@ -9,6 +9,8 @@ import { resolveModel, requireCredits, calculateCreditCost, deductCredits, getPr
 import type { AIFeature } from '@/lib/ai';
 import { ARCHETYPE_PROFILES, getArchetypeProfile, formatArchetypeForPrompt, getAllArchetypesSummary } from '@/lib/brand/archetype-profiles';
 import { getAgentForQuestion, formatAgentForPrompt } from '@/config/phase-agents';
+import { hasPermission } from '@/lib/permissions';
+import { checkTeamCredits, deductTeamCredits } from '@/lib/team-credits';
 
 // Allow up to 60s for AI calls (Phase 8+ has large system prompts with all prior locked outputs)
 export const maxDuration = 60;
@@ -61,6 +63,12 @@ export async function POST(request: Request) {
 
     if (!membership) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+
+    // Check team member has brand_engine chat permission
+    const hasChatPerm = await hasPermission(organizationId, user.id, 'brand_engine', 'chat');
+    if (!hasChatPerm) {
+      return NextResponse.json({ error: 'You do not have permission to use the Brand Engine chat.' }, { status: 403 });
     }
 
     logger.info('Brand chat request received', { organizationId, phaseId, userId: user.id, fileCount: files.length });
@@ -463,14 +471,15 @@ export async function POST(request: Request) {
       logger.warn('Failed to track AI usage', { organizationId, error: usageError.message });
     }
 
-    // Deduct credits (only for paid models)
+    // Deduct credits (only for paid models) — routes through team credits for team members
     if (creditsCharged > 0) {
-      await deductCredits(
+      await deductTeamCredits(
         organizationId,
         user.id,
+        'brand_engine',
         creditsCharged,
-        usageRow?.id || null,
-        `Brand chat — ${resolvedModel.name}`
+        `Brand chat — ${resolvedModel.name}`,
+        usageRow?.id || null
       );
     }
 

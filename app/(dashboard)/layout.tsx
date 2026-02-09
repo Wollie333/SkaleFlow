@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
+import type { FeaturePermissions } from '@/lib/permissions';
 
 export default async function DashboardLayout({
   children,
@@ -27,7 +28,7 @@ export default async function DashboardLayout({
       .single(),
     supabase
       .from('org_members')
-      .select('organization_id')
+      .select('organization_id, role')
       .eq('user_id', user.id)
       .single(),
   ]);
@@ -38,6 +39,9 @@ export default async function DashboardLayout({
   let pipelineCount = 0;
   let contentEngineEnabled = false;
   let notificationCount = 0;
+  let pendingReviewCount = 0;
+  const orgRole = (membership?.role || null) as string | null;
+  let teamPermissions: Record<string, FeaturePermissions> = {};
 
   // Prepare promises that run regardless of org membership
   const notificationPromise = supabase
@@ -55,9 +59,29 @@ export default async function DashboardLayout({
 
   if (membership?.organization_id) {
     const orgId = membership.organization_id;
+    const isAdmin = orgRole === 'owner' || orgRole === 'admin';
+
+    // Prepare team permissions query for non-admin users
+    const teamPermsPromise = !isAdmin
+      ? supabase
+          .from('team_permissions')
+          .select('feature, permissions')
+          .eq('organization_id', orgId)
+          .eq('user_id', user.id)
+      : null;
+
+    // Prepare pending review count for admins
+    const serviceClient = createServiceClient();
+    const pendingReviewPromise = isAdmin
+      ? serviceClient
+          .from('change_requests')
+          .select('*', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .in('status', ['pending', 'revision_requested'])
+      : null;
 
     // Run ALL queries in parallel (org-scoped + global)
-    const [orgResult, subscriptionResult, phasesResult, contentCountResult, notifResult, pipelineResult] = await Promise.all([
+    const [orgResult, subscriptionResult, phasesResult, contentCountResult, notifResult, pipelineResult, teamPermsResult, pendingReviewResult] = await Promise.all([
       supabase
         .from('organizations')
         .select('content_engine_enabled')
@@ -81,6 +105,8 @@ export default async function DashboardLayout({
         .in('status', ['idea', 'scripted']),
       notificationPromise,
       pipelinePromise,
+      teamPermsPromise,
+      pendingReviewPromise,
     ]);
 
     contentEngineEnabled = orgResult.data?.content_engine_enabled ?? false;
@@ -104,6 +130,14 @@ export default async function DashboardLayout({
     contentStats = { pending: contentCountResult.count || 0 };
     pipelineCount = pipelineResult?.count || 0;
     notificationCount = notifResult.count || 0;
+    pendingReviewCount = pendingReviewResult?.count || 0;
+
+    // Build team permissions map for non-admin users
+    if (teamPermsResult?.data) {
+      for (const row of teamPermsResult.data) {
+        teamPermissions[row.feature] = (row.permissions || {}) as FeaturePermissions;
+      }
+    }
   } else {
     const [notifResult, pipelineResult] = await Promise.all([
       notificationPromise,
@@ -116,7 +150,18 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-cream">
       <Header user={{ email: user.email!, full_name: userData?.full_name }} initialUnreadCount={notificationCount || 0} organizationId={membership?.organization_id} />
-      <Sidebar brandProgress={brandProgress} contentStats={contentStats} userRole={userData?.role} tierName={tierName} pipelineCount={pipelineCount} contentEngineEnabled={contentEngineEnabled} notificationCount={notificationCount || 0} />
+      <Sidebar
+        brandProgress={brandProgress}
+        contentStats={contentStats}
+        userRole={userData?.role}
+        orgRole={orgRole}
+        tierName={tierName}
+        pipelineCount={pipelineCount}
+        contentEngineEnabled={contentEngineEnabled}
+        notificationCount={notificationCount || 0}
+        pendingReviewCount={pendingReviewCount}
+        teamPermissions={teamPermissions}
+      />
       <main className="ml-60 pt-16 min-h-screen overflow-x-hidden">
         <div className="p-6 lg:p-8 max-w-[calc(100vw-15rem)]">
           {children}

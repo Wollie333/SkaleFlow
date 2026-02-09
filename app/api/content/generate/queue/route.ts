@@ -4,6 +4,8 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { enqueueBatch } from '@/lib/content-engine/queue-service';
 import { getModelConfig, checkCredits, isSuperAdmin } from '@/lib/ai';
 import { MAX_BATCH_FREE, MAX_BATCH_PAID } from '@/lib/content-engine/queue-config';
+import { hasFeatureAccess } from '@/lib/permissions';
+import { checkTeamCredits } from '@/lib/team-credits';
 
 export async function POST(request: NextRequest) {
   console.log('[QUEUE-ENQUEUE] POST /api/content/generate/queue called');
@@ -44,6 +46,12 @@ export async function POST(request: NextRequest) {
   }
   console.log('[QUEUE-ENQUEUE] Membership role:', membership.role);
 
+  // Check team member has content_engine access
+  const hasAccess = await hasFeatureAccess(organizationId, user.id, 'content_engine');
+  if (!hasAccess) {
+    return NextResponse.json({ error: 'You do not have access to the Content Engine.' }, { status: 403 });
+  }
+
   // Validate model
   const model = getModelConfig(modelOverride);
   if (!model) {
@@ -68,12 +76,14 @@ export async function POST(request: NextRequest) {
   if (!model.isFree) {
     const estimatedCreditsPerItem = 140;
     const totalEstimated = estimatedCreditsPerItem * contentItemIds.length;
-    const balance = await checkCredits(organizationId, totalEstimated, user.id);
-    if (!balance.hasCredits) {
+
+    // Check team credits for team members, org pool for owner/admin
+    const teamBalance = await checkTeamCredits(organizationId, user.id, 'content_engine', totalEstimated);
+    if (!teamBalance.hasCredits) {
       return NextResponse.json({
         error: 'Insufficient credits for this batch',
         creditsRequired: totalEstimated,
-        creditsAvailable: balance.totalRemaining,
+        creditsAvailable: teamBalance.remaining,
       }, { status: 402 });
     }
   }

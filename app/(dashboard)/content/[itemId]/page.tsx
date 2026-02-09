@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button, Card, StatusBadge, ActionModal } from '@/components/ui';
-import { SocialPreviewTabs, MediaUpload, PlatformOverrideTabs, CommentThread, TagSelector, type UploadedFile } from '@/components/content';
+import { SocialPreviewTabs, MediaUpload, PlatformOverrideTabs, CommentThread, TagSelector, UTMBuilderModal, PostActionPopup, type UploadedFile, type PublishResult } from '@/components/content';
 import {
   ArrowLeftIcon,
   CalendarDaysIcon,
@@ -14,9 +14,11 @@ import {
   ArrowPathIcon,
   PaperAirplaneIcon,
   SparklesIcon,
+  LinkIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import type { SocialPlatform, ContentStatus, FunnelStage, StoryBrandStage } from '@/types/database';
+import type { UTMParams } from '@/lib/utm/generate-utm';
 
 const PLATFORM_OPTIONS: SocialPlatform[] = ['linkedin', 'facebook', 'instagram', 'twitter', 'tiktok'];
 
@@ -110,6 +112,11 @@ export default function PostEditPage() {
     subtitle?: string;
   }>({ variant: 'success', title: '' });
 
+  // Post action popup + UTM state
+  const [showPostActionPopup, setShowPostActionPopup] = useState(false);
+  const [utmParams, setUtmParams] = useState<UTMParams | null>(null);
+  const [showUtmModal, setShowUtmModal] = useState(false);
+
   useEffect(() => {
     async function loadItem() {
       try {
@@ -137,6 +144,9 @@ export default function PostEditPage() {
         setFunnelStage(loadedItem.funnel_stage || 'awareness');
         setStorybrandStage(loadedItem.storybrand_stage || 'character');
         setFilmingNotes(loadedItem.filming_notes || '');
+        if (loadedItem.utm_parameters) {
+          setUtmParams(loadedItem.utm_parameters as unknown as UTMParams);
+        }
         setUploadedFiles(
           (loadedItem.media_urls || []).map((url: string) => ({
             url,
@@ -180,6 +190,7 @@ export default function PostEditPage() {
         hashtags: hashtags.length > 0 ? hashtags : null,
         platforms,
         target_url: targetUrl || null,
+        utm_parameters: utmParams || null,
         scheduled_date: scheduledDate,
         scheduled_time: scheduledTime,
         funnel_stage: funnelStage,
@@ -225,7 +236,7 @@ export default function PostEditPage() {
     } finally {
       setIsSaving(false);
     }
-  }, [item, topic, hook, scriptBody, cta, caption, hashtags, platforms, targetUrl, scheduledDate, scheduledTime, funnelStage, storybrandStage, filmingNotes, uploadedFiles]);
+  }, [item, topic, hook, scriptBody, cta, caption, hashtags, platforms, targetUrl, utmParams, scheduledDate, scheduledTime, funnelStage, storybrandStage, filmingNotes, uploadedFiles]);
 
   const handleReview = useCallback(async (action: 'approve' | 'reject' | 'request_revision', comment?: string) => {
     if (!item) return;
@@ -264,6 +275,83 @@ export default function PostEditPage() {
 
   const removeHashtag = (tag: string) => {
     setHashtags(prev => prev.filter(t => t !== tag));
+  };
+
+  // Post action popup handlers
+  const handlePopupSaveDraft = async (): Promise<string | null> => {
+    await handleSave();
+    return item?.id || null;
+  };
+
+  const handlePopupSchedule = async (date: string, time: string): Promise<string | null> => {
+    if (!item) return null;
+    setIsSaving(true);
+    try {
+      const body: Record<string, unknown> = {
+        topic: topic || null,
+        hook: hook || null,
+        script_body: scriptBody || null,
+        cta: cta || null,
+        caption: caption || null,
+        hashtags: hashtags.length > 0 ? hashtags : null,
+        platforms,
+        target_url: targetUrl || null,
+        utm_parameters: utmParams || null,
+        scheduled_date: date,
+        scheduled_time: time,
+        funnel_stage: funnelStage,
+        storybrand_stage: storybrandStage,
+        filming_notes: filmingNotes || null,
+        media_urls: uploadedFiles.map(f => f.url),
+        status: 'scheduled',
+      };
+
+      const res = await fetch(`/api/content/items/${item.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setItem(data.item);
+        setScheduledDate(date);
+        setScheduledTime(time);
+        setModalConfig({
+          variant: 'success',
+          title: 'Post Scheduled!',
+          subtitle: `Scheduled for ${format(new Date(date + 'T00:00:00'), 'MMM d, yyyy')} at ${time}`,
+        });
+        setShowModal(true);
+        return item.id;
+      }
+      throw new Error('Save failed');
+    } catch {
+      setModalConfig({ variant: 'error', title: 'Schedule Failed', subtitle: 'Please try again' });
+      setShowModal(true);
+      return null;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePopupPublishNow = async (publishPlatforms: string[]): Promise<PublishResult[]> => {
+    // Save first
+    await handleSave();
+    if (!item) return [{ platform: 'all', success: false, error: 'No item to publish' }];
+
+    try {
+      const res = await fetch('/api/content/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentItemId: item.id, platforms: publishPlatforms }),
+      });
+      const data = await res.json();
+      if (!res.ok) return [{ platform: 'all', success: false, error: data.error || 'Publish failed' }];
+      return data.results || [];
+    } catch {
+      return [{ platform: 'all', success: false, error: 'Publish failed. Please try again.' }];
+    }
   };
 
   if (isLoading) {
@@ -430,6 +518,24 @@ export default function PostEditPage() {
               className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
               placeholder="https://your-link.com"
             />
+            <button
+              onClick={() => setShowUtmModal(true)}
+              className="flex items-center gap-1.5 text-xs font-medium text-teal hover:underline"
+            >
+              <LinkIcon className="w-3.5 h-3.5" />
+              {utmParams ? 'Edit UTM Parameters' : 'Build UTM Parameters'}
+            </button>
+            {utmParams && (utmParams.utm_source || utmParams.utm_campaign) && (
+              <div className="bg-cream-warm rounded-lg p-2.5">
+                <p className="text-xs text-stone">
+                  {[
+                    utmParams.utm_source && `source: ${utmParams.utm_source}`,
+                    utmParams.utm_medium && `medium: ${utmParams.utm_medium}`,
+                    utmParams.utm_campaign && `campaign: ${utmParams.utm_campaign}`,
+                  ].filter(Boolean).join(' · ')}
+                </p>
+              </div>
+            )}
           </Card>
 
           {/* Platforms */}
@@ -592,24 +698,43 @@ export default function PostEditPage() {
 
         <div className="flex items-center gap-3">
           <Button
-            variant="ghost"
-            onClick={() => handleSave()}
+            onClick={() => setShowPostActionPopup(true)}
             isLoading={isSaving}
           >
-            Save Draft
+            <PaperAirplaneIcon className="w-4 h-4 mr-1" />
+            Save &amp; Publish
           </Button>
-          {item.status !== 'published' && (
-            <Button
-              onClick={() => handleSave('scheduled')}
-              isLoading={isSaving}
-              disabled={!scheduledDate}
-            >
-              <CalendarDaysIcon className="w-4 h-4 mr-1" />
-              Schedule
-            </Button>
-          )}
         </div>
       </div>
+
+      {/* UTM Builder Modal */}
+      <UTMBuilderModal
+        open={showUtmModal}
+        onClose={() => setShowUtmModal(false)}
+        baseUrl={targetUrl}
+        initialParams={utmParams}
+        onApply={setUtmParams}
+        autoGenerateContext={{
+          platform: platforms[0] || 'linkedin',
+          funnelStage,
+          format: item.format || 'short_video_30_60',
+          topic: topic || null,
+          scheduledDate: scheduledDate || format(new Date(), 'yyyy-MM-dd'),
+        }}
+      />
+
+      {/* Post Action Popup */}
+      <PostActionPopup
+        open={showPostActionPopup}
+        onClose={() => setShowPostActionPopup(false)}
+        platforms={platforms}
+        onSaveDraft={handlePopupSaveDraft}
+        onSchedule={handlePopupSchedule}
+        onPublishNow={handlePopupPublishNow}
+        isLoading={isSaving}
+        defaultScheduleDate={scheduledDate}
+        defaultScheduleTime={scheduledTime}
+      />
 
       {/* Action Modal */}
       <ActionModal

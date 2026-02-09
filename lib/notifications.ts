@@ -158,3 +158,53 @@ export async function notifyCreator({
     },
   });
 }
+
+/**
+ * Notify a specific team member.
+ */
+export async function notifyTeamMember(
+  supabase: ServiceClient,
+  userId: string,
+  orgId: string,
+  type: NotificationType,
+  title: string,
+  body: string,
+  link?: string,
+  metadata?: Record<string, unknown>
+) {
+  await createNotification({ supabase, userId, orgId, type, title, body, link, metadata });
+}
+
+/**
+ * Notify all org owners and admins.
+ */
+export async function notifyOrgAdmins(
+  supabase: ServiceClient,
+  orgId: string,
+  type: NotificationType,
+  title: string,
+  body: string,
+  link?: string,
+  metadata?: Record<string, unknown>
+) {
+  const { data: admins } = await supabase
+    .from('org_members')
+    .select('user_id')
+    .eq('organization_id', orgId)
+    .in('role', ['owner', 'admin']);
+
+  if (!admins || admins.length === 0) return;
+
+  for (const admin of admins) {
+    await createNotification({
+      supabase,
+      userId: admin.user_id,
+      orgId,
+      type,
+      title,
+      body,
+      link,
+      metadata,
+    });
+  }
+}

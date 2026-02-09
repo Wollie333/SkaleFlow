@@ -45,7 +45,10 @@ export type PipelineStage = 'application' | 'declined' | 'approved' | 'booking_m
 export type MeetingStatus = 'pending' | 'scheduled' | 'completed' | 'cancelled' | 'no_show';
 export type SocialPlatform = 'linkedin' | 'facebook' | 'instagram' | 'twitter' | 'tiktok';
 export type PublishStatus = 'queued' | 'publishing' | 'published' | 'failed';
-export type NotificationType = 'content_submitted' | 'content_approved' | 'content_rejected' | 'revision_requested' | 'generation_completed';
+export type NotificationType = 'content_submitted' | 'content_approved' | 'content_rejected' | 'revision_requested' | 'generation_completed' | 'change_request_submitted' | 'change_request_approved' | 'change_request_rejected' | 'change_request_revision' | 'credits_allocated' | 'credits_low';
+export type FeatureType = 'brand_engine' | 'content_engine' | 'pipeline' | 'ad_campaigns';
+export type ChangeRequestStatus = 'pending' | 'approved' | 'rejected' | 'revision_requested';
+export type ChangeType = 'create' | 'update' | 'delete';
 export type GenerationBatchStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 export type GenerationQueueStatus = 'pending' | 'processing' | 'completed' | 'failed';
 export type CreditTransactionType = 'monthly_allocation' | 'monthly_reset' | 'topup_purchase' | 'ai_usage_deduction' | 'refund' | 'admin_adjustment';
@@ -3356,6 +3359,188 @@ export interface Database {
           {
             foreignKeyName: "ad_generation_batches_user_id_fkey";
             columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      team_permissions: {
+        Row: {
+          id: string;
+          organization_id: string;
+          user_id: string;
+          feature: string;
+          permissions: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          user_id: string;
+          feature: string;
+          permissions?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          user_id?: string;
+          feature?: string;
+          permissions?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "team_permissions_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "team_permissions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      team_credit_allocations: {
+        Row: {
+          id: string;
+          organization_id: string;
+          user_id: string;
+          feature: string;
+          credits_allocated: number;
+          credits_remaining: number;
+          allocated_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          user_id: string;
+          feature: string;
+          credits_allocated?: number;
+          credits_remaining?: number;
+          allocated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          user_id?: string;
+          feature?: string;
+          credits_allocated?: number;
+          credits_remaining?: number;
+          allocated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "team_credit_allocations_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "team_credit_allocations_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "team_credit_allocations_allocated_by_fkey";
+            columns: ["allocated_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      change_requests: {
+        Row: {
+          id: string;
+          organization_id: string;
+          requested_by: string;
+          feature: string;
+          entity_type: string;
+          entity_id: string | null;
+          change_type: string;
+          current_value: Json | null;
+          proposed_value: Json | null;
+          metadata: Json;
+          status: string;
+          reviewed_by: string | null;
+          review_comment: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          requested_by: string;
+          feature: string;
+          entity_type: string;
+          entity_id?: string | null;
+          change_type: string;
+          current_value?: Json | null;
+          proposed_value?: Json | null;
+          metadata?: Json;
+          status?: string;
+          reviewed_by?: string | null;
+          review_comment?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          requested_by?: string;
+          feature?: string;
+          entity_type?: string;
+          entity_id?: string | null;
+          change_type?: string;
+          current_value?: Json | null;
+          proposed_value?: Json | null;
+          metadata?: Json;
+          status?: string;
+          reviewed_by?: string | null;
+          review_comment?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "change_requests_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "change_requests_requested_by_fkey";
+            columns: ["requested_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "change_requests_reviewed_by_fkey";
+            columns: ["reviewed_by"];
             isOneToOne: false;
             referencedRelation: "users";
             referencedColumns: ["id"];

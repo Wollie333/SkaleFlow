@@ -3,6 +3,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button, PageHeader } from '@/components/ui';
 import { UserGroupIcon } from '@heroicons/react/24/outline';
+import { MemberCard } from '@/components/team/member-card';
+import { PermissionsGrid } from '@/components/team/permissions-grid';
+import { CreditAllocator } from '@/components/team/credit-allocator';
+import { MemberDetailPanel } from '@/components/team/member-detail-panel';
+import { TeamCreditSummary } from '@/components/team/team-credit-summary';
+import { cn } from '@/lib/utils';
 
 interface TeamMember {
   id: string;
@@ -25,20 +31,40 @@ interface PendingInvite {
   status: string;
 }
 
+interface FeaturePermissions {
+  access?: boolean;
+  chat?: boolean;
+  edit_variables?: boolean;
+  create?: boolean;
+  edit?: boolean;
+  schedule?: boolean;
+  publish?: boolean;
+}
+
+interface MemberPermissions {
+  userId: string;
+  role: string;
+  user: { full_name: string; email: string } | null;
+  permissions: Record<string, FeaturePermissions>;
+}
+
+interface CreditAllocation {
+  id: string;
+  user_id: string;
+  feature: string;
+  credits_allocated: number;
+  credits_remaining: number;
+  users?: { full_name: string; email: string } | null;
+}
+
 type OrgMemberRole = 'owner' | 'admin' | 'member' | 'viewer';
+type TabId = 'members' | 'permissions' | 'credits';
 
 const roleBadgeColors: Record<OrgMemberRole, string> = {
   owner: 'bg-gold/15 text-gold',
   admin: 'bg-purple-100 text-purple-700',
   member: 'bg-teal/10 text-teal',
   viewer: 'bg-stone/10 text-stone',
-};
-
-const roleLabels: Record<OrgMemberRole, string> = {
-  owner: 'Owner',
-  admin: 'Admin',
-  member: 'Member',
-  viewer: 'Viewer',
 };
 
 export default function MyTeamPage() {
@@ -48,9 +74,9 @@ export default function MyTeamPage() {
   const [organizationName, setOrganizationName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState<TabId>('members');
 
-  // Invite modal state
-  const [showInviteModal, setShowInviteModal] = useState(false);
+  // Invite form state
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<OrgMemberRole>('member');
   const [inviteLoading, setInviteLoading] = useState(false);
@@ -58,64 +84,89 @@ export default function MyTeamPage() {
 
   // Action state
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [roleChanging, setRoleChanging] = useState<string | null>(null);
+
+  // Permissions state
+  const [memberPermissions, setMemberPermissions] = useState<MemberPermissions[]>([]);
+  const [permsSaving, setPermsSaving] = useState(false);
+
+  // Credits state
+  const [creditAllocations, setCreditAllocations] = useState<CreditAllocation[]>([]);
+  const [orgBalance, setOrgBalance] = useState({ monthlyRemaining: 0, monthlyTotal: 0, topupRemaining: 0, totalRemaining: 0 });
+
+  // Detail panel
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [selectedMemberPerms, setSelectedMemberPerms] = useState<Record<string, FeaturePermissions>>({});
+  const [selectedMemberCredits, setSelectedMemberCredits] = useState<CreditAllocation[]>([]);
+
+  const isAdmin = userRole === 'owner' || userRole === 'admin';
 
   const fetchTeam = useCallback(async () => {
     try {
       const res = await fetch('/api/team');
       const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'Failed to load team');
-        return;
-      }
-
+      if (!res.ok) { setError(data.error || 'Failed to load team'); return; }
       setMembers(data.members || []);
       setPendingInvites(data.pendingInvites || []);
       setUserRole(data.userRole || null);
       setOrganizationName(data.organizationName || null);
-    } catch {
-      setError('Failed to load team');
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { setError('Failed to load team'); }
+    finally { setIsLoading(false); }
+  }, []);
+
+  const fetchPermissions = useCallback(async () => {
+    try {
+      const res = await fetch('/api/team/permissions');
+      const data = await res.json();
+      if (res.ok) setMemberPermissions(data.members || []);
+    } catch { /* silent */ }
+  }, []);
+
+  const fetchCredits = useCallback(async () => {
+    try {
+      const [allocRes, balRes] = await Promise.all([
+        fetch('/api/team/credits'),
+        fetch('/api/billing/credits'),
+      ]);
+      const allocData = await allocRes.json();
+      const balData = await balRes.json();
+      if (allocRes.ok) setCreditAllocations(allocData.allocations || []);
+      if (balRes.ok) setOrgBalance({
+        monthlyRemaining: balData.monthlyRemaining || 0,
+        monthlyTotal: balData.monthlyTotal || 0,
+        topupRemaining: balData.topupRemaining || 0,
+        totalRemaining: balData.totalRemaining || 0,
+      });
+    } catch { /* silent */ }
   }, []);
 
   useEffect(() => {
     fetchTeam();
   }, [fetchTeam]);
 
+  useEffect(() => {
+    if (isAdmin && activeTab === 'permissions') fetchPermissions();
+    if (isAdmin && activeTab === 'credits') fetchCredits();
+  }, [isAdmin, activeTab, fetchPermissions, fetchCredits]);
+
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
-
     setInviteLoading(true);
     setInviteError('');
-
     try {
       const res = await fetch('/api/team', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        setInviteError(data.error || 'Failed to send invitation');
-        return;
-      }
-
-      setShowInviteModal(false);
+      if (!res.ok) { setInviteError(data.error || 'Failed to send invitation'); return; }
       setInviteEmail('');
       setInviteRole('member');
       await fetchTeam();
-    } catch {
-      setInviteError('Failed to send invitation');
-    } finally {
-      setInviteLoading(false);
-    }
+    } catch { setInviteError('Failed to send invitation'); }
+    finally { setInviteLoading(false); }
   };
 
   const handleCancelInvite = async (invitationId: string) => {
@@ -126,79 +177,88 @@ export default function MyTeamPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ invitationId, action: 'cancel' }),
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || 'Failed to cancel invitation');
-        return;
-      }
-
+      if (!res.ok) { const data = await res.json(); setError(data.error || 'Failed to cancel invitation'); return; }
       await fetchTeam();
-    } catch {
-      setError('Failed to cancel invitation');
-    } finally {
-      setActionLoading(null);
-    }
+    } catch { setError('Failed to cancel invitation'); }
+    finally { setActionLoading(null); }
   };
 
   const handleRemoveMember = async (memberId: string) => {
     setActionLoading(memberId);
     try {
-      const res = await fetch(`/api/team/${memberId}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || 'Failed to remove member');
-        return;
-      }
-
-      setConfirmRemove(null);
+      const res = await fetch(`/api/team/${memberId}`, { method: 'DELETE' });
+      if (!res.ok) { const data = await res.json(); setError(data.error || 'Failed to remove member'); return; }
+      setSelectedMemberId(null);
       await fetchTeam();
-    } catch {
-      setError('Failed to remove member');
-    } finally {
-      setActionLoading(null);
-    }
+    } catch { setError('Failed to remove member'); }
+    finally { setActionLoading(null); }
   };
 
   const handleRoleChange = async (memberId: string, newRole: OrgMemberRole) => {
     setRoleChanging(memberId);
-    setError('');
     try {
       const res = await fetch(`/api/team/${memberId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole }),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'Failed to update role');
-        return;
-      }
-
-      // Update local state immediately
-      setMembers(prev =>
-        prev.map(m => m.id === memberId ? { ...m, role: newRole } : m)
-      );
-    } catch {
-      setError('Failed to update role');
-    } finally {
-      setRoleChanging(null);
-    }
+      if (!res.ok) { const data = await res.json(); setError(data.error || 'Failed to update role'); return; }
+      setMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: newRole } : m));
+    } catch { setError('Failed to update role'); }
+    finally { setRoleChanging(null); }
   };
 
-  const isAdmin = userRole === 'owner' || userRole === 'admin';
+  const handlePermissionChange = async (userId: string, feature: string, permissions: FeaturePermissions) => {
+    setPermsSaving(true);
+    try {
+      const res = await fetch('/api/team/permissions', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, feature, permissions }),
+      });
+      if (res.ok) await fetchPermissions();
+    } catch { setError('Failed to update permissions'); }
+    finally { setPermsSaving(false); }
+  };
+
+  const handleAllocateCredits = async (userId: string, feature: string, amount: number) => {
+    const res = await fetch('/api/team/credits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, feature, amount }),
+    });
+    if (!res.ok) { const data = await res.json(); throw new Error(data.error || 'Failed to allocate'); }
+    await fetchCredits();
+  };
+
+  const handleReclaimCredits = async (userId: string, feature: string, amount: number) => {
+    const res = await fetch('/api/team/credits', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, feature, amount }),
+    });
+    if (!res.ok) { const data = await res.json(); throw new Error(data.error || 'Failed to reclaim'); }
+    await fetchCredits();
+  };
+
+  const openMemberDetail = (memberId: string) => {
+    const member = members.find(m => m.id === memberId);
+    if (!member) return;
+
+    setSelectedMemberId(memberId);
+    const mp = memberPermissions.find(p => p.userId === member.user_id);
+    setSelectedMemberPerms(mp?.permissions || {});
+    setSelectedMemberCredits(creditAllocations.filter(a => a.user_id === member.user_id));
+
+    // Fetch if not loaded
+    if (memberPermissions.length === 0) fetchPermissions();
+    if (creditAllocations.length === 0) fetchCredits();
+  };
+
+  const selectedMember = members.find(m => m.id === selectedMemberId);
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-ZA', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
+    return new Date(dateStr).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
   if (isLoading) {
@@ -214,282 +274,212 @@ export default function MyTeamPage() {
       <div className="p-6">
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
           {error}
-          <button
-            onClick={() => { setError(''); fetchTeam(); }}
-            className="ml-3 underline hover:no-underline"
-          >
-            Retry
-          </button>
+          <button onClick={() => { setError(''); fetchTeam(); }} className="ml-3 underline hover:no-underline">Retry</button>
         </div>
       </div>
     );
   }
 
+  const tabs: { id: TabId; label: string; adminOnly: boolean }[] = [
+    { id: 'members', label: 'Members', adminOnly: false },
+    { id: 'permissions', label: 'Permissions', adminOnly: true },
+    { id: 'credits', label: 'Credits', adminOnly: true },
+  ];
+
+  const totalAllocated = creditAllocations.reduce((sum, a) => sum + a.credits_allocated, 0);
+
   return (
     <div>
-      {/* Invite Modal */}
-      {showInviteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-xl border border-teal/[0.08] p-6 w-full max-w-md mx-4">
-            <h3 className="font-serif text-lg font-bold text-charcoal mb-1">
-              Invite Team Member
-            </h3>
-            <p className="text-sm text-stone mb-4">
-              Send an invitation to join your team.
-            </p>
-
-            <form onSubmit={handleInvite} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-1.5">
-                  Email address
-                </label>
-                <input
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder="colleague@company.com"
-                  required
-                  autoFocus
-                  className="w-full px-4 py-2.5 border border-cream rounded-lg text-charcoal placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-1.5">
-                  Role
-                </label>
-                <select
-                  value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as OrgMemberRole)}
-                  className="w-full px-4 py-2.5 border border-cream rounded-lg text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal cursor-pointer"
-                >
-                  <option value="member">Member</option>
-                  <option value="viewer">Viewer</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-
-              {inviteError && (
-                <p className="text-sm text-red-600">{inviteError}</p>
-              )}
-
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => { setShowInviteModal(false); setInviteEmail(''); setInviteError(''); }}
-                  className="text-sm font-medium text-stone hover:text-charcoal px-4 py-2 rounded-lg hover:bg-cream transition-colors"
-                >
-                  Cancel
-                </button>
-                <Button
-                  type="submit"
-                  disabled={!inviteEmail.trim()}
-                  isLoading={inviteLoading}
-                  className="bg-teal hover:bg-teal-light text-white text-sm px-5 py-2 disabled:opacity-50"
-                >
-                  Send Invite
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
       {/* Error banner */}
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
           {error}
-          <button
-            onClick={() => setError('')}
-            className="ml-3 underline hover:no-underline"
-          >
-            Dismiss
-          </button>
+          <button onClick={() => setError('')} className="ml-3 underline hover:no-underline">Dismiss</button>
         </div>
       )}
 
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <PageHeader
           icon={UserGroupIcon}
           title={organizationName || 'My Team'}
           subtitle={organizationName
-            ? `Team members and invitations for ${organizationName}.`
-            : 'Manage your team members and invitations.'}
-          action={isAdmin ? (
-            <Button
-              onClick={() => setShowInviteModal(true)}
-              className="bg-teal hover:bg-teal-light text-white text-sm px-5 py-2.5"
-            >
-              Invite Member
-            </Button>
-          ) : undefined}
+            ? `Manage team members, permissions and credits for ${organizationName}.`
+            : 'Manage your team members, permissions and credits.'}
         />
       </div>
 
-      {/* Pending Invites */}
-      {pendingInvites.length > 0 && (
-        <div className="mb-8">
-          <h2 className="font-serif text-xl font-bold text-charcoal mb-4 flex items-center gap-2">
-            Pending Invitations
-            <span className="bg-amber-100 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full">
-              {pendingInvites.length}
-            </span>
-          </h2>
+      {/* Tabs */}
+      <div className="border-b border-cream mb-6">
+        <nav className="flex gap-6">
+          {tabs
+            .filter(tab => !tab.adminOnly || isAdmin)
+            .map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'pb-3 text-sm font-medium transition-colors border-b-2',
+                  activeTab === tab.id
+                    ? 'border-teal text-teal'
+                    : 'border-transparent text-stone hover:text-charcoal'
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+        </nav>
+      </div>
 
-          <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-cream">
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Email</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Company</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Invited</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Expires</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Status</th>
-                  {isAdmin && (
-                    <th className="text-right px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Actions</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
+      {/* Tab Content */}
+      {activeTab === 'members' && (
+        <div>
+          {/* Inline invite form (admin only) */}
+          {isAdmin && (
+            <form onSubmit={handleInvite} className="mb-6 bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+              <h3 className="font-serif text-lg font-bold text-charcoal mb-3">Invite Member</h3>
+              <div className="flex items-end gap-3 flex-wrap">
+                <div className="flex-1 min-w-[220px]">
+                  <label className="block text-xs font-medium text-stone mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="colleague@company.com"
+                    required
+                    className="w-full px-3 py-2 border border-cream rounded-lg text-charcoal placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
+                  />
+                </div>
+                <div className="w-36">
+                  <label className="block text-xs font-medium text-stone mb-1">Role</label>
+                  <select
+                    value={inviteRole}
+                    onChange={(e) => setInviteRole(e.target.value as OrgMemberRole)}
+                    className="w-full px-3 py-2 border border-cream rounded-lg text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
+                  >
+                    <option value="member">Member</option>
+                    <option value="viewer">Viewer</option>
+                    {userRole === 'owner' && <option value="admin">Admin</option>}
+                  </select>
+                </div>
+                <Button
+                  type="submit"
+                  disabled={!inviteEmail.trim()}
+                  isLoading={inviteLoading}
+                  className="bg-teal hover:bg-teal-light text-white text-sm px-5 py-2"
+                >
+                  Send Invite
+                </Button>
+              </div>
+              {inviteError && <p className="text-sm text-red-600 mt-2">{inviteError}</p>}
+            </form>
+          )}
+
+          {/* Pending Invites */}
+          {pendingInvites.length > 0 && (
+            <div className="mb-6">
+              <h3 className="font-serif text-lg font-bold text-charcoal mb-3 flex items-center gap-2">
+                Pending Invitations
+                <span className="bg-amber-100 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full">{pendingInvites.length}</span>
+              </h3>
+              <div className="space-y-2">
                 {pendingInvites.map(invite => (
-                  <tr key={invite.id} className="border-b border-cream/50 last:border-0 bg-amber-50/30">
-                    <td className="px-6 py-4 text-charcoal font-medium">{invite.email}</td>
-                    <td className="px-6 py-4 text-stone">{organizationName || '—'}</td>
-                    <td className="px-6 py-4 text-stone">{formatDate(invite.created_at)}</td>
-                    <td className="px-6 py-4 text-stone">{formatDate(invite.expires_at)}</td>
-                    <td className="px-6 py-4">
-                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
-                        Pending
-                      </span>
-                    </td>
+                  <div key={invite.id} className="bg-amber-50/50 rounded-xl border border-amber-200/50 p-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-charcoal">{invite.email}</p>
+                      <p className="text-xs text-stone">Invited {formatDate(invite.created_at)} — Expires {formatDate(invite.expires_at)}</p>
+                    </div>
                     {isAdmin && (
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => handleCancelInvite(invite.id)}
-                          disabled={actionLoading === invite.id}
-                          className="text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
-                        >
-                          {actionLoading === invite.id ? 'Cancelling...' : 'Cancel'}
-                        </button>
-                      </td>
+                      <button
+                        onClick={() => handleCancelInvite(invite.id)}
+                        disabled={actionLoading === invite.id}
+                        className="text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+                      >
+                        {actionLoading === invite.id ? 'Cancelling...' : 'Cancel'}
+                      </button>
                     )}
-                  </tr>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            </div>
+          )}
+
+          {/* Members Grid */}
+          <h3 className="font-serif text-lg font-bold text-charcoal mb-3">
+            Team Members <span className="text-stone font-normal text-sm">({members.length})</span>
+          </h3>
+          {members.length === 0 ? (
+            <div className="bg-white rounded-xl border border-teal/[0.08] p-8 text-center text-stone">
+              No team members yet. {isAdmin && 'Invite your first team member to get started.'}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {members.map(member => (
+                <MemberCard
+                  key={member.id}
+                  member={member}
+                  isAdmin={isAdmin}
+                  onManage={() => openMemberDetail(member.id)}
+                  onRoleChange={(id, role) => handleRoleChange(id, role as OrgMemberRole)}
+                  onRemove={handleRemoveMember}
+                  roleChanging={roleChanging}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Team Members */}
-      <div>
-        <h2 className="font-serif text-xl font-bold text-charcoal mb-4">
-          Team Members
-          <span className="text-stone font-normal text-base ml-2">({members.length})</span>
-        </h2>
+      {activeTab === 'permissions' && isAdmin && (
+        <PermissionsGrid
+          members={memberPermissions}
+          onPermissionChange={handlePermissionChange}
+          saving={permsSaving}
+        />
+      )}
 
-        {members.length === 0 ? (
-          <div className="bg-white rounded-xl border border-teal/[0.08] p-8 text-center text-stone">
-            No team members yet. {isAdmin && 'Invite your first team member to get started.'}
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-cream">
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Name</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Email</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Company</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Role</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Joined</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Last Login</th>
-                  {isAdmin && (
-                    <th className="text-right px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Actions</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {members.map(member => {
-                  const memberRole = member.role as OrgMemberRole;
-                  const isOwner = memberRole === 'owner';
+      {activeTab === 'credits' && isAdmin && (
+        <div className="space-y-6">
+          <TeamCreditSummary
+            orgBalance={orgBalance}
+            totalAllocated={totalAllocated}
+          />
+          <CreditAllocator
+            orgBalance={orgBalance}
+            allocations={creditAllocations}
+            onAllocate={handleAllocateCredits}
+            onReclaim={handleReclaimCredits}
+            members={members
+              .filter(m => m.role !== 'owner')
+              .map(m => ({ userId: m.user_id, name: m.users?.full_name || 'Unknown', email: m.users?.email || '' }))
+            }
+          />
+        </div>
+      )}
 
-                  return (
-                    <tr key={member.id} className="border-b border-cream/50 last:border-0">
-                      <td className="px-6 py-4">
-                        <span className="font-medium text-charcoal">
-                          {member.users?.full_name || 'Unknown'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-stone">{member.users?.email || '—'}</td>
-                      <td className="px-6 py-4 text-stone">{organizationName || '—'}</td>
-                      <td className="px-6 py-4">
-                        {isAdmin && !isOwner ? (
-                          <div className="relative inline-block">
-                            <select
-                              value={memberRole}
-                              onChange={(e) => handleRoleChange(member.id, e.target.value as OrgMemberRole)}
-                              disabled={roleChanging === member.id}
-                              className={`text-xs font-semibold px-2.5 py-1 rounded-full border-0 cursor-pointer appearance-none pr-6 focus:outline-none focus:ring-2 focus:ring-teal/20 ${roleBadgeColors[memberRole] || 'bg-stone/10 text-stone'} ${roleChanging === member.id ? 'opacity-50' : ''}`}
-                            >
-                              {userRole === 'owner' && (
-                                <option value="admin">Admin</option>
-                              )}
-                              <option value="member">Member</option>
-                              <option value="viewer">Viewer</option>
-                            </select>
-                            <svg className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-current opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </div>
-                        ) : (
-                          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${roleBadgeColors[memberRole] || 'bg-stone/10 text-stone'}`}>
-                            {roleLabels[memberRole] || memberRole}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-stone">{formatDate(member.joined_at)}</td>
-                      <td className="px-6 py-4 text-stone">
-                        {member.users?.last_login_at ? formatDate(member.users.last_login_at) : 'Never'}
-                      </td>
-                      {isAdmin && (
-                        <td className="px-6 py-4 text-right">
-                          {isOwner ? (
-                            <span className="text-xs text-stone/50">—</span>
-                          ) : confirmRemove === member.id ? (
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                onClick={() => handleRemoveMember(member.id)}
-                                className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1.5"
-                                isLoading={actionLoading === member.id}
-                              >
-                                Confirm
-                              </Button>
-                              <Button
-                                onClick={() => setConfirmRemove(null)}
-                                className="bg-white hover:bg-cream text-stone border border-stone/20 text-sm px-3 py-1.5"
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => setConfirmRemove(member.id)}
-                              className="text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
-                            >
-                              Remove
-                            </button>
-                          )}
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {/* Member Detail Panel */}
+      {selectedMember && (
+        <MemberDetailPanel
+          member={selectedMember}
+          permissions={selectedMemberPerms}
+          creditAllocations={selectedMemberCredits}
+          isOpen={!!selectedMemberId}
+          onClose={() => setSelectedMemberId(null)}
+          onPermissionChange={(feature, permissions) =>
+            handlePermissionChange(selectedMember.user_id, feature, permissions)
+          }
+          onAllocateCredits={async (feature, amount) => {
+            await handleAllocateCredits(selectedMember.user_id, feature, amount);
+            setSelectedMemberCredits(creditAllocations.filter(a => a.user_id === selectedMember.user_id));
+          }}
+          onReclaimCredits={async (feature, amount) => {
+            await handleReclaimCredits(selectedMember.user_id, feature, amount);
+            setSelectedMemberCredits(creditAllocations.filter(a => a.user_id === selectedMember.user_id));
+          }}
+          onRemove={() => handleRemoveMember(selectedMember.id)}
+          onRoleChange={(role) => handleRoleChange(selectedMember.id, role as OrgMemberRole)}
+        />
+      )}
     </div>
   );
 }

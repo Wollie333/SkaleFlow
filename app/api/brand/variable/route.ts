@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isOrgOwnerOrAdmin } from '@/lib/permissions';
+import { createChangeRequest } from '@/lib/change-requests';
 
 export async function PATCH(request: Request) {
   try {
@@ -23,7 +25,7 @@ export async function PATCH(request: Request) {
 
     const { data: membership } = await supabase
       .from('org_members')
-      .select('id')
+      .select('id, role')
       .eq('organization_id', organizationId)
       .eq('user_id', user.id)
       .single();
@@ -43,7 +45,7 @@ export async function PATCH(request: Request) {
       // Check if variable is locked
       const { data: existing } = await supabase
         .from('brand_outputs')
-        .select('id, is_locked')
+        .select('id, is_locked, output_value')
         .eq('organization_id', organizationId)
         .eq('output_key', outputKey)
         .single();
@@ -52,7 +54,30 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: 'Variable is locked. Unlock it first.' }, { status: 409 });
       }
 
-      // Upsert the value
+      // Team member interception: create change request instead of direct save
+      const isAdmin = await isOrgOwnerOrAdmin(organizationId, user.id);
+      if (!isAdmin) {
+        const changeRequest = await createChangeRequest({
+          orgId: organizationId,
+          userId: user.id,
+          feature: 'brand_engine',
+          entityType: 'brand_variable',
+          entityId: outputKey,
+          changeType: existing ? 'update' : 'create',
+          currentValue: existing ? { value: existing.output_value } : null,
+          proposedValue: { value },
+          metadata: { phase_id: phaseId },
+        });
+
+        return NextResponse.json({
+          success: true,
+          pendingApproval: true,
+          changeRequestId: changeRequest.id,
+          message: 'Your change has been submitted for review.',
+        }, { status: 202 });
+      }
+
+      // Owner/admin: direct save
       const { data: updated, error: upsertError } = await supabase
         .from('brand_outputs')
         .upsert({

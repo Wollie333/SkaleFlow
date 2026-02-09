@@ -13,6 +13,13 @@ interface BrandOutput {
   is_locked: boolean;
 }
 
+interface PendingChange {
+  id: string;
+  entity_id: string | null;
+  status: string;
+  proposed_value: unknown;
+}
+
 interface PhaseOutputsProps {
   outputs: BrandOutput[];
   phaseName: string;
@@ -25,6 +32,7 @@ interface PhaseOutputsProps {
   savingKey?: string | null;
   lockingKey?: string | null;
   allPhaseOutputKeys?: string[];
+  pendingChanges?: PendingChange[];
 }
 
 export function PhaseOutputs({
@@ -37,6 +45,7 @@ export function PhaseOutputs({
   savingKey,
   lockingKey,
   allPhaseOutputKeys,
+  pendingChanges = [],
 }: PhaseOutputsProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -49,6 +58,7 @@ export function PhaseOutputs({
   }
 
   const outputMap = new Map(outputs.map(o => [o.output_key, o]));
+  const pendingMap = new Map(pendingChanges.filter(c => c.entity_id).map(c => [c.entity_id!, c]));
   const allLocked = outputs.length > 0 && outputs.every(o => o.is_locked);
 
   // Sort: empty first, then unlocked drafts, then locked
@@ -84,6 +94,7 @@ export function PhaseOutputs({
         <div className="mt-4 space-y-3">
           {sortedKeys.map((key) => {
             const output = outputMap.get(key);
+            const pending = pendingMap.get(key);
             return (
               <VariablePreviewCard
                 key={key}
@@ -97,6 +108,7 @@ export function PhaseOutputs({
                 onUnlock={onUnlockVariable}
                 isSaving={savingKey === key}
                 isLocking={lockingKey === key}
+                pendingApproval={pending ? { status: pending.status, proposedValue: pending.proposed_value } : undefined}
               />
             );
           })}
