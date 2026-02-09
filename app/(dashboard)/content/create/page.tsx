@@ -5,8 +5,11 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button, Card, Badge, Textarea, PageHeader, ActionModal } from '@/components/ui';
 import { BrandVariablesPanel, ScriptTemplateBadge, CreativeAssetSpecs, PlatformOverrideTabs, MediaUpload, GenerationBatchTracker, UTMBuilderModal, PostActionPopup, AIModelPicker, type UploadedFile, type PublishResult } from '@/components/content';
+import { BrandVariableModal } from '@/components/content/brand-variable-modal';
+import { EngineVariationCard } from '@/components/content/engine-variation-card';
 import { DriveFilePicker } from '@/components/content/drive-file-picker';
 import { PreviewPanel } from '@/components/content/preview-panel';
+import { InstanceEditForm, type InstanceSpec } from '@/components/content/instance-edit-form';
 import ScriptModal, { type ScriptData } from '@/components/content/script-modal';
 import ConfigModal, { ConfigSummaryChip, type ContentConfig } from '@/components/content/config-modal';
 import { createDefaultPlacementsMap, getSelectedPlacements, getEnabledPlatforms, type PlatformPlacementsMap } from '@/config/placement-types';
@@ -39,10 +42,8 @@ import { cn } from '@/lib/utils';
 import {
   BRAND_VARIABLE_CATEGORIES,
   AI_GENERATION_VARIABLES,
-  VARIABLE_DISPLAY_NAMES,
 } from '@/lib/content-engine/brand-variable-categories';
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
-import type { FunnelStage, StoryBrandStage, ContentStatus, Json, SocialPlatform } from '@/types/database';
+import type { FunnelStage, StoryBrandStage, ContentStatus, Json, SocialPlatform, PlacementType } from '@/types/database';
 import type { UTMParams } from '@/lib/utm/generate-utm';
 
 type CreateMode = 'single' | 'engine';
@@ -191,37 +192,42 @@ export default function ContentCreatePage() {
   const [engineFunnelStage, setEngineFunnelStage] = useState<FunnelStage>('awareness');
   const [engineStorybrandStage, setEngineStorybrandStage] = useState<StoryBrandStage>('character');
   const [engineFormat, setEngineFormat] = useState<ContentFormat>('short_video_30_60');
-  const [enginePlatforms, setEnginePlatforms] = useState<string[]>(['linkedin']);
   const [engineAngleId, setEngineAngleId] = useState<string | null>(null);
   const [engineVariationCount, setEngineVariationCount] = useState(3);
-  const [engineScheduleMode, setEngineScheduleMode] = useState<'undated' | 'dated'>('undated');
-  const [engineStartDate, setEngineStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [engineEndDate, setEngineEndDate] = useState('');
   const [selectedBrandVars, setSelectedBrandVars] = useState<Set<string>>(
     new Set(AI_GENERATION_VARIABLES)
   );
   const [engineModelId, setEngineModelId] = useState<string | null>(null);
   const [engineBatchId, setEngineBatchId] = useState<string | null>(null);
-  const [engineGeneratedItems, setEngineGeneratedItems] = useState<Array<{
-    id: string; topic: string | null; funnel_stage: string; storybrand_stage: string; format: string; scheduled_date: string;
-  }>>([]);
   const [engineIsGenerating, setEngineIsGenerating] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [contentAngles, setContentAngles] = useState<Array<{
     id: string; name: string; emotional_target: string | null;
   }>>([]);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(BRAND_VARIABLE_CATEGORIES.map(c => c.key))
-  );
   const [showAdvancedFields, setShowAdvancedFields] = useState(false);
   const [showTargetUrl, setShowTargetUrl] = useState(false);
-  const [engineSectionsCollapsed, setEngineSectionsCollapsed] = useState<Set<string>>(new Set(['ai_model']));
+
+  // Engine 3-phase state
+  const [enginePhase, setEnginePhase] = useState<'configure' | 'generating' | 'review'>('configure');
+  const [engineFullItems, setEngineFullItems] = useState<Array<{
+    id: string; topic: string | null; caption: string | null; hashtags: string[] | null;
+    funnel_stage: string; storybrand_stage: string; format: string; platforms: string[] | null;
+    media_urls: string[] | null; scheduled_date: string;
+  }>>([]);
+  const [engineEditFields, setEngineEditFields] = useState<Record<string, Record<string, string>>>({});
+  const [engineMediaFiles, setEngineMediaFiles] = useState<Record<string, UploadedFile[]>>({});
+  const [engineSelectedIds, setEngineSelectedIds] = useState<Set<string>>(new Set());
+  const [showBrandVarModal, setShowBrandVarModal] = useState(false);
+  const [showEngineModelModal, setShowEngineModelModal] = useState(false);
+  const [showEnginePostAction, setShowEnginePostAction] = useState(false);
+  const [engineSaving, setEngineSaving] = useState(false);
 
   // New state for single/manual redesign
   const [platformPlacements, setPlatformPlacements] = useState<PlatformPlacementsMap>(
     createDefaultPlacementsMap(['linkedin'])
   );
-  const [platformSpecs, setPlatformSpecs] = useState<Record<string, { caption?: string; hashtags?: string[] }>>({});
+  const [platformSpecs, setPlatformSpecs] = useState<Record<string, InstanceSpec>>({});
+  const [editingInstance, setEditingInstance] = useState<PlacementType | null>(null);
   const [showScriptModal, setShowScriptModal] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [scriptData, setScriptData] = useState<ScriptData>({
@@ -890,45 +896,19 @@ export default function ContentCreatePage() {
     });
   };
 
-  const toggleExpandCategory = (key: string) => {
-    setExpandedCategories(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  };
-
-  const toggleEnginePlatform = (p: string) => {
-    setEnginePlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
-  };
 
   const handleEngineGenerate = async () => {
-    if (!organizationId || enginePlatforms.length === 0 || !engineEffectiveModelId) return;
+    const enginePlatformsArr = getEnabledPlatforms(platformPlacements) as string[];
+    if (!organizationId || enginePlatformsArr.length === 0 || !engineEffectiveModelId) return;
     setEngineIsGenerating(true);
     setEngineError(null);
-    setEngineGeneratedItems([]);
+    setEngineFullItems([]);
     setEngineBatchId(null);
+    setEnginePhase('generating');
 
     try {
-      // Distribute dates if in "dated" mode
-      const dates: string[] = [];
-      if (engineScheduleMode === 'dated' && engineStartDate && engineEndDate) {
-        const start = new Date(engineStartDate);
-        const end = new Date(engineEndDate);
-        const totalMs = end.getTime() - start.getTime();
-        for (let i = 0; i < engineVariationCount; i++) {
-          const offset = engineVariationCount > 1
-            ? (totalMs * i) / (engineVariationCount - 1)
-            : 0;
-          const d = new Date(start.getTime() + offset);
-          dates.push(format(d, 'yyyy-MM-dd'));
-        }
-      } else {
-        for (let i = 0; i < engineVariationCount; i++) {
-          dates.push(format(new Date(), 'yyyy-MM-dd'));
-        }
-      }
+      // All items created as undated (today's date)
+      const today = format(new Date(), 'yyyy-MM-dd');
 
       // Create content items
       const createdIds: string[] = [];
@@ -941,8 +921,8 @@ export default function ContentCreatePage() {
             format: engineFormat,
             funnel_stage: engineFunnelStage,
             storybrand_stage: engineStorybrandStage,
-            platforms: enginePlatforms,
-            scheduled_date: dates[i],
+            platforms: enginePlatformsArr,
+            scheduled_date: today,
             ai_generated: true,
             status: 'idea',
             ...(engineAngleId ? { angle_id: engineAngleId } : {}),
@@ -975,6 +955,7 @@ export default function ContentCreatePage() {
     } catch (error) {
       console.error('Engine generation failed:', error);
       setEngineError(error instanceof Error ? error.message : 'Generation failed');
+      setEnginePhase('configure');
     }
 
     setEngineIsGenerating(false);
@@ -996,17 +977,32 @@ export default function ContentCreatePage() {
       const ids = queueItems.map(q => q.content_item_id);
       const { data: items } = await supabase
         .from('content_items')
-        .select('id, topic, funnel_stage, storybrand_stage, format, scheduled_date')
+        .select('id, topic, caption, hashtags, funnel_stage, storybrand_stage, format, platforms, media_urls, scheduled_date')
         .in('id', ids);
 
-      if (items) {
-        setEngineGeneratedItems(items);
+      if (items && items.length > 0) {
+        setEngineFullItems(items);
+        // Populate edit fields from generated content
+        const editMap: Record<string, Record<string, string>> = {};
+        const selectedSet = new Set<string>();
+        for (const item of items) {
+          editMap[item.id] = {};
+          if (item.caption) editMap[item.id].caption = item.caption;
+          if (item.hashtags) editMap[item.id].hashtags = (item.hashtags as string[]).join(', ');
+          if (item.topic) editMap[item.id].topic = item.topic;
+          selectedSet.add(item.id);
+        }
+        setEngineEditFields(editMap);
+        setEngineSelectedIds(selectedSet);
+        setEngineMediaFiles({});
+        setEnginePhase('review');
       }
     }
   }, [engineBatchId, organizationId, supabase]);
 
   const handleEngineBatchCancel = useCallback(() => {
     setEngineBatchId(null);
+    setEnginePhase('configure');
   }, []);
 
   const handleBulkPush = async () => {
@@ -1062,8 +1058,12 @@ export default function ContentCreatePage() {
       });
     } else if (newMode === 'engine') {
       setEngineBatchId(null);
-      setEngineGeneratedItems([]);
+      setEngineFullItems([]);
+      setEngineEditFields({});
+      setEngineMediaFiles({});
+      setEngineSelectedIds(new Set());
       setEngineError(null);
+      setEnginePhase('configure');
     }
   };
 
@@ -1244,6 +1244,134 @@ export default function ContentCreatePage() {
     }
   };
 
+  // Engine review phase: bulk action handlers
+  const engineSelectedCount = engineSelectedIds.size;
+
+  const updateEngineField = (itemId: string, field: string, value: string) => {
+    setEngineEditFields(prev => ({
+      ...prev,
+      [itemId]: { ...(prev[itemId] || {}), [field]: value },
+    }));
+  };
+
+  const handleEngineBulkDraft = async (): Promise<string | null> => {
+    setEngineSaving(true);
+    try {
+      for (const itemId of Array.from(engineSelectedIds)) {
+        const fields = engineEditFields[itemId] || {};
+        const mediaFiles = engineMediaFiles[itemId] || [];
+        await fetch(`/api/content/items/${itemId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            caption: fields.caption || null,
+            hashtags: fields.hashtags ? fields.hashtags.split(',').map((h: string) => h.trim()).filter(Boolean) : null,
+            topic: fields.topic || null,
+            media_urls: mediaFiles.length > 0 ? mediaFiles.map(f => f.url) : null,
+            status: 'scripted',
+          }),
+        });
+      }
+      setActionModalConfig({
+        variant: 'success',
+        title: `${engineSelectedCount} Post${engineSelectedCount !== 1 ? 's' : ''} Saved as Drafts`,
+      });
+      setShowActionModal(true);
+      return 'bulk';
+    } catch (error) {
+      console.error('Bulk draft save failed:', error);
+      setActionModalConfig({ variant: 'error', title: 'Save Failed', subtitle: 'Please try again' });
+      setShowActionModal(true);
+      return null;
+    } finally {
+      setEngineSaving(false);
+    }
+  };
+
+  const handleEngineBulkSchedule = async (date: string, time: string): Promise<string | null> => {
+    setEngineSaving(true);
+    try {
+      for (const itemId of Array.from(engineSelectedIds)) {
+        const fields = engineEditFields[itemId] || {};
+        const mediaFiles = engineMediaFiles[itemId] || [];
+        await fetch(`/api/content/items/${itemId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            caption: fields.caption || null,
+            hashtags: fields.hashtags ? fields.hashtags.split(',').map((h: string) => h.trim()).filter(Boolean) : null,
+            topic: fields.topic || null,
+            media_urls: mediaFiles.length > 0 ? mediaFiles.map(f => f.url) : null,
+            scheduled_date: date,
+            scheduled_time: time || null,
+            status: 'scheduled',
+          }),
+        });
+      }
+      setActionModalConfig({
+        variant: 'success',
+        title: `${engineSelectedCount} Post${engineSelectedCount !== 1 ? 's' : ''} Scheduled!`,
+        subtitle: `Scheduled for ${format(new Date(date + 'T00:00:00'), 'MMM d, yyyy')} at ${time}`,
+      });
+      setShowActionModal(true);
+      return 'bulk';
+    } catch (error) {
+      console.error('Bulk schedule failed:', error);
+      setActionModalConfig({ variant: 'error', title: 'Schedule Failed', subtitle: 'Please try again' });
+      setShowActionModal(true);
+      return null;
+    } finally {
+      setEngineSaving(false);
+    }
+  };
+
+  const handleEngineBulkPublish = async (publishPlatforms: string[]): Promise<PublishResult[]> => {
+    setEngineSaving(true);
+    const allResults: PublishResult[] = [];
+    try {
+      for (const itemId of Array.from(engineSelectedIds)) {
+        // Save edits first
+        const fields = engineEditFields[itemId] || {};
+        const mediaFiles = engineMediaFiles[itemId] || [];
+        await fetch(`/api/content/items/${itemId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            caption: fields.caption || null,
+            hashtags: fields.hashtags ? fields.hashtags.split(',').map((h: string) => h.trim()).filter(Boolean) : null,
+            topic: fields.topic || null,
+            media_urls: mediaFiles.length > 0 ? mediaFiles.map(f => f.url) : null,
+          }),
+        });
+
+        // Publish
+        const res = await fetch('/api/content/publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contentItemId: itemId, platforms: publishPlatforms }),
+        });
+        const data = await res.json();
+        if (data.results) {
+          allResults.push(...data.results);
+        } else {
+          allResults.push({ platform: 'all', success: false, error: data.error || 'Publish failed' });
+        }
+      }
+    } catch (error) {
+      allResults.push({ platform: 'all', success: false, error: 'Publish failed. Please try again.' });
+    }
+    setEngineSaving(false);
+    return allResults;
+  };
+
+  const toggleEngineSelectAll = () => {
+    if (engineSelectedIds.size === engineFullItems.length) {
+      setEngineSelectedIds(new Set());
+    } else {
+      setEngineSelectedIds(new Set(engineFullItems.map(i => i.id)));
+    }
+  };
+
   // Current content item ID (for media upload)
   const currentItemId = generated?.id;
 
@@ -1359,175 +1487,194 @@ export default function ContentCreatePage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Left column: Post content (3/5) */}
         <div className="lg:col-span-3 space-y-4">
-          <Card>
-            {/* Config summary + Configure button */}
-            <div className="flex items-center justify-between mb-4">
-              <ConfigSummaryChip config={contentConfig} angles={contentAngles} />
-              <button
-                onClick={() => setShowConfigModal(true)}
-                className="text-xs font-medium text-teal hover:underline"
-              >
-                Configure
-              </button>
-            </div>
+          {editingInstance ? (
+            <InstanceEditForm
+              placementType={editingInstance}
+              masterCaption={editFields.caption || ''}
+              masterHashtags={(editFields.hashtags || '').split(',').map(t => t.trim()).filter(Boolean)}
+              instanceSpec={platformSpecs[editingInstance] || {}}
+              onSave={(placement, spec) => {
+                const updated = { ...platformSpecs };
+                if (Object.keys(spec).length === 0) delete updated[placement];
+                else updated[placement] = spec;
+                setPlatformSpecs(updated);
+                setEditingInstance(null);
+              }}
+              onCancel={() => setEditingInstance(null)}
+            />
+          ) : (
+            <>
+              <Card>
+                {/* Config summary + Configure button */}
+                <div className="flex items-center justify-between mb-4">
+                  <ConfigSummaryChip config={contentConfig} angles={contentAngles} />
+                  <button
+                    onClick={() => setShowConfigModal(true)}
+                    className="text-xs font-medium text-teal hover:underline"
+                  >
+                    Configure
+                  </button>
+                </div>
 
-            {/* Caption - PRIMARY FIELD */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-sm font-medium text-charcoal-700">Caption / Description</label>
+                {/* Caption - PRIMARY FIELD */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-sm font-medium text-charcoal-700">Caption / Description</label>
+                    <button
+                      onClick={handleAiAssistPost}
+                      disabled={isAiAssisting}
+                      className="flex items-center gap-1.5 text-xs font-medium text-teal hover:underline disabled:opacity-50"
+                    >
+                      <SparklesIcon className="w-3.5 h-3.5" />
+                      {isAiAssisting ? 'Generating...' : editFields.caption ? 'AI Enhance' : 'AI Generate'}
+                    </button>
+                  </div>
+                  <Textarea
+                    value={editFields.caption || ''}
+                    onChange={e => updateField('caption', e.target.value)}
+                    rows={8}
+                    placeholder="Write your post caption..."
+                    className="text-sm"
+                  />
+                </div>
+
+                {/* Hashtags */}
+                <div className="mb-4">
+                  <label className="text-sm font-medium text-charcoal-700 mb-1 block">Hashtags</label>
+                  <input
+                    value={editFields.hashtags || ''}
+                    onChange={e => updateField('hashtags', e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                    placeholder="hashtag1, hashtag2, hashtag3"
+                  />
+                </div>
+
+                {/* Topic (small) */}
+                <div className="mb-4">
+                  <label className="text-sm font-medium text-charcoal-700 mb-1 block">Topic</label>
+                  <input
+                    value={editFields.topic || ''}
+                    onChange={e => updateField('topic', e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                    placeholder="Brief topic summary"
+                  />
+                </div>
+              </Card>
+
+              {/* Creative Assets */}
+              <Card>
+                <h3 className="text-heading-sm text-charcoal mb-3">Media</h3>
+                {organizationId && (
+                  <MediaUpload
+                    organizationId={organizationId}
+                    contentItemId={currentItemId || undefined}
+                    uploadedFiles={uploadedFiles}
+                    onFilesChange={setUploadedFiles}
+                    onImportFromDrive={hasDriveConnection ? () => setShowDrivePicker(true) : undefined}
+                  />
+                )}
+              </Card>
+
+              {/* Small buttons row */}
+              <div className="flex items-center gap-3">
                 <button
-                  onClick={handleAiAssistPost}
-                  disabled={isAiAssisting}
-                  className="flex items-center gap-1.5 text-xs font-medium text-teal hover:underline disabled:opacity-50"
+                  type="button"
+                  onClick={() => setShowScriptModal(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-stone-600 hover:border-teal/30 hover:text-teal transition-colors"
                 >
-                  <SparklesIcon className="w-3.5 h-3.5" />
-                  {isAiAssisting ? 'Generating...' : editFields.caption ? 'AI Enhance' : 'AI Generate'}
+                  Script {scriptData.hook || scriptData.script_body ? '(added)' : '(optional)'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowTargetUrl(prev => !prev)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-stone-600 hover:border-teal/30 hover:text-teal transition-colors"
+                >
+                  <LinkIcon className="w-4 h-4" />
+                  {targetUrl ? 'Edit Link' : 'Add Link'}
                 </button>
               </div>
-              <Textarea
-                value={editFields.caption || ''}
-                onChange={e => updateField('caption', e.target.value)}
-                rows={8}
-                placeholder="Write your post caption..."
-                className="text-sm"
-              />
-            </div>
 
-            {/* Hashtags */}
-            <div className="mb-4">
-              <label className="text-sm font-medium text-charcoal-700 mb-1 block">Hashtags</label>
-              <input
-                value={editFields.hashtags || ''}
-                onChange={e => updateField('hashtags', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                placeholder="hashtag1, hashtag2, hashtag3"
-              />
-            </div>
+              {/* Target URL (collapsible) */}
+              {(showTargetUrl || targetUrl || utmParams) && (
+                <Card>
+                  <h3 className="text-heading-sm text-charcoal mb-3">Target URL &amp; Tracking</h3>
+                  <input
+                    value={targetUrl}
+                    onChange={e => setTargetUrl(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                    placeholder="https://your-link.com"
+                  />
+                  <button
+                    onClick={() => setShowUtmModal(true)}
+                    className="mt-2 flex items-center gap-1.5 text-xs font-medium text-teal hover:underline"
+                  >
+                    <LinkIcon className="w-3.5 h-3.5" />
+                    {utmParams ? 'Edit UTM Parameters' : 'Build UTM Parameters'}
+                  </button>
+                  {utmParams && (utmParams.utm_source || utmParams.utm_campaign) && (
+                    <div className="mt-2 bg-cream-warm rounded-lg p-2.5">
+                      <p className="text-xs text-stone">
+                        {[
+                          utmParams.utm_source && `source: ${utmParams.utm_source}`,
+                          utmParams.utm_medium && `medium: ${utmParams.utm_medium}`,
+                          utmParams.utm_campaign && `campaign: ${utmParams.utm_campaign}`,
+                        ].filter(Boolean).join(' · ')}
+                      </p>
+                    </div>
+                  )}
+                </Card>
+              )}
 
-            {/* Topic (small) */}
-            <div className="mb-4">
-              <label className="text-sm font-medium text-charcoal-700 mb-1 block">Topic</label>
-              <input
-                value={editFields.topic || ''}
-                onChange={e => updateField('topic', e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                placeholder="Brief topic summary"
-              />
-            </div>
-          </Card>
+              {/* Schedule + Actions */}
+              <Card>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-charcoal-700 mb-1 block">Schedule Date</label>
+                    <input
+                      type="date"
+                      value={scheduleDate}
+                      onChange={e => setScheduleDate(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-charcoal-700 mb-1 block">Time</label>
+                    <input
+                      type="time"
+                      value={scheduleTime}
+                      onChange={e => setScheduleTime(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                    />
+                  </div>
+                </div>
 
-          {/* Creative Assets */}
-          <Card>
-            <h3 className="text-heading-sm text-charcoal mb-3">Media</h3>
-            {organizationId && (
-              <MediaUpload
-                organizationId={organizationId}
-                contentItemId={currentItemId || undefined}
-                uploadedFiles={uploadedFiles}
-                onFilesChange={setUploadedFiles}
-                onImportFromDrive={hasDriveConnection ? () => setShowDrivePicker(true) : undefined}
-              />
-            )}
-          </Card>
+                {/* AI Model selector */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-charcoal mb-2">AI Model</label>
+                  <AIModelPicker
+                    models={models}
+                    selectedModelId={effectiveModelId}
+                    onSelect={setSelectedModelId}
+                    costLabelFn={m => m.isFree ? 'Free' : `~${m.estimatedCreditsPerMessage} cr`}
+                  />
+                </div>
 
-          {/* Small buttons row */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setShowScriptModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-stone-600 hover:border-teal/30 hover:text-teal transition-colors"
-            >
-              Script {scriptData.hook || scriptData.script_body ? '(added)' : '(optional)'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowTargetUrl(prev => !prev)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-stone-600 hover:border-teal/30 hover:text-teal transition-colors"
-            >
-              <LinkIcon className="w-4 h-4" />
-              {targetUrl ? 'Edit Link' : 'Add Link'}
-            </button>
-          </div>
+                <Button
+                  onClick={() => setShowPostActionPopup(true)}
+                  className="w-full"
+                  disabled={isSaving}
+                >
+                  <PaperAirplaneIcon className="w-4 h-4 mr-2" />
+                  Save &amp; Publish
+                </Button>
+              </Card>
 
-          {/* Target URL (collapsible) */}
-          {(showTargetUrl || targetUrl || utmParams) && (
-            <Card>
-              <h3 className="text-heading-sm text-charcoal mb-3">Target URL &amp; Tracking</h3>
-              <input
-                value={targetUrl}
-                onChange={e => setTargetUrl(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                placeholder="https://your-link.com"
-              />
-              <button
-                onClick={() => setShowUtmModal(true)}
-                className="mt-2 flex items-center gap-1.5 text-xs font-medium text-teal hover:underline"
-              >
-                <LinkIcon className="w-3.5 h-3.5" />
-                {utmParams ? 'Edit UTM Parameters' : 'Build UTM Parameters'}
-              </button>
-              {utmParams && (utmParams.utm_source || utmParams.utm_campaign) && (
-                <div className="mt-2 bg-cream-warm rounded-lg p-2.5">
-                  <p className="text-xs text-stone">
-                    {[
-                      utmParams.utm_source && `source: ${utmParams.utm_source}`,
-                      utmParams.utm_medium && `medium: ${utmParams.utm_medium}`,
-                      utmParams.utm_campaign && `campaign: ${utmParams.utm_campaign}`,
-                    ].filter(Boolean).join(' · ')}
-                  </p>
+              {generateError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-700">{generateError}</p>
                 </div>
               )}
-            </Card>
-          )}
-
-          {/* Schedule + Actions */}
-          <Card>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="flex-1">
-                <label className="text-sm font-medium text-charcoal-700 mb-1 block">Schedule Date</label>
-                <input
-                  type="date"
-                  value={scheduleDate}
-                  onChange={e => setScheduleDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="text-sm font-medium text-charcoal-700 mb-1 block">Time</label>
-                <input
-                  type="time"
-                  value={scheduleTime}
-                  onChange={e => setScheduleTime(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                />
-              </div>
-            </div>
-
-            {/* AI Model selector */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-charcoal mb-2">AI Model</label>
-              <AIModelPicker
-                models={models}
-                selectedModelId={effectiveModelId}
-                onSelect={setSelectedModelId}
-                costLabelFn={m => m.isFree ? 'Free' : `~${m.estimatedCreditsPerMessage} cr`}
-              />
-            </div>
-
-            <Button
-              onClick={() => setShowPostActionPopup(true)}
-              className="w-full"
-              disabled={isSaving}
-            >
-              <PaperAirplaneIcon className="w-4 h-4 mr-2" />
-              Save &amp; Publish
-            </Button>
-          </Card>
-
-          {generateError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-700">{generateError}</p>
-            </div>
+            </>
           )}
         </div>
 
@@ -1543,8 +1690,9 @@ export default function ContentCreatePage() {
                 mediaUrls={uploadedFiles.map(f => f.url)}
                 targetUrl={targetUrl}
                 userName={userName}
-                platformSpecs={platformSpecs}
-                onPlatformSpecsChange={setPlatformSpecs}
+                instanceSpecs={platformSpecs}
+                onEditInstance={setEditingInstance}
+                editingInstance={editingInstance}
                 hasMedia={uploadedFiles.length > 0}
                 hasVideo={uploadedFiles.some(f => f.fileType?.startsWith('video/'))}
               />
@@ -1616,88 +1764,49 @@ export default function ContentCreatePage() {
       {mode === 'single' && renderSingleManualLayout()}
 
       {/* ============================================================ */}
-      {/* MODE 2: CONTENT ENGINE */}
+      {/* MODE 2: CONTENT ENGINE — 3-Phase UI */}
       {/* ============================================================ */}
-      {mode === 'engine' && (
+      {mode === 'engine' && enginePhase === 'configure' && (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Left: Configuration (3 cols) */}
+          {/* Left column: Config + Generate (3/5) */}
           <div className="lg:col-span-3 space-y-4">
+            {/* Config Card */}
             <Card>
-              <h3 className="text-heading-sm text-charcoal mb-4">Content Configuration</h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Funnel Stage */}
-                <div>
-                  <label className="block text-sm font-medium text-charcoal mb-1">Funnel Stage</label>
-                  <select
-                    value={engineFunnelStage}
-                    onChange={e => setEngineFunnelStage(e.target.value as FunnelStage)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                  >
-                    {FUNNEL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                </div>
-
-                {/* StoryBrand Stage */}
-                <div>
-                  <label className="block text-sm font-medium text-charcoal mb-1">StoryBrand Stage</label>
-                  <select
-                    value={engineStorybrandStage}
-                    onChange={e => setEngineStorybrandStage(e.target.value as StoryBrandStage)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                  >
-                    {STORYBRAND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                </div>
-
-                {/* Format */}
-                <div>
-                  <label className="block text-sm font-medium text-charcoal mb-1">Format</label>
-                  <select
-                    value={engineFormat}
-                    onChange={e => setEngineFormat(e.target.value as ContentFormat)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                  >
-                    {FORMAT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                </div>
-
-                {/* Content Angle */}
-                <div>
-                  <label className="block text-sm font-medium text-charcoal mb-1">Content Angle</label>
-                  <select
-                    value={engineAngleId || ''}
-                    onChange={e => setEngineAngleId(e.target.value || null)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                  >
-                    <option value="">Auto-select</option>
-                    {contentAngles.map(a => (
-                      <option key={a.id} value={a.id}>{a.name}{a.emotional_target ? ` (${a.emotional_target})` : ''}</option>
-                    ))}
-                  </select>
-                </div>
+              <div className="flex items-center justify-between mb-4">
+                <ConfigSummaryChip
+                  config={{
+                    format: engineFormat,
+                    funnelStage: engineFunnelStage,
+                    storybrandStage: engineStorybrandStage,
+                    angleId: engineAngleId,
+                  }}
+                  angles={contentAngles}
+                />
+                <button
+                  onClick={() => setShowConfigModal(true)}
+                  className="text-xs font-medium text-teal hover:underline"
+                >
+                  Configure
+                </button>
               </div>
 
-              {/* Platforms */}
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-charcoal mb-1">Platforms</label>
-                <div className="flex flex-wrap gap-2">
-                  {PLATFORM_OPTIONS.map(p => (
-                    <button
-                      key={p}
-                      onClick={() => toggleEnginePlatform(p)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
-                        enginePlatforms.includes(p) ? 'bg-teal text-white' : 'bg-stone/5 text-stone hover:bg-stone/10'
-                      }`}
-                    >
-                      {p}
-                    </button>
+              {/* Content Angle */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-charcoal mb-1">Content Angle</label>
+                <select
+                  value={engineAngleId || ''}
+                  onChange={e => setEngineAngleId(e.target.value || null)}
+                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                >
+                  <option value="">Auto-select</option>
+                  {contentAngles.map(a => (
+                    <option key={a.id} value={a.id}>{a.name}{a.emotional_target ? ` (${a.emotional_target})` : ''}</option>
                   ))}
-                </div>
+                </select>
               </div>
 
               {/* Variation Count */}
-              <div className="mt-4">
+              <div className="mb-4">
                 <label className="block text-sm font-medium text-charcoal mb-1">Variations</label>
                 <div className="flex items-center gap-3">
                   <button
@@ -1708,77 +1817,67 @@ export default function ContentCreatePage() {
                   </button>
                   <span className="text-lg font-semibold text-charcoal w-8 text-center">{engineVariationCount}</span>
                   <button
-                    onClick={() => setEngineVariationCount(prev => Math.min(5, prev + 1))}
+                    onClick={() => setEngineVariationCount(prev => Math.min(3, prev + 1))}
                     className="w-8 h-8 rounded-lg border border-stone/20 text-sm font-medium text-charcoal hover:bg-stone/5 flex items-center justify-center"
                   >
                     +
                   </button>
-                  <span className="text-xs text-stone">posts (1-5)</span>
+                  <span className="text-xs text-stone">posts (1-3)</span>
                 </div>
               </div>
 
-              {/* Scheduling */}
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-charcoal mb-2">Scheduling</label>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setEngineScheduleMode('undated')}
-                    className={cn(
-                      'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                      engineScheduleMode === 'undated' ? 'bg-teal text-white' : 'bg-stone/5 text-stone hover:bg-stone/10'
+              {/* Brand Variables pill */}
+              <div className="mb-4">
+                <button
+                  onClick={() => setShowBrandVarModal(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-charcoal hover:border-teal/30 hover:text-teal transition-colors w-full justify-between"
+                >
+                  <span>Brand Variables</span>
+                  <span className={cn(
+                    'text-xs px-2 py-0.5 rounded-full font-medium',
+                    selectedBrandVars.size === AI_GENERATION_VARIABLES.length
+                      ? 'bg-teal/10 text-teal'
+                      : selectedBrandVars.size === 0
+                      ? 'bg-stone/10 text-stone'
+                      : 'bg-gold/10 text-gold'
+                  )}>
+                    {selectedBrandVars.size} of {AI_GENERATION_VARIABLES.length}
+                  </span>
+                </button>
+              </div>
+
+              {/* AI Model row */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between px-4 py-2.5 rounded-lg border border-stone/20">
+                  <div className="flex items-center gap-2">
+                    <SparklesIcon className="w-4 h-4 text-stone" />
+                    <span className="text-sm text-charcoal">
+                      {engineSelectedModel ? engineSelectedModel.name : 'Select AI Model'}
+                    </span>
+                    {engineSelectedModel && (
+                      <span className={cn(
+                        'text-xs px-1.5 py-0.5 rounded-full font-medium',
+                        engineSelectedModel.isFree ? 'bg-teal/10 text-teal' : 'bg-gold/10 text-gold'
+                      )}>
+                        {engineSelectedModel.isFree ? 'Free' : `~${engineSelectedModel.estimatedCreditsPerMessage * engineVariationCount} cr`}
+                      </span>
                     )}
-                  >
-                    Create as Undated
-                  </button>
-                  <button
-                    onClick={() => setEngineScheduleMode('dated')}
-                    className={cn(
-                      'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                      engineScheduleMode === 'dated' ? 'bg-teal text-white' : 'bg-stone/5 text-stone hover:bg-stone/10'
-                    )}
-                  >
-                    Assign to Dates
-                  </button>
-                </div>
-                {engineScheduleMode === 'dated' && (
-                  <div className="grid grid-cols-2 gap-3 mt-3">
-                    <div>
-                      <label className="block text-xs text-stone mb-1">Start Date</label>
-                      <input
-                        type="date"
-                        value={engineStartDate}
-                        onChange={e => setEngineStartDate(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-stone mb-1">End Date</label>
-                      <input
-                        type="date"
-                        value={engineEndDate}
-                        onChange={e => setEngineEndDate(e.target.value)}
-                        min={engineStartDate}
-                        className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                      />
-                    </div>
                   </div>
-                )}
+                  <button
+                    onClick={() => setShowEngineModelModal(true)}
+                    className="text-xs font-medium text-teal hover:underline"
+                  >
+                    Change
+                  </button>
+                </div>
               </div>
+            </Card>
 
-              {/* AI Model Selection */}
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-charcoal mb-2">AI Model</label>
-                <AIModelPicker
-                  models={models}
-                  selectedModelId={engineEffectiveModelId}
-                  onSelect={setEngineModelId}
-                  costLabelFn={m => m.isFree ? 'Free' : `~${m.estimatedCreditsPerMessage * engineVariationCount} cr total`}
-                />
-              </div>
-
+            {/* Generate Button Card */}
+            <Card>
               {/* Cost estimate */}
               {engineSelectedModel && !engineSelectedModel.isFree && !balanceLoading && balance && (
-                <div className="mt-3 bg-cream-warm rounded-xl p-3 space-y-1">
+                <div className="mb-4 bg-cream-warm rounded-xl p-3 space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-stone">Estimated total cost</span>
                     <span className="font-semibold text-charcoal">
@@ -1798,16 +1897,14 @@ export default function ContentCreatePage() {
                 </div>
               )}
 
-              {/* Generate Button */}
               <Button
                 onClick={handleEngineGenerate}
                 isLoading={engineIsGenerating}
                 disabled={
-                  enginePlatforms.length === 0 ||
-                  !engineEffectiveModelId ||
-                  (engineScheduleMode === 'dated' && !engineEndDate)
+                  getEnabledPlatforms(platformPlacements).length === 0 ||
+                  !engineEffectiveModelId
                 }
-                className="w-full mt-4"
+                className="w-full"
               >
                 <BoltIcon className="w-4 h-4 mr-2" />
                 {engineIsGenerating ? 'Creating...' : `Generate ${engineVariationCount} Variation${engineVariationCount !== 1 ? 's' : ''}`}
@@ -1821,148 +1918,138 @@ export default function ContentCreatePage() {
             </Card>
           </div>
 
-          {/* Right: Brand Variables + Results (2 cols) */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* Brand Variable Toggles */}
-            <Card>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-heading-sm text-charcoal">Brand Variables</h3>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setSelectedBrandVars(new Set(AI_GENERATION_VARIABLES))}
-                    className="text-xs text-teal hover:underline"
-                  >
-                    Select All
-                  </button>
-                  <button
-                    onClick={() => setSelectedBrandVars(new Set())}
-                    className="text-xs text-stone hover:underline"
-                  >
-                    Clear All
-                  </button>
-                </div>
-              </div>
-              <p className="text-xs text-stone mb-3">
-                Toggle which brand DNA feeds the AI prompt. Deselect variables to narrow the content focus.
-              </p>
-
-              <div className="space-y-1 max-h-[500px] overflow-y-auto pr-1">
-                {BRAND_VARIABLE_CATEGORIES.map(category => {
-                  const isExpanded = expandedCategories.has(category.key);
-                  const selectedCount = category.outputKeys.filter(k => selectedBrandVars.has(k)).length;
-                  const allSelected = selectedCount === category.outputKeys.length;
-
-                  return (
-                    <div key={category.key} className="border border-stone/10 rounded-lg">
-                      <button
-                        onClick={() => toggleExpandCategory(category.key)}
-                        className="w-full flex items-center justify-between p-2.5 text-left hover:bg-stone/5 rounded-lg transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-charcoal">{category.label}</span>
-                          <span className={cn(
-                            'text-xs px-1.5 py-0.5 rounded-full',
-                            selectedCount === 0 ? 'bg-stone/10 text-stone' : 'bg-teal/10 text-teal'
-                          )}>
-                            {selectedCount}/{category.outputKeys.length}
-                          </span>
-                        </div>
-                        {isExpanded
-                          ? <ChevronUpIcon className="w-4 h-4 text-stone" />
-                          : <ChevronDownIcon className="w-4 h-4 text-stone" />
-                        }
-                      </button>
-
-                      {isExpanded && (
-                        <div className="px-2.5 pb-2.5 space-y-1">
-                          <button
-                            onClick={() => toggleCategoryVars(category.key, !allSelected)}
-                            className="text-xs text-teal hover:underline mb-1"
-                          >
-                            {allSelected ? 'Deselect all' : 'Select all'}
-                          </button>
-                          {category.outputKeys.map(varKey => (
-                            <label
-                              key={varKey}
-                              className="flex items-center gap-2 py-1 px-1 rounded hover:bg-stone/5 cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedBrandVars.has(varKey)}
-                                onChange={() => toggleBrandVar(varKey)}
-                                className="rounded border-stone/30 text-teal focus:ring-teal w-3.5 h-3.5"
-                              />
-                              <span className="text-xs text-charcoal">{VARIABLE_DISPLAY_NAMES[varKey] || varKey}</span>
-                            </label>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-3 pt-3 border-t border-stone/10">
-                <p className="text-xs text-stone">
-                  {selectedBrandVars.size} of {AI_GENERATION_VARIABLES.length} variables selected
-                </p>
-              </div>
-            </Card>
-
-            {/* Results Panel */}
-            {!engineBatchId && engineGeneratedItems.length === 0 && (
-              <Card className="text-center py-12">
-                <BoltIcon className="w-12 h-12 mx-auto text-stone/20 mb-3" />
-                <h3 className="text-heading-md text-charcoal mb-2">Ready to Generate</h3>
-                <p className="text-sm text-stone">Configure your content on the left, then click Generate.</p>
+          {/* Right column: Preview Panel (2/5) */}
+          <div className="lg:col-span-2">
+            <div className="sticky top-6">
+              <Card className="p-5">
+                <PreviewPanel
+                  platformPlacements={platformPlacements}
+                  onPlatformPlacementsChange={setPlatformPlacements}
+                  caption=""
+                  hashtags={[]}
+                  mediaUrls={[]}
+                  userName={userName}
+                  instanceSpecs={{}}
+                  hasMedia={false}
+                  hasVideo={false}
+                />
               </Card>
-            )}
+            </div>
+          </div>
+        </div>
+      )}
 
-            {engineBatchId && (
+      {/* Engine: Generating Phase */}
+      {mode === 'engine' && enginePhase === 'generating' && (
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div className="lg:col-span-3">
+            {engineBatchId ? (
               <GenerationBatchTracker
                 batchId={engineBatchId}
                 onComplete={handleEngineBatchComplete}
                 onCancel={handleEngineBatchCancel}
               />
-            )}
-
-            {engineGeneratedItems.length > 0 && (
-              <Card>
-                <h3 className="text-heading-sm text-charcoal mb-3">
-                  Generated Content ({engineGeneratedItems.length})
-                </h3>
-                <div className="space-y-2">
-                  {engineGeneratedItems.map(item => (
-                    <div
-                      key={item.id}
-                      className="p-3 rounded-lg border border-stone/10 hover:border-teal/30 transition-colors"
-                    >
-                      <p className="text-sm font-medium text-charcoal mb-1">
-                        {item.topic || 'Generated content'}
-                      </p>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge className={FUNNEL_COLORS[item.funnel_stage as FunnelStage]}>
-                          {item.funnel_stage}
-                        </Badge>
-                        <Badge className="bg-purple-100 text-purple-800">
-                          {item.storybrand_stage.replace(/_/g, ' ')}
-                        </Badge>
-                        <span className="text-xs text-stone">{FORMAT_LABELS[item.format as ContentFormat] || item.format}</span>
-                        <span className="text-xs text-stone/50">|</span>
-                        <span className="text-xs text-stone">{format(new Date(item.scheduled_date), 'MMM d')}</span>
-                      </div>
-                      <a
-                        href="/calendar"
-                        className="text-xs text-teal hover:underline mt-1 inline-block"
-                      >
-                        View in Calendar
-                      </a>
-                    </div>
-                  ))}
-                </div>
+            ) : (
+              <Card className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal mx-auto mb-3" />
+                <p className="text-sm text-stone">Setting up generation...</p>
               </Card>
             )}
           </div>
+          <div className="lg:col-span-2">
+            <div className="sticky top-6">
+              <Card className="p-5">
+                <PreviewPanel
+                  platformPlacements={platformPlacements}
+                  onPlatformPlacementsChange={setPlatformPlacements}
+                  caption=""
+                  hashtags={[]}
+                  mediaUrls={[]}
+                  userName={userName}
+                  instanceSpecs={{}}
+                  hasMedia={false}
+                  hasVideo={false}
+                />
+              </Card>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Engine: Review Phase */}
+      {mode === 'engine' && enginePhase === 'review' && (
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setEnginePhase('configure')}
+                className="text-sm text-stone hover:text-charcoal transition-colors flex items-center gap-1"
+              >
+                <ArrowPathIcon className="w-4 h-4" />
+                Back
+              </button>
+              <h3 className="text-heading-sm text-charcoal">
+                {engineFullItems.length} Variation{engineFullItems.length !== 1 ? 's' : ''} Generated
+              </h3>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={toggleEngineSelectAll}
+                className="text-xs font-medium text-teal hover:underline"
+              >
+                {engineSelectedIds.size === engineFullItems.length ? 'Deselect All' : 'Select All'}
+              </button>
+              <Button
+                onClick={() => setShowEnginePostAction(true)}
+                disabled={engineSelectedCount === 0 || engineSaving}
+                size="sm"
+              >
+                <PaperAirplaneIcon className="w-4 h-4 mr-1" />
+                Save &amp; Publish ({engineSelectedCount})
+              </Button>
+            </div>
+          </div>
+
+          {/* Variation cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {engineFullItems.map(item => (
+              <EngineVariationCard
+                key={item.id}
+                item={item}
+                editFields={engineEditFields[item.id] || {}}
+                onFieldChange={(field, value) => updateEngineField(item.id, field, value)}
+                uploadedFiles={engineMediaFiles[item.id] || []}
+                onFilesChange={(files) => setEngineMediaFiles(prev => ({ ...prev, [item.id]: files }))}
+                platforms={getEnabledPlatforms(platformPlacements)}
+                organizationId={organizationId || ''}
+                userName={userName}
+                isSelected={engineSelectedIds.has(item.id)}
+                onToggleSelect={() => {
+                  setEngineSelectedIds(prev => {
+                    const next = new Set(prev);
+                    if (next.has(item.id)) next.delete(item.id);
+                    else next.add(item.id);
+                    return next;
+                  });
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Sticky bottom bar */}
+          {engineSelectedCount > 0 && (
+            <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-stone/10 -mx-6 px-6 py-4 flex items-center justify-between">
+              <span className="text-sm text-stone">{engineSelectedCount} selected</span>
+              <Button
+                onClick={() => setShowEnginePostAction(true)}
+                disabled={engineSaving}
+              >
+                <PaperAirplaneIcon className="w-4 h-4 mr-1" />
+                Save &amp; Publish
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -2134,17 +2221,108 @@ export default function ContentCreatePage() {
         format={selectedFormat}
       />
 
-      {/* Config Modal */}
+      {/* Config Modal — handles both single and engine modes */}
       <ConfigModal
         isOpen={showConfigModal}
         onClose={() => setShowConfigModal(false)}
-        config={contentConfig}
+        config={mode === 'engine'
+          ? { format: engineFormat, funnelStage: engineFunnelStage, storybrandStage: engineStorybrandStage, angleId: engineAngleId }
+          : contentConfig}
         onSave={(c) => {
-          setSelectedFormat(c.format);
-          setFunnelStage(c.funnelStage);
-          setStorybrandStage(c.storybrandStage);
+          if (mode === 'engine') {
+            setEngineFormat(c.format);
+            setEngineFunnelStage(c.funnelStage);
+            setEngineStorybrandStage(c.storybrandStage);
+          } else {
+            setSelectedFormat(c.format);
+            setFunnelStage(c.funnelStage);
+            setStorybrandStage(c.storybrandStage);
+          }
         }}
         angles={contentAngles}
+      />
+
+      {/* Brand Variable Modal (engine tab) */}
+      <BrandVariableModal
+        isOpen={showBrandVarModal}
+        onClose={() => setShowBrandVarModal(false)}
+        selectedBrandVars={selectedBrandVars}
+        onToggle={toggleBrandVar}
+        onSelectAll={() => setSelectedBrandVars(new Set(AI_GENERATION_VARIABLES))}
+        onClearAll={() => setSelectedBrandVars(new Set())}
+      />
+
+      {/* Engine AI Model Selection Modal */}
+      {showEngineModelModal && (
+        <div className="fixed inset-0 bg-dark/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-teal/10 flex items-center justify-center">
+                  <SparklesIcon className="w-5 h-5 text-teal" />
+                </div>
+                <div>
+                  <h2 className="text-heading-lg text-charcoal">AI Model</h2>
+                  <p className="text-sm text-stone">Select a model for content generation</p>
+                </div>
+              </div>
+              <button onClick={() => setShowEngineModelModal(false)} className="p-1 rounded-lg hover:bg-stone/10">
+                <XMarkIcon className="w-5 h-5 text-stone" />
+              </button>
+            </div>
+
+            <AIModelPicker
+              models={models}
+              selectedModelId={engineEffectiveModelId}
+              onSelect={setEngineModelId}
+              costLabelFn={m => m.isFree ? 'Free' : `~${m.estimatedCreditsPerMessage * engineVariationCount} cr total`}
+            />
+
+            {engineSelectedModel && !engineSelectedModel.isFree && !balanceLoading && balance && (
+              <div className="mt-4 bg-cream-warm rounded-xl p-3 space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-stone">Estimated total cost</span>
+                  <span className="font-semibold text-charcoal">
+                    ~{engineSelectedModel.estimatedCreditsPerMessage * engineVariationCount} credits
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs border-t border-stone/10 pt-1">
+                  <span className="text-stone">Your balance</span>
+                  <span className={cn(
+                    'font-medium',
+                    balance.totalRemaining >= engineSelectedModel.estimatedCreditsPerMessage * engineVariationCount ? 'text-teal' : 'text-red-500'
+                  )}>
+                    {balance.totalRemaining.toLocaleString()} credits
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {engineSelectedModel?.isFree && (
+              <div className="mt-4 bg-teal/5 rounded-xl p-3 flex items-center gap-2">
+                <BoltIcon className="w-4 h-4 text-teal shrink-0" />
+                <p className="text-sm text-teal font-medium">This model is free -- no credits required</p>
+              </div>
+            )}
+
+            <Button onClick={() => setShowEngineModelModal(false)} className="w-full mt-6">
+              Done
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Engine Post Action Popup (bulk mode) */}
+      <PostActionPopup
+        open={showEnginePostAction}
+        onClose={() => setShowEnginePostAction(false)}
+        platforms={getEnabledPlatforms(platformPlacements) as string[]}
+        onSaveDraft={handleEngineBulkDraft}
+        onSchedule={handleEngineBulkSchedule}
+        onPublishNow={handleEngineBulkPublish}
+        isLoading={engineSaving}
+        bulkMode={true}
+        bulkCount={engineSelectedCount}
       />
     </div>
   );

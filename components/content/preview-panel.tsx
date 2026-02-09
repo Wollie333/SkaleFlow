@@ -7,13 +7,14 @@ import {
   PLACEMENT_OPTIONS,
   PLATFORM_ORDER,
   getEnabledPlatforms,
+  getPlacementLabel,
   countPlacements,
   type PlatformPlacementsMap,
-  type PlatformPlacementState,
   type PlacementOption,
 } from '@/config/placement-types';
 import type { SocialPlatform, PlacementType } from '@/types/database';
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import { PencilSquareIcon } from '@heroicons/react/24/outline';
+import type { InstanceSpec } from './instance-edit-form';
 
 // ─── Platform brand colors ──────────────────────────────────────────────
 const PLATFORM_COLORS: Record<SocialPlatform, string> = {
@@ -88,8 +89,9 @@ export interface PreviewPanelProps {
   mediaUrls: string[];
   targetUrl?: string;
   userName?: string;
-  platformSpecs: Record<string, { caption?: string; hashtags?: string[] }>;
-  onPlatformSpecsChange: (specs: Record<string, { caption?: string; hashtags?: string[] }>) => void;
+  instanceSpecs: Record<string, InstanceSpec>;
+  onEditInstance?: (placementType: PlacementType) => void;
+  editingInstance?: PlacementType | null;
   hasMedia?: boolean;
   hasVideo?: boolean;
 }
@@ -103,13 +105,13 @@ export function PreviewPanel({
   mediaUrls,
   targetUrl,
   userName,
-  platformSpecs,
-  onPlatformSpecsChange,
+  instanceSpecs,
+  onEditInstance,
+  editingInstance,
   hasMedia,
   hasVideo,
 }: PreviewPanelProps) {
   const [activePlatform, setActivePlatform] = useState<SocialPlatform | null>(null);
-  const [customizeOpen, setCustomizeOpen] = useState(false);
 
   const enabledPlatforms = getEnabledPlatforms(platformPlacements);
   const { platforms: platformCount, placements: placementCount } = countPlacements(platformPlacements);
@@ -130,26 +132,22 @@ export function PreviewPanel({
     ? platformPlacements[currentActive].placements
     : new Set<PlacementType>();
 
-  // Find which placement to preview (first selected)
-  const selectedPlacementsArr = currentActive
-    ? Array.from(platformPlacements[currentActive].placements)
-    : [];
-  const previewPlacement: PlacementType | null =
-    selectedPlacementsArr.length > 0 ? selectedPlacementsArr[0] : null;
-
-  // Per-channel customization
-  const currentSpec = currentActive ? platformSpecs[currentActive] : undefined;
-  const effectiveCaption = currentSpec?.caption || caption;
-  const effectiveHashtags = currentSpec?.hashtags || hashtags;
+  // Collect all selected placements across all enabled platforms (for multi-card grid)
+  const allSelectedPlacements: { platform: SocialPlatform; placement: PlacementType }[] = [];
+  for (const platform of PLATFORM_ORDER) {
+    if (platformPlacements[platform].enabled) {
+      platformPlacements[platform].placements.forEach(p => {
+        allSelectedPlacements.push({ platform, placement: p });
+      });
+    }
+  }
 
   // ─── Handlers ─────────────────────────────────────────────────────────
   const handlePlatformClick = (platform: SocialPlatform) => {
     const state = platformPlacements[platform];
     if (state.enabled) {
-      // Already enabled — just select for preview (don't toggle off on single click)
       setActivePlatform(platform);
     } else {
-      // Enable with default placement + select for preview
       const defaultPlacement = PLACEMENT_OPTIONS[platform][0].value;
       const updated = { ...platformPlacements };
       updated[platform] = {
@@ -162,7 +160,6 @@ export function PreviewPanel({
   };
 
   const handlePlatformDoubleClick = (platform: SocialPlatform) => {
-    // Double-click to disable
     const state = platformPlacements[platform];
     if (state.enabled) {
       const updated = { ...platformPlacements };
@@ -190,7 +187,6 @@ export function PreviewPanel({
     const state = platformPlacements[currentActive];
     const next = new Set(state.placements);
     if (next.has(placement)) {
-      // Don't allow deselecting the last placement
       if (next.size > 1) {
         next.delete(placement);
       }
@@ -200,26 +196,6 @@ export function PreviewPanel({
     const updated = { ...platformPlacements };
     updated[currentActive] = { ...state, placements: next };
     onPlatformPlacementsChange(updated);
-  };
-
-  const handleSpecChange = (field: 'caption' | 'hashtags', value: string) => {
-    if (!currentActive) return;
-    const existing = platformSpecs[currentActive] || {};
-    const updated = { ...platformSpecs };
-    if (field === 'caption') {
-      updated[currentActive] = { ...existing, caption: value || undefined };
-    } else {
-      const tags = value.split(',').map(t => t.trim()).filter(Boolean);
-      updated[currentActive] = { ...existing, hashtags: tags.length > 0 ? tags : undefined };
-    }
-    onPlatformSpecsChange(updated);
-  };
-
-  const handleResetSpec = () => {
-    if (!currentActive) return;
-    const updated = { ...platformSpecs };
-    delete updated[currentActive];
-    onPlatformSpecsChange(updated);
   };
 
   // ─── Render ───────────────────────────────────────────────────────────
@@ -257,14 +233,14 @@ export function PreviewPanel({
                 isActive
                   ? 'text-white shadow-lg scale-105'
                   : isEnabled
-                    ? 'bg-white border-2 shadow-sm hover:shadow-md'
+                    ? 'shadow-sm hover:shadow-md'
                     : 'bg-stone-100 border border-stone-200 text-stone-400 hover:bg-stone-50 hover:border-stone-300'
               )}
               style={
                 isActive
                   ? { backgroundColor: color, borderColor: color, boxShadow: `0 0 0 3px ${color}30` }
                   : isEnabled
-                    ? { borderColor: color, color }
+                    ? { backgroundColor: `${color}15`, borderWidth: 2, borderStyle: 'solid', borderColor: color, color }
                     : undefined
               }
             >
@@ -306,19 +282,76 @@ export function PreviewPanel({
       {/* ── Divider ──────────────────────────────────────────────── */}
       <div className="border-t border-stone-100" />
 
-      {/* ── Live Preview ─────────────────────────────────────────── */}
-      <div className="bg-stone-50 rounded-xl p-3 min-h-[380px] flex flex-col">
-        {currentActive ? (
-          <SocialPreview
-            platform={currentActive}
-            caption={effectiveCaption}
-            hashtags={effectiveHashtags}
-            mediaUrls={mediaUrls}
-            targetUrl={targetUrl}
-            userName={userName}
-            placementType={previewPlacement}
-          />
-        ) : (
+      {/* ── Multi-Card Preview Grid ────────────────────────────── */}
+      {allSelectedPlacements.length > 0 ? (
+        <div className="space-y-3 max-h-[600px] overflow-y-auto">
+          {allSelectedPlacements.map(({ platform, placement }) => {
+            const color = PLATFORM_COLORS[platform];
+            const platformLabel = PLATFORM_LABELS[platform];
+            const placementLabel = getPlacementLabel(placement);
+            const spec = instanceSpecs[placement];
+            const effectiveCaption = spec?.caption || caption;
+            const effectiveHashtags = spec?.hashtags || hashtags;
+            const isEditing = editingInstance === placement;
+            const hasOverride = spec && (spec.caption || spec.hashtags || spec.title);
+
+            return (
+              <div
+                key={placement}
+                className={cn(
+                  'rounded-xl overflow-hidden border transition-all',
+                  isEditing
+                    ? 'border-teal ring-2 ring-teal/20'
+                    : 'border-stone-200'
+                )}
+              >
+                {/* Card header */}
+                <div
+                  className="flex items-center justify-between px-3 py-2"
+                  style={{ backgroundColor: color }}
+                >
+                  <div className="flex items-center gap-2 text-white">
+                    <PlatformIcon platform={platform} size={14} />
+                    <span className="text-xs font-medium">
+                      {platformLabel} {placementLabel}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {hasOverride && (
+                      <span className="text-[10px] bg-white/20 text-white px-1.5 py-0.5 rounded-full font-medium">
+                        Customized
+                      </span>
+                    )}
+                    {onEditInstance && (
+                      <button
+                        onClick={() => onEditInstance(placement)}
+                        className="p-0.5 rounded hover:bg-white/20 transition-colors text-white"
+                        title="Edit this instance"
+                      >
+                        <PencilSquareIcon className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Preview body */}
+                <div className="bg-stone-50 p-2">
+                  <SocialPreview
+                    platform={platform}
+                    caption={effectiveCaption}
+                    hashtags={effectiveHashtags}
+                    mediaUrls={mediaUrls}
+                    targetUrl={targetUrl}
+                    userName={userName}
+                    placementType={placement}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="bg-stone-50 rounded-xl p-3 min-h-[380px] flex flex-col">
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mb-3">
               <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="text-stone-400">
@@ -329,67 +362,6 @@ export function PreviewPanel({
             <p className="text-sm font-medium text-stone-500">Select a channel to preview</p>
             <p className="text-xs text-stone-400 mt-1">Click a platform icon above to get started</p>
           </div>
-        )}
-      </div>
-
-      {/* ── Per-Channel Customization Accordion ──────────────────── */}
-      {currentActive && (
-        <div className="border border-stone-200 rounded-lg overflow-hidden">
-          <button
-            onClick={() => setCustomizeOpen(prev => !prev)}
-            className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-stone-50 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              {customizeOpen
-                ? <ChevronUpIcon className="w-4 h-4 text-stone" />
-                : <ChevronDownIcon className="w-4 h-4 text-stone" />
-              }
-              <span className="text-sm font-medium text-charcoal">
-                Customize for {PLATFORM_LABELS[currentActive]}
-              </span>
-            </div>
-            {currentSpec && (currentSpec.caption || currentSpec.hashtags) && (
-              <span className="text-xs bg-teal/10 text-teal px-2 py-0.5 rounded-full font-medium">
-                Custom
-              </span>
-            )}
-          </button>
-
-          {customizeOpen && (
-            <div className="px-3 pb-3 space-y-3 border-t border-stone-100">
-              <div className="pt-3">
-                <label className="text-xs font-medium text-stone-600 mb-1 block">
-                  Caption override
-                </label>
-                <textarea
-                  value={currentSpec?.caption || ''}
-                  onChange={e => handleSpecChange('caption', e.target.value)}
-                  rows={4}
-                  placeholder={caption || 'Leave blank to use universal caption...'}
-                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal resize-none"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-stone-600 mb-1 block">
-                  Hashtags override
-                </label>
-                <input
-                  value={currentSpec?.hashtags?.join(', ') || ''}
-                  onChange={e => handleSpecChange('hashtags', e.target.value)}
-                  placeholder={hashtags.join(', ') || 'Leave blank to use universal hashtags...'}
-                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                />
-              </div>
-              {currentSpec && (currentSpec.caption || currentSpec.hashtags) && (
-                <button
-                  onClick={handleResetSpec}
-                  className="text-xs text-stone hover:text-red-500 transition-colors"
-                >
-                  Reset to default
-                </button>
-              )}
-            </div>
-          )}
         </div>
       )}
 

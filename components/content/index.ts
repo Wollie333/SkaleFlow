@@ -23,7 +23,10 @@ export { ContentFilterBar, applyContentFilters, EMPTY_FILTERS, type ContentFilte
 export { GenerationBatchTracker, type BatchStatus } from './generation-batch-tracker';
 export { SocialPreview, SocialPreviewTabs } from './social-preview';
 export { PreviewPanel, type PreviewPanelProps } from './preview-panel';
+export { InstanceEditForm, type InstanceSpec } from './instance-edit-form';
 export { UTMBuilderModal } from './utm-builder-modal';
 export { PostActionPopup, type PublishResult } from './post-action-popup';
 export { CreateCalendarModal } from './create-calendar-modal';
 export { AIModelPicker } from './ai-model-picker';
+export { BrandVariableModal } from './brand-variable-modal';
+export { EngineVariationCard } from './engine-variation-card';

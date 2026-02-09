@@ -31,6 +31,8 @@ export interface PostActionPopupProps {
   isLoading: boolean;
   defaultScheduleDate?: string;
   defaultScheduleTime?: string;
+  bulkMode?: boolean;
+  bulkCount?: number;
 }
 
 export function PostActionPopup({
@@ -44,6 +46,8 @@ export function PostActionPopup({
   isLoading,
   defaultScheduleDate = '',
   defaultScheduleTime = '08:00',
+  bulkMode = false,
+  bulkCount = 1,
 }: PostActionPopupProps) {
   const [selectedAction, setSelectedAction] = useState<'publish' | 'schedule' | 'draft' | null>(null);
   const [publishPlatforms, setPublishPlatforms] = useState<string[]>(platforms);
@@ -114,7 +118,7 @@ export function PostActionPopup({
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-stone/10">
           <h2 className="text-lg font-bold text-charcoal">
-            {hasResults ? 'Publish Results' : 'Choose Action'}
+            {hasResults ? 'Publish Results' : bulkMode && bulkCount > 1 ? `Choose Action for ${bulkCount} Posts` : 'Choose Action'}
           </h2>
           <button onClick={resetAndClose} className="p-1.5 rounded-lg hover:bg-stone/10 text-stone">
             <XMarkIcon className="w-5 h-5" />
@@ -296,7 +300,7 @@ export function PostActionPopup({
                   className="w-full bg-blue-600 hover:bg-blue-700"
                 >
                   <CalendarDaysIcon className="w-4 h-4 mr-1" />
-                  Schedule Post
+                  {bulkMode && bulkCount > 1 ? `Schedule ${bulkCount} Posts` : 'Schedule Post'}
                 </Button>
               </div>
             )}
@@ -312,8 +316,8 @@ export function PostActionPopup({
                   <DocumentIcon className="w-5 h-5 text-stone" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-charcoal">Save as Draft</p>
-                  <p className="text-xs text-stone">Save without scheduling or publishing</p>
+                  <p className="text-sm font-semibold text-charcoal">{bulkMode && bulkCount > 1 ? `Save ${bulkCount} as Drafts` : 'Save as Draft'}</p>
+                  <p className="text-xs text-stone">{bulkMode && bulkCount > 1 ? 'Save all without scheduling or publishing' : 'Save without scheduling or publishing'}</p>
                 </div>
               </div>
             </button>
