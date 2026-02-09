@@ -4,6 +4,11 @@ import { exchangeCode, getRedirectUri, isValidPlatform } from '@/lib/social/auth
 import { cookies } from 'next/headers';
 import type { Json } from '@/types/database';
 
+// TikTok sends a POST to verify webhook support during setup
+export async function POST() {
+  return NextResponse.json({ message: 'ok' }, { status: 200 });
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { platform: string } }
