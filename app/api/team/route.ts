@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { sendTeamInviteEmail } from '@/lib/resend';
 import crypto from 'crypto';
 
 // GET — List team members + pending invites for the current user's org
@@ -161,12 +162,24 @@ export async function POST(request: Request) {
     // Build invite URL
     const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${token}`;
 
-    // Send invite email via Supabase
-    const { error: emailError } = await serviceSupabase.auth.admin.inviteUserByEmail(email, {
-      redirectTo: inviteUrl,
-    });
+    // Get inviter's name for the email
+    const { data: inviter } = await serviceSupabase
+      .from('users')
+      .select('full_name, email')
+      .eq('id', user.id)
+      .single();
 
-    if (emailError) {
+    const inviterName = inviter?.full_name || inviter?.email || 'Your team';
+
+    // Send invite email via Resend
+    try {
+      await sendTeamInviteEmail({
+        to: email,
+        inviterName,
+        organizationName: org.name,
+        inviteUrl,
+      });
+    } catch (emailError) {
       console.error('Failed to send invitation email:', emailError);
       // Don't fail — invite was created, admin can share link manually
     }
