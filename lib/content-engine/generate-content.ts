@@ -46,6 +46,8 @@ export async function generateContentForItems(
     .eq('organization_id', organizationId)
     .eq('is_locked', true);
 
+  console.log(`[GEN-LEGACY] Brand outputs for org ${organizationId}: ${outputs?.length || 0} locked variables`);
+
   const brandContext = buildBrandContextMap(outputs || []);
 
   const { data: org } = await supabase
@@ -64,8 +66,11 @@ export async function generateContentForItems(
     .in('id', contentItemIds.slice(0, 30));
 
   if (!items || items.length === 0) {
+    console.error(`[GEN-LEGACY] No content items found for IDs: ${contentItemIds.join(', ')}`);
     return { results: [], generated: 0, failed: 0, creditExhausted: false };
   }
+
+  console.log(`[GEN-LEGACY] Found ${items.length} items to generate`);
 
   // Resolve AI model
   const resolvedModel = await resolveModel(organizationId, 'content_generation' as AIFeature, modelOverride);

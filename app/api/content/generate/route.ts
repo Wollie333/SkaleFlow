@@ -37,6 +37,13 @@ export async function POST(request: Request) {
     );
 
     if (result.generated === 0 && result.results.length === 0) {
+      // Distinguish between "items not found" and "generation failed for all items"
+      if (result.failed > 0) {
+        if (result.creditExhausted) {
+          return NextResponse.json({ error: 'Insufficient credits. Please top up or switch to a free AI model.' }, { status: 402 });
+        }
+        return NextResponse.json({ error: 'Content generation failed after multiple attempts. Please try again or switch AI model.' }, { status: 500 });
+      }
       return NextResponse.json({ error: 'No content items found' }, { status: 404 });
     }
 
