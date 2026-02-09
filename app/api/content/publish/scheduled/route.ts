@@ -81,9 +81,14 @@ async function runScheduledPublish() {
 
         if (!newPost) continue;
 
+        const itemForPublish = {
+          ...item,
+          utm_parameters: (item.utm_parameters || null) as Record<string, string> | null,
+        };
+
         const result = await publishToConnection(
           connection as unknown as ConnectionWithTokens,
-          item
+          itemForPublish
         );
 
         if (result.result.success) {
@@ -117,9 +122,14 @@ async function runScheduledPublish() {
           .update({ publish_status: 'publishing' })
           .eq('id', publishedPostId);
 
+        const retryItemForPublish = {
+          ...item,
+          utm_parameters: (item.utm_parameters || null) as Record<string, string> | null,
+        };
+
         const result = await publishToConnection(
           connection as unknown as ConnectionWithTokens,
-          item
+          retryItemForPublish
         );
 
         if (result.result.success) {

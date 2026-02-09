@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button, PageHeader } from '@/components/ui';
 import { UsersIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { AddUserModal } from '@/components/admin/add-user-modal';
@@ -39,6 +40,7 @@ interface User {
 }
 
 export default function AdminUsersPage() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [tiers, setTiers] = useState<SubscriptionTier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -324,7 +326,11 @@ export default function AdminUsersPage() {
               </thead>
               <tbody>
                 {pendingUsers.map(user => (
-                  <tr key={user.id} className="border-b border-cream/50 last:border-0 bg-amber-50/30">
+                  <tr
+                    key={user.id}
+                    onClick={() => router.push(`/admin/users/${user.id}`)}
+                    className="border-b border-cream/50 last:border-0 bg-amber-50/30 cursor-pointer hover:bg-amber-50/60 transition-colors"
+                  >
                     <td className="px-6 py-4">
                       <span className="font-medium text-charcoal">{user.full_name}</span>
                     </td>
@@ -332,7 +338,7 @@ export default function AdminUsersPage() {
                     <td className="px-6 py-4 text-stone">
                       {user.org_members?.[0]?.organizations?.name || (
                         <button
-                          onClick={() => setOrgPopup(user.id)}
+                          onClick={(e) => { e.stopPropagation(); setOrgPopup(user.id); }}
                           className="text-teal hover:text-teal-light text-sm font-medium underline"
                         >
                           + Add org
@@ -341,7 +347,7 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-6 py-4 text-stone">{formatDate(user.created_at)}</td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                         <Button
                           onClick={() => handleApproval(user.id, true)}
                           className="bg-teal hover:bg-teal-light text-white text-sm px-4 py-2"
@@ -410,7 +416,11 @@ export default function AdminUsersPage() {
               </thead>
               <tbody>
                 {approvedUsers.map(user => (
-                  <tr key={user.id} className="border-b border-cream/50 last:border-0">
+                  <tr
+                    key={user.id}
+                    onClick={() => router.push(`/admin/users/${user.id}`)}
+                    className="border-b border-cream/50 last:border-0 cursor-pointer hover:bg-cream-warm/40 transition-colors"
+                  >
                     <td className="px-6 py-4">
                       <span className="font-medium text-charcoal">{user.full_name}</span>
                     </td>
@@ -418,14 +428,14 @@ export default function AdminUsersPage() {
                     <td className="px-6 py-4 text-stone">
                       {user.org_members?.[0]?.organizations?.name || (
                         <button
-                          onClick={() => setOrgPopup(user.id)}
+                          onClick={(e) => { e.stopPropagation(); setOrgPopup(user.id); }}
                           className="text-teal hover:text-teal-light text-sm font-medium underline"
                         >
                           + Add org
                         </button>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       {user.org_members?.[0]?.organization_id ? (
                         <select
                           value={getUserTier(user)?.id || ''}
@@ -454,7 +464,7 @@ export default function AdminUsersPage() {
                     <td className="px-6 py-4 text-stone">
                       {user.last_login_at ? formatDate(user.last_login_at) : 'Never'}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                       {confirmDelete === user.id ? (
                         <div className="flex items-center justify-end gap-2">
                           <Button

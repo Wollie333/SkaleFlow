@@ -90,7 +90,10 @@ export async function POST(request: NextRequest) {
     // Publish
     const publishResult = await publishToConnection(
       connection as unknown as ConnectionWithTokens,
-      contentItem
+      {
+        ...contentItem,
+        utm_parameters: (contentItem.utm_parameters || null) as Record<string, string> | null,
+      }
     );
 
     if (publishResult.result.success) {

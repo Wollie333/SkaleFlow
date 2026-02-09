@@ -6,6 +6,10 @@ import { createClient } from '@/lib/supabase/client';
 import { Button, Card, Badge, Textarea, PageHeader, ActionModal } from '@/components/ui';
 import { BrandVariablesPanel, ScriptTemplateBadge, CreativeAssetSpecs, PlatformOverrideTabs, MediaUpload, GenerationBatchTracker, SocialPreviewTabs, UTMBuilderModal, PostActionPopup, AIModelPicker, type UploadedFile, type PublishResult } from '@/components/content';
 import { DriveFilePicker } from '@/components/content/drive-file-picker';
+import PlatformPlacementSelector from '@/components/content/platform-placement-selector';
+import ScriptModal, { type ScriptData } from '@/components/content/script-modal';
+import ConfigModal, { ConfigSummaryChip, type ContentConfig } from '@/components/content/config-modal';
+import { createDefaultPlacementsMap, getSelectedPlacements, getEnabledPlatforms, type PlatformPlacementsMap } from '@/config/placement-types';
 import {
   SparklesIcon,
   BeakerIcon,
@@ -38,7 +42,7 @@ import {
   VARIABLE_DISPLAY_NAMES,
 } from '@/lib/content-engine/brand-variable-categories';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
-import type { FunnelStage, StoryBrandStage, ContentStatus, Json } from '@/types/database';
+import type { FunnelStage, StoryBrandStage, ContentStatus, Json, SocialPlatform } from '@/types/database';
 import type { UTMParams } from '@/lib/utm/generate-utm';
 
 type CreateMode = 'single' | 'manual' | 'bulk' | 'engine';
@@ -98,7 +102,7 @@ const STORYBRAND_OPTIONS: { value: StoryBrandStage; label: string }[] = [
   { value: 'success', label: 'Success' },
 ];
 
-const PLATFORM_OPTIONS = ['linkedin', 'facebook', 'instagram', 'twitter', 'tiktok'];
+const PLATFORM_OPTIONS = ['linkedin', 'facebook', 'instagram', 'twitter', 'tiktok', 'youtube'];
 
 const FORMAT_OPTIONS = Object.entries(FORMAT_LABELS).map(([value, label]) => ({
   value: value as ContentFormat,
@@ -213,6 +217,19 @@ export default function ContentCreatePage() {
   const [showTargetUrl, setShowTargetUrl] = useState(false);
   const [engineSectionsCollapsed, setEngineSectionsCollapsed] = useState<Set<string>>(new Set(['ai_model']));
 
+  // New state for single/manual redesign
+  const [platformPlacements, setPlatformPlacements] = useState<PlatformPlacementsMap>(
+    createDefaultPlacementsMap(['linkedin'])
+  );
+  const [showScriptModal, setShowScriptModal] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [scriptData, setScriptData] = useState<ScriptData>({
+    hook: null, script_body: null, cta: null, filming_notes: null,
+    context_section: null, teaching_points: null, reframe: null,
+    problem_expansion: null, framework_teaching: null, case_study: null,
+  });
+  const [isAiAssisting, setIsAiAssisting] = useState(false);
+
   useEffect(() => {
     async function loadData() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -274,7 +291,7 @@ export default function ContentCreatePage() {
   const effectiveModelId = selectedModelId || orgDefaultModel || null;
   const selectedModel = effectiveModelId ? models.find(m => m.id === effectiveModelId) : null;
 
-  /** 1 credit = 1 ZAR cent → 100 credits = R1.00 */
+  /** 1 credit = 1 ZAR cent -> 100 credits = R1.00 */
   const creditsToRand = (credits: number) => `R${(credits / 100).toFixed(2)}`;
 
   const openModelModal = (action: 'generate' | 'enhance' | 'regenerate') => {
@@ -306,7 +323,15 @@ export default function ContentCreatePage() {
   const frameworkInfo = getScriptFramework(selectedFormat, funnelStage, storybrandStage);
   const formatCategory = getFormatCategory(selectedFormat);
 
-  // Primary field keys — always visible
+  // Computed config for ConfigModal / ConfigSummaryChip
+  const contentConfig: ContentConfig = {
+    format: selectedFormat,
+    funnelStage,
+    storybrandStage,
+    angleId: null,
+  };
+
+  // Primary field keys -- always visible
   const PRIMARY_FIELDS = new Set(['topic', 'hook', 'script_body', 'cta', 'caption']);
 
   // Get fields to display based on format category
@@ -368,7 +393,44 @@ export default function ContentCreatePage() {
     }
   };
 
-  // Single mode: generate content
+  // AI Assist for single/manual modes (new caption-first flow)
+  const handleAiAssistPost = async () => {
+    if (!organizationId) return;
+    setIsAiAssisting(true);
+    setGenerateError(null);
+
+    try {
+      const res = await fetch('/api/content/ai-assist/post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organizationId,
+          funnelStage,
+          storybrandStage,
+          format: selectedFormat,
+          platforms: getEnabledPlatforms(platformPlacements),
+          modelOverride: effectiveModelId,
+          existingCaption: editFields.caption || null,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed' }));
+        throw new Error(err.error || 'Generation failed');
+      }
+
+      const data = await res.json();
+      updateField('caption', data.caption || '');
+      updateField('topic', data.topic || '');
+      updateField('hashtags', (data.hashtags || []).join(', '));
+    } catch (err: unknown) {
+      setGenerateError(err instanceof Error ? err.message : 'AI assist failed');
+    }
+
+    setIsAiAssisting(false);
+  };
+
+  // Single mode: generate content (legacy, kept for bulk/engine compat)
   const handleGenerate = async (modelOverride?: string) => {
     if (!organizationId || platforms.length === 0) return;
     setIsGenerating(true);
@@ -472,98 +534,41 @@ export default function ContentCreatePage() {
     setIsGenerating(false);
   };
 
-  // Single mode: regenerate
-  const handleRegenerate = async (modelOverride?: string) => {
-    if (!generated?.id || !organizationId) return;
-    setIsGenerating(true);
-    setGenerateError(null);
-
-    try {
-      const response = await fetch('/api/content/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ organizationId, contentItemIds: [generated.id], modelOverride }),
-      });
-
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-
-      const { data: item } = await supabase
-        .from('content_items')
-        .select('*')
-        .eq('id', generated.id)
-        .single();
-
-      if (item) {
-        const gen: GeneratedContent = {
-          id: item.id,
-          topic: item.topic,
-          hook: item.hook,
-          script_body: item.script_body,
-          cta: item.cta,
-          caption: item.caption,
-          hashtags: item.hashtags,
-          filming_notes: item.filming_notes,
-          context_section: item.context_section,
-          teaching_points: item.teaching_points,
-          reframe: item.reframe,
-          problem_expansion: item.problem_expansion,
-          framework_teaching: item.framework_teaching,
-          case_study: item.case_study,
-          script_template: item.script_template,
-          hook_template: item.hook_template,
-          cta_template: item.cta_template,
-          platform_specs: (item.platform_specs || null) as Record<string, unknown> | null,
-          media_urls: item.media_urls || null,
-          status: item.status,
-        };
-        setGenerated(gen);
-
-        const fields: Record<string, string> = {};
-        if (gen.topic) fields.topic = gen.topic;
-        if (gen.hook) fields.hook = gen.hook;
-        if (gen.script_body) fields.script_body = gen.script_body;
-        if (gen.cta) fields.cta = gen.cta;
-        if (gen.caption) fields.caption = gen.caption;
-        if (gen.hashtags) fields.hashtags = gen.hashtags.join(', ');
-        if (gen.filming_notes) fields.filming_notes = gen.filming_notes;
-        if (gen.context_section) fields.context_section = gen.context_section;
-        if (gen.teaching_points) fields.teaching_points = gen.teaching_points;
-        if (gen.reframe) fields.reframe = gen.reframe;
-        if (gen.problem_expansion) fields.problem_expansion = gen.problem_expansion;
-        if (gen.framework_teaching) fields.framework_teaching = gen.framework_teaching;
-        if (gen.case_study) fields.case_study = gen.case_study;
-        setEditFields(fields);
-      }
-    } catch (error) {
-      console.error('Regeneration failed:', error);
-      setGenerateError(error instanceof Error ? error.message : 'Regeneration failed. Please try again.');
-    }
-
-    setIsGenerating(false);
+  // Single mode: regenerate (now uses handleAiAssistPost)
+  const handleRegenerate = async (_modelOverride?: string) => {
+    await handleAiAssistPost();
   };
+
+  // Helper to build the script data fields for save body
+  const buildScriptFields = (): Record<string, unknown> => ({
+    hook: scriptData.hook || editFields.hook || null,
+    script_body: scriptData.script_body || editFields.script_body || null,
+    cta: scriptData.cta || editFields.cta || null,
+    filming_notes: scriptData.filming_notes || editFields.filming_notes || null,
+    context_section: scriptData.context_section || editFields.context_section || null,
+    teaching_points: scriptData.teaching_points || editFields.teaching_points || null,
+    reframe: scriptData.reframe || editFields.reframe || null,
+    problem_expansion: scriptData.problem_expansion || editFields.problem_expansion || null,
+    framework_teaching: scriptData.framework_teaching || editFields.framework_teaching || null,
+    case_study: scriptData.case_study || editFields.case_study || null,
+  });
 
   // Save edits (works for both single/AI and manual modes)
   const handleSave = async (pushToSchedule: boolean) => {
     const itemId = mode === 'manual' ? manualItemId : generated?.id;
     setIsSaving(true);
 
+    const activePlatforms = (mode === 'single' || mode === 'manual')
+      ? getEnabledPlatforms(platformPlacements) as string[]
+      : platforms;
+
     try {
       const updateBody: Record<string, unknown> = {
         topic: editFields.topic || null,
-        hook: editFields.hook || null,
-        script_body: editFields.script_body || null,
-        cta: editFields.cta || null,
         caption: editFields.caption || null,
         hashtags: editFields.hashtags ? editFields.hashtags.split(',').map(h => h.trim()).filter(Boolean) : null,
-        filming_notes: editFields.filming_notes || null,
-        context_section: editFields.context_section || null,
-        teaching_points: editFields.teaching_points || null,
-        reframe: editFields.reframe || null,
-        problem_expansion: editFields.problem_expansion || null,
-        framework_teaching: editFields.framework_teaching || null,
-        case_study: editFields.case_study || null,
         media_urls: uploadedFiles.length > 0 ? uploadedFiles.map(f => f.url) : null,
+        ...buildScriptFields(),
       };
 
       // If no item exists yet (manual mode, first save), create one
@@ -576,7 +581,7 @@ export default function ContentCreatePage() {
             format: selectedFormat,
             funnel_stage: funnelStage,
             storybrand_stage: storybrandStage,
-            platforms,
+            platforms: activePlatforms,
             scheduled_date: scheduleDate || format(new Date(), 'yyyy-MM-dd'),
             scheduled_time: scheduleTime || null,
             ai_generated: false,
@@ -658,7 +663,7 @@ export default function ContentCreatePage() {
     setIsSaving(false);
   };
 
-  // Manual mode: enhance with AI
+  // Manual mode: enhance with AI (legacy, kept for backward compat)
   const handleEnhanceWithAI = async (modelOverride?: string) => {
     if (!organizationId || platforms.length === 0) return;
     setIsGenerating(true);
@@ -1048,12 +1053,22 @@ export default function ContentCreatePage() {
       setEditFields({});
       setUploadedFiles([]);
       setSaveSuccess(false);
+      setScriptData({
+        hook: null, script_body: null, cta: null, filming_notes: null,
+        context_section: null, teaching_points: null, reframe: null,
+        problem_expansion: null, framework_teaching: null, case_study: null,
+      });
     } else if (newMode === 'single') {
       setManualItemId(null);
       setGenerated(null);
       setEditFields({});
       setUploadedFiles([]);
       setSaveSuccess(false);
+      setScriptData({
+        hook: null, script_body: null, cta: null, filming_notes: null,
+        context_section: null, teaching_points: null, reframe: null,
+        problem_expansion: null, framework_teaching: null, case_study: null,
+      });
     } else if (newMode === 'engine') {
       setEngineBatchId(null);
       setEngineGeneratedItems([]);
@@ -1066,24 +1081,19 @@ export default function ContentCreatePage() {
     const itemId = mode === 'manual' ? manualItemId : generated?.id;
     setIsSaving(true);
 
+    const activePlatforms = (mode === 'single' || mode === 'manual')
+      ? getEnabledPlatforms(platformPlacements) as string[]
+      : platforms;
+
     try {
       const updateBody: Record<string, unknown> = {
         topic: editFields.topic || null,
-        hook: editFields.hook || null,
-        script_body: editFields.script_body || null,
-        cta: editFields.cta || null,
         caption: editFields.caption || null,
         hashtags: editFields.hashtags ? editFields.hashtags.split(',').map(h => h.trim()).filter(Boolean) : null,
-        filming_notes: editFields.filming_notes || null,
-        context_section: editFields.context_section || null,
-        teaching_points: editFields.teaching_points || null,
-        reframe: editFields.reframe || null,
-        problem_expansion: editFields.problem_expansion || null,
-        framework_teaching: editFields.framework_teaching || null,
-        case_study: editFields.case_study || null,
         media_urls: uploadedFiles.length > 0 ? uploadedFiles.map(f => f.url) : null,
         target_url: targetUrl || null,
         utm_parameters: utmParams || null,
+        ...buildScriptFields(),
       };
 
       if (status) updateBody.status = status;
@@ -1097,7 +1107,7 @@ export default function ContentCreatePage() {
             format: selectedFormat,
             funnel_stage: funnelStage,
             storybrand_stage: storybrandStage,
-            platforms,
+            platforms: activePlatforms,
             scheduled_date: scheduleDate || format(new Date(), 'yyyy-MM-dd'),
             scheduled_time: scheduleTime || null,
             ai_generated: false,
@@ -1152,27 +1162,22 @@ export default function ContentCreatePage() {
     const itemId = mode === 'manual' ? manualItemId : generated?.id;
     setIsSaving(true);
 
+    const activePlatforms = (mode === 'single' || mode === 'manual')
+      ? getEnabledPlatforms(platformPlacements) as string[]
+      : platforms;
+
     try {
       const updateBody: Record<string, unknown> = {
         topic: editFields.topic || null,
-        hook: editFields.hook || null,
-        script_body: editFields.script_body || null,
-        cta: editFields.cta || null,
         caption: editFields.caption || null,
         hashtags: editFields.hashtags ? editFields.hashtags.split(',').map(h => h.trim()).filter(Boolean) : null,
-        filming_notes: editFields.filming_notes || null,
-        context_section: editFields.context_section || null,
-        teaching_points: editFields.teaching_points || null,
-        reframe: editFields.reframe || null,
-        problem_expansion: editFields.problem_expansion || null,
-        framework_teaching: editFields.framework_teaching || null,
-        case_study: editFields.case_study || null,
         media_urls: uploadedFiles.length > 0 ? uploadedFiles.map(f => f.url) : null,
         target_url: targetUrl || null,
         utm_parameters: utmParams || null,
         scheduled_date: date,
         scheduled_time: time || null,
         status: 'scheduled',
+        ...buildScriptFields(),
       };
 
       if (!itemId) {
@@ -1184,7 +1189,7 @@ export default function ContentCreatePage() {
             format: selectedFormat,
             funnel_stage: funnelStage,
             storybrand_stage: storybrandStage,
-            platforms,
+            platforms: activePlatforms,
             ...updateBody,
           }),
         });
@@ -1272,7 +1277,7 @@ export default function ContentCreatePage() {
     );
   }
 
-  // Shared configuration panel (used by both single and manual modes)
+  // Shared configuration panel (used by bulk mode for backward compat)
   const renderConfigPanel = () => (
     <Card>
       <h3 className="text-heading-sm text-charcoal mb-4">Post Configuration</h3>
@@ -1346,32 +1351,6 @@ export default function ContentCreatePage() {
         <CreativeAssetSpecs format={selectedFormat} />
       </div>
 
-      {/* Mode-specific buttons */}
-      {mode === 'single' && (
-        <Button
-          onClick={() => openModelModal('generate')}
-          isLoading={isGenerating}
-          disabled={platforms.length === 0}
-          className="w-full mt-4"
-        >
-          <SparklesIcon className="w-4 h-4 mr-2" />
-          {isGenerating ? 'Generating...' : 'Generate Content'}
-        </Button>
-      )}
-
-      {mode === 'manual' && (
-        <Button
-          onClick={() => openModelModal('enhance')}
-          isLoading={isGenerating}
-          disabled={platforms.length === 0}
-          variant="secondary"
-          className="w-full mt-4"
-        >
-          <SparklesIcon className="w-4 h-4 mr-2" />
-          {isGenerating ? 'Enhancing...' : 'Enhance with AI'}
-        </Button>
-      )}
-
       {/* Error display */}
       {generateError && (
         <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -1381,166 +1360,214 @@ export default function ContentCreatePage() {
     </Card>
   );
 
-  // Shared content fields + upload + actions panel
-  const allFields = getFieldsForFormat(formatCategory);
-  const primaryFields = allFields.filter(f => !f.advanced);
-  const advancedFields = allFields.filter(f => f.advanced);
+  // Single/Manual mode: new 2-column caption-first layout
+  const renderSingleManualLayout = () => {
+    const enabledPlatformsList = getEnabledPlatforms(platformPlacements);
 
-  const renderContentPanel = () => (
-    <>
-      {/* Script Content fields */}
-      <Card>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-heading-sm text-charcoal">Script Content</h3>
-          {mode === 'single' && generated && (
-            <Button onClick={() => openModelModal('regenerate')} variant="ghost" size="sm" disabled={isGenerating}>
-              <ArrowPathIcon className="w-4 h-4 mr-1" />
-              Regenerate
-            </Button>
-          )}
-        </div>
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Left column: Post content (3/5) */}
+        <div className="lg:col-span-3 space-y-4">
+          <Card>
+            {/* Config summary + Configure button */}
+            <div className="flex items-center justify-between mb-4">
+              <ConfigSummaryChip config={contentConfig} angles={contentAngles} />
+              <button
+                onClick={() => setShowConfigModal(true)}
+                className="text-xs font-medium text-teal hover:underline"
+              >
+                Configure
+              </button>
+            </div>
 
-        <div className="space-y-4">
-          {primaryFields.map(field => (
-            <div key={field.key}>
-              <label className="block text-sm font-medium text-charcoal mb-1">{field.label}</label>
+            {/* Caption - PRIMARY FIELD */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm font-medium text-charcoal-700">Caption / Description</label>
+                <button
+                  onClick={handleAiAssistPost}
+                  disabled={isAiAssisting}
+                  className="flex items-center gap-1.5 text-xs font-medium text-teal hover:underline disabled:opacity-50"
+                >
+                  <SparklesIcon className="w-3.5 h-3.5" />
+                  {isAiAssisting ? 'Generating...' : editFields.caption ? 'AI Enhance' : 'AI Generate'}
+                </button>
+              </div>
               <Textarea
-                value={editFields[field.key] || ''}
-                onChange={e => updateField(field.key, e.target.value)}
-                rows={field.rows || 3}
+                value={editFields.caption || ''}
+                onChange={e => updateField('caption', e.target.value)}
+                rows={8}
+                placeholder="Write your post caption..."
                 className="text-sm"
-                placeholder={mode === 'manual' ? `Enter ${field.label.toLowerCase()}...` : undefined}
               />
             </div>
-          ))}
-        </div>
 
-        {/* Advanced fields toggle */}
-        {advancedFields.length > 0 && (
-          <>
-            <button
-              onClick={() => setShowAdvancedFields(prev => !prev)}
-              className="mt-4 flex items-center gap-1.5 text-xs font-medium text-teal hover:underline"
-            >
-              <ChevronDownIcon className={cn("w-3.5 h-3.5 transition-transform", showAdvancedFields && "rotate-180")} />
-              {showAdvancedFields ? 'Show fewer fields' : `Show more fields (${advancedFields.length})`}
-            </button>
-            {showAdvancedFields && (
-              <div className="space-y-4 mt-4 pt-4 border-t border-stone/10">
-                {advancedFields.map(field => (
-                  <div key={field.key}>
-                    <label className="block text-sm font-medium text-charcoal mb-1">{field.label}</label>
-                    <Textarea
-                      value={editFields[field.key] || ''}
-                      onChange={e => updateField(field.key, e.target.value)}
-                      rows={field.rows || 3}
-                      className="text-sm"
-                      placeholder={mode === 'manual' ? `Enter ${field.label.toLowerCase()}...` : undefined}
-                    />
-                  </div>
-                ))}
-              </div>
+            {/* Hashtags */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-charcoal-700 mb-1 block">Hashtags</label>
+              <input
+                value={editFields.hashtags || ''}
+                onChange={e => updateField('hashtags', e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                placeholder="hashtag1, hashtag2, hashtag3"
+              />
+            </div>
+
+            {/* Topic (small) */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-charcoal-700 mb-1 block">Topic</label>
+              <input
+                value={editFields.topic || ''}
+                onChange={e => updateField('topic', e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                placeholder="Brief topic summary"
+              />
+            </div>
+          </Card>
+
+          {/* Platform & Placements */}
+          <Card>
+            <PlatformPlacementSelector
+              value={platformPlacements}
+              onChange={setPlatformPlacements}
+              mediaUploaded={uploadedFiles.length > 0}
+              videoUploaded={uploadedFiles.some(f => f.fileType?.startsWith('video/'))}
+            />
+          </Card>
+
+          {/* Creative Assets */}
+          <Card>
+            <h3 className="text-heading-sm text-charcoal mb-3">Media</h3>
+            {organizationId && (
+              <MediaUpload
+                organizationId={organizationId}
+                contentItemId={currentItemId || undefined}
+                uploadedFiles={uploadedFiles}
+                onFilesChange={setUploadedFiles}
+                onImportFromDrive={hasDriveConnection ? () => setShowDrivePicker(true) : undefined}
+              />
             )}
-          </>
-        )}
-      </Card>
+          </Card>
 
-      {/* Template info bar (AI mode only, when generated) */}
-      {mode === 'single' && generated && (
-        <ScriptTemplateBadge
-          scriptTemplate={generated.script_template}
-          hookTemplate={generated.hook_template}
-          ctaTemplate={generated.cta_template}
-        />
-      )}
+          {/* Small buttons row */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowScriptModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-stone-600 hover:border-teal/30 hover:text-teal transition-colors"
+            >
+              Script {scriptData.hook || scriptData.script_body ? '(added)' : '(optional)'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowTargetUrl(prev => !prev)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-stone-600 hover:border-teal/30 hover:text-teal transition-colors"
+            >
+              <LinkIcon className="w-4 h-4" />
+              {targetUrl ? 'Edit Link' : 'Add Link'}
+            </button>
+          </div>
 
-      {/* Creative Asset Upload */}
-      <Card>
-        <h3 className="text-heading-sm text-charcoal mb-4">Creative Assets</h3>
-        <p className="text-xs text-stone mb-3">
-          Upload images, videos, or PDFs to attach to this post.
-        </p>
-        {organizationId && (
-          <MediaUpload
-            organizationId={organizationId}
-            contentItemId={currentItemId || undefined}
-            uploadedFiles={uploadedFiles}
-            onFilesChange={setUploadedFiles}
-            onImportFromDrive={hasDriveConnection ? () => setShowDrivePicker(true) : undefined}
-          />
-        )}
-      </Card>
+          {/* Target URL (collapsible) */}
+          {(showTargetUrl || targetUrl || utmParams) && (
+            <Card>
+              <h3 className="text-heading-sm text-charcoal mb-3">Target URL &amp; Tracking</h3>
+              <input
+                value={targetUrl}
+                onChange={e => setTargetUrl(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                placeholder="https://your-link.com"
+              />
+              <button
+                onClick={() => setShowUtmModal(true)}
+                className="mt-2 flex items-center gap-1.5 text-xs font-medium text-teal hover:underline"
+              >
+                <LinkIcon className="w-3.5 h-3.5" />
+                {utmParams ? 'Edit UTM Parameters' : 'Build UTM Parameters'}
+              </button>
+              {utmParams && (utmParams.utm_source || utmParams.utm_campaign) && (
+                <div className="mt-2 bg-cream-warm rounded-lg p-2.5">
+                  <p className="text-xs text-stone">
+                    {[
+                      utmParams.utm_source && `source: ${utmParams.utm_source}`,
+                      utmParams.utm_medium && `medium: ${utmParams.utm_medium}`,
+                      utmParams.utm_campaign && `campaign: ${utmParams.utm_campaign}`,
+                    ].filter(Boolean).join(' · ')}
+                  </p>
+                </div>
+              )}
+            </Card>
+          )}
 
-      {/* Platform previews */}
-      {((mode === 'single' && generated?.platform_specs) || mode === 'manual') && platforms.length > 0 && (
-        <Card>
-          <h3 className="text-heading-sm text-charcoal mb-4">Platform Previews</h3>
-          <PlatformOverrideTabs
-            platforms={platforms}
-            universalCaption={editFields.caption || ''}
-            universalHashtags={editFields.hashtags ? editFields.hashtags.split(',').map(h => h.trim()).filter(Boolean) : []}
-            platformSpecs={((mode === 'single' ? generated?.platform_specs : {}) || {}) as Record<string, { caption?: string; hashtags?: string[]; customized?: boolean }>}
-            onUniversalChange={(caption, hashtags) => {
-              updateField('caption', caption);
-              updateField('hashtags', hashtags.join(', '));
-            }}
-            onPlatformChange={() => {}}
-          />
-        </Card>
-      )}
+          {/* Schedule + Actions */}
+          <Card>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="flex-1">
+                <label className="text-sm font-medium text-charcoal-700 mb-1 block">Schedule Date</label>
+                <input
+                  type="date"
+                  value={scheduleDate}
+                  onChange={e => setScheduleDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-sm font-medium text-charcoal-700 mb-1 block">Time</label>
+                <input
+                  type="time"
+                  value={scheduleTime}
+                  onChange={e => setScheduleTime(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                />
+              </div>
+            </div>
 
-      {/* Target URL & UTM — collapsible when empty */}
-      {(showTargetUrl || targetUrl || utmParams) ? (
-        <Card>
-          <h3 className="text-heading-sm text-charcoal mb-3">Target URL &amp; Tracking</h3>
-          <input
-            value={targetUrl}
-            onChange={e => setTargetUrl(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-            placeholder="https://your-link.com"
-          />
-          <button
-            onClick={() => setShowUtmModal(true)}
-            className="mt-2 flex items-center gap-1.5 text-xs font-medium text-teal hover:underline"
-          >
-            <LinkIcon className="w-3.5 h-3.5" />
-            {utmParams ? 'Edit UTM Parameters' : 'Build UTM Parameters'}
-          </button>
-          {utmParams && (utmParams.utm_source || utmParams.utm_campaign) && (
-            <div className="mt-2 bg-cream-warm rounded-lg p-2.5">
-              <p className="text-xs text-stone">
-                {[
-                  utmParams.utm_source && `source: ${utmParams.utm_source}`,
-                  utmParams.utm_medium && `medium: ${utmParams.utm_medium}`,
-                  utmParams.utm_campaign && `campaign: ${utmParams.utm_campaign}`,
-                ].filter(Boolean).join(' · ')}
-              </p>
+            {/* AI Model selector */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-charcoal mb-2">AI Model</label>
+              <AIModelPicker
+                models={models}
+                selectedModelId={effectiveModelId}
+                onSelect={setSelectedModelId}
+                costLabelFn={m => m.isFree ? 'Free' : `~${m.estimatedCreditsPerMessage} cr`}
+              />
+            </div>
+
+            <Button
+              onClick={() => setShowPostActionPopup(true)}
+              className="w-full"
+              disabled={isSaving}
+            >
+              <PaperAirplaneIcon className="w-4 h-4 mr-2" />
+              Save &amp; Publish
+            </Button>
+          </Card>
+
+          {generateError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700">{generateError}</p>
             </div>
           )}
-        </Card>
-      ) : (
-        <button
-          onClick={() => setShowTargetUrl(true)}
-          className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-stone/20 text-sm text-stone hover:border-teal/30 hover:text-teal transition-colors w-full"
-        >
-          <LinkIcon className="w-4 h-4" />
-          Add Link Tracking
-        </button>
-      )}
+        </div>
 
-      {/* Actions */}
-      <Card>
-        <Button
-          onClick={() => setShowPostActionPopup(true)}
-          className="w-full"
-          disabled={isSaving}
-        >
-          <PaperAirplaneIcon className="w-4 h-4 mr-2" />
-          Save &amp; Publish
-        </Button>
-      </Card>
-    </>
-  );
+        {/* Right column: Live Preview (2/5) */}
+        <div className="lg:col-span-2">
+          <div className="sticky top-6">
+            <Card className="p-5">
+              <h3 className="text-sm font-semibold text-charcoal mb-4">Live Preview</h3>
+              <SocialPreviewTabs
+                platforms={enabledPlatformsList as SocialPlatform[]}
+                caption={editFields.caption || 'Your content will preview here...'}
+                hashtags={(editFields.hashtags || '').split(',').map(t => t.trim()).filter(Boolean)}
+                mediaUrls={uploadedFiles.map(f => f.url)}
+                userName={userName}
+              />
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -1602,88 +1629,14 @@ export default function ContentCreatePage() {
       </div>
 
       {/* ============================================================ */}
-      {/* MODE 1: SINGLE POST (AI) */}
+      {/* MODE 1: SINGLE POST (AI) — New caption-first layout */}
       {/* ============================================================ */}
-      {mode === 'single' && (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Left: Configuration */}
-          <div className="lg:col-span-1 space-y-4">
-            {renderConfigPanel()}
-          </div>
-
-          {/* Center: Generated content */}
-          <div className="lg:col-span-2 space-y-4">
-            {!generated && !isGenerating && (
-              <Card className="text-center py-16">
-                <SparklesIcon className="w-16 h-16 mx-auto text-stone/20 mb-4" />
-                <h3 className="text-heading-md text-charcoal mb-2">Ready to Generate</h3>
-                <p className="text-stone">Configure your post on the left, then click Generate Content.</p>
-              </Card>
-            )}
-
-            {isGenerating && !generated && (
-              <Card className="text-center py-16">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal mx-auto mb-4" />
-                <h3 className="text-heading-md text-charcoal mb-2">Generating Content...</h3>
-                <p className="text-stone">AI is crafting your content using the {frameworkInfo.scriptTemplateName} framework.</p>
-              </Card>
-            )}
-
-            {generated && renderContentPanel()}
-          </div>
-
-          {/* Right: Live social preview */}
-          <div className="lg:col-span-2">
-            <div className="sticky top-6">
-              <Card className="p-5">
-                <h3 className="text-sm font-semibold text-charcoal mb-4">Live Preview</h3>
-                <SocialPreviewTabs
-                  platforms={platforms as unknown as import('@/types/database').SocialPlatform[]}
-                  caption={generated ? (editFields['caption'] || generated.caption || generated.script_body || generated.hook || '') : 'Your generated content will preview here...'}
-                  hashtags={generated?.hashtags || []}
-                  mediaUrls={uploadedFiles.map(f => f.url)}
-                  targetUrl={undefined}
-                  userName={userName}
-                />
-              </Card>
-            </div>
-          </div>
-        </div>
-      )}
+      {mode === 'single' && renderSingleManualLayout()}
 
       {/* ============================================================ */}
-      {/* MODE 2: MANUAL CREATE */}
+      {/* MODE 2: MANUAL CREATE — New caption-first layout */}
       {/* ============================================================ */}
-      {mode === 'manual' && (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Left: Configuration + AI Enhance */}
-          <div className="lg:col-span-1 space-y-4">
-            {renderConfigPanel()}
-          </div>
-
-          {/* Center: Editable fields (always visible) */}
-          <div className="lg:col-span-2 space-y-4">
-            {renderContentPanel()}
-          </div>
-
-          {/* Right: Live social preview */}
-          <div className="lg:col-span-2">
-            <div className="sticky top-6">
-              <Card className="p-5">
-                <h3 className="text-sm font-semibold text-charcoal mb-4">Live Preview</h3>
-                <SocialPreviewTabs
-                  platforms={platforms as unknown as import('@/types/database').SocialPlatform[]}
-                  caption={editFields['caption'] || editFields['script_body'] || editFields['hook'] || editFields['topic'] || 'Start typing to see a preview...'}
-                  hashtags={(editFields['hashtags'] || '').split(',').map(t => t.trim()).filter(Boolean)}
-                  mediaUrls={uploadedFiles.map(f => f.url)}
-                  targetUrl={undefined}
-                  userName={userName}
-                />
-              </Card>
-            </div>
-          </div>
-        </div>
-      )}
+      {mode === 'manual' && renderSingleManualLayout()}
 
       {/* ============================================================ */}
       {/* MODE 3: BULK AI PLANNER */}
@@ -2246,7 +2199,7 @@ export default function ContentCreatePage() {
         />
       )}
 
-      {/* AI Model Selection Modal */}
+      {/* AI Model Selection Modal (kept for backward compat, used by bulk/engine) */}
       {showModelModal && (
         <div className="fixed inset-0 bg-dark/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
@@ -2302,7 +2255,7 @@ export default function ContentCreatePage() {
               {selectedModel?.isFree && (
                 <div className="bg-teal/5 rounded-xl p-3 flex items-center gap-2">
                   <BoltIcon className="w-4 h-4 text-teal shrink-0" />
-                  <p className="text-sm text-teal font-medium">This model is free — no credits required</p>
+                  <p className="text-sm text-teal font-medium">This model is free -- no credits required</p>
                 </div>
               )}
 
@@ -2339,7 +2292,9 @@ export default function ContentCreatePage() {
         initialParams={utmParams}
         onApply={setUtmParams}
         autoGenerateContext={{
-          platform: platforms[0] || 'linkedin',
+          platform: (mode === 'single' || mode === 'manual')
+            ? (getEnabledPlatforms(platformPlacements)[0] || 'linkedin')
+            : (platforms[0] || 'linkedin'),
           funnelStage,
           format: selectedFormat,
           topic: editFields.topic || null,
@@ -2351,7 +2306,9 @@ export default function ContentCreatePage() {
       <PostActionPopup
         open={showPostActionPopup}
         onClose={() => setShowPostActionPopup(false)}
-        platforms={platforms}
+        platforms={(mode === 'single' || mode === 'manual')
+          ? getEnabledPlatforms(platformPlacements) as string[]
+          : platforms}
         onSaveDraft={handlePopupSaveDraft}
         onSchedule={handlePopupSchedule}
         onPublishNow={handlePopupPublishNow}
@@ -2360,7 +2317,7 @@ export default function ContentCreatePage() {
         defaultScheduleTime={scheduleTime}
       />
 
-      {/* Action Modal — shown after save/schedule */}
+      {/* Action Modal -- shown after save/schedule */}
       <ActionModal
         open={showActionModal}
         onClose={() => setShowActionModal(false)}
@@ -2374,6 +2331,34 @@ export default function ContentCreatePage() {
           ...(actionModalConfig.savedItemId ? [{ label: 'Edit Post', onClick: () => router.push(`/content/${actionModalConfig.savedItemId}`), variant: 'ghost' as const }] : []),
           { label: 'Create Another', onClick: () => { setShowActionModal(false); handleModeChange(mode); }, variant: 'ghost' as const },
         ]}
+      />
+
+      {/* Script Modal */}
+      <ScriptModal
+        isOpen={showScriptModal}
+        onClose={() => setShowScriptModal(false)}
+        scriptData={scriptData}
+        onSave={setScriptData}
+        formatCategory={formatCategory}
+        organizationId={organizationId || ''}
+        caption={editFields.caption}
+        hashtags={editFields.hashtags ? editFields.hashtags.split(',').map(h => h.trim()).filter(Boolean) : []}
+        funnelStage={funnelStage}
+        storybrandStage={storybrandStage}
+        format={selectedFormat}
+      />
+
+      {/* Config Modal */}
+      <ConfigModal
+        isOpen={showConfigModal}
+        onClose={() => setShowConfigModal(false)}
+        config={contentConfig}
+        onSave={(c) => {
+          setSelectedFormat(c.format);
+          setFunnelStage(c.funnelStage);
+          setStorybrandStage(c.storybrandStage);
+        }}
+        angles={contentAngles}
       />
     </div>
   );

@@ -12,6 +12,9 @@ interface ContentItem {
   caption: string | null;
   hashtags: string[] | null;
   media_urls: string[] | null;
+  target_url?: string | null;
+  utm_parameters?: Record<string, string> | null;
+  placement_type?: string | null;
 }
 
 export interface PublishToConnectionResult {
@@ -40,8 +43,8 @@ export async function publishToConnection(
     // Ensure token is valid (refresh if needed)
     const tokens = await ensureValidToken(connection);
 
-    // Format content for the platform
-    const postPayload = formatForPlatform(platform, contentItem);
+    // Format content for the platform (with placement-specific formatting)
+    const postPayload = formatForPlatform(platform, contentItem, contentItem.placement_type as import('@/types/database').PlacementType | null);
 
     // Publish via platform adapter
     const adapter = getAdapter(platform);

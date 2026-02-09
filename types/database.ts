@@ -44,6 +44,13 @@ export type StoryBrandStage =
 export type PipelineStage = 'application' | 'declined' | 'approved' | 'booking_made' | 'lost' | 'won';
 export type MeetingStatus = 'pending' | 'scheduled' | 'completed' | 'cancelled' | 'no_show';
 export type SocialPlatform = 'linkedin' | 'facebook' | 'instagram' | 'twitter' | 'tiktok' | 'youtube';
+export type PlacementType =
+  | 'facebook_feed' | 'facebook_reel' | 'facebook_story'
+  | 'instagram_feed' | 'instagram_reel' | 'instagram_story'
+  | 'linkedin_feed' | 'linkedin_article' | 'linkedin_document'
+  | 'twitter_tweet' | 'twitter_thread'
+  | 'tiktok_video' | 'tiktok_story'
+  | 'youtube_video' | 'youtube_short' | 'youtube_community_post';
 export type PublishStatus = 'queued' | 'publishing' | 'published' | 'failed';
 export type NotificationType = 'content_submitted' | 'content_approved' | 'content_rejected' | 'revision_requested' | 'generation_completed' | 'change_request_submitted' | 'change_request_approved' | 'change_request_rejected' | 'change_request_revision' | 'credits_allocated' | 'credits_low';
 export type FeatureType = 'brand_engine' | 'content_engine' | 'pipeline' | 'ad_campaigns';
@@ -731,6 +738,9 @@ export interface Database {
           framework_teaching: string | null;
           target_url: string | null;
           utm_parameters: Json;
+          placement_type: string | null;
+          variation_group_id: string | null;
+          is_primary_variation: boolean;
         };
         Insert: {
           id?: string;
@@ -778,6 +788,9 @@ export interface Database {
           framework_teaching?: string | null;
           target_url?: string | null;
           utm_parameters?: Json;
+          placement_type?: string | null;
+          variation_group_id?: string | null;
+          is_primary_variation?: boolean;
         };
         Update: {
           id?: string;
@@ -825,6 +838,9 @@ export interface Database {
           framework_teaching?: string | null;
           target_url?: string | null;
           utm_parameters?: Json;
+          placement_type?: string | null;
+          variation_group_id?: string | null;
+          is_primary_variation?: boolean;
         };
         Relationships: [
           {
@@ -2620,6 +2636,8 @@ export interface Database {
           failed_items: number;
           uniqueness_log: Json;
           selected_brand_variables: Json | null;
+          generate_scripts: boolean;
+          selected_placements: Json | null;
           created_at: string;
           updated_at: string;
           completed_at: string | null;
@@ -2636,6 +2654,8 @@ export interface Database {
           failed_items?: number;
           uniqueness_log?: Json;
           selected_brand_variables?: Json | null;
+          generate_scripts?: boolean;
+          selected_placements?: Json | null;
           created_at?: string;
           updated_at?: string;
           completed_at?: string | null;
@@ -2652,6 +2672,8 @@ export interface Database {
           failed_items?: number;
           uniqueness_log?: Json;
           selected_brand_variables?: Json | null;
+          generate_scripts?: boolean;
+          selected_placements?: Json | null;
           created_at?: string;
           updated_at?: string;
           completed_at?: string | null;

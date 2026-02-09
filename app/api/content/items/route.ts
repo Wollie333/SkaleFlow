@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import type { ContentStatus } from '@/types/database';
+import type { ContentStatus, PlacementType } from '@/types/database';
+import { getPlatformFromPlacement } from '@/config/placement-types';
 
 export async function POST(request: Request) {
   try {
@@ -33,6 +34,11 @@ export async function POST(request: Request) {
       case_study,
       ai_generated = true,
       status: requestedStatus,
+      // Placement variations
+      platformPlacements,
+      target_url,
+      utm_parameters,
+      angle_id,
     } = body;
 
     const supabase = createClient();
@@ -90,35 +96,72 @@ export async function POST(request: Request) {
       }
     }
 
+    // Shared fields for item creation
+    const sharedFields = {
+      organization_id: organizationId,
+      calendar_id: resolvedCalendarId,
+      scheduled_date: scheduled_date || new Date().toISOString().split('T')[0],
+      time_slot,
+      scheduled_time,
+      funnel_stage,
+      storybrand_stage,
+      format,
+      status,
+      ai_generated,
+      topic: topic || null,
+      hook: hook || null,
+      script_body: script_body || null,
+      cta: cta || null,
+      caption: caption || null,
+      hashtags: hashtags || null,
+      filming_notes: filming_notes || null,
+      media_urls: media_urls || null,
+      context_section: context_section || null,
+      teaching_points: teaching_points || null,
+      reframe: reframe || null,
+      problem_expansion: problem_expansion || null,
+      framework_teaching: framework_teaching || null,
+      case_study: case_study || null,
+      target_url: target_url || null,
+      utm_parameters: utm_parameters || null,
+      angle_id: angle_id || null,
+    };
+
+    // ─── Variation group creation (when platformPlacements provided) ────
+    if (platformPlacements && Array.isArray(platformPlacements) && platformPlacements.length > 0) {
+      const variationGroupId = crypto.randomUUID();
+      const itemsToInsert = (platformPlacements as PlacementType[]).map((placement, i) => ({
+        ...sharedFields,
+        platforms: [getPlatformFromPlacement(placement)],
+        placement_type: placement,
+        variation_group_id: variationGroupId,
+        is_primary_variation: i === 0,
+      }));
+
+      const { data: items, error } = await supabase
+        .from('content_items')
+        .insert(itemsToInsert)
+        .select();
+
+      if (error || !items || items.length === 0) {
+        console.error('Failed to create variation items:', error);
+        return NextResponse.json({ error: 'Failed to create content items' }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        items,
+        item: items[0], // primary item for backward compat
+        variationGroupId,
+        generated: false,
+      });
+    }
+
+    // ─── Single item creation (legacy/default) ─────────────────────────
     const { data: item, error } = await supabase
       .from('content_items')
       .insert({
-        organization_id: organizationId,
-        calendar_id: resolvedCalendarId,
-        scheduled_date: scheduled_date || new Date().toISOString().split('T')[0],
-        time_slot,
-        scheduled_time,
-        funnel_stage,
-        storybrand_stage,
-        format,
+        ...sharedFields,
         platforms,
-        status,
-        ai_generated,
-        // Manual content fields
-        topic: topic || null,
-        hook: hook || null,
-        script_body: script_body || null,
-        cta: cta || null,
-        caption: caption || null,
-        hashtags: hashtags || null,
-        filming_notes: filming_notes || null,
-        media_urls: media_urls || null,
-        context_section: context_section || null,
-        teaching_points: teaching_points || null,
-        reframe: reframe || null,
-        problem_expansion: problem_expansion || null,
-        framework_teaching: framework_teaching || null,
-        case_study: case_study || null,
       })
       .select()
       .single();
@@ -144,7 +187,6 @@ export async function POST(request: Request) {
 
       if (generateResponse.ok) {
         const result = await generateResponse.json();
-        // Re-fetch the updated item
         const { data: updatedItem } = await supabase
           .from('content_items')
           .select('*')

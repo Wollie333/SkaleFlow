@@ -74,7 +74,18 @@ interface ContentItem {
   problem_expansion: string | null;
   framework_teaching: string | null;
   case_study: string | null;
+  placement_type: string | null;
+  variation_group_id: string | null;
+  is_primary_variation: boolean;
   [key: string]: unknown;
+}
+
+interface VariationSibling {
+  id: string;
+  placement_type: string | null;
+  platforms: string[];
+  status: ContentStatus;
+  is_primary_variation: boolean;
 }
 
 export default function PostEditPage() {
@@ -122,6 +133,9 @@ export default function PostEditPage() {
   const [showTargetUrlSection, setShowTargetUrlSection] = useState(false);
   const [showMediaSection, setShowMediaSection] = useState(false);
 
+  // Variation group state
+  const [variationSiblings, setVariationSiblings] = useState<VariationSibling[]>([]);
+
   useEffect(() => {
     async function loadItem() {
       try {
@@ -163,6 +177,19 @@ export default function PostEditPage() {
         if (loadedItem.target_url || loadedItem.utm_parameters) setShowTargetUrlSection(true);
         if (loadedMedia.length > 0) setShowMediaSection(true);
         if (loadedItem.filming_notes) setShowAdvancedFields(true);
+
+        // Load variation siblings if item has a variation group
+        if (loadedItem.variation_group_id) {
+          const { data: siblings } = await supabase
+            .from('content_items')
+            .select('id, placement_type, platforms, status, is_primary_variation')
+            .eq('variation_group_id', loadedItem.variation_group_id)
+            .neq('id', loadedItem.id)
+            .order('is_primary_variation', { ascending: false });
+          if (siblings) {
+            setVariationSiblings(siblings as VariationSibling[]);
+          }
+        }
 
         // Get user name for preview
         const { data: { user } } = await supabase.auth.getUser();
@@ -419,6 +446,28 @@ export default function PostEditPage() {
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
           <p className="text-sm font-medium text-red-800">Rejected</p>
           <p className="text-sm text-red-700 mt-1">{item.rejection_reason}</p>
+        </div>
+      )}
+
+      {/* Variation group tabs */}
+      {variationSiblings.length > 0 && (
+        <div className="bg-white border border-stone/15 rounded-xl p-3">
+          <p className="text-xs font-medium text-stone mb-2">Variation Group</p>
+          <div className="flex gap-2 flex-wrap">
+            <span className="px-3 py-1.5 rounded-lg text-xs font-medium bg-teal/10 text-teal border border-teal/20">
+              {item.placement_type ? item.placement_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : item.platforms.join(', ')}
+              {' '}(current)
+            </span>
+            {variationSiblings.map(s => (
+              <button
+                key={s.id}
+                onClick={() => router.push(`/content/${s.id}`)}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-stone/5 text-stone hover:bg-stone/10 border border-stone/10 transition-colors"
+              >
+                {s.placement_type ? s.placement_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : s.platforms.join(', ')}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

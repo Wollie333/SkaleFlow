@@ -1,4 +1,5 @@
 import type { SocialPlatform, PostPayload } from './types';
+import type { PlacementType } from '@/types/database';
 import { buildTrackedUrl, type UTMParams } from '@/lib/utm/generate-utm';
 
 interface ContentItem {
@@ -11,6 +12,7 @@ interface ContentItem {
   media_urls: string[] | null;
   target_url?: string | null;
   utm_parameters?: Record<string, string> | null;
+  placement_type?: string | null;
 }
 
 function appendTrackedUrl(text: string, item: ContentItem, platform: string): string {
@@ -22,7 +24,17 @@ function appendTrackedUrl(text: string, item: ContentItem, platform: string): st
   return text ? `${text}\n\n${trackedUrl}` : trackedUrl;
 }
 
-export function formatForPlatform(platform: SocialPlatform, item: ContentItem): PostPayload {
+export function formatForPlatform(platform: SocialPlatform, item: ContentItem, placementType?: PlacementType | null): PostPayload {
+  // Placement-specific formatting overrides
+  const pt = placementType || item.placement_type;
+  if (pt === 'twitter_thread') {
+    return formatForTwitterThread(item);
+  }
+  if (pt === 'linkedin_article') {
+    return formatForLinkedInArticle(item);
+  }
+
+  // Default platform-based formatting
   switch (platform) {
     case 'facebook':
       return formatForFacebook(item);
@@ -111,6 +123,33 @@ function buildDefaultText(item: ContentItem): string {
   if (item.script_body) parts.push(item.script_body);
   if (item.cta) parts.push(item.cta);
   return parts.join('\n\n');
+}
+
+// ─── Placement-specific formatters ──────────────────────────────────────
+
+function formatForTwitterThread(item: ContentItem): PostPayload {
+  // Split caption into tweet-sized chunks for thread publishing
+  const text = appendTrackedUrl(item.caption || buildDefaultText(item), item, 'twitter');
+  return {
+    text,
+    hashtags: item.hashtags || [],
+    mediaUrls: item.media_urls || [],
+    // Thread splitting happens in the platform adapter
+    isThread: true,
+  } as PostPayload;
+}
+
+function formatForLinkedInArticle(item: ContentItem): PostPayload {
+  // Articles use the caption as the article body, first line as title
+  const lines = (item.caption || buildDefaultText(item)).split('\n');
+  const title = lines[0] || item.topic || 'Untitled Article';
+  const body = lines.slice(1).join('\n').trim();
+  return {
+    text: title,
+    caption: body,
+    hashtags: item.hashtags || [],
+    mediaUrls: item.media_urls || [],
+  };
 }
 
 export function canPublishToPlatform(platform: SocialPlatform, item: Pick<ContentItem, 'media_urls'>): { canPublish: boolean; reason?: string } {

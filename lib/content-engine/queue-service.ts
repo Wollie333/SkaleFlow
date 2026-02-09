@@ -19,6 +19,8 @@ interface EnqueueParams {
   contentItemIds: string[];
   modelId: string;
   selectedBrandVariables?: string[] | null;
+  generateScripts?: boolean;
+  selectedPlacements?: string[] | null;
 }
 
 /**
@@ -27,7 +29,7 @@ interface EnqueueParams {
  */
 export async function enqueueBatch(
   supabase: ServiceClient,
-  { orgId, calendarId, userId, contentItemIds, modelId, selectedBrandVariables }: EnqueueParams
+  { orgId, calendarId, userId, contentItemIds, modelId, selectedBrandVariables, generateScripts, selectedPlacements }: EnqueueParams
 ): Promise<{ batchId: string; totalItems: number }> {
   console.log(`[QUEUE-ENQUEUE-SVC] enqueueBatch: orgId=${orgId}, modelId=${modelId}, items=${contentItemIds.length}, userId=${userId}`);
 
@@ -52,6 +54,8 @@ export async function enqueueBatch(
       failed_items: 0,
       uniqueness_log: '[]' as unknown as Json,
       selected_brand_variables: (selectedBrandVariables || null) as unknown as Json,
+      generate_scripts: generateScripts || false,
+      selected_placements: (selectedPlacements || null) as unknown as Json,
     })
     .select('id')
     .single();
