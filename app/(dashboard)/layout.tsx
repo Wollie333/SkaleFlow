@@ -61,81 +61,96 @@ export default async function DashboardLayout({
     const orgId = membership.organization_id;
     const isAdmin = orgRole === 'owner' || orgRole === 'admin';
 
-    // Prepare team permissions query for non-admin users
-    const teamPermsPromise = !isAdmin
-      ? supabase
-          .from('team_permissions')
-          .select('feature, permissions')
-          .eq('organization_id', orgId)
-          .eq('user_id', user.id)
-      : null;
+    try {
+      // Prepare team permissions query for non-admin users
+      const teamPermsPromise = !isAdmin
+        ? supabase
+            .from('team_permissions')
+            .select('feature, permissions')
+            .eq('organization_id', orgId)
+            .eq('user_id', user.id)
+        : null;
 
-    // Prepare pending review count for admins
-    const serviceClient = createServiceClient();
-    const pendingReviewPromise = isAdmin
-      ? serviceClient
-          .from('change_requests')
+      // Prepare pending review count for admins
+      const serviceClient = createServiceClient();
+      const pendingReviewPromise = isAdmin
+        ? serviceClient
+            .from('change_requests')
+            .select('*', { count: 'exact', head: true })
+            .eq('organization_id', orgId)
+            .in('status', ['pending', 'revision_requested'])
+        : null;
+
+      // Run ALL queries in parallel (org-scoped + global)
+      const [orgResult, subscriptionResult, phasesResult, contentCountResult, notifResult, pipelineResult, teamPermsResult, pendingReviewResult] = await Promise.all([
+        supabase
+          .from('organizations')
+          .select('content_engine_enabled')
+          .eq('id', orgId)
+          .single(),
+        supabase
+          .from('subscriptions')
+          .select('*, tier:subscription_tiers(name)')
+          .eq('organization_id', orgId)
+          .limit(1)
+          .single(),
+        supabase
+          .from('brand_phases')
+          .select('phase_number, status')
+          .eq('organization_id', orgId)
+          .order('sort_order'),
+        supabase
+          .from('content_items')
           .select('*', { count: 'exact', head: true })
           .eq('organization_id', orgId)
-          .in('status', ['pending', 'revision_requested'])
-      : null;
+          .in('status', ['idea', 'scripted']),
+        notificationPromise,
+        pipelinePromise,
+        teamPermsPromise,
+        pendingReviewPromise,
+      ]);
 
-    // Run ALL queries in parallel (org-scoped + global)
-    const [orgResult, subscriptionResult, phasesResult, contentCountResult, notifResult, pipelineResult, teamPermsResult, pendingReviewResult] = await Promise.all([
-      supabase
-        .from('organizations')
-        .select('content_engine_enabled')
-        .eq('id', orgId)
-        .single(),
-      supabase
-        .from('subscriptions')
-        .select('*, tier:subscription_tiers(name)')
-        .eq('organization_id', orgId)
-        .limit(1)
-        .single(),
-      supabase
-        .from('brand_phases')
-        .select('phase_number, status')
-        .eq('organization_id', orgId)
-        .order('sort_order'),
-      supabase
-        .from('content_items')
-        .select('*', { count: 'exact', head: true })
-        .eq('organization_id', orgId)
-        .in('status', ['idea', 'scripted']),
-      notificationPromise,
-      pipelinePromise,
-      teamPermsPromise,
-      pendingReviewPromise,
-    ]);
+      contentEngineEnabled = orgResult.data?.content_engine_enabled ?? false;
 
-    contentEngineEnabled = orgResult.data?.content_engine_enabled ?? false;
+      const tierData = (subscriptionResult.data as Record<string, unknown>)?.tier as { name: string } | null;
+      tierName = tierData?.name ?? undefined;
 
-    const tierData = (subscriptionResult.data as Record<string, unknown>)?.tier as { name: string } | null;
-    tierName = tierData?.name ?? undefined;
+      const phases = phasesResult.data;
+      if (phases && phases.length > 0) {
+        const completedPhases = phases.filter(p => p.status === 'locked' || p.status === 'completed').length;
+        const currentPhase = phases.find(p => p.status === 'in_progress')?.phase_number ||
+          phases.find(p => p.status === 'not_started')?.phase_number;
 
-    const phases = phasesResult.data;
-    if (phases && phases.length > 0) {
-      const completedPhases = phases.filter(p => p.status === 'locked' || p.status === 'completed').length;
-      const currentPhase = phases.find(p => p.status === 'in_progress')?.phase_number ||
-        phases.find(p => p.status === 'not_started')?.phase_number;
+        brandProgress = {
+          currentPhase,
+          completedPhases,
+          totalPhases: phases.length,
+        };
+      }
 
-      brandProgress = {
-        currentPhase,
-        completedPhases,
-        totalPhases: phases.length,
-      };
-    }
+      contentStats = { pending: contentCountResult.count || 0 };
+      pipelineCount = pipelineResult?.count || 0;
+      notificationCount = notifResult.count || 0;
+      pendingReviewCount = pendingReviewResult?.count || 0;
 
-    contentStats = { pending: contentCountResult.count || 0 };
-    pipelineCount = pipelineResult?.count || 0;
-    notificationCount = notifResult.count || 0;
-    pendingReviewCount = pendingReviewResult?.count || 0;
-
-    // Build team permissions map for non-admin users
-    if (teamPermsResult?.data) {
-      for (const row of teamPermsResult.data) {
-        teamPermissions[row.feature] = (row.permissions || {}) as FeaturePermissions;
+      // Build team permissions map for non-admin users
+      if (teamPermsResult?.data) {
+        for (const row of teamPermsResult.data) {
+          teamPermissions[row.feature] = (row.permissions || {}) as FeaturePermissions;
+        }
+      }
+    } catch (layoutError) {
+      console.error('Dashboard layout query error:', layoutError);
+      // Fallback: run only the essential queries (notifications + pipeline)
+      try {
+        const [notifResult, pipelineResult] = await Promise.all([
+          notificationPromise,
+          pipelinePromise,
+        ]);
+        pipelineCount = pipelineResult?.count || 0;
+        notificationCount = notifResult.count || 0;
+      } catch (fallbackError) {
+        console.error('Dashboard layout fallback query error:', fallbackError);
       }
     }
   } else {
