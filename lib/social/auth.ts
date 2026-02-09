@@ -25,8 +25,8 @@ export function getAuthUrl(platform: SocialPlatform, state: string, redirectUri:
   return getAdapter(platform).getAuthUrl(state, redirectUri);
 }
 
-export function exchangeCode(platform: SocialPlatform, code: string, redirectUri: string): Promise<TokenData> {
-  return getAdapter(platform).exchangeCode(code, redirectUri);
+export function exchangeCode(platform: SocialPlatform, code: string, redirectUri: string, codeVerifier?: string): Promise<TokenData> {
+  return getAdapter(platform).exchangeCode(code, redirectUri, codeVerifier);
 }
 
 export function isValidPlatform(platform: string): platform is SocialPlatform {

@@ -46,9 +46,13 @@ export async function GET(
     return NextResponse.redirect(`${baseUrl}/settings?social=error&message=Missing+organization`);
   }
 
+  // Get PKCE code verifier for Twitter
+  const codeVerifier = cookieStore.get(`social_oauth_pkce_${platform}`)?.value;
+
   // Clean up cookies
   cookieStore.delete(`social_oauth_state_${platform}`);
   cookieStore.delete(`social_oauth_org_${platform}`);
+  cookieStore.delete(`social_oauth_pkce_${platform}`);
 
   // Check auth
   const supabase = createClient();
@@ -59,7 +63,7 @@ export async function GET(
 
   try {
     const redirectUri = getRedirectUri(platform);
-    const tokenData = await exchangeCode(platform, code, redirectUri);
+    const tokenData = await exchangeCode(platform, code, redirectUri, codeVerifier);
 
     // Upsert connection (one per platform per org)
     const { error: upsertError } = await supabase

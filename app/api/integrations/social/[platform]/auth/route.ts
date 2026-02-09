@@ -54,6 +54,17 @@ export async function GET(
     path: '/',
   });
 
+  // For Twitter PKCE: store state as code_verifier in cookie
+  if (platform === 'twitter') {
+    cookieStore.set(`social_oauth_pkce_${platform}`, state, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 600,
+      path: '/',
+    });
+  }
+
   const redirectUri = getRedirectUri(platform);
   const authUrl = getAuthUrl(platform, state, redirectUri);
 

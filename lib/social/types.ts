@@ -47,7 +47,7 @@ export interface AnalyticsData {
 export interface PlatformAdapter {
   platform: SocialPlatform;
   getAuthUrl(state: string, redirectUri: string): string;
-  exchangeCode(code: string, redirectUri: string): Promise<TokenData>;
+  exchangeCode(code: string, redirectUri: string, codeVerifier?: string): Promise<TokenData>;
   refreshToken(refreshToken: string): Promise<TokenData>;
   publishPost(tokens: TokenData, post: PostPayload): Promise<PublishResult>;
   getPostAnalytics(tokens: TokenData, postId: string): Promise<AnalyticsData>;

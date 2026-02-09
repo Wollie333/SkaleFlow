@@ -20,7 +20,7 @@ export const twitterAdapter: PlatformAdapter = {
     return `https://twitter.com/i/oauth2/authorize?${params}`;
   },
 
-  async exchangeCode(code: string, redirectUri: string): Promise<TokenData> {
+  async exchangeCode(code: string, redirectUri: string, codeVerifier?: string): Promise<TokenData> {
     const basicAuth = Buffer.from(
       `${process.env.TWITTER_CLIENT_ID}:${process.env.TWITTER_CLIENT_SECRET}`
     ).toString('base64');
@@ -35,7 +35,7 @@ export const twitterAdapter: PlatformAdapter = {
         code,
         grant_type: 'authorization_code',
         redirect_uri: redirectUri,
-        code_verifier: code, // Must match the code_challenge from getAuthUrl
+        code_verifier: codeVerifier || code, // Must match the code_challenge from getAuthUrl (using plain method)
       }),
     });
 
