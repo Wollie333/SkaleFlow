@@ -32,7 +32,11 @@ export function MarketingFooter() {
       </div>
       <div className="max-w-[1060px] mx-auto mt-10 pt-6 border-t border-teal/[0.08] flex flex-col md:flex-row justify-between items-center gap-3">
         <p className="text-[13px] text-stone">&copy; 2026 <span className="text-teal">Mana Marketing</span> &middot; Sabie, Mpumalanga, South Africa</p>
-        <p className="text-[13px] text-stone">SkaleFlow&trade; is a trademark of Mana Marketing</p>
+        <div className="flex items-center gap-4">
+          <Link href="/privacy" className="text-[13px] text-stone hover:text-cream transition-colors">Privacy Policy</Link>
+          <Link href="/terms" className="text-[13px] text-stone hover:text-cream transition-colors">Terms of Service</Link>
+          <p className="text-[13px] text-stone">SkaleFlow&trade; is a trademark of Mana Marketing</p>
+        </div>
       </div>
     </footer>
   );
