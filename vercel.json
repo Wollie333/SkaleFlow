@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/content/publish/scheduled",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/content/analytics/sync",
@@ -18,11 +18,11 @@
     },
     {
       "path": "/api/automations/process",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 9 * * *"
     },
     {
       "path": "/api/content/generate/queue/process",
-      "schedule": "*/2 * * * *"
+      "schedule": "0 10 * * *"
     },
     {
       "path": "/api/marketing/analytics/sync",
