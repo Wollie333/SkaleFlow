@@ -34,6 +34,8 @@ export function formatForPlatform(platform: SocialPlatform, item: ContentItem): 
       return formatForTwitter(item);
     case 'tiktok':
       return formatForTikTok(item);
+    case 'youtube':
+      return formatForYouTube(item);
     default:
       throw new Error(`Unsupported platform: ${platform}`);
   }
@@ -94,6 +96,15 @@ function formatForTikTok(item: ContentItem): PostPayload {
   };
 }
 
+function formatForYouTube(item: ContentItem): PostPayload {
+  return {
+    text: '',
+    caption: appendTrackedUrl(item.caption || buildDefaultText(item), item, 'youtube'),
+    hashtags: item.hashtags || [],
+    mediaUrls: item.media_urls || [],
+  };
+}
+
 function buildDefaultText(item: ContentItem): string {
   const parts: string[] = [];
   if (item.hook) parts.push(item.hook);
@@ -114,6 +125,14 @@ export function canPublishToPlatform(platform: SocialPlatform, item: Pick<Conten
       const hasVideo = item.media_urls?.some(url => /\.(mp4|mov|avi|wmv)$/i.test(url));
       if (!hasVideo) {
         return { canPublish: false, reason: 'TikTok requires a video file.' };
+      }
+      return { canPublish: true };
+    }
+
+    case 'youtube': {
+      const hasYTVideo = item.media_urls?.some(url => /\.(mp4|mov|avi|wmv|mkv|flv|webm)$/i.test(url));
+      if (!hasYTVideo) {
+        return { canPublish: false, reason: 'YouTube requires a video file.' };
       }
       return { canPublish: true };
     }

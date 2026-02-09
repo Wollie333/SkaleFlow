@@ -30,6 +30,7 @@ const PLATFORM_LABELS: Record<SocialPlatform, string> = {
   instagram: 'Instagram',
   twitter: 'X',
   tiktok: 'TikTok',
+  youtube: 'YouTube',
 };
 
 const PLATFORM_CHAR_LIMITS: Record<SocialPlatform, number> = {
@@ -38,6 +39,7 @@ const PLATFORM_CHAR_LIMITS: Record<SocialPlatform, number> = {
   instagram: 2200,
   twitter: 280,
   tiktok: 2200,
+  youtube: 5000,
 };
 
 function AvatarPlaceholder({ name, size = 40 }: { name: string; size?: number }) {
@@ -320,6 +322,50 @@ function TikTokPreview({ caption, hashtags, mediaUrls, userName }: SocialPreview
   );
 }
 
+// ─── YouTube Preview ────────────────────────────────────────────────────
+function YouTubePreview({ caption, hashtags, mediaUrls, userName }: SocialPreviewProps) {
+  const fullText = formatCaption(caption, hashtags);
+  const displayName = userName || 'Your Channel';
+
+  return (
+    <div className="bg-white rounded-lg overflow-hidden border border-stone/10">
+      {/* Video thumbnail */}
+      <div className="aspect-video bg-charcoal flex items-center justify-center relative">
+        {mediaUrls.length > 0 && mediaUrls[0] ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={mediaUrls[0]} alt="Video" className="w-full h-full object-cover" />
+        ) : (
+          <span className="text-white/20 text-sm">Video thumbnail</span>
+        )}
+        {/* Play button overlay */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-16 h-11 bg-red-600 rounded-xl flex items-center justify-center opacity-80">
+            <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      {/* Title and channel info */}
+      <div className="p-3 space-y-2">
+        <div className="flex gap-3">
+          <div className="w-9 h-9 rounded-full bg-stone/20 flex-shrink-0 flex items-center justify-center text-xs font-bold text-stone">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-charcoal line-clamp-2 leading-tight">
+              {fullText || <span className="text-stone italic">Video title will appear here...</span>}
+            </p>
+            <p className="text-xs text-stone mt-1">{displayName}</p>
+            <p className="text-xs text-stone">0 views</p>
+          </div>
+        </div>
+        <CharCount current={fullText.length} max={5000} />
+      </div>
+    </div>
+  );
+}
+
 // ─── Single Platform Preview (exported) ────────────────────────────────
 export function SocialPreview(props: SocialPreviewProps) {
   switch (props.platform) {
@@ -333,6 +379,8 @@ export function SocialPreview(props: SocialPreviewProps) {
       return <TwitterPreview {...props} />;
     case 'tiktok':
       return <TikTokPreview {...props} />;
+    case 'youtube':
+      return <YouTubePreview {...props} />;
     default:
       return <LinkedInPreview {...props} />;
   }

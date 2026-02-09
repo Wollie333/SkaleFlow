@@ -24,7 +24,7 @@ interface PlatformSelectorProps {
   contentItem?: ContentItem;
 }
 
-const ALL_PLATFORMS: SocialPlatform[] = ['linkedin', 'facebook', 'instagram', 'twitter', 'tiktok'];
+const ALL_PLATFORMS: SocialPlatform[] = ['linkedin', 'facebook', 'instagram', 'twitter', 'tiktok', 'youtube'];
 
 export function PlatformSelector({ selectedPlatforms, onSelectionChange, contentItem }: PlatformSelectorProps) {
   const [connections, setConnections] = useState<Connection[]>([]);

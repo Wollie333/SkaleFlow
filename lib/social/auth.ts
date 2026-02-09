@@ -4,6 +4,7 @@ import { instagramAdapter } from './platforms/instagram';
 import { linkedinAdapter } from './platforms/linkedin';
 import { twitterAdapter } from './platforms/twitter';
 import { tiktokAdapter } from './platforms/tiktok';
+import { youtubeAdapter } from './platforms/youtube';
 
 const adapters: Record<SocialPlatform, PlatformAdapter> = {
   facebook: facebookAdapter,
@@ -11,6 +12,7 @@ const adapters: Record<SocialPlatform, PlatformAdapter> = {
   linkedin: linkedinAdapter,
   twitter: twitterAdapter,
   tiktok: tiktokAdapter,
+  youtube: youtubeAdapter,
 };
 
 export function getAdapter(platform: SocialPlatform): PlatformAdapter {
@@ -30,7 +32,7 @@ export function exchangeCode(platform: SocialPlatform, code: string, redirectUri
 }
 
 export function isValidPlatform(platform: string): platform is SocialPlatform {
-  return ['linkedin', 'facebook', 'instagram', 'twitter', 'tiktok'].includes(platform);
+  return ['linkedin', 'facebook', 'instagram', 'twitter', 'tiktok', 'youtube'].includes(platform);
 }
 
 export function getRedirectUri(platform: SocialPlatform): string {

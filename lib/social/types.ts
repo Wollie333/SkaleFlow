@@ -105,4 +105,11 @@ export const PLATFORM_CONFIG: Record<SocialPlatform, {
     requiresVideo: true,
     maxCaptionLength: 2200,
   },
+  youtube: {
+    name: 'YouTube',
+    color: '#FF0000',
+    bgColor: 'bg-[#FF0000]',
+    requiresVideo: true,
+    maxCaptionLength: 5000,
+  },
 };

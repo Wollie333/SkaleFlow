@@ -43,7 +43,7 @@ export type StoryBrandStage =
   | 'success';
 export type PipelineStage = 'application' | 'declined' | 'approved' | 'booking_made' | 'lost' | 'won';
 export type MeetingStatus = 'pending' | 'scheduled' | 'completed' | 'cancelled' | 'no_show';
-export type SocialPlatform = 'linkedin' | 'facebook' | 'instagram' | 'twitter' | 'tiktok';
+export type SocialPlatform = 'linkedin' | 'facebook' | 'instagram' | 'twitter' | 'tiktok' | 'youtube';
 export type PublishStatus = 'queued' | 'publishing' | 'published' | 'failed';
 export type NotificationType = 'content_submitted' | 'content_approved' | 'content_rejected' | 'revision_requested' | 'generation_completed' | 'change_request_submitted' | 'change_request_approved' | 'change_request_rejected' | 'change_request_revision' | 'credits_allocated' | 'credits_low';
 export type FeatureType = 'brand_engine' | 'content_engine' | 'pipeline' | 'ad_campaigns';

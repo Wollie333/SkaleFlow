@@ -521,7 +521,7 @@ export default function SettingsPage() {
           )}
 
           <div className="space-y-3">
-            {(['linkedin', 'facebook', 'instagram', 'twitter', 'tiktok'] as SocialPlatform[]).map(platform => (
+            {(['linkedin', 'facebook', 'instagram', 'twitter', 'tiktok', 'youtube'] as SocialPlatform[]).map(platform => (
               <SocialConnectionCard
                 key={platform}
                 platform={platform}
