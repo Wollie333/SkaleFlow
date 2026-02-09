@@ -16,6 +16,7 @@ export interface SocialConnectionRow {
   is_active: boolean;
   connected_at: string;
   token_expires_at: string | null;
+  metadata?: Record<string, unknown> | null;
 }
 
 interface SocialConnectionCardProps {
@@ -66,8 +67,9 @@ export function SocialConnectionCard({ platform, connections, onDisconnect, onMa
   const pageConns = connections.filter(c => c.account_type === 'page');
   const hasAnyConnection = connections.length > 0;
 
-  // Platforms that support pages
-  const supportsPages = ['facebook', 'linkedin'].includes(platform);
+  // Show "Manage Pages" only when the profile connection actually has pages in metadata
+  const profileMetadataPages = profileConn?.metadata?.pages as unknown[] | undefined;
+  const hasAvailablePages = (profileMetadataPages && profileMetadataPages.length > 0) || pageConns.length > 0;
 
   const handleConnect = () => {
     window.location.href = `/api/integrations/social/${platform}/auth`;
@@ -129,7 +131,7 @@ export function SocialConnectionCard({ platform, connections, onDisconnect, onMa
             ) : (
               <Badge variant="awareness">Connected</Badge>
             )}
-            {supportsPages && profileConn && onManagePages && (
+            {hasAvailablePages && profileConn && onManagePages && (
               <Button
                 variant="secondary"
                 className="text-sm"

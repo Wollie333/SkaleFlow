@@ -83,9 +83,10 @@ export const facebookAdapter: PlatformAdapter = {
   },
 
   async publishPost(tokens: TokenData, post: PostPayload): Promise<PublishResult> {
-    const pageId = tokens.platformPageId;
-    if (!pageId) {
-      return { success: false, error: 'No Facebook Page connected. Please reconnect with a Page.' };
+    // Post to page if platformPageId is set, otherwise post to personal profile
+    const targetId = tokens.platformPageId || tokens.platformUserId;
+    if (!targetId) {
+      return { success: false, error: 'No Facebook account ID found. Please reconnect.' };
     }
 
     try {
@@ -98,11 +99,11 @@ export const facebookAdapter: PlatformAdapter = {
         body.link = post.link;
       }
 
-      let endpoint = `${GRAPH_API_BASE}/${pageId}/feed`;
+      let endpoint = `${GRAPH_API_BASE}/${targetId}/feed`;
 
       // If media URLs exist, post as photo
       if (post.mediaUrls && post.mediaUrls.length > 0) {
-        endpoint = `${GRAPH_API_BASE}/${pageId}/photos`;
+        endpoint = `${GRAPH_API_BASE}/${targetId}/photos`;
         body.url = post.mediaUrls[0];
       }
 

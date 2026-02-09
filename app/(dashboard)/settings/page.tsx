@@ -145,11 +145,22 @@ export default function SettingsPage() {
         // Load social media connections
         const { data: connections } = await supabase
           .from('social_media_connections')
-          .select('id, platform, platform_username, platform_page_name, platform_page_id, account_type, is_active, connected_at, token_expires_at')
+          .select('id, platform, platform_username, platform_page_name, platform_page_id, account_type, is_active, connected_at, token_expires_at, metadata')
           .eq('organization_id', org.id);
 
         if (connections) {
-          setSocialConnections(connections as SocialConnectionRow[]);
+          // Strip tokens from metadata before storing in state (only keep pages array structure)
+          const safeConnections = connections.map(c => {
+            const meta = c.metadata as Record<string, unknown> | null;
+            const pages = (meta?.pages as Array<Record<string, unknown>>) || [];
+            return {
+              ...c,
+              metadata: pages.length > 0
+                ? { pages: pages.map(p => ({ id: p.id, name: p.name, category: p.category })) }
+                : null,
+            };
+          });
+          setSocialConnections(safeConnections as SocialConnectionRow[]);
         }
 
         // Load Google Drive connection (table may not exist yet)
@@ -557,10 +568,20 @@ export default function SettingsPage() {
                 if (organization) {
                   const { data: freshConns } = await supabase
                     .from('social_media_connections')
-                    .select('id, platform, platform_username, platform_page_name, platform_page_id, account_type, is_active, connected_at, token_expires_at')
+                    .select('id, platform, platform_username, platform_page_name, platform_page_id, account_type, is_active, connected_at, token_expires_at, metadata')
                     .eq('organization_id', organization.id);
                   if (freshConns) {
-                    setSocialConnections(freshConns as SocialConnectionRow[]);
+                    const safeConns = freshConns.map(c => {
+                      const meta = c.metadata as Record<string, unknown> | null;
+                      const pages = (meta?.pages as Array<Record<string, unknown>>) || [];
+                      return {
+                        ...c,
+                        metadata: pages.length > 0
+                          ? { pages: pages.map(p => ({ id: p.id, name: p.name, category: p.category })) }
+                          : null,
+                      };
+                    });
+                    setSocialConnections(safeConns as SocialConnectionRow[]);
                   }
                 }
               }}

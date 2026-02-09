@@ -149,17 +149,16 @@ export const linkedinAdapter: PlatformAdapter = {
         };
       }
 
-      // If there are media URLs (images), add as multi-image content
-      // Note: For direct image uploads, a 2-step register+upload flow is needed.
-      // External image URLs are added as article links as a fallback.
+      // If there are media URLs (images), upload natively via LinkedIn's image API
       if (post.mediaUrls && post.mediaUrls.length > 0 && !post.link) {
-        // LinkedIn Posts API supports external media via article source
-        postBody.content = {
-          article: {
-            source: post.mediaUrls[0],
-            title: post.text?.slice(0, 200) || 'Shared media',
-          },
-        };
+        const imageUrn = await uploadImageToLinkedIn(tokens.accessToken, authorUrn, post.mediaUrls[0]);
+        if (imageUrn) {
+          postBody.content = {
+            media: {
+              id: imageUrn,
+            },
+          };
+        }
       }
 
       const res = await fetch(`${LINKEDIN_API_BASE}/rest/posts`, {
@@ -188,14 +187,16 @@ export const linkedinAdapter: PlatformAdapter = {
 
       // The new Posts API returns the post URN in the x-restli-id header
       const postUrn = res.headers.get('x-restli-id') || '';
-      // Extract activity ID for the post URL
-      const activityMatch = postUrn.match(/urn:li:share:(\d+)/);
-      const activityId = activityMatch ? activityMatch[1] : postUrn;
+      // The URN is typically urn:li:share:{id} — use it directly in the feed URL
+      // LinkedIn feed URLs work with both share and activity URNs
+      const postUrl = postUrn
+        ? `https://www.linkedin.com/feed/update/${postUrn}`
+        : undefined;
 
       return {
         success: true,
         platformPostId: postUrn,
-        postUrl: activityId ? `https://www.linkedin.com/feed/update/urn:li:activity:${activityId}` : undefined,
+        postUrl,
         metadata: { urn: postUrn },
       };
     } catch (error) {
@@ -258,4 +259,74 @@ function buildLinkedInText(post: PostPayload): string {
   }
   // LinkedIn limit: 3000 chars
   return text.slice(0, 3000);
+}
+
+/**
+ * Upload an image to LinkedIn using the Images API (2-step: register then upload binary).
+ * Returns the image URN for use in a post, or null on failure.
+ */
+async function uploadImageToLinkedIn(
+  accessToken: string,
+  ownerUrn: string,
+  imageUrl: string
+): Promise<string | null> {
+  try {
+    // Step 1: Initialize the upload
+    const initRes = await fetch(`${LINKEDIN_API_BASE}/rest/images?action=initializeUpload`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'LinkedIn-Version': '202601',
+        'X-Restli-Protocol-Version': '2.0.0',
+      },
+      body: JSON.stringify({
+        initializeUploadRequest: {
+          owner: ownerUrn,
+        },
+      }),
+    });
+
+    if (!initRes.ok) {
+      console.error('[LinkedIn Image] Init upload failed:', initRes.status, await initRes.text());
+      return null;
+    }
+
+    const initData = await initRes.json();
+    const uploadUrl = initData.value?.uploadUrl;
+    const imageUrn = initData.value?.image;
+
+    if (!uploadUrl || !imageUrn) {
+      console.error('[LinkedIn Image] Missing uploadUrl or image URN in response');
+      return null;
+    }
+
+    // Step 2: Download the image from the external URL
+    const imageRes = await fetch(imageUrl);
+    if (!imageRes.ok) {
+      console.error('[LinkedIn Image] Failed to download image from:', imageUrl);
+      return null;
+    }
+    const imageBuffer = await imageRes.arrayBuffer();
+
+    // Step 3: Upload the binary to LinkedIn's upload URL
+    const uploadRes = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/octet-stream',
+      },
+      body: imageBuffer,
+    });
+
+    if (!uploadRes.ok) {
+      console.error('[LinkedIn Image] Binary upload failed:', uploadRes.status);
+      return null;
+    }
+
+    return imageUrn;
+  } catch (error) {
+    console.error('[LinkedIn Image] Upload error:', error);
+    return null;
+  }
 }
