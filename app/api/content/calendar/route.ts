@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       month,
     } = body;
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -176,7 +176,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'calendarId is required' }, { status: 400 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

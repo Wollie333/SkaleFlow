@@ -201,6 +201,8 @@ export default function ContentCreatePage() {
   const [engineBatchId, setEngineBatchId] = useState<string | null>(null);
   const [engineIsGenerating, setEngineIsGenerating] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
+  const [engineTemplateOverride, setEngineTemplateOverride] = useState<string | null>(null);
+  const [engineAvailableTemplates, setEngineAvailableTemplates] = useState<Array<{ template_key: string; name: string; category: string; format_category: string | null }>>([]);
   const [contentAngles, setContentAngles] = useState<Array<{
     id: string; name: string; emotional_target: string | null;
   }>>([]);
@@ -283,6 +285,14 @@ export default function ContentCreatePage() {
           .eq('is_active', true)
           .order('sort_order');
         if (angles) setContentAngles(angles);
+
+        // Load available templates for engine tab override dropdown
+        const { data: tmplData } = await supabase
+          .from('content_templates')
+          .select('template_key, name, category, format_category')
+          .eq('is_active', true)
+          .order('sort_order');
+        if (tmplData) setEngineAvailableTemplates(tmplData);
       }
 
       setIsLoading(false);
@@ -1618,7 +1628,7 @@ export default function ContentCreatePage() {
                           utmParams.utm_source && `source: ${utmParams.utm_source}`,
                           utmParams.utm_medium && `medium: ${utmParams.utm_medium}`,
                           utmParams.utm_campaign && `campaign: ${utmParams.utm_campaign}`,
-                        ].filter(Boolean).join(' · ')}
+                        ].filter(Boolean).join(' Â· ')}
                       </p>
                     </div>
                   )}
@@ -1759,12 +1769,12 @@ export default function ContentCreatePage() {
       </div>
 
       {/* ============================================================ */}
-      {/* MODE 1: SINGLE POST (AI) — New caption-first layout */}
+      {/* MODE 1: SINGLE POST (AI) â€” New caption-first layout */}
       {/* ============================================================ */}
       {mode === 'single' && renderSingleManualLayout()}
 
       {/* ============================================================ */}
-      {/* MODE 2: CONTENT ENGINE — 3-Phase UI */}
+      {/* MODE 2: CONTENT ENGINE â€” 3-Phase UI */}
       {/* ============================================================ */}
       {mode === 'engine' && enginePhase === 'configure' && (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -1870,6 +1880,23 @@ export default function ContentCreatePage() {
                     Change
                   </button>
                 </div>
+              </div>
+
+              {/* Template override (optional) */}
+              <div className="mb-4">
+                <label className="block text-xs font-medium text-stone/60 mb-1">Template Override</label>
+                <select
+                  value={engineTemplateOverride || ''}
+                  onChange={(e) => setEngineTemplateOverride(e.target.value || null)}
+                  className="w-full px-3 py-2 text-sm border border-stone/20 rounded-lg bg-white"
+                >
+                  <option value="">AI will choose best fit</option>
+                  {engineAvailableTemplates.map((t) => (
+                    <option key={t.template_key} value={t.template_key}>
+                      {t.name} ({t.category === 'social_framework' ? 'Social' : t.format_category || t.category})
+                    </option>
+                  ))}
+                </select>
               </div>
             </Card>
 
@@ -2221,7 +2248,7 @@ export default function ContentCreatePage() {
         format={selectedFormat}
       />
 
-      {/* Config Modal — handles both single and engine modes */}
+      {/* Config Modal â€” handles both single and engine modes */}
       <ConfigModal
         isOpen={showConfigModal}
         onClose={() => setShowConfigModal(false)}

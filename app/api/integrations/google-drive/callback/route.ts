@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const { userId, organizationId } = parsedState;
 
     // Verify user is still authenticated
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || user.id !== userId) {
       return NextResponse.redirect(new URL('/settings?gdrive=error&message=Authentication+mismatch', siteUrl));

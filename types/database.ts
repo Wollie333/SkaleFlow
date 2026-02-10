@@ -76,6 +76,9 @@ export type AdComplianceStatus = 'pending' | 'passed' | 'flagged' | 'rejected';
 export type AdAudienceType = 'saved' | 'custom' | 'lookalike';
 export type AdCtaType = 'learn_more' | 'shop_now' | 'sign_up' | 'download' | 'get_quote' | 'apply_now' | 'book_now' | 'contact_us';
 export type AdGenerationBatchStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+export type TemplateCategory = 'video_script' | 'hook' | 'cta' | 'social_framework' | 'seo_content' | 'email_outreach' | 'web_copy';
+export type TemplateTier = 'core_rotation' | 'high_impact' | 'strategic';
+export type TemplateContentType = 'post' | 'script' | 'hook' | 'cta';
 
 export interface Database {
   public: {
@@ -1635,47 +1638,6 @@ export interface Database {
             columns: ["tag_id"];
             isOneToOne: false;
             referencedRelation: "content_tags";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      content_templates: {
-        Row: {
-          id: string;
-          organization_id: string;
-          name: string;
-          format: string;
-          template_fields: Json;
-          created_by: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          name: string;
-          format: string;
-          template_fields?: Json;
-          created_by?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          name?: string;
-          format?: string;
-          template_fields?: Json;
-          created_by?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "content_templates_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
             referencedColumns: ["id"];
           },
         ];
@@ -3568,6 +3530,122 @@ export interface Database {
             columns: ["reviewed_by"];
             isOneToOne: false;
             referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      content_templates: {
+        Row: {
+          id: string;
+          template_key: string;
+          name: string;
+          category: TemplateCategory;
+          content_type: TemplateContentType;
+          format_category: string | null;
+          tier: TemplateTier;
+          funnel_stages: string[];
+          structure: string | null;
+          psychology: string | null;
+          description: string | null;
+          when_to_use: string[] | null;
+          when_not_to_use: string[] | null;
+          example_content: string | null;
+          prompt_instructions: string;
+          output_format: string | null;
+          markdown_source: string | null;
+          is_active: boolean;
+          is_system: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+          updated_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          template_key: string;
+          name: string;
+          category: TemplateCategory;
+          content_type: TemplateContentType;
+          format_category?: string | null;
+          tier?: TemplateTier;
+          funnel_stages?: string[];
+          structure?: string | null;
+          psychology?: string | null;
+          description?: string | null;
+          when_to_use?: string[] | null;
+          when_not_to_use?: string[] | null;
+          example_content?: string | null;
+          prompt_instructions: string;
+          output_format?: string | null;
+          markdown_source?: string | null;
+          is_active?: boolean;
+          is_system?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+          updated_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          template_key?: string;
+          name?: string;
+          category?: TemplateCategory;
+          content_type?: TemplateContentType;
+          format_category?: string | null;
+          tier?: TemplateTier;
+          funnel_stages?: string[];
+          structure?: string | null;
+          psychology?: string | null;
+          description?: string | null;
+          when_to_use?: string[] | null;
+          when_not_to_use?: string[] | null;
+          example_content?: string | null;
+          prompt_instructions?: string;
+          output_format?: string | null;
+          markdown_source?: string | null;
+          is_active?: boolean;
+          is_system?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
+      template_stage_mappings: {
+        Row: {
+          id: string;
+          template_id: string;
+          funnel_stage: string;
+          storybrand_stage: string;
+          is_primary: boolean;
+          confidence_score: number;
+        };
+        Insert: {
+          id?: string;
+          template_id: string;
+          funnel_stage: string;
+          storybrand_stage: string;
+          is_primary?: boolean;
+          confidence_score?: number;
+        };
+        Update: {
+          id?: string;
+          template_id?: string;
+          funnel_stage?: string;
+          storybrand_stage?: string;
+          is_primary?: boolean;
+          confidence_score?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "template_stage_mappings_template_id_fkey";
+            columns: ["template_id"];
+            isOneToOne: false;
+            referencedRelation: "content_templates";
             referencedColumns: ["id"];
           },
         ];

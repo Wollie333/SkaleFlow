@@ -4,20 +4,21 @@ import type { OrgMemberRole } from '@/types/database';
 
 const VALID_ROLES: OrgMemberRole[] = ['admin', 'member', 'viewer'];
 
-// PATCH — Update a team member's role
+// PATCH ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Update a team member's role
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const memberId = params.id;
+  const { id } = await params;
+    const memberId = id;
     const { role } = await request.json();
 
     if (!role || !VALID_ROLES.includes(role)) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const serviceSupabase = createServiceClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -85,15 +86,16 @@ export async function PATCH(
   }
 }
 
-// DELETE — Remove a team member
+// DELETE ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Remove a team member
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const memberId = params.id;
+  const { id } = await params;
+    const memberId = id;
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const serviceSupabase = createServiceClient();
 
     const { data: { user } } = await supabase.auth.getUser();

@@ -13,7 +13,7 @@ import {
   type PlacementOption,
 } from '@/config/placement-types';
 import type { SocialPlatform, PlacementType } from '@/types/database';
-import { PencilSquareIcon } from '@heroicons/react/24/outline';
+import { PencilSquareIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import type { InstanceSpec } from './instance-edit-form';
 
 // ─── Platform brand colors ──────────────────────────────────────────────
@@ -112,6 +112,7 @@ export function PreviewPanel({
   hasVideo,
 }: PreviewPanelProps) {
   const [activePlatform, setActivePlatform] = useState<SocialPlatform | null>(null);
+  const [collapsedCards, setCollapsedCards] = useState<Set<PlacementType>>(new Set());
 
   const enabledPlatforms = getEnabledPlatforms(platformPlacements);
   const { platforms: platformCount, placements: placementCount } = countPlacements(platformPlacements);
@@ -143,42 +144,27 @@ export function PreviewPanel({
   }
 
   // ─── Handlers ─────────────────────────────────────────────────────────
-  const handlePlatformClick = (platform: SocialPlatform) => {
+  const handlePlatformToggle = (platform: SocialPlatform) => {
     const state = platformPlacements[platform];
-    if (state.enabled) {
-      setActivePlatform(platform);
-    } else {
-      const defaultPlacement = PLACEMENT_OPTIONS[platform][0].value;
-      const updated = { ...platformPlacements };
-      updated[platform] = {
-        enabled: true,
-        placements: new Set([defaultPlacement]),
-      };
-      onPlatformPlacementsChange(updated);
-      setActivePlatform(platform);
-    }
-  };
+    const updated = { ...platformPlacements };
 
-  const handlePlatformDoubleClick = (platform: SocialPlatform) => {
-    const state = platformPlacements[platform];
     if (state.enabled) {
-      const updated = { ...platformPlacements };
+      // Disable — grey it out
       updated[platform] = { enabled: false, placements: new Set() };
       onPlatformPlacementsChange(updated);
       if (activePlatform === platform) {
         const remaining = PLATFORM_ORDER.filter(p => p !== platform && updated[p].enabled);
         setActivePlatform(remaining.length > 0 ? remaining[0] : null);
       }
-    }
-  };
-
-  const handleTogglePlatformOff = (platform: SocialPlatform) => {
-    const updated = { ...platformPlacements };
-    updated[platform] = { enabled: false, placements: new Set() };
-    onPlatformPlacementsChange(updated);
-    if (activePlatform === platform) {
-      const remaining = PLATFORM_ORDER.filter(p => p !== platform && updated[p].enabled);
-      setActivePlatform(remaining.length > 0 ? remaining[0] : null);
+    } else {
+      // Enable with default placement + select for preview
+      const defaultPlacement = PLACEMENT_OPTIONS[platform][0].value;
+      updated[platform] = {
+        enabled: true,
+        placements: new Set([defaultPlacement]),
+      };
+      onPlatformPlacementsChange(updated);
+      setActivePlatform(platform);
     }
   };
 
@@ -202,16 +188,9 @@ export function PreviewPanel({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div>
         <h3 className="text-sm font-semibold text-charcoal">Preview &amp; Channels</h3>
-        {currentActive && platformPlacements[currentActive]?.enabled && (
-          <button
-            onClick={() => handleTogglePlatformOff(currentActive)}
-            className="text-xs text-stone hover:text-red-500 transition-colors"
-          >
-            Remove {PLATFORM_LABELS[currentActive]}
-          </button>
-        )}
+        <p className="text-xs text-stone mt-0.5">Click to enable/disable a channel</p>
       </div>
 
       {/* ── Round Platform Logos ──────────────────────────────────── */}
@@ -219,29 +198,23 @@ export function PreviewPanel({
         {PLATFORM_ORDER.map(platform => {
           const state = platformPlacements[platform];
           const isEnabled = state.enabled;
-          const isActive = currentActive === platform;
           const color = PLATFORM_COLORS[platform];
 
           return (
             <button
               key={platform}
-              onClick={() => handlePlatformClick(platform)}
-              onDoubleClick={() => handlePlatformDoubleClick(platform)}
-              title={`${PLATFORM_LABELS[platform]}${isEnabled ? ' (double-click to remove)' : ''}`}
+              onClick={() => handlePlatformToggle(platform)}
+              title={`${PLATFORM_LABELS[platform]} — ${isEnabled ? 'click to disable' : 'click to enable'}`}
               className={cn(
                 'w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shrink-0',
-                isActive
+                isEnabled
                   ? 'text-white shadow-lg scale-105'
-                  : isEnabled
-                    ? 'shadow-sm hover:shadow-md'
-                    : 'bg-stone-100 border border-stone-200 text-stone-400 hover:bg-stone-50 hover:border-stone-300'
+                  : 'bg-stone-100 border border-stone-200 text-stone-400 hover:bg-stone-50 hover:border-stone-300'
               )}
               style={
-                isActive
+                isEnabled
                   ? { backgroundColor: color, borderColor: color, boxShadow: `0 0 0 3px ${color}30` }
-                  : isEnabled
-                    ? { backgroundColor: `${color}15`, borderWidth: 2, borderStyle: 'solid', borderColor: color, color }
-                    : undefined
+                  : undefined
               }
             >
               <PlatformIcon platform={platform} size={20} />
@@ -294,6 +267,7 @@ export function PreviewPanel({
             const effectiveHashtags = spec?.hashtags || hashtags;
             const isEditing = editingInstance === placement;
             const hasOverride = spec && (spec.caption || spec.hashtags || spec.title);
+            const isCollapsed = collapsedCards.has(placement);
 
             return (
               <div
@@ -305,12 +279,22 @@ export function PreviewPanel({
                     : 'border-stone-200'
                 )}
               >
-                {/* Card header */}
+                {/* Card header — click to collapse/expand */}
                 <div
-                  className="flex items-center justify-between px-3 py-2"
+                  className="flex items-center justify-between px-3 py-2 cursor-pointer select-none"
                   style={{ backgroundColor: color }}
+                  onClick={() => {
+                    const next = new Set(collapsedCards);
+                    if (next.has(placement)) next.delete(placement);
+                    else next.add(placement);
+                    setCollapsedCards(next);
+                  }}
                 >
                   <div className="flex items-center gap-2 text-white">
+                    {isCollapsed
+                      ? <ChevronDownIcon className="w-3.5 h-3.5" />
+                      : <ChevronUpIcon className="w-3.5 h-3.5" />
+                    }
                     <PlatformIcon platform={platform} size={14} />
                     <span className="text-xs font-medium">
                       {platformLabel} {placementLabel}
@@ -324,7 +308,7 @@ export function PreviewPanel({
                     )}
                     {onEditInstance && (
                       <button
-                        onClick={() => onEditInstance(placement)}
+                        onClick={(e) => { e.stopPropagation(); onEditInstance(placement); }}
                         className="p-0.5 rounded hover:bg-white/20 transition-colors text-white"
                         title="Edit this instance"
                       >
@@ -334,18 +318,20 @@ export function PreviewPanel({
                   </div>
                 </div>
 
-                {/* Preview body */}
-                <div className="bg-stone-50 p-2">
-                  <SocialPreview
-                    platform={platform}
-                    caption={effectiveCaption}
-                    hashtags={effectiveHashtags}
-                    mediaUrls={mediaUrls}
-                    targetUrl={targetUrl}
-                    userName={userName}
-                    placementType={placement}
-                  />
-                </div>
+                {/* Preview body — collapsible */}
+                {!isCollapsed && (
+                  <div className="bg-stone-50 p-2">
+                    <SocialPreview
+                      platform={platform}
+                      caption={effectiveCaption}
+                      hashtags={effectiveHashtags}
+                      mediaUrls={mediaUrls}
+                      targetUrl={targetUrl}
+                      userName={userName}
+                      placementType={placement}
+                    />
+                  </div>
+                )}
               </div>
             );
           })}

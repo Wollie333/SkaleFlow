@@ -11,9 +11,9 @@ export async function POST() {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { platform: string } }
+  { params }: { params: Promise<{ platform: string }> }
 ) {
-  const { platform } = params;
+  const { platform } = await params;
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get('code');
   const state = searchParams.get('state');
@@ -32,7 +32,7 @@ export async function GET(
     return NextResponse.redirect(`${baseUrl}/settings?social=error&message=No+authorization+code`);
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   // Verify state (CSRF protection)
   const storedState = cookieStore.get(`social_oauth_state_${platform}`)?.value;
@@ -55,7 +55,7 @@ export async function GET(
   cookieStore.delete(`social_oauth_pkce_${platform}`);
 
   // Check auth
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.redirect(`${baseUrl}/login`);

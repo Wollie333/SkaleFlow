@@ -15,7 +15,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Verify user has access
     const { data: { user } } = await supabase.auth.getUser();

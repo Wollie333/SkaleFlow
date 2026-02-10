@@ -275,7 +275,7 @@ export default function BillingPage() {
                           {typeInfo.label}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-stone">{tx.description || tx.source || '—'}</td>
+                      <td className="px-4 py-3 text-sm text-stone">{tx.description || tx.source || 'â€”'}</td>
                       <td className={`px-4 py-3 text-sm font-medium text-right ${
                         tx.credits_amount > 0 ? 'text-teal' : 'text-charcoal'
                       }`}>

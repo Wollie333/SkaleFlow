@@ -4,7 +4,7 @@ import { initializeTransaction, generateReference } from '@/lib/paystack';
 
 export async function POST(request: Request) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

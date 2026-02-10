@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing organizationId' }, { status: 400 });
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Verify auth
   const { data: { user }, error: authError } = await supabase.auth.getUser();

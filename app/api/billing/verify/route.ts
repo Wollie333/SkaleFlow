@@ -12,7 +12,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Reference required' }, { status: 400 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Verify user is authenticated
     const { data: { user } } = await supabase.auth.getUser();

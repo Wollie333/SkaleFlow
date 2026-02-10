@@ -18,7 +18,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${siteUrl}/settings?google=error&message=No+authorization+code`);
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-async function verifyPipelineAccess(supabase: ReturnType<typeof createClient>, pipelineId: string, userId: string, requireAdmin = false) {
+async function verifyPipelineAccess(supabase: Awaited<ReturnType<typeof createClient>>, pipelineId: string, userId: string, requireAdmin = false) {
   const { data: pipeline } = await supabase.from('pipelines').select('organization_id').eq('id', pipelineId).single();
   if (!pipeline) return { error: 'Pipeline not found', status: 404 };
 
@@ -12,37 +12,39 @@ async function verifyPipelineAccess(supabase: ReturnType<typeof createClient>, p
   return { pipeline, member };
 }
 
-export async function GET(request: NextRequest, { params }: { params: { pipelineId: string } }) {
-  const supabase = createClient();
+export async function GET(request: NextRequest, { params }: { params: Promise<{ pipelineId: string }> }) {
+  const { pipelineId } = await params;
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const access = await verifyPipelineAccess(supabase, params.pipelineId, user.id);
+  const access = await verifyPipelineAccess(supabase, pipelineId, user.id);
   if ('error' in access) return NextResponse.json({ error: access.error }, { status: access.status });
 
   const { data, error } = await supabase
     .from('pipeline_stages')
     .select('*')
-    .eq('pipeline_id', params.pipelineId)
+    .eq('pipeline_id', pipelineId)
     .order('sort_order', { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }
 
-export async function POST(request: NextRequest, { params }: { params: { pipelineId: string } }) {
-  const supabase = createClient();
+export async function POST(request: NextRequest, { params }: { params: Promise<{ pipelineId: string }> }) {
+  const { pipelineId } = await params;
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const access = await verifyPipelineAccess(supabase, params.pipelineId, user.id, true);
+  const access = await verifyPipelineAccess(supabase, pipelineId, user.id, true);
   if ('error' in access) return NextResponse.json({ error: access.error }, { status: access.status });
 
   const body = await request.json();
   const { data, error } = await supabase
     .from('pipeline_stages')
     .insert({
-      pipeline_id: params.pipelineId,
+      pipeline_id: pipelineId,
       name: body.name,
       color: body.color || '#6B7280',
       sort_order: body.sort_order ?? 0,
@@ -56,12 +58,13 @@ export async function POST(request: NextRequest, { params }: { params: { pipelin
   return NextResponse.json(data, { status: 201 });
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { pipelineId: string } }) {
-  const supabase = createClient();
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ pipelineId: string }> }) {
+  const { pipelineId } = await params;
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const access = await verifyPipelineAccess(supabase, params.pipelineId, user.id, true);
+  const access = await verifyPipelineAccess(supabase, pipelineId, user.id, true);
   if ('error' in access) return NextResponse.json({ error: access.error }, { status: access.status });
 
   const body = await request.json();
@@ -71,7 +74,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { pipeli
     for (const stage of body.stages) {
       await supabase.from('pipeline_stages').update({ sort_order: stage.sort_order, name: stage.name, color: stage.color }).eq('id', stage.id);
     }
-    const { data } = await supabase.from('pipeline_stages').select('*').eq('pipeline_id', params.pipelineId).order('sort_order');
+    const { data } = await supabase.from('pipeline_stages').select('*').eq('pipeline_id', pipelineId).order('sort_order');
     return NextResponse.json(data);
   }
 
@@ -89,12 +92,13 @@ export async function PATCH(request: NextRequest, { params }: { params: { pipeli
   return NextResponse.json(data);
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { pipelineId: string } }) {
-  const supabase = createClient();
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ pipelineId: string }> }) {
+  const { pipelineId } = await params;
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const access = await verifyPipelineAccess(supabase, params.pipelineId, user.id, true);
+  const access = await verifyPipelineAccess(supabase, pipelineId, user.id, true);
   if ('error' in access) return NextResponse.json({ error: access.error }, { status: access.status });
 
   const { searchParams } = new URL(request.url);

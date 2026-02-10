@@ -6,9 +6,10 @@ import type { SocialPlatform } from '@/lib/social/types';
 // DELETE: Disconnect a social account
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { connectionId: string } }
+  { params }: { params: Promise<{ connectionId: string }> }
 ) {
-  const supabase = createClient();
+  const { connectionId } = await params;
+  const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -19,7 +20,7 @@ export async function DELETE(
   const { data: connection, error: fetchError } = await supabase
     .from('social_media_connections')
     .select('*')
-    .eq('id', params.connectionId)
+    .eq('id', connectionId)
     .single();
 
   if (fetchError || !connection) {
@@ -51,7 +52,7 @@ export async function DELETE(
   }
 
   // If disconnecting a profile connection, also delete its page connections
-  // (page tokens come from the profile's OAuth grant — they're invalid without it)
+  // (page tokens come from the profile's OAuth grant ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â they're invalid without it)
   if (connection.account_type === 'profile' || !connection.platform_page_id) {
     await supabase
       .from('social_media_connections')
@@ -65,7 +66,7 @@ export async function DELETE(
   const { error: deleteError } = await supabase
     .from('social_media_connections')
     .delete()
-    .eq('id', params.connectionId);
+    .eq('id', connectionId);
 
   if (deleteError) {
     return NextResponse.json({ error: deleteError.message }, { status: 500 });
@@ -77,9 +78,10 @@ export async function DELETE(
 // POST: Force token refresh
 export async function POST(
   _request: NextRequest,
-  { params }: { params: { connectionId: string } }
+  { params }: { params: Promise<{ connectionId: string }> }
 ) {
-  const supabase = createClient();
+  const { connectionId } = await params;
+  const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -89,7 +91,7 @@ export async function POST(
   const { data: connection, error: fetchError } = await supabase
     .from('social_media_connections')
     .select('*')
-    .eq('id', params.connectionId)
+    .eq('id', connectionId)
     .single();
 
   if (fetchError || !connection) {
@@ -112,7 +114,7 @@ export async function POST(
         token_expires_at: newTokens.expiresAt?.toISOString() || null,
         is_active: true,
       })
-      .eq('id', params.connectionId);
+      .eq('id', connectionId);
 
     return NextResponse.json({ success: true });
   } catch (err) {

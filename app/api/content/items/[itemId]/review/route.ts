@@ -6,16 +6,17 @@ import type { ContentStatus, OrgMemberRole } from '@/types/database';
 
 export async function POST(
   request: Request,
-  { params }: { params: { itemId: string } }
+  { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
+  const { itemId } = await params;
     const { action, comment } = await request.json();
 
     if (!['approve', 'reject', 'request_revision'].includes(action)) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -26,7 +27,7 @@ export async function POST(
     const { data: item } = await supabase
       .from('content_items')
       .select('organization_id, status, topic, format, assigned_to')
-      .eq('id', params.itemId)
+      .eq('id', itemId)
       .single();
 
     if (!item) {
@@ -78,7 +79,7 @@ export async function POST(
           rejection_reason: null,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', params.itemId);
+        .eq('id', itemId);
 
       if (error) {
         return NextResponse.json({ error: 'Failed to approve' }, { status: 500 });
@@ -92,7 +93,7 @@ export async function POST(
           review_comment: comment || null,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', params.itemId);
+        .eq('id', itemId);
 
       if (error) {
         return NextResponse.json({ error: 'Failed to reject' }, { status: 500 });
@@ -108,7 +109,7 @@ export async function POST(
           review_comment: comment,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', params.itemId);
+        .eq('id', itemId);
 
       if (error) {
         return NextResponse.json({ error: 'Failed to request revision' }, { status: 500 });
@@ -122,7 +123,7 @@ export async function POST(
       supabase: serviceClient,
       orgId: item.organization_id,
       contentItem: {
-        id: params.itemId,
+        id: itemId,
         topic: item.topic,
         format: item.format,
         assigned_to: item.assigned_to,

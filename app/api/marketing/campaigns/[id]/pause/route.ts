@@ -15,13 +15,13 @@ function getAdapter(platform: AdPlatform): AdPlatformAdapter {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id } = params;
+  const { id } = await params;
 
   // Get campaign
   const { data: campaign } = await supabase

@@ -5,15 +5,15 @@ import { cookies } from 'next/headers';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { platform: string } }
+  { params }: { params: Promise<{ platform: string }> }
 ) {
-  const { platform } = params;
+  const { platform } = await params;
 
   if (!isValidPlatform(platform)) {
     return NextResponse.json({ error: 'Invalid platform' }, { status: 400 });
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Check auth
   const { data: { user } } = await supabase.auth.getUser();
@@ -36,7 +36,7 @@ export async function GET(
   const state = crypto.randomUUID();
 
   // Store state in cookie for verification on callback
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set(`social_oauth_state_${platform}`, state, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',

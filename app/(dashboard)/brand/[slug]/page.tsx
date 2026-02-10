@@ -365,7 +365,7 @@ export default function BrandPhaseDetailPage() {
       refetchCredits();
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
-        // User cancelled — remove the user message
+        // User cancelled Ã¢â‚¬â€ remove the user message
         setMessages(prev => prev.slice(0, -1));
       } else {
         console.error('Error sending message:', error);
@@ -440,7 +440,7 @@ export default function BrandPhaseDetailPage() {
           const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
           setOutputs(freshOutputs);
 
-          // Thread stays blank — user initiates conversation
+          // Thread stays blank Ã¢â‚¬â€ user initiates conversation
         }
         return;
       }
@@ -448,7 +448,7 @@ export default function BrandPhaseDetailPage() {
       if (data.missingKeys && data.missingKeys.length > 0) {
         const missingStr = data.missingKeys.join(', ');
         setIsLockingAnswer(false);
-        // Thread stays blank — user initiates conversation
+        // Thread stays blank Ã¢â‚¬â€ user initiates conversation
         return;
       }
 
@@ -488,7 +488,7 @@ export default function BrandPhaseDetailPage() {
         setAcceptedExtractions(new Set());
 
         setIsLockingAnswer(false);
-        // Thread stays blank — user initiates conversation
+        // Thread stays blank Ã¢â‚¬â€ user initiates conversation
         return;
       }
     } catch (error) {
@@ -501,7 +501,7 @@ export default function BrandPhaseDetailPage() {
   const handleRequestStructure = () => {
     if (!phaseTemplate) return;
     const keys = phaseTemplate.questionOutputMap[currentPhase?.current_question_index ?? 0] ?? [];
-    const prompt = `Based on everything we've discussed in this conversation, please structure my answers into YAML format for these variables: ${keys.join(', ')}. IMPORTANT: Use exactly what I told you — my specific choices, preferences, and wording. Do not substitute your own recommendations. Present the structured output now so I can lock it.`;
+    const prompt = `Based on everything we've discussed in this conversation, please structure my answers into YAML format for these variables: ${keys.join(', ')}. IMPORTANT: Use exactly what I told you Ã¢â‚¬â€ my specific choices, preferences, and wording. Do not substitute your own recommendations. Present the structured output now so I can lock it.`;
     handleSendMessage(prompt);
   };
 
@@ -546,7 +546,7 @@ export default function BrandPhaseDetailPage() {
     if (!currentPhase || !organizationId || !phaseTemplate) return;
     const nextIndex = currentPhase.current_question_index + 1;
 
-    // If this is the last question, can't skip — they need to fill in missing vars
+    // If this is the last question, can't skip Ã¢â‚¬â€ they need to fill in missing vars
     if (nextIndex >= phaseTemplate.questions.length) return;
 
     setIsLockingAnswer(true);
@@ -944,7 +944,7 @@ export default function BrandPhaseDetailPage() {
 
       {/* Two-panel layout */}
       <div className="flex-1 flex gap-4 overflow-hidden min-h-0 px-1 pb-1">
-        {/* Left panel — Question & Context (42%) */}
+        {/* Left panel Ã¢â‚¬â€ Question & Context (42%) */}
         <div className={`lg:w-[42%] lg:flex-shrink-0 lg:block ${mobileTab === 'question' ? 'block w-full' : 'hidden'} bg-white rounded-xl border border-stone/10 overflow-hidden`}>
           <QuestionPanel
             phases={phases}
@@ -1003,7 +1003,7 @@ export default function BrandPhaseDetailPage() {
           />
         </div>
 
-        {/* Right panel — Expert Chat (58%) */}
+        {/* Right panel Ã¢â‚¬â€ Expert Chat (58%) */}
         <div className={`lg:flex-1 lg:block ${mobileTab === 'chat' ? 'block w-full' : 'hidden'}`}>
           <ExpertChatPanel
             messages={messages}

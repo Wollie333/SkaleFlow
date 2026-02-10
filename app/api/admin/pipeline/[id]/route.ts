@@ -3,10 +3,11 @@ import { createClient, createServiceClient } from '@/lib/supabase/server';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createClient();
+  const { id } = await params;
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -30,7 +31,7 @@ export async function GET(
     const { data: application, error: appError } = await serviceSupabase
       .from('applications')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (appError || !application) {
@@ -41,7 +42,7 @@ export async function GET(
     const { data: activity, error: activityError } = await serviceSupabase
       .from('application_activity')
       .select('*')
-      .eq('application_id', params.id)
+      .eq('application_id', id)
       .order('created_at', { ascending: true });
 
     if (activityError) {
@@ -52,7 +53,7 @@ export async function GET(
     const { data: meeting } = await serviceSupabase
       .from('meetings')
       .select('*')
-      .eq('application_id', params.id)
+      .eq('application_id', id)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();

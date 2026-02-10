@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   try {
     const { organizationId, contentItemIds, modelOverride } = await request.json();
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

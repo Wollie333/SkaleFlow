@@ -5,10 +5,11 @@ import {
   type ContentFormat,
 } from '@/config/script-frameworks';
 import { PLATFORM_CHARACTER_LIMITS } from '@/config/creative-specs';
-import type { FunnelStage, StoryBrandStage, Json } from '@/types/database';
+import type { Database, FunnelStage, StoryBrandStage, Json } from '@/types/database';
 import { resolveModel, calculateCreditCost, deductCredits, getProviderAdapter, checkCredits } from '@/lib/ai';
 import type { AIFeature } from '@/lib/ai';
 import { MAX_VALIDATION_RETRIES } from './queue-config';
+import { getScriptFrameworkFromDB } from './template-service';
 
 export interface GenerateContentResult {
   results: Array<{
@@ -111,7 +112,7 @@ export async function generateContentForItems(
     const storybrandStage = item.storybrand_stage as StoryBrandStage;
     const platforms = item.platforms || [];
 
-    const framework = getScriptFramework(format, funnelStage, storybrandStage, platforms);
+    const framework = await getScriptFrameworkFromDB(supabase as SupabaseClient<Database>, format, funnelStage, storybrandStage, platforms);
 
     // Pick a unique content theme for this item to force topic diversity
     const themeHint = contentThemes.length > 0
@@ -669,7 +670,7 @@ export async function generateSingleItem(
   const platforms = item.platforms || [];
 
   console.log(`[GEN-SINGLE] Getting script framework: format=${format}, funnel=${funnelStage}, storybrand=${storybrandStage}`);
-  const framework = getScriptFramework(format, funnelStage, storybrandStage, platforms);
+  const framework = await getScriptFrameworkFromDB(supabase as SupabaseClient<Database>, format, funnelStage, storybrandStage, platforms);
   console.log(`[GEN-SINGLE] Framework: category=${framework.formatCategory}, script=${framework.scriptTemplateName}, hook=${framework.hookTemplateName}`);
 
   // Content themes for topic diversity

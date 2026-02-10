@@ -195,7 +195,7 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
         <div>
           <h2 className="text-heading-md text-charcoal">Edit Content</h2>
           <p className="text-sm text-stone">
-            {format(new Date(item.scheduled_date), 'EEEE, MMMM d')} • {item.scheduled_time || item.time_slot}
+            {format(new Date(item.scheduled_date), 'EEEE, MMMM d')} â€¢ {item.scheduled_time || item.time_slot}
           </p>
         </div>
         <div className="flex items-center gap-2">

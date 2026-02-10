@@ -4,7 +4,7 @@ import { initializeCreditBalance } from '@/lib/ai/credits';
 
 export async function GET() {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Verify user is authenticated and is an admin
     const { data: { user } } = await supabase.auth.getUser();
@@ -85,7 +85,7 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Verify user is authenticated and is an admin
     const { data: { user } } = await supabase.auth.getUser();
@@ -343,7 +343,7 @@ export async function PATCH(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Verify caller is super_admin
     const { data: { user } } = await supabase.auth.getUser();

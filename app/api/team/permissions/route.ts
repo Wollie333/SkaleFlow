@@ -5,7 +5,7 @@ import type { FeatureType } from '@/types/database';
 
 export async function GET(request: Request) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -63,7 +63,7 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 

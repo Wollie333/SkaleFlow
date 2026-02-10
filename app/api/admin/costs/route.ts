@@ -34,7 +34,7 @@ function computeApiCostUSD(model: string, inputTokens: number, outputTokens: num
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Verify super_admin
     const { data: { user } } = await supabase.auth.getUser();

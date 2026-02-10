@@ -6,7 +6,7 @@ import type { Json } from '@/types/database';
 export async function POST(request: NextRequest) {
   console.log('[AD-GEN-BATCH] POST /api/marketing/generate/batch called');
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     console.log('[AD-GEN-BATCH] No user — returning 401');

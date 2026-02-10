@@ -14,7 +14,7 @@ export default async function PlaybookPage({ searchParams }: PageProps) {
     redirect('/brand');
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Verify auth
   const { data: { user }, error: authError } = await supabase.auth.getUser();

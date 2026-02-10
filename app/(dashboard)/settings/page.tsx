@@ -176,7 +176,7 @@ export default function SettingsPage() {
             setDriveConnection(driveConn);
           }
         } catch {
-          // Table doesn't exist yet — skip silently
+          // Table doesn't exist yet â€” skip silently
         }
       }
 
@@ -674,7 +674,7 @@ export default function SettingsPage() {
             )}
           </div>
 
-          {/* Calendar selector — shown when connected */}
+          {/* Calendar selector â€” shown when connected */}
           {googleConnected && (
             <div className="mt-4 p-4 bg-cream-warm rounded-xl">
               <label className="block text-sm font-medium text-charcoal mb-2">
@@ -686,7 +686,7 @@ export default function SettingsPage() {
               {isLoadingCalendars ? (
                 <div className="flex items-center gap-2 text-sm text-stone">
                   <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-teal" />
-                  Loading calendars…
+                  Loading calendarsâ€¦
                 </div>
               ) : googleCalendars.length > 0 ? (
                 <div className="relative">

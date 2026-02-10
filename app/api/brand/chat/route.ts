@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       modelOverride = body.modelOverride || null;
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Verify user has access to this organization
     const { data: { user } } = await supabase.auth.getUser();

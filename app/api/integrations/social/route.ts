@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 
 // GET: List all social connections for user's org
 export async function GET() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {

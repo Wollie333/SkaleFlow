@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   try {
     const { email, organizationName } = await request.json();
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const serviceSupabase = createServiceClient();
 
     // Verify user is authenticated and is an admin
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
 // Get all pending invitations
 export async function GET() {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Verify user is authenticated and is an admin
     const { data: { user } } = await supabase.auth.getUser();

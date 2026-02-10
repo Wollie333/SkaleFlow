@@ -24,6 +24,7 @@ import {
   CurrencyDollarIcon,
   ClipboardDocumentCheckIcon,
   EyeIcon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 
 interface FeaturePermissions {
@@ -70,6 +71,7 @@ const adminNavigation: NavItem[] = [
   { name: 'Users', href: '/admin/users', icon: UsersIcon },
   { name: 'AI Models', href: '/admin/models', icon: SparklesIcon },
   { name: 'Costs', href: '/admin/costs', icon: CurrencyDollarIcon },
+  { name: 'Templates', href: '/admin/templates', icon: DocumentTextIcon },
 ];
 
 interface SidebarProps {

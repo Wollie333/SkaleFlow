@@ -4,10 +4,11 @@ import { notifyApprovers } from '@/lib/notifications';
 
 export async function GET(
   request: Request,
-  { params }: { params: { itemId: string } }
+  { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
-    const supabase = createClient();
+  const { itemId } = await params;
+    const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -17,7 +18,7 @@ export async function GET(
     const { data: item, error } = await supabase
       .from('content_items')
       .select('*')
-      .eq('id', params.itemId)
+      .eq('id', itemId)
       .single();
 
     if (error || !item) {
@@ -45,11 +46,12 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { itemId: string } }
+  { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
+  const { itemId } = await params;
     const body = await request.json();
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -60,7 +62,7 @@ export async function PATCH(
     const { data: item } = await supabase
       .from('content_items')
       .select('organization_id, status, topic, format')
-      .eq('id', params.itemId)
+      .eq('id', itemId)
       .single();
 
     if (!item) {
@@ -102,7 +104,7 @@ export async function PATCH(
     const { data: updated, error } = await supabase
       .from('content_items')
       .update(updateData)
-      .eq('id', params.itemId)
+      .eq('id', itemId)
       .select()
       .single();
 
@@ -123,7 +125,7 @@ export async function PATCH(
       notifyApprovers({
         supabase: serviceClient,
         orgId: item.organization_id,
-        contentItem: { id: params.itemId, topic: item.topic, format: item.format },
+        contentItem: { id: itemId, topic: item.topic, format: item.format },
         submitterName: submitter?.full_name || undefined,
       }).catch(err => console.error('Failed to notify approvers:', err));
     }
@@ -140,10 +142,11 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { itemId: string } }
+  { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
-    const supabase = createClient();
+  const { itemId } = await params;
+    const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -153,7 +156,7 @@ export async function DELETE(
     const { data: item } = await supabase
       .from('content_items')
       .select('organization_id')
-      .eq('id', params.itemId)
+      .eq('id', itemId)
       .single();
 
     if (!item) {
@@ -174,7 +177,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('content_items')
       .delete()
-      .eq('id', params.itemId);
+      .eq('id', itemId);
 
     if (error) {
       return NextResponse.json({ error: 'Failed to delete content item' }, { status: 500 });

@@ -4,10 +4,11 @@ import { reviewChangeRequest } from '@/lib/change-requests';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createClient();
+  const { id } = await params;
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -15,7 +16,7 @@ export async function GET(
     const { data: cr } = await serviceClient
       .from('change_requests')
       .select('*, requester:requested_by(full_name, email), reviewer:reviewed_by(full_name)')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (!cr) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -43,10 +44,11 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createClient();
+  const { id } = await params;
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -55,7 +57,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    const result = await reviewChangeRequest(params.id, user.id, action, comment);
+    const result = await reviewChangeRequest(id, user.id, action, comment);
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }

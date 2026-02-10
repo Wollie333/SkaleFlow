@@ -1,3 +1,5 @@
+/** @deprecated — Templates are now managed in the database (content_templates table). This file serves as a readonly fallback. */
+
 import type { FunnelStage, StoryBrandStage } from '@/types/database';
 
 // ============================================================

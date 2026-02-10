@@ -6,13 +6,13 @@ import type { Json } from '@/types/database';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id } = params;
+  const { id } = await params;
 
   // Get creative with campaign info
   const { data: creative, error: fetchError } = await supabase

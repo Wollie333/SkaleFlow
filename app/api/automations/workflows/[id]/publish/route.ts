@@ -16,12 +16,13 @@ interface GraphEdge {
   sourceHandle?: string;
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = createClient();
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: workflow } = await supabase.from('automation_workflows').select('*').eq('id', params.id).single();
+  const { data: workflow } = await supabase.from('automation_workflows').select('*').eq('id', id).single();
   if (!workflow) return NextResponse.json({ error: 'Workflow not found' }, { status: 404 });
 
   const { data: member } = await supabase.from('org_members').select('role').eq('organization_id', workflow.organization_id).eq('user_id', user.id).single();
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   }
 
   // Delete old steps
-  await supabase.from('automation_steps').delete().eq('workflow_id', params.id);
+  await supabase.from('automation_steps').delete().eq('workflow_id', id);
 
   // Traverse graph from trigger, create steps
   // First pass: create all steps with placeholder IDs
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       trigger_config: (triggerNode.data?.triggerConfig || {}) as unknown as Json,
       version: workflow.version + 1,
       updated_at: new Date().toISOString(),
-    }).eq('id', params.id);
+    }).eq('id', id);
 
     return NextResponse.json({ success: true, steps: 0 });
   }
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     if (!node) continue;
 
     stepInserts.push({
-      workflow_id: params.id,
+      workflow_id: id,
       step_order: order++,
       step_type: (node.data?.stepType as string) || node.type || 'unknown',
       config: (node.data?.config || {}) as unknown as Json,
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       trigger_config: (triggerNode.data?.triggerConfig || {}) as unknown as Json,
       version: workflow.version + 1,
       updated_at: new Date().toISOString(),
-    }).eq('id', params.id);
+    }).eq('id', id);
     return NextResponse.json({ success: true, steps: 0 });
   }
 
@@ -170,7 +171,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     trigger_config: (triggerNode.data?.triggerConfig || {}) as unknown as Json,
     version: workflow.version + 1,
     updated_at: new Date().toISOString(),
-  }).eq('id', params.id);
+  }).eq('id', id);
 
   return NextResponse.json({ success: true, steps: insertedSteps.length });
 }

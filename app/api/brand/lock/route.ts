@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   try {
     const { organizationId, phaseId } = await request.json();
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Verify user has access to this organization
     const { data: { user } } = await supabase.auth.getUser();

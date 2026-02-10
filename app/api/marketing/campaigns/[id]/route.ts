@@ -3,13 +3,13 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id } = params;
+  const { id } = await params;
 
   const { data: campaign, error } = await supabase
     .from('ad_campaigns')
@@ -36,13 +36,13 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id } = params;
+  const { id } = await params;
 
   // Get campaign to find org
   const { data: campaign } = await supabase
@@ -98,13 +98,13 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id } = params;
+  const { id } = await params;
 
   // Get campaign
   const { data: campaign } = await supabase

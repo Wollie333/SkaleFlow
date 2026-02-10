@@ -108,7 +108,7 @@ export default function ResetPasswordPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 required
                 minLength={6}
                 className="w-full px-4 py-3.5 bg-cream border border-teal/15 rounded-lg text-charcoal placeholder:text-stone transition-all focus:outline-none focus:border-teal focus:shadow-[0_0_0_3px_rgba(30,107,99,0.1)]"
@@ -123,7 +123,7 @@ export default function ResetPasswordPage() {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 required
                 minLength={6}
                 className="w-full px-4 py-3.5 bg-cream border border-teal/15 rounded-lg text-charcoal placeholder:text-stone transition-all focus:outline-none focus:border-teal focus:shadow-[0_0_0_3px_rgba(30,107,99,0.1)]"

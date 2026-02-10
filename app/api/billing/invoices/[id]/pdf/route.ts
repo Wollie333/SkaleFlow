@@ -5,10 +5,11 @@ import { InvoicePdfDocument } from '@/components/billing/invoice-pdf-document';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createClient();
+  const { id } = await params;
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -17,7 +18,7 @@ export async function GET(
     const { data: invoice } = await supabase
       .from('invoices')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (!invoice) {

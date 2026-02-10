@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = createClient();
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: endpoint } = await supabase.from('webhook_endpoints').select('*').eq('id', params.id).single();
+  const { data: endpoint } = await supabase.from('webhook_endpoints').select('*').eq('id', id).single();
   if (!endpoint) return NextResponse.json({ error: 'Endpoint not found' }, { status: 404 });
 
   const { data: member } = await supabase.from('org_members').select('role').eq('organization_id', endpoint.organization_id).eq('user_id', user.id).single();

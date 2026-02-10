@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Verify state (CSRF protection)
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const storedState = cookieStore.get('meta_ads_oauth_state')?.value;
 
   if (!storedState || storedState !== stateParam) {
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
   cookieStore.delete('meta_ads_oauth_state');
 
   // Check auth
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.redirect(`${baseUrl}/login`);

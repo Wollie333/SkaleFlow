@@ -21,7 +21,7 @@ interface ActivityItem {
 }
 
 async function verifyAdmin() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Unauthorized', status: 401 };
 
@@ -98,7 +98,7 @@ export async function GET(
     const orgId = membership?.organization_id || null;
 
     // Phase 2: All org-dependent queries (parallel)
-    // Wrap Supabase queries with .then() to convert PromiseLike → Promise
+    // Wrap Supabase queries with .then() to convert PromiseLike â†’ Promise
     const wrap = <T,>(query: PromiseLike<T>): Promise<T> => Promise.resolve(query);
     const empty = <T,>(val: T): Promise<{ data: T }> => Promise.resolve({ data: val });
 
@@ -248,7 +248,7 @@ export async function GET(
         id: `content-${item.id}`,
         type: 'content',
         title: item.topic || 'Untitled content',
-        description: `${platform} — ${item.status}`,
+        description: `${platform} â€” ${item.status}`,
         timestamp: item.updated_at || item.created_at,
         metadata: { status: item.status, platform },
       });
@@ -272,7 +272,7 @@ export async function GET(
         id: `batch-${b.id}`,
         type: 'generation_batch',
         title: `Content generation batch`,
-        description: `${b.completed_items}/${b.total_items} items — ${b.status}`,
+        description: `${b.completed_items}/${b.total_items} items â€” ${b.status}`,
         timestamp: b.created_at,
         metadata: { status: b.status, total: b.total_items, completed: b.completed_items },
       });

@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { resolveMergeFields } from '@/lib/automations/merge-fields';
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = createClient();
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: template } = await supabase.from('email_templates').select('*').eq('id', params.id).single();
+  const { data: template } = await supabase.from('email_templates').select('*').eq('id', id).single();
   if (!template) return NextResponse.json({ error: 'Template not found' }, { status: 404 });
 
   const { data: member } = await supabase.from('org_members').select('role').eq('organization_id', template.organization_id).eq('user_id', user.id).single();

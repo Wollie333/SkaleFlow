@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import type { Json } from '@/types/database';
 
-export async function GET(request: NextRequest, { params }: { params: { pipelineId: string } }) {
-  const supabase = createClient();
+export async function GET(request: NextRequest, { params }: { params: Promise<{ pipelineId: string }> }) {
+  const { pipelineId } = await params;
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: pipeline } = await supabase.from('pipelines').select('organization_id').eq('id', params.pipelineId).single();
+  const { data: pipeline } = await supabase.from('pipelines').select('organization_id').eq('id', pipelineId).single();
   if (!pipeline) return NextResponse.json({ error: 'Pipeline not found' }, { status: 404 });
 
   const { data: member } = await supabase.from('org_members').select('role').eq('organization_id', pipeline.organization_id).eq('user_id', user.id).single();
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest, { params }: { params: { pipeline
   let query = supabase
     .from('pipeline_contacts')
     .select('*, pipeline_contact_tags(tag_id, pipeline_tags(id, name, color))')
-    .eq('pipeline_id', params.pipelineId)
+    .eq('pipeline_id', pipelineId)
     .order('created_at', { ascending: false });
 
   if (stageId) query = query.eq('stage_id', stageId);
@@ -31,12 +32,13 @@ export async function GET(request: NextRequest, { params }: { params: { pipeline
   return NextResponse.json(data);
 }
 
-export async function POST(request: NextRequest, { params }: { params: { pipelineId: string } }) {
-  const supabase = createClient();
+export async function POST(request: NextRequest, { params }: { params: Promise<{ pipelineId: string }> }) {
+  const { pipelineId } = await params;
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: pipeline } = await supabase.from('pipelines').select('organization_id').eq('id', params.pipelineId).single();
+  const { data: pipeline } = await supabase.from('pipelines').select('organization_id').eq('id', pipelineId).single();
   if (!pipeline) return NextResponse.json({ error: 'Pipeline not found' }, { status: 404 });
 
   const { data: member } = await supabase.from('org_members').select('role').eq('organization_id', pipeline.organization_id).eq('user_id', user.id).single();
@@ -49,7 +51,7 @@ export async function POST(request: NextRequest, { params }: { params: { pipelin
     .from('pipeline_contacts')
     .insert({
       organization_id: pipeline.organization_id,
-      pipeline_id: params.pipelineId,
+      pipeline_id: pipelineId,
       stage_id: body.stage_id,
       full_name: body.full_name,
       email: body.email || null,
@@ -84,7 +86,7 @@ export async function POST(request: NextRequest, { params }: { params: { pipelin
       type: 'contact_created',
       contactId: contact.id,
       organizationId: pipeline.organization_id,
-      pipelineId: params.pipelineId,
+      pipelineId: pipelineId,
       performedBy: user.id,
       data: {},
     });

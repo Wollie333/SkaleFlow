@@ -3,44 +3,28 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Button, Card, StatusBadge, ActionModal } from '@/components/ui';
-import { SocialPreviewTabs, MediaUpload, PlatformOverrideTabs, CommentThread, TagSelector, UTMBuilderModal, PostActionPopup, type UploadedFile, type PublishResult } from '@/components/content';
+import { Button, Card, Textarea, StatusBadge, ActionModal } from '@/components/ui';
+import { MediaUpload, UTMBuilderModal, PostActionPopup, AIModelPicker, type UploadedFile, type PublishResult } from '@/components/content';
+import { PreviewPanel } from '@/components/content/preview-panel';
+import { InstanceEditForm, type InstanceSpec } from '@/components/content/instance-edit-form';
+import ScriptModal, { type ScriptData } from '@/components/content/script-modal';
+import ConfigModal, { ConfigSummaryChip, type ContentConfig } from '@/components/content/config-modal';
+import { createDefaultPlacementsMap, getEnabledPlatforms, type PlatformPlacementsMap } from '@/config/placement-types';
+import { FORMAT_LABELS, getFormatCategory, type ContentFormat } from '@/config/script-frameworks';
+import { useAvailableModels } from '@/hooks/useAvailableModels';
+import { useModelPreference } from '@/hooks/useModelPreference';
 import {
   ArrowLeftIcon,
-  CalendarDaysIcon,
-  ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
   ArrowPathIcon,
   PaperAirplaneIcon,
   SparklesIcon,
   LinkIcon,
-  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import type { SocialPlatform, ContentStatus, FunnelStage, StoryBrandStage } from '@/types/database';
+import type { SocialPlatform, ContentStatus, FunnelStage, StoryBrandStage, PlacementType } from '@/types/database';
 import type { UTMParams } from '@/lib/utm/generate-utm';
-
-const PLATFORM_OPTIONS: SocialPlatform[] = ['linkedin', 'facebook', 'instagram', 'twitter', 'tiktok'];
-
-const FUNNEL_OPTIONS: { value: FunnelStage; label: string }[] = [
-  { value: 'awareness', label: 'Awareness' },
-  { value: 'consideration', label: 'Consideration' },
-  { value: 'conversion', label: 'Conversion' },
-];
-
-const STORYBRAND_OPTIONS: { value: StoryBrandStage; label: string }[] = [
-  { value: 'character', label: 'Character' },
-  { value: 'external_problem', label: 'External Problem' },
-  { value: 'internal_problem', label: 'Internal Problem' },
-  { value: 'philosophical_problem', label: 'Philosophical Problem' },
-  { value: 'guide', label: 'Guide' },
-  { value: 'plan', label: 'Plan' },
-  { value: 'call_to_action', label: 'Call to Action' },
-  { value: 'failure', label: 'Failure' },
-  { value: 'success', label: 'Success' },
-];
 
 interface ContentItem {
   id: string;
@@ -99,43 +83,83 @@ export default function PostEditPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [userRole, setUserRole] = useState<string>('member');
   const [userName, setUserName] = useState<string>('');
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
 
-  // Form state
-  const [topic, setTopic] = useState('');
-  const [hook, setHook] = useState('');
-  const [scriptBody, setScriptBody] = useState('');
-  const [cta, setCta] = useState('');
-  const [caption, setCaption] = useState('');
-  const [hashtags, setHashtags] = useState<string[]>([]);
-  const [hashtagInput, setHashtagInput] = useState('');
-  const [platforms, setPlatforms] = useState<SocialPlatform[]>(['linkedin']);
-  const [targetUrl, setTargetUrl] = useState('');
-  const [scheduledDate, setScheduledDate] = useState('');
-  const [scheduledTime, setScheduledTime] = useState('08:00');
+  // Editable fields (caption-first)
+  const [editFields, setEditFields] = useState<Record<string, string>>({});
+
+  // Script data (managed via ScriptModal)
+  const [scriptData, setScriptData] = useState<ScriptData>({
+    hook: null, script_body: null, cta: null, filming_notes: null,
+    context_section: null, teaching_points: null, reframe: null,
+    problem_expansion: null, framework_teaching: null, case_study: null,
+  });
+
+  // Platform / placement state (managed via PreviewPanel)
+  const [platformPlacements, setPlatformPlacements] = useState<PlatformPlacementsMap>(
+    createDefaultPlacementsMap(['linkedin'])
+  );
+  const [platformSpecs, setPlatformSpecs] = useState<Record<string, InstanceSpec>>({});
+  const [editingInstance, setEditingInstance] = useState<PlacementType | null>(null);
+
+  // Config state
+  const [selectedFormat, setSelectedFormat] = useState<ContentFormat>('short_video_30_60');
   const [funnelStage, setFunnelStage] = useState<FunnelStage>('awareness');
   const [storybrandStage, setStorybrandStage] = useState<StoryBrandStage>('character');
-  const [filmingNotes, setFilmingNotes] = useState('');
+  const [contentAngles, setContentAngles] = useState<Array<{ id: string; name: string; emotional_target: string | null }>>([]);
+
+  // AI assist state
+  const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
+  const [isAiAssisting, setIsAiAssisting] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+
+  // Scheduling
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledTime, setScheduledTime] = useState('08:00');
+
+  // Media
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
-  // Modal state
+  // Target URL / UTM
+  const [targetUrl, setTargetUrl] = useState('');
+  const [utmParams, setUtmParams] = useState<UTMParams | null>(null);
+  const [showUtmModal, setShowUtmModal] = useState(false);
+  const [showTargetUrl, setShowTargetUrl] = useState(false);
+
+  // Modals
+  const [showScriptModal, setShowScriptModal] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalConfig, setModalConfig] = useState<{
     variant: 'success' | 'error' | 'info';
     title: string;
     subtitle?: string;
   }>({ variant: 'success', title: '' });
-
-  // Post action popup + UTM state
   const [showPostActionPopup, setShowPostActionPopup] = useState(false);
-  const [utmParams, setUtmParams] = useState<UTMParams | null>(null);
-  const [showUtmModal, setShowUtmModal] = useState(false);
-  const [showAdvancedFields, setShowAdvancedFields] = useState(false);
-  const [showTargetUrlSection, setShowTargetUrlSection] = useState(false);
-  const [showMediaSection, setShowMediaSection] = useState(false);
 
   // Variation group state
   const [variationSiblings, setVariationSiblings] = useState<VariationSibling[]>([]);
 
+  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Hooks Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  const { models } = useAvailableModels('content_generation');
+  const { selectedModel: orgDefaultModel } = useModelPreference(organizationId, 'content_generation');
+  const effectiveModelId = selectedModelId || orgDefaultModel || null;
+  const formatCategory = getFormatCategory(selectedFormat);
+
+  // Computed config for ConfigModal / ConfigSummaryChip
+  const contentConfig: ContentConfig = {
+    format: selectedFormat,
+    funnelStage,
+    storybrandStage,
+    angleId: null,
+  };
+
+  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Helpers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  const updateField = (key: string, value: string) => {
+    setEditFields(prev => ({ ...prev, [key]: value }));
+  };
+
+  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Load item Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   useEffect(() => {
     async function loadItem() {
       try {
@@ -148,24 +172,63 @@ export default function PostEditPage() {
         const loadedItem = data.item as ContentItem;
         setItem(loadedItem);
         setUserRole(data.role || 'member');
+        setOrganizationId(loadedItem.organization_id);
 
-        // Populate form fields
-        setTopic(loadedItem.topic || '');
-        setHook(loadedItem.hook || '');
-        setScriptBody(loadedItem.script_body || '');
-        setCta(loadedItem.cta || '');
-        setCaption(loadedItem.caption || '');
-        setHashtags(loadedItem.hashtags || []);
-        setPlatforms((loadedItem.platforms || ['linkedin']) as SocialPlatform[]);
-        setTargetUrl(loadedItem.target_url || '');
-        setScheduledDate(loadedItem.scheduled_date || '');
-        setScheduledTime(loadedItem.scheduled_time || '08:00');
+        // Populate editFields
+        setEditFields({
+          caption: loadedItem.caption || '',
+          hashtags: (loadedItem.hashtags || []).join(', '),
+          topic: loadedItem.topic || '',
+        });
+
+        // Populate scriptData
+        setScriptData({
+          hook: loadedItem.hook || null,
+          script_body: loadedItem.script_body || null,
+          cta: loadedItem.cta || null,
+          filming_notes: loadedItem.filming_notes || null,
+          context_section: loadedItem.context_section || null,
+          teaching_points: loadedItem.teaching_points || null,
+          reframe: loadedItem.reframe || null,
+          problem_expansion: loadedItem.problem_expansion || null,
+          framework_teaching: loadedItem.framework_teaching || null,
+          case_study: loadedItem.case_study || null,
+        });
+
+        // Platform placements from saved platforms array
+        const loadedPlatforms = (loadedItem.platforms || ['linkedin']) as SocialPlatform[];
+        setPlatformPlacements(createDefaultPlacementsMap(loadedPlatforms));
+
+        // Platform specs
+        if (loadedItem.platform_specs) {
+          const specs: Record<string, InstanceSpec> = {};
+          for (const [key, val] of Object.entries(loadedItem.platform_specs)) {
+            if (val && typeof val === 'object') {
+              specs[key] = val as InstanceSpec;
+            }
+          }
+          setPlatformSpecs(specs);
+        }
+
+        // Config
+        setSelectedFormat((loadedItem.format || 'short_video_30_60') as ContentFormat);
         setFunnelStage(loadedItem.funnel_stage || 'awareness');
         setStorybrandStage(loadedItem.storybrand_stage || 'character');
-        setFilmingNotes(loadedItem.filming_notes || '');
+
+        // Schedule
+        setScheduledDate(loadedItem.scheduled_date || '');
+        setScheduledTime(loadedItem.scheduled_time || '08:00');
+
+        // Target URL / UTM
+        setTargetUrl(loadedItem.target_url || '');
         if (loadedItem.utm_parameters) {
           setUtmParams(loadedItem.utm_parameters as unknown as UTMParams);
         }
+        if (loadedItem.target_url || loadedItem.utm_parameters) {
+          setShowTargetUrl(true);
+        }
+
+        // Media
         const loadedMedia = (loadedItem.media_urls || []).map((url: string) => ({
           url,
           fileName: url.split('/').pop() || 'file',
@@ -173,12 +236,8 @@ export default function PostEditPage() {
           fileSize: 0,
         }));
         setUploadedFiles(loadedMedia);
-        // Auto-expand sections that have data
-        if (loadedItem.target_url || loadedItem.utm_parameters) setShowTargetUrlSection(true);
-        if (loadedMedia.length > 0) setShowMediaSection(true);
-        if (loadedItem.filming_notes) setShowAdvancedFields(true);
 
-        // Load variation siblings if item has a variation group
+        // Load variation siblings
         if (loadedItem.variation_group_id) {
           const { data: siblings } = await supabase
             .from('content_items')
@@ -190,6 +249,15 @@ export default function PostEditPage() {
             setVariationSiblings(siblings as VariationSibling[]);
           }
         }
+
+        // Load content angles for ConfigModal
+        const { data: angles } = await supabase
+          .from('content_angles')
+          .select('id, name, emotional_target')
+          .eq('organization_id', loadedItem.organization_id)
+          .eq('is_active', true)
+          .order('sort_order');
+        if (angles) setContentAngles(angles);
 
         // Get user name for preview
         const { data: { user } } = await supabase.auth.getUser();
@@ -211,32 +279,51 @@ export default function PostEditPage() {
     loadItem();
   }, [itemId, router, supabase]);
 
+  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Build save body Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  const buildSaveBody = useCallback((overrides?: Record<string, unknown>) => {
+    const hashtagsArray = (editFields.hashtags || '')
+      .split(',')
+      .map(t => t.trim())
+      .filter(Boolean);
+
+    const body: Record<string, unknown> = {
+      topic: editFields.topic || null,
+      caption: editFields.caption || null,
+      hashtags: hashtagsArray.length > 0 ? hashtagsArray : null,
+      platforms: getEnabledPlatforms(platformPlacements),
+      platform_specs: Object.keys(platformSpecs).length > 0 ? platformSpecs : null,
+      format: selectedFormat,
+      funnel_stage: funnelStage,
+      storybrand_stage: storybrandStage,
+      target_url: targetUrl || null,
+      utm_parameters: utmParams || null,
+      scheduled_date: scheduledDate,
+      scheduled_time: scheduledTime,
+      media_urls: uploadedFiles.map(f => f.url),
+      // Script fields
+      hook: scriptData.hook || null,
+      script_body: scriptData.script_body || null,
+      cta: scriptData.cta || null,
+      filming_notes: scriptData.filming_notes || null,
+      context_section: scriptData.context_section || null,
+      teaching_points: scriptData.teaching_points || null,
+      reframe: scriptData.reframe || null,
+      problem_expansion: scriptData.problem_expansion || null,
+      framework_teaching: scriptData.framework_teaching || null,
+      case_study: scriptData.case_study || null,
+      ...overrides,
+    };
+
+    return body;
+  }, [editFields, platformPlacements, platformSpecs, selectedFormat, funnelStage, storybrandStage, targetUrl, utmParams, scheduledDate, scheduledTime, uploadedFiles, scriptData]);
+
+  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Save handler Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const handleSave = useCallback(async (newStatus?: ContentStatus) => {
     if (!item) return;
     setIsSaving(true);
 
     try {
-      const body: Record<string, unknown> = {
-        topic: topic || null,
-        hook: hook || null,
-        script_body: scriptBody || null,
-        cta: cta || null,
-        caption: caption || null,
-        hashtags: hashtags.length > 0 ? hashtags : null,
-        platforms,
-        target_url: targetUrl || null,
-        utm_parameters: utmParams || null,
-        scheduled_date: scheduledDate,
-        scheduled_time: scheduledTime,
-        funnel_stage: funnelStage,
-        storybrand_stage: storybrandStage,
-        filming_notes: filmingNotes || null,
-        media_urls: uploadedFiles.map(f => f.url),
-      };
-
-      if (newStatus) {
-        body.status = newStatus;
-      }
+      const body = buildSaveBody(newStatus ? { status: newStatus } : undefined);
 
       const res = await fetch(`/api/content/items/${item.id}`, {
         method: 'PATCH',
@@ -271,8 +358,9 @@ export default function PostEditPage() {
     } finally {
       setIsSaving(false);
     }
-  }, [item, topic, hook, scriptBody, cta, caption, hashtags, platforms, targetUrl, utmParams, scheduledDate, scheduledTime, funnelStage, storybrandStage, filmingNotes, uploadedFiles]);
+  }, [item, buildSaveBody, scheduledDate, scheduledTime]);
 
+  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Review handler (unchanged) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const handleReview = useCallback(async (action: 'approve' | 'reject' | 'request_revision', comment?: string) => {
     if (!item) return;
     const res = await fetch(`/api/content/items/${item.id}/review`, {
@@ -281,7 +369,6 @@ export default function PostEditPage() {
       body: JSON.stringify({ action, comment }),
     });
     if (res.ok) {
-      // Reload item
       const itemRes = await fetch(`/api/content/items/${item.id}`);
       if (itemRes.ok) {
         const data = await itemRes.json();
@@ -294,25 +381,44 @@ export default function PostEditPage() {
     }
   }, [item]);
 
-  const togglePlatform = (p: SocialPlatform) => {
-    setPlatforms(prev =>
-      prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]
-    );
-  };
+  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ AI Assist handler Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  const handleAiAssistPost = async () => {
+    if (!organizationId) return;
+    setIsAiAssisting(true);
+    setGenerateError(null);
 
-  const addHashtag = () => {
-    const tag = hashtagInput.trim().startsWith('#') ? hashtagInput.trim() : '#' + hashtagInput.trim();
-    if (tag.length > 1 && !hashtags.includes(tag)) {
-      setHashtags(prev => [...prev, tag]);
+    try {
+      const res = await fetch('/api/content/ai-assist/post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organizationId,
+          funnelStage,
+          storybrandStage,
+          format: selectedFormat,
+          platforms: getEnabledPlatforms(platformPlacements),
+          modelOverride: effectiveModelId,
+          existingCaption: editFields.caption || null,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Failed' }));
+        throw new Error(err.error || 'Generation failed');
+      }
+
+      const data = await res.json();
+      updateField('caption', data.caption || '');
+      updateField('topic', data.topic || '');
+      updateField('hashtags', (data.hashtags || []).join(', '));
+    } catch (err: unknown) {
+      setGenerateError(err instanceof Error ? err.message : 'AI assist failed');
     }
-    setHashtagInput('');
+
+    setIsAiAssisting(false);
   };
 
-  const removeHashtag = (tag: string) => {
-    setHashtags(prev => prev.filter(t => t !== tag));
-  };
-
-  // Post action popup handlers
+  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Post action popup handlers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const handlePopupSaveDraft = async (): Promise<string | null> => {
     await handleSave();
     return item?.id || null;
@@ -322,24 +428,11 @@ export default function PostEditPage() {
     if (!item) return null;
     setIsSaving(true);
     try {
-      const body: Record<string, unknown> = {
-        topic: topic || null,
-        hook: hook || null,
-        script_body: scriptBody || null,
-        cta: cta || null,
-        caption: caption || null,
-        hashtags: hashtags.length > 0 ? hashtags : null,
-        platforms,
-        target_url: targetUrl || null,
-        utm_parameters: utmParams || null,
+      const body = buildSaveBody({
         scheduled_date: date,
         scheduled_time: time,
-        funnel_stage: funnelStage,
-        storybrand_stage: storybrandStage,
-        filming_notes: filmingNotes || null,
-        media_urls: uploadedFiles.map(f => f.url),
         status: 'scheduled',
-      };
+      });
 
       const res = await fetch(`/api/content/items/${item.id}`, {
         method: 'PATCH',
@@ -371,7 +464,6 @@ export default function PostEditPage() {
   };
 
   const handlePopupPublishNow = async (publishPlatforms: string[]): Promise<PublishResult[]> => {
-    // Save first
     await handleSave();
     if (!item) return [{ platform: 'all', success: false, error: 'No item to publish' }];
 
@@ -389,6 +481,7 @@ export default function PostEditPage() {
     }
   };
 
+  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Loading / Not found states Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
@@ -407,11 +500,12 @@ export default function PostEditPage() {
   }
 
   const canApprove = userRole === 'owner' || userRole === 'admin';
-  const previewCaption = caption || scriptBody || hook || topic || '';
+  const enabledPlatforms = getEnabledPlatforms(platformPlacements);
+  const formatLabel = FORMAT_LABELS[selectedFormat] || selectedFormat;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Header Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
@@ -422,10 +516,10 @@ export default function PostEditPage() {
           </button>
           <div>
             <h1 className="text-xl font-bold text-charcoal">
-              {topic || 'Untitled Post'}
+              {editFields.topic || 'Untitled Post'}
             </h1>
             <p className="text-sm text-stone">
-              {scheduledDate ? format(new Date(scheduledDate + 'T00:00:00'), 'EEEE, MMMM d, yyyy') : 'No date'} &middot; {item.format}
+              {scheduledDate ? format(new Date(scheduledDate + 'T00:00:00'), 'EEEE, MMMM d, yyyy') : 'No date'} &middot; {formatLabel}
             </p>
           </div>
         </div>
@@ -434,7 +528,7 @@ export default function PostEditPage() {
         </div>
       </div>
 
-      {/* Revision feedback banner */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Revision feedback banner Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
       {item.status === 'revision_requested' && item.review_comment && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
           <p className="text-sm font-medium text-amber-800">Revision Requested</p>
@@ -449,7 +543,7 @@ export default function PostEditPage() {
         </div>
       )}
 
-      {/* Variation group tabs */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Variation group tabs Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
       {variationSiblings.length > 0 && (
         <div className="bg-white border border-stone/15 rounded-xl p-3">
           <p className="text-xs font-medium text-stone mb-2">Variation Group</p>
@@ -471,292 +565,223 @@ export default function PostEditPage() {
         </div>
       )}
 
-      {/* Two-column layout */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Two-column layout (matching create page) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* LEFT: Edit Form (60%) */}
-        <div className="lg:col-span-3 space-y-5">
-          {/* Card 1: Content */}
-          <Card className="p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-charcoal">Content</h3>
-
-            <div>
-              <label className="block text-xs font-medium text-stone mb-1.5">Topic</label>
-              <input
-                value={topic}
-                onChange={e => setTopic(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
-                placeholder="What is this post about?"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-stone mb-1.5">Hook</label>
-              <input
-                value={hook}
-                onChange={e => setHook(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
-                placeholder="Opening line that grabs attention"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-stone mb-1.5">Script / Body</label>
-              <textarea
-                value={scriptBody}
-                onChange={e => setScriptBody(e.target.value)}
-                rows={6}
-                className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none resize-y"
-                placeholder="Full script or post body"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-stone mb-1.5">CTA</label>
-              <input
-                value={cta}
-                onChange={e => setCta(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
-                placeholder="Call to action"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-stone mb-1.5">Caption (Published Text)</label>
-              <textarea
-                value={caption}
-                onChange={e => setCaption(e.target.value)}
-                rows={4}
-                className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none resize-y"
-                placeholder="The caption that gets published"
-              />
-            </div>
-
-            {/* Advanced fields toggle */}
-            <button
-              onClick={() => setShowAdvancedFields(prev => !prev)}
-              className="flex items-center gap-1.5 text-xs font-medium text-teal hover:underline"
-            >
-              <ChevronDownIcon className={cn("w-3.5 h-3.5 transition-transform", showAdvancedFields && "rotate-180")} />
-              {showAdvancedFields ? 'Hide advanced fields' : 'Show filming notes & more'}
-            </button>
-            {showAdvancedFields && (
-              <div className="pt-3 border-t border-stone/10">
-                <label className="block text-xs font-medium text-stone mb-1.5">Filming Notes</label>
-                <textarea
-                  value={filmingNotes}
-                  onChange={e => setFilmingNotes(e.target.value)}
-                  rows={2}
-                  className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none resize-y"
-                  placeholder="Notes for filming / content creation"
-                />
-              </div>
-            )}
-          </Card>
-
-          {/* Card 2: Details (Hashtags + Platforms + Strategy) */}
-          <Card className="p-5 space-y-0">
-            <h3 className="text-sm font-semibold text-charcoal mb-4">Details</h3>
-
-            {/* Hashtags section */}
-            <div>
-              <h4 className="text-xs font-semibold text-stone uppercase tracking-wider mb-2">Hashtags</h4>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {hashtags.map(tag => (
-                  <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-teal/10 text-teal text-xs font-medium">
-                    {tag}
-                    <button onClick={() => removeHashtag(tag)} className="hover:text-red-500">&times;</button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  value={hashtagInput}
-                  onChange={e => setHashtagInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addHashtag())}
-                  className="flex-1 px-3 py-2 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
-                  placeholder="Add hashtag"
-                />
-                <Button size="sm" onClick={addHashtag}>Add</Button>
-              </div>
-            </div>
-
-            {/* Platforms section */}
-            <div className="border-t border-stone/10 pt-4 mt-4">
-              <h4 className="text-xs font-semibold text-stone uppercase tracking-wider mb-2">Platforms</h4>
-              <div className="flex flex-wrap gap-2">
-                {PLATFORM_OPTIONS.map(p => (
+        {/* LEFT: Post content (3/5) */}
+        <div className="lg:col-span-3 space-y-4">
+          {editingInstance ? (
+            <InstanceEditForm
+              placementType={editingInstance}
+              masterCaption={editFields.caption || ''}
+              masterHashtags={(editFields.hashtags || '').split(',').map(t => t.trim()).filter(Boolean)}
+              instanceSpec={platformSpecs[editingInstance] || {}}
+              onSave={(placement, spec) => {
+                const updated = { ...platformSpecs };
+                if (Object.keys(spec).length === 0) delete updated[placement];
+                else updated[placement] = spec;
+                setPlatformSpecs(updated);
+                setEditingInstance(null);
+              }}
+              onCancel={() => setEditingInstance(null)}
+            />
+          ) : (
+            <>
+              {/* Card 1: Main Post Ã¢â‚¬â€ Config + Caption + Hashtags + Topic */}
+              <Card>
+                {/* Config summary + Configure button */}
+                <div className="flex items-center justify-between mb-4">
+                  <ConfigSummaryChip config={contentConfig} angles={contentAngles} />
                   <button
-                    key={p}
-                    onClick={() => togglePlatform(p)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
-                      platforms.includes(p)
-                        ? 'bg-teal text-white'
-                        : 'bg-stone/5 text-stone hover:bg-stone/10'
-                    }`}
+                    onClick={() => setShowConfigModal(true)}
+                    className="text-xs font-medium text-teal hover:underline"
                   >
-                    {p}
+                    Configure
                   </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Strategy section */}
-            <div className="border-t border-stone/10 pt-4 mt-4">
-              <h4 className="text-xs font-semibold text-stone uppercase tracking-wider mb-2">Strategy</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-stone mb-1.5">Funnel Stage</label>
-                  <select
-                    value={funnelStage}
-                    onChange={e => setFunnelStage(e.target.value as FunnelStage)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
-                  >
-                    {FUNNEL_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-stone mb-1.5">StoryBrand Stage</label>
-                  <select
-                    value={storybrandStage}
-                    onChange={e => setStorybrandStage(e.target.value as StoryBrandStage)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
-                  >
-                    {STORYBRAND_OPTIONS.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-          </Card>
 
-          {/* Card 3: Publishing (Schedule + Target URL + Media) */}
-          <Card className="p-5 space-y-0">
-            <h3 className="text-sm font-semibold text-charcoal mb-4">Publishing</h3>
-
-            {/* Schedule section */}
-            <div>
-              <h4 className="text-xs font-semibold text-stone uppercase tracking-wider mb-2">Schedule</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-stone mb-1.5">
-                    <CalendarDaysIcon className="w-3.5 h-3.5 inline mr-1" />
-                    Date
-                  </label>
-                  <input
-                    type="date"
-                    value={scheduledDate}
-                    onChange={e => setScheduledDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
+                {/* Caption Ã¢â‚¬â€ PRIMARY FIELD */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-sm font-medium text-charcoal-700">Caption / Description</label>
+                    <button
+                      onClick={handleAiAssistPost}
+                      disabled={isAiAssisting}
+                      className="flex items-center gap-1.5 text-xs font-medium text-teal hover:underline disabled:opacity-50"
+                    >
+                      <SparklesIcon className="w-3.5 h-3.5" />
+                      {isAiAssisting ? 'Generating...' : editFields.caption ? 'AI Enhance' : 'AI Generate'}
+                    </button>
+                  </div>
+                  <Textarea
+                    value={editFields.caption || ''}
+                    onChange={e => updateField('caption', e.target.value)}
+                    rows={8}
+                    placeholder="Write your post caption..."
+                    className="text-sm"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-stone mb-1.5">
-                    <ClockIcon className="w-3.5 h-3.5 inline mr-1" />
-                    Time
-                  </label>
+
+                {/* Hashtags */}
+                <div className="mb-4">
+                  <label className="text-sm font-medium text-charcoal-700 mb-1 block">Hashtags</label>
                   <input
-                    type="time"
-                    value={scheduledTime}
-                    onChange={e => setScheduledTime(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
+                    value={editFields.hashtags || ''}
+                    onChange={e => updateField('hashtags', e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                    placeholder="hashtag1, hashtag2, hashtag3"
                   />
                 </div>
-              </div>
-            </div>
 
-            {/* Target URL section — collapsed if empty */}
-            <div className="border-t border-stone/10 pt-4 mt-4">
-              <button
-                onClick={() => setShowTargetUrlSection(prev => !prev)}
-                className="flex items-center justify-between w-full text-left"
-              >
-                <h4 className="text-xs font-semibold text-stone uppercase tracking-wider">Target URL &amp; Tracking</h4>
-                <div className="flex items-center gap-2">
-                  {targetUrl && !showTargetUrlSection && (
-                    <span className="text-xs text-teal bg-teal/10 px-2 py-0.5 rounded-full truncate max-w-[200px]">{targetUrl}</span>
-                  )}
-                  <ChevronDownIcon className={cn("w-4 h-4 text-stone transition-transform", showTargetUrlSection && "rotate-180")} />
+                {/* Topic (small) */}
+                <div className="mb-4">
+                  <label className="text-sm font-medium text-charcoal-700 mb-1 block">Topic</label>
+                  <input
+                    value={editFields.topic || ''}
+                    onChange={e => updateField('topic', e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                    placeholder="Brief topic summary"
+                  />
                 </div>
-              </button>
-              {showTargetUrlSection && (
-                <div className="mt-3 space-y-2">
+              </Card>
+
+              {/* Card 2: Media */}
+              <Card>
+                <h3 className="text-heading-sm text-charcoal mb-3">Media</h3>
+                <MediaUpload
+                  uploadedFiles={uploadedFiles}
+                  onFilesChange={setUploadedFiles}
+                  organizationId={item.organization_id}
+                />
+              </Card>
+
+              {/* Small buttons row */}
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowScriptModal(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-stone-600 hover:border-teal/30 hover:text-teal transition-colors"
+                >
+                  Script {scriptData.hook || scriptData.script_body ? '(added)' : '(optional)'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowTargetUrl(prev => !prev)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-stone-600 hover:border-teal/30 hover:text-teal transition-colors"
+                >
+                  <LinkIcon className="w-4 h-4" />
+                  {targetUrl ? 'Edit Link' : 'Add Link'}
+                </button>
+              </div>
+
+              {/* Target URL (collapsible) */}
+              {(showTargetUrl || targetUrl || utmParams) && (
+                <Card>
+                  <h3 className="text-heading-sm text-charcoal mb-3">Target URL &amp; Tracking</h3>
                   <input
                     value={targetUrl}
                     onChange={e => setTargetUrl(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal outline-none"
+                    className="w-full px-3 py-2.5 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
                     placeholder="https://your-link.com"
                   />
                   <button
                     onClick={() => setShowUtmModal(true)}
-                    className="flex items-center gap-1.5 text-xs font-medium text-teal hover:underline"
+                    className="mt-2 flex items-center gap-1.5 text-xs font-medium text-teal hover:underline"
                   >
                     <LinkIcon className="w-3.5 h-3.5" />
                     {utmParams ? 'Edit UTM Parameters' : 'Build UTM Parameters'}
                   </button>
                   {utmParams && (utmParams.utm_source || utmParams.utm_campaign) && (
-                    <div className="bg-cream-warm rounded-lg p-2.5">
+                    <div className="mt-2 bg-cream-warm rounded-lg p-2.5">
                       <p className="text-xs text-stone">
                         {[
                           utmParams.utm_source && `source: ${utmParams.utm_source}`,
                           utmParams.utm_medium && `medium: ${utmParams.utm_medium}`,
                           utmParams.utm_campaign && `campaign: ${utmParams.utm_campaign}`,
-                        ].filter(Boolean).join(' · ')}
+                        ].filter(Boolean).join(' Ã‚Â· ')}
                       </p>
                     </div>
                   )}
-                </div>
+                </Card>
               )}
-            </div>
 
-            {/* Media section — collapsed if empty */}
-            <div className="border-t border-stone/10 pt-4 mt-4">
-              <button
-                onClick={() => setShowMediaSection(prev => !prev)}
-                className="flex items-center justify-between w-full text-left"
-              >
-                <h4 className="text-xs font-semibold text-stone uppercase tracking-wider">Media</h4>
-                <div className="flex items-center gap-2">
-                  {uploadedFiles.length > 0 && !showMediaSection && (
-                    <span className="text-xs text-teal bg-teal/10 px-2 py-0.5 rounded-full">{uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''}</span>
-                  )}
-                  <ChevronDownIcon className={cn("w-4 h-4 text-stone transition-transform", showMediaSection && "rotate-180")} />
+              {/* Schedule + AI Model + Actions */}
+              <Card>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-charcoal-700 mb-1 block">Schedule Date</label>
+                    <input
+                      type="date"
+                      value={scheduledDate}
+                      onChange={e => setScheduledDate(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-charcoal-700 mb-1 block">Time</label>
+                    <input
+                      type="time"
+                      value={scheduledTime}
+                      onChange={e => setScheduledTime(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                    />
+                  </div>
                 </div>
-              </button>
-              {showMediaSection && (
-                <div className="mt-3">
-                  <MediaUpload
-                    uploadedFiles={uploadedFiles}
-                    onFilesChange={setUploadedFiles}
-                    organizationId={item.organization_id}
+
+                {/* AI Model selector */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-charcoal mb-2">AI Model</label>
+                  <AIModelPicker
+                    models={models}
+                    selectedModelId={effectiveModelId}
+                    onSelect={setSelectedModelId}
+                    costLabelFn={m => m.isFree ? 'Free' : `~${m.estimatedCreditsPerMessage} cr`}
                   />
                 </div>
+
+                <Button
+                  onClick={() => setShowPostActionPopup(true)}
+                  className="w-full"
+                  disabled={isSaving}
+                >
+                  <PaperAirplaneIcon className="w-4 h-4 mr-2" />
+                  Save &amp; Publish
+                </Button>
+              </Card>
+
+              {/* Error display */}
+              {generateError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-700">{generateError}</p>
+                </div>
               )}
-            </div>
-          </Card>
+            </>
+          )}
         </div>
 
-        {/* RIGHT: Live Preview (40%) */}
+        {/* RIGHT: Preview Panel (2/5) */}
         <div className="lg:col-span-2">
-          <div className="sticky top-6 space-y-4">
+          <div className="sticky top-6">
             <Card className="p-5">
-              <h3 className="text-sm font-semibold text-charcoal mb-4">Live Preview</h3>
-              <SocialPreviewTabs
-                platforms={platforms}
-                caption={previewCaption}
-                hashtags={hashtags}
+              <PreviewPanel
+                platformPlacements={platformPlacements}
+                onPlatformPlacementsChange={setPlatformPlacements}
+                caption={editFields.caption || ''}
+                hashtags={(editFields.hashtags || '').split(',').map(t => t.trim()).filter(Boolean)}
                 mediaUrls={uploadedFiles.map(f => f.url)}
-                targetUrl={targetUrl || undefined}
+                targetUrl={targetUrl}
                 userName={userName}
+                instanceSpecs={platformSpecs}
+                onEditInstance={setEditingInstance}
+                editingInstance={editingInstance}
+                hasMedia={uploadedFiles.length > 0}
+                hasVideo={uploadedFiles.some(f => f.fileType?.startsWith('video/'))}
               />
             </Card>
           </div>
         </div>
       </div>
 
-      {/* Footer Actions */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Footer Actions Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-stone/10 -mx-6 px-6 py-4 flex flex-wrap items-center justify-between gap-3 z-30">
         <div className="flex items-center gap-2 flex-wrap">
           <StatusBadge status={item.status} />
@@ -810,6 +835,36 @@ export default function PostEditPage() {
         </Button>
       </div>
 
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Modals Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
+
+      {/* Script Modal */}
+      <ScriptModal
+        isOpen={showScriptModal}
+        onClose={() => setShowScriptModal(false)}
+        scriptData={scriptData}
+        onSave={setScriptData}
+        formatCategory={formatCategory}
+        organizationId={item.organization_id}
+        caption={editFields.caption}
+        hashtags={editFields.hashtags ? editFields.hashtags.split(',').map(h => h.trim()).filter(Boolean) : []}
+        funnelStage={funnelStage}
+        storybrandStage={storybrandStage}
+        format={selectedFormat}
+      />
+
+      {/* Config Modal */}
+      <ConfigModal
+        isOpen={showConfigModal}
+        onClose={() => setShowConfigModal(false)}
+        config={contentConfig}
+        onSave={(c) => {
+          setSelectedFormat(c.format);
+          setFunnelStage(c.funnelStage);
+          setStorybrandStage(c.storybrandStage);
+        }}
+        angles={contentAngles}
+      />
+
       {/* UTM Builder Modal */}
       <UTMBuilderModal
         open={showUtmModal}
@@ -818,10 +873,10 @@ export default function PostEditPage() {
         initialParams={utmParams}
         onApply={setUtmParams}
         autoGenerateContext={{
-          platform: platforms[0] || 'linkedin',
+          platform: enabledPlatforms[0] || 'linkedin',
           funnelStage,
-          format: item.format || 'short_video_30_60',
-          topic: topic || null,
+          format: selectedFormat,
+          topic: editFields.topic || null,
           scheduledDate: scheduledDate || format(new Date(), 'yyyy-MM-dd'),
         }}
       />
@@ -830,7 +885,7 @@ export default function PostEditPage() {
       <PostActionPopup
         open={showPostActionPopup}
         onClose={() => setShowPostActionPopup(false)}
-        platforms={platforms}
+        platforms={enabledPlatforms as string[]}
         onSaveDraft={handlePopupSaveDraft}
         onSchedule={handlePopupSchedule}
         onPublishNow={handlePopupPublishNow}

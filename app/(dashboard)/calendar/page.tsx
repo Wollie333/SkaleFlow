@@ -194,7 +194,7 @@ export default function CalendarPage() {
     setItems((itemsData || []) as ContentItem[]);
   }, [supabase]);
 
-  /** Reload only generated (non-idea) items — used during active generation */
+  /** Reload only generated (non-idea) items â€” used during active generation */
   const reloadGeneratedItems = useCallback(async (calendarId: string) => {
     const { data: itemsData } = await supabase
       .from('content_items')
@@ -215,7 +215,7 @@ export default function CalendarPage() {
     setActiveBatchId(null);
     setIsGenerating(false);
     if (currentCalendar) {
-      // Final reload — include all items (some may still be "idea" if cancelled/failed)
+      // Final reload â€” include all items (some may still be "idea" if cancelled/failed)
       await reloadItems(currentCalendar.id);
     }
   }, [currentCalendar, reloadItems]);
@@ -264,7 +264,7 @@ export default function CalendarPage() {
         setCalendars(parsedCalendars);
         setCurrentCalendar(parsedCalendars[0]);
 
-        // DON'T load items yet — they're all "idea" status.
+        // DON'T load items yet â€” they're all "idea" status.
         // Items will appear one by one as AI generates them via onProgress.
         setItems([]);
 
@@ -309,7 +309,7 @@ export default function CalendarPage() {
             setIsGenerating(false);
           }
         } else {
-          // No model selected — just load the idea items normally
+          // No model selected â€” just load the idea items normally
           await reloadItems(parsedCalendars[0].id);
           setIsGenerating(false);
         }
@@ -363,7 +363,7 @@ export default function CalendarPage() {
   };
 
   const handleOpenGenerateWeek = (weekNumber: number) => {
-    // Count all items for the week — the API filters to 'idea' status server-side
+    // Count all items for the week â€” the API filters to 'idea' status server-side
     const weekItems = items.filter(i => i.generation_week === weekNumber);
     const ideaItems = weekItems.filter(i => i.status === 'idea');
     setGenerateWeekModal({ weekNumber, itemCount: ideaItems.length, totalWeekItems: weekItems.length });
@@ -675,7 +675,7 @@ export default function CalendarPage() {
                   'text-xs block',
                   currentCalendar?.id === cal.id ? 'text-cream/70' : 'text-stone'
                 )}>
-                  {format(new Date(cal.start_date + 'T00:00:00'), 'MMM d')} – {format(new Date(cal.end_date + 'T00:00:00'), 'MMM d')}
+                  {format(new Date(cal.start_date + 'T00:00:00'), 'MMM d')} â€“ {format(new Date(cal.end_date + 'T00:00:00'), 'MMM d')}
                 </span>
               </button>
             ))}
@@ -694,7 +694,7 @@ export default function CalendarPage() {
           >
             {calendars.map(cal => (
               <option key={cal.id} value={cal.id}>
-                {cal.name} ({format(new Date(cal.start_date + 'T00:00:00'), 'MMM d')} – {format(new Date(cal.end_date + 'T00:00:00'), 'MMM d')})
+                {cal.name} ({format(new Date(cal.start_date + 'T00:00:00'), 'MMM d')} â€“ {format(new Date(cal.end_date + 'T00:00:00'), 'MMM d')})
               </option>
             ))}
           </select>

@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       angle_id,
     } = body;
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {

@@ -4,11 +4,11 @@ import { MetaAdsAdapter } from '@/lib/marketing/platforms/meta-ads';
 import { cookies } from 'next/headers';
 
 export async function GET(request: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // Check org membership — must be owner or admin
+  // Check org membership â€” must be owner or admin
   const { data: membership } = await supabase
     .from('org_members')
     .select('organization_id, role')
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   });
 
   // Store state in cookie for verification on callback
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set('meta_ads_oauth_state', state, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',

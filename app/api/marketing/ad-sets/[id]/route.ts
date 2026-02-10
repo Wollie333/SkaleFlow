@@ -4,13 +4,13 @@ import type { Json } from '@/types/database';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id } = params;
+  const { id } = await params;
 
   const { data: adSet, error } = await supabase
     .from('ad_sets')
@@ -35,13 +35,13 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id } = params;
+  const { id } = await params;
 
   const { data: adSet } = await supabase
     .from('ad_sets')
@@ -94,13 +94,13 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id } = params;
+  const { id } = await params;
 
   const { data: adSet } = await supabase
     .from('ad_sets')

@@ -12,7 +12,7 @@ interface PageInfo {
 const VALID_PLATFORMS = ['linkedin', 'facebook', 'instagram', 'twitter', 'tiktok', 'youtube'];
 
 export async function GET(request: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {

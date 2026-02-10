@@ -3,10 +3,11 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createClient();
+  const { id } = await params;
+    const supabase = await createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -18,7 +19,7 @@ export async function PATCH(
     const { error } = await supabase
       .from('notifications')
       .update({ is_read: body.is_read ?? true })
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id);
 
     if (error) {

@@ -3,9 +3,10 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { contentItemId: string } }
+  { params }: { params: Promise<{ contentItemId: string }> }
 ) {
-  const supabase = createClient();
+  const { contentItemId } = await params;
+  const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -46,7 +47,7 @@ export async function GET(
         synced_at
       )
     `)
-    .eq('content_item_id', params.contentItemId)
+    .eq('content_item_id', contentItemId)
     .eq('organization_id', membership.organization_id)
     .order('published_at', { ascending: false });
 

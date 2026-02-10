@@ -8,9 +8,7 @@ const nextConfig = {
     // Linting done separately via `next lint` to avoid OOM during build
     ignoreDuringBuilds: true,
   },
-  experimental: {
-    serverComponentsExternalPackages: ['pdf-parse'],
-  },
+  serverExternalPackages: ['pdf-parse'],
   images: {
     remotePatterns: [
       {

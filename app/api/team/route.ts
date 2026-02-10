@@ -6,7 +6,7 @@ import crypto from 'crypto';
 // GET — List team members + pending invites for the current user's org
 export async function GET() {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const serviceSupabase = createServiceClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const serviceSupabase = createServiceClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -203,7 +203,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const serviceSupabase = createServiceClient();
 
     const { data: { user } } = await supabase.auth.getUser();

@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   try {
     const { planCode } = await request.json();
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Verify user is authenticated
     const { data: { user } } = await supabase.auth.getUser();
