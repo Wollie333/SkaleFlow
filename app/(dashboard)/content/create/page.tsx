@@ -227,6 +227,7 @@ export default function ContentCreatePage() {
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [rejectingItemId, setRejectingItemId] = useState<string | null>(null);
   const [rejectionLoading, setRejectionLoading] = useState(false);
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   // New state for single/manual redesign
   const [platformPlacements, setPlatformPlacements] = useState<PlatformPlacementsMap>(
@@ -1268,6 +1269,40 @@ export default function ContentCreatePage() {
     }));
   };
 
+  const saveVariation = useCallback(async (itemId: string) => {
+    const fields = engineEditFields[itemId] || {};
+    const mediaFiles = engineMediaFiles[itemId] || [];
+    if (Object.keys(fields).length === 0 && mediaFiles.length === 0) return;
+    try {
+      await fetch(`/api/content/items/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          caption: fields.caption || null,
+          hashtags: fields.hashtags ? fields.hashtags.split(',').map((h: string) => h.trim()).filter(Boolean) : null,
+          topic: fields.topic || null,
+          media_urls: mediaFiles.length > 0 ? mediaFiles.map(f => f.url) : null,
+        }),
+      });
+    } catch (err) {
+      console.error('Auto-save variation failed:', err);
+    }
+  }, [engineEditFields, engineMediaFiles]);
+
+  const handleExpandCard = useCallback((itemId: string) => {
+    setExpandedCardId(prev => {
+      if (prev && prev !== itemId) {
+        saveVariation(prev);
+      }
+      return itemId;
+    });
+  }, [saveVariation]);
+
+  const handleCollapseCard = useCallback((itemId: string) => {
+    saveVariation(itemId);
+    setExpandedCardId(null);
+  }, [saveVariation]);
+
   const handleEngineBulkDraft = async (): Promise<string | null> => {
     setEngineSaving(true);
     try {
@@ -2110,6 +2145,9 @@ export default function ContentCreatePage() {
                 onReject={handleEngineRejectStart}
                 isRegenerating={engineRegeneratingIds.has(item.id)}
                 isRejected={engineRejectedIds.has(item.id)}
+                isExpanded={expandedCardId === item.id}
+                onExpand={() => handleExpandCard(item.id)}
+                onCollapse={() => handleCollapseCard(item.id)}
               />
             ))}
           </div>
