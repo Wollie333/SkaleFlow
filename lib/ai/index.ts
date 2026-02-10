@@ -41,7 +41,15 @@ export async function getAvailableModels(
     }
   }
 
-  // 2. Query tier-level rules
+  // 2. Query global platform-wide rules (admin toggle)
+  const { data: globalRulesData } = await supabase
+    .from('model_access_rules')
+    .select('model_id, is_enabled')
+    .eq('scope_type', 'global')
+    .eq('scope_id', 'platform');
+  const globalRules = globalRulesData || [];
+
+  // 3. Query tier-level rules
   let tierRules: { model_id: string; is_enabled: boolean }[] = [];
   if (tierSlug) {
     const { data } = await supabase
@@ -52,7 +60,7 @@ export async function getAvailableModels(
     tierRules = data || [];
   }
 
-  // 3. Query user-level rules
+  // 4. Query user-level rules
   const { data: userRulesData } = await supabase
     .from('model_access_rules')
     .select('model_id, is_enabled')
@@ -60,25 +68,33 @@ export async function getAvailableModels(
     .eq('scope_id', userId);
   const userRules = userRulesData || [];
 
-  // 4. Start with full catalog filtered by feature
+  // 5. Start with full catalog filtered by feature
   let models = feature
     ? MODEL_CATALOG.filter(m => m.features.includes(feature))
     : [...MODEL_CATALOG];
 
-  // 5. Build tier rule map
+  // 6. Build rule maps (global > tier > user priority for disabling)
+  const globalRuleMap = new Map<string, boolean>();
+  for (const rule of globalRules) {
+    globalRuleMap.set(rule.model_id, rule.is_enabled);
+  }
+
   const tierRuleMap = new Map<string, boolean>();
   for (const rule of tierRules) {
     tierRuleMap.set(rule.model_id, rule.is_enabled);
   }
 
-  // 6. Build user rule map
   const userRuleMap = new Map<string, boolean>();
   for (const rule of userRules) {
     userRuleMap.set(rule.model_id, rule.is_enabled);
   }
 
-  // 7. Filter models: user rules override tier rules
+  // 7. Filter models: global disabled = hard block, then user > tier
   models = models.filter(model => {
+    // Global disable is absolute — admin turned it off for everyone
+    if (globalRuleMap.has(model.id) && !globalRuleMap.get(model.id)) {
+      return false;
+    }
     // User-level override takes priority
     if (userRuleMap.has(model.id)) {
       return userRuleMap.get(model.id)!;

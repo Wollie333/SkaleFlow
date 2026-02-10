@@ -13,6 +13,7 @@ export interface BatchStatus {
   percentage: number;
   recentItems: Array<{ id: string; topic: string | null; status: string }>;
   failedDetails?: Array<{ contentItemId: string; error: string }>;
+  processError?: string;
 }
 
 interface GenerationBatchTrackerProps {
@@ -23,12 +24,17 @@ interface GenerationBatchTrackerProps {
   onProgress?: (status: BatchStatus) => void;
 }
 
+const MAX_INITIAL_RETRIES = 3;
+const INITIAL_RETRY_DELAY = 2000;
+
 export function GenerationBatchTracker({ batchId, onComplete, onCancel, onProgress }: GenerationBatchTrackerProps) {
   const [status, setStatus] = useState<BatchStatus | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const completedRef = useRef(false);
   const cancelledRef = useRef(false);
+  // Unique mount ID to prevent React 18 Strict Mode from running two parallel loops
+  const mountIdRef = useRef(0);
   // Store callbacks in refs so the processing loop never re-triggers on callback changes
   const onCompleteRef = useRef(onComplete);
   const onCancelRef = useRef(onCancel);
@@ -38,43 +44,81 @@ export function GenerationBatchTracker({ batchId, onComplete, onCancel, onProgre
   onProgressRef.current = onProgress;
 
   // Sequential processing loop: fetch status → process one item → repeat
-  const runProcessingLoop = useCallback(async () => {
+  const runProcessingLoop = useCallback(async (currentMountId: number) => {
     // Guard already finished (user cancelled via button)
     if (completedRef.current) return;
 
-    console.log('[GEN-TRACKER] Starting processing loop for batch:', batchId);
+    console.log('[GEN-TRACKER] Starting processing loop for batch:', batchId, 'mountId:', currentMountId);
 
-    // 1. Get initial status (fast, no processing)
-    try {
-      console.log('[GEN-TRACKER] Fetching initial status...');
-      const res = await fetch(`/api/content/generate/queue/status?batchId=${batchId}`);
-      console.log('[GEN-TRACKER] Initial status response:', res.status, res.statusText);
-      if (!res.ok) {
-        const errText = await res.text();
-        console.error('[GEN-TRACKER] Initial status failed:', res.status, errText);
-        setError('Failed to check generation status');
+    // 1. Get initial status with retries
+    let initialData: BatchStatus | null = null;
+
+    for (let retry = 0; retry < MAX_INITIAL_RETRIES; retry++) {
+      // Check if this loop is stale (Strict Mode unmount/remount)
+      if (mountIdRef.current !== currentMountId || cancelledRef.current) {
+        console.log('[GEN-TRACKER] Stale loop detected during initial status, exiting');
         return;
       }
-      const data: BatchStatus = await res.json();
-      console.log('[GEN-TRACKER] Initial status data:', JSON.stringify(data));
-      setStatus(data);
 
-      // Already done? (batch was completed by cron or previous session)
-      if (data.status === 'completed' || data.status === 'failed' || data.status === 'cancelled') {
-        console.log('[GEN-TRACKER] Batch already done:', data.status);
-        completedRef.current = true;
-        setTimeout(() => onCompleteRef.current(), 1500);
+      try {
+        console.log(`[GEN-TRACKER] Fetching initial status (attempt ${retry + 1}/${MAX_INITIAL_RETRIES})...`);
+        const res = await fetch(`/api/content/generate/queue/status?batchId=${batchId}`);
+        console.log('[GEN-TRACKER] Initial status response:', res.status, res.statusText);
+        if (!res.ok) {
+          const errText = await res.text();
+          console.error('[GEN-TRACKER] Initial status failed:', res.status, errText);
+          setError(`Status check failed (${res.status}): ${errText || res.statusText}`);
+          if (retry < MAX_INITIAL_RETRIES - 1) {
+            await new Promise(r => setTimeout(r, INITIAL_RETRY_DELAY));
+            continue;
+          }
+          return;
+        }
+        initialData = await res.json();
+        console.log('[GEN-TRACKER] Initial status data:', JSON.stringify(initialData));
+        setStatus(initialData);
+        setError(null);
+        break;
+      } catch (err) {
+        console.error('[GEN-TRACKER] Network error on initial status:', err);
+        setError('Network error checking generation status');
+        if (retry < MAX_INITIAL_RETRIES - 1) {
+          await new Promise(r => setTimeout(r, INITIAL_RETRY_DELAY));
+          continue;
+        }
         return;
       }
-    } catch (err) {
-      console.error('[GEN-TRACKER] Network error on initial status:', err);
-      setError('Network error checking generation status');
+    }
+
+    if (!initialData) return;
+
+    // Already done? (batch was completed by cron or previous session)
+    if (initialData.status === 'completed' || initialData.status === 'failed' || initialData.status === 'cancelled') {
+      console.log('[GEN-TRACKER] Batch already done:', initialData.status);
+      completedRef.current = true;
+      setTimeout(() => onCompleteRef.current(), 1500);
       return;
     }
 
     // 2. Processing loop: process one item at a time
+    const MAX_LOOP_DURATION_MS = 3 * 60 * 1000; // 3-minute hard timeout
+    const MAX_CONSECUTIVE_STALLS = 5;
     let loopCount = 0;
-    while (!completedRef.current && !cancelledRef.current) {
+    let consecutiveStalls = 0;
+    let previousCompleted = initialData.completedItems;
+    let previousFailed = initialData.failedItems;
+    const loopStartTime = Date.now();
+
+    while (!completedRef.current && !cancelledRef.current && mountIdRef.current === currentMountId) {
+      // Hard timeout check
+      if (Date.now() - loopStartTime > MAX_LOOP_DURATION_MS) {
+        console.error('[GEN-TRACKER] Hard timeout reached (3 min) — exiting loop');
+        setError('Generation timed out. Check your content calendar for any completed posts.');
+        completedRef.current = true;
+        setTimeout(() => onCompleteRef.current(), 1500);
+        return;
+      }
+
       loopCount++;
       console.log(`[GEN-TRACKER] Processing loop iteration #${loopCount} — calling action=process...`);
       const startTime = Date.now();
@@ -88,7 +132,7 @@ export function GenerationBatchTracker({ batchId, onComplete, onCancel, onProgre
         if (!res.ok) {
           const errText = await res.text();
           console.error('[GEN-TRACKER] Process request failed:', res.status, errText);
-          setError('Generation request failed');
+          setError(`Generation request failed (${res.status})`);
           // Wait 3s then retry
           await new Promise(r => setTimeout(r, 3000));
           continue;
@@ -100,7 +144,26 @@ export function GenerationBatchTracker({ batchId, onComplete, onCancel, onProgre
           console.log('[GEN-TRACKER] Recent items:', data.recentItems.map(i => i.topic).join(', '));
         }
         setStatus(data);
-        setError(null);
+
+        // Show processError from the server if present
+        if (data.processError) {
+          setError(`Last item error: ${data.processError}`);
+        } else {
+          setError(null);
+        }
+
+        // Track consecutive no-progress iterations (stall detection)
+        if (data.completedItems === previousCompleted && data.failedItems === previousFailed) {
+          consecutiveStalls++;
+          if (consecutiveStalls >= MAX_CONSECUTIVE_STALLS) {
+            console.warn(`[GEN-TRACKER] ${MAX_CONSECUTIVE_STALLS} consecutive stalls detected`);
+            setError('Generation appears stuck. You may want to cancel and retry.');
+          }
+        } else {
+          consecutiveStalls = 0;
+          previousCompleted = data.completedItems;
+          previousFailed = data.failedItems;
+        }
 
         // Notify parent so it can reload items progressively
         if (onProgressRef.current) {
@@ -124,18 +187,17 @@ export function GenerationBatchTracker({ batchId, onComplete, onCancel, onProgre
         await new Promise(r => setTimeout(r, 5000));
       }
     }
-    console.log('[GEN-TRACKER] Processing loop ended. completedRef:', completedRef.current, 'cancelledRef:', cancelledRef.current);
+    console.log('[GEN-TRACKER] Processing loop ended. completedRef:', completedRef.current, 'cancelledRef:', cancelledRef.current, 'mountMatch:', mountIdRef.current === currentMountId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [batchId]);
 
   useEffect(() => {
-    // Reset refs on (re)mount — critical for React 18 Strict Mode
-    // which runs: mount → cleanup → mount. Without this reset,
-    // the second mount sees cancelledRef=true and the loop never starts.
+    // Increment mount ID — stale loops from previous mounts will detect the mismatch and exit
+    const currentMountId = ++mountIdRef.current;
     cancelledRef.current = false;
     completedRef.current = false;
 
-    runProcessingLoop();
+    runProcessingLoop(currentMountId);
 
     return () => {
       // Stop loop on unmount
@@ -159,13 +221,37 @@ export function GenerationBatchTracker({ batchId, onComplete, onCancel, onProgre
     setIsCancelling(false);
   };
 
+  // Show initial state with error visibility
   if (!status) {
     return (
-      <div className="bg-white rounded-xl border border-stone/10 p-4">
+      <div className="bg-white rounded-xl border border-stone/10 p-4 space-y-3">
         <div className="flex items-center gap-2">
-          <SparklesIcon className="w-5 h-5 text-teal animate-pulse" />
-          <span className="text-sm text-stone">Starting generation...</span>
+          {error ? (
+            <ExclamationTriangleIcon className="w-5 h-5 text-red-500" />
+          ) : (
+            <SparklesIcon className="w-5 h-5 text-teal animate-pulse" />
+          )}
+          <span className="text-sm text-stone">
+            {error ? 'Generation failed to start' : 'Starting generation...'}
+          </span>
         </div>
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-2">
+            <p className="text-xs text-red-700">{error}</p>
+          </div>
+        )}
+        {error && (
+          <Button
+            onClick={handleCancel}
+            variant="ghost"
+            size="sm"
+            isLoading={isCancelling}
+            className="w-full text-stone hover:text-red-600"
+          >
+            <XMarkIcon className="w-4 h-4 mr-1" />
+            Cancel
+          </Button>
+        )}
       </div>
     );
   }

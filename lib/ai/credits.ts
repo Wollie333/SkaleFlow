@@ -63,31 +63,24 @@ interface CreditBalance {
   totalRemaining: number;
   periodEnd: string | null;
   hasCredits: boolean;
+  isSuperAdmin?: boolean;
+  apiCostUSD?: number;
 }
 
 /**
  * Check current credit balance for an org.
  * Performs lazy monthly reset if period has expired.
- * If userId is provided and user is super_admin, always returns unlimited credits.
+ * If userId is provided and user is super_admin, returns real balance but always hasCredits=true.
  */
 export async function checkCredits(
   orgId: string,
   requiredCredits: number = 0,
   userId?: string | null
 ): Promise<CreditBalance> {
-  // Super admins bypass all credit constraints
+  // Check super admin status (but still query real balance)
+  let isAdmin = false;
   if (userId) {
-    const isAdmin = await isSuperAdmin(userId);
-    if (isAdmin) {
-      return {
-        monthlyRemaining: 999999,
-        monthlyTotal: 999999,
-        topupRemaining: 999999,
-        totalRemaining: 999999,
-        periodEnd: null,
-        hasCredits: true,
-      };
-    }
+    isAdmin = await isSuperAdmin(userId);
   }
 
   const supabase = createServiceClient();
@@ -106,7 +99,8 @@ export async function checkCredits(
       topupRemaining: 0,
       totalRemaining: 0,
       periodEnd: null,
-      hasCredits: requiredCredits === 0,
+      hasCredits: isAdmin || requiredCredits === 0,
+      isSuperAdmin: isAdmin,
     };
   }
 
@@ -129,7 +123,8 @@ export async function checkCredits(
         topupRemaining: refreshed.topup_credits_remaining,
         totalRemaining: total,
         periodEnd: refreshed.period_end,
-        hasCredits: total >= requiredCredits,
+        hasCredits: isAdmin || total >= requiredCredits,
+        isSuperAdmin: isAdmin,
       };
     }
   }
@@ -141,7 +136,8 @@ export async function checkCredits(
     topupRemaining: balance.topup_credits_remaining,
     totalRemaining: total,
     periodEnd: balance.period_end,
-    hasCredits: total >= requiredCredits,
+    hasCredits: isAdmin || total >= requiredCredits,
+    isSuperAdmin: isAdmin,
   };
 }
 

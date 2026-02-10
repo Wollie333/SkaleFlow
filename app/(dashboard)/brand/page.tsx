@@ -429,10 +429,12 @@ export default function BrandEnginePage() {
               const qDone = phase.current_question_index ?? 0;
 
               return (
-                <button
+                <div
                   key={phase.id}
-                  onClick={() => handlePhaseClick(phase)}
-                  disabled={!accessible}
+                  role="button"
+                  tabIndex={accessible ? 0 : -1}
+                  onClick={() => accessible && handlePhaseClick(phase)}
+                  onKeyDown={(e) => { if (accessible && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handlePhaseClick(phase); } }}
                   className={`relative text-left bg-white rounded-xl border p-5 transition-all duration-200 ${
                     !accessible
                       ? 'opacity-50 cursor-not-allowed'
@@ -567,7 +569,7 @@ export default function BrandEnginePage() {
                       )}
                     </div>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>

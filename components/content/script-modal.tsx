@@ -5,6 +5,8 @@ import { XMarkIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { type FormatCategory } from '@/config/script-frameworks';
 import { CLIENT_MODEL_CATALOG } from '@/lib/ai/client-models';
 import { ModelSelector } from '@/components/ai/model-selector';
+import { useBrandVariables } from '@/hooks/useBrandVariables';
+import { VariableTextarea } from '@/components/content/variable-field';
 
 export interface ScriptData {
   hook: string | null;
@@ -87,6 +89,7 @@ export default function ScriptModal({
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
 
+  const { categories: brandCategories, flatVariables: brandFlatVariables } = useBrandVariables(organizationId || null);
   const fields = getFieldsForCategory(formatCategory);
 
   const handleFieldChange = useCallback((key: keyof ScriptData, value: string) => {
@@ -196,18 +199,17 @@ export default function ScriptModal({
 
           {/* Script fields */}
           {fields.map(({ key, label, rows }) => (
-            <div key={key}>
-              <label className="block text-sm font-medium text-charcoal-700 mb-1">
-                {label}
-              </label>
-              <textarea
-                value={localData[key] || ''}
-                onChange={(e) => handleFieldChange(key, e.target.value)}
-                rows={rows}
-                className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-y"
-                placeholder={`Enter ${label.toLowerCase()}...`}
-              />
-            </div>
+            <VariableTextarea
+              key={key}
+              label={label}
+              value={localData[key] || ''}
+              onValueChange={(v) => handleFieldChange(key, v)}
+              rows={rows}
+              placeholder={`Enter ${label.toLowerCase()}... (~ for brand variables)`}
+              className="text-sm border-stone-300 rounded-lg"
+              brandFlatVariables={brandFlatVariables}
+              brandCategories={brandCategories}
+            />
           ))}
         </div>
 

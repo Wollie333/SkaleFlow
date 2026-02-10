@@ -220,7 +220,7 @@ function buildYouTubeDescription(post: PostPayload): string {
     desc += `\n\n${post.link}`;
   }
   if (post.hashtags && post.hashtags.length > 0) {
-    desc += '\n\n' + post.hashtags.join(' ');
+    desc += '\n\n' + post.hashtags.map(h => h.startsWith('#') ? h : `#${h}`).join(' ');
   }
   return desc.slice(0, 5000);
 }

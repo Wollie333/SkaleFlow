@@ -14,7 +14,7 @@ export const CRON_INTERVAL_SEC = 120;
 export const LOCK_TIMEOUT_MIN = 5;
 
 /** Max retries per queue item before marking as failed */
-export const MAX_RETRIES = 3;
+export const MAX_RETRIES = 2;
 
 /** Max internal validation retries per AI call (before returning to queue) */
 export const MAX_VALIDATION_RETRIES = 3;

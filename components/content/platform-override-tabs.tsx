@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Textarea } from '@/components/ui';
+import { VariableTextarea, VariableInput } from '@/components/content/variable-field';
+import { useBrandVariables } from '@/hooks/useBrandVariables';
 import { PLATFORM_CHARACTER_LIMITS } from '@/config/creative-specs';
 
 interface PlatformOverrideTabsProps {
@@ -12,6 +13,7 @@ interface PlatformOverrideTabsProps {
   platformSpecs: Record<string, { caption?: string; hashtags?: string[]; customized?: boolean }>;
   onUniversalChange: (caption: string, hashtags: string[]) => void;
   onPlatformChange: (platform: string, caption: string, hashtags: string[]) => void;
+  organizationId?: string | null;
 }
 
 export function PlatformOverrideTabs({
@@ -21,8 +23,10 @@ export function PlatformOverrideTabs({
   platformSpecs,
   onUniversalChange,
   onPlatformChange,
+  organizationId,
 }: PlatformOverrideTabsProps) {
   const [activeTab, setActiveTab] = useState('universal');
+  const { categories: brandCategories, flatVariables: brandFlatVariables } = useBrandVariables(organizationId || null);
 
   const tabs = ['universal', ...platforms];
 
@@ -47,41 +51,43 @@ export function PlatformOverrideTabs({
 
       {activeTab === 'universal' ? (
         <div className="space-y-3">
-          <Textarea
+          <VariableTextarea
             label="Universal Caption"
             value={universalCaption}
-            onChange={e => onUniversalChange(e.target.value, universalHashtags)}
+            onValueChange={v => onUniversalChange(v, universalHashtags)}
             rows={3}
-            placeholder="Caption for all platforms..."
+            placeholder="Caption for all platforms... (~ for brand variables)"
+            brandFlatVariables={brandFlatVariables}
+            brandCategories={brandCategories}
           />
-          <div>
-            <label className="block text-sm font-medium text-charcoal mb-1">Hashtags</label>
-            <input
-              type="text"
-              value={universalHashtags.join(' ')}
-              onChange={e => onUniversalChange(universalCaption, e.target.value.split(/\s+/).filter(Boolean))}
-              className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-              placeholder="#hashtag1 #hashtag2"
-            />
-          </div>
+          <VariableInput
+            label="Hashtags"
+            value={universalHashtags.join(' ')}
+            onValueChange={v => onUniversalChange(universalCaption, v.split(/\s+/).filter(Boolean))}
+            placeholder="#hashtag1 #hashtag2 (~ for brand variables)"
+            brandFlatVariables={brandFlatVariables}
+            brandCategories={brandCategories}
+          />
         </div>
       ) : (
         <div className="space-y-3">
-          <Textarea
+          <VariableTextarea
             label={`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Caption`}
             value={platformSpecs[activeTab]?.caption ?? universalCaption}
-            onChange={e => onPlatformChange(activeTab, e.target.value, platformSpecs[activeTab]?.hashtags ?? universalHashtags)}
+            onValueChange={v => onPlatformChange(activeTab, v, platformSpecs[activeTab]?.hashtags ?? universalHashtags)}
             rows={3}
             hint={`Max ${PLATFORM_CHARACTER_LIMITS[activeTab]?.caption || '?'} characters`}
+            brandFlatVariables={brandFlatVariables}
+            brandCategories={brandCategories}
           />
           <div>
-            <label className="block text-sm font-medium text-charcoal mb-1">Hashtags</label>
-            <input
-              type="text"
+            <VariableInput
+              label="Hashtags"
               value={(platformSpecs[activeTab]?.hashtags ?? universalHashtags).join(' ')}
-              onChange={e => onPlatformChange(activeTab, platformSpecs[activeTab]?.caption ?? universalCaption, e.target.value.split(/\s+/).filter(Boolean))}
-              className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-              placeholder="#hashtag1 #hashtag2"
+              onValueChange={v => onPlatformChange(activeTab, platformSpecs[activeTab]?.caption ?? universalCaption, v.split(/\s+/).filter(Boolean))}
+              placeholder="#hashtag1 #hashtag2 (~ for brand variables)"
+              brandFlatVariables={brandFlatVariables}
+              brandCategories={brandCategories}
             />
             <p className="text-xs text-stone mt-1">Max {PLATFORM_CHARACTER_LIMITS[activeTab]?.hashtags || '?'} hashtags</p>
           </div>

@@ -108,6 +108,88 @@ export const BRAND_VARIABLE_CATEGORIES: BrandVariableCategory[] = [
 
 export const AI_GENERATION_VARIABLES: string[] = BRAND_VARIABLE_CATEGORIES.flatMap(c => c.outputKeys);
 
+/**
+ * CORE variables — always included in every post (non-negotiable for brand alignment).
+ * These 4 define HOW to write and WHO we're writing for.
+ */
+export const CORE_CONTENT_VARIABLES: string[] = [
+  'tone_descriptors',
+  'vocabulary_preferred',
+  'vocabulary_avoided',
+  'brand_archetype',
+];
+
+/**
+ * ROTATING variables — a random subset is selected per post for variety.
+ * Each post gets 3-4 of these, creating diverse content that doesn't repeat the same angles.
+ */
+export const ROTATING_CONTENT_VARIABLES: string[] = [
+  // Audience
+  'icp_pains',
+  'icp_desires',
+  'icp_emotional_triggers',
+  'icp_objections',
+  // Enemy
+  'enemy_name',
+  'enemy_description',
+  'enemy_cost',
+  // Messaging
+  'message_core',
+  'message_pillars',
+  'positioning_statement',
+  'content_themes',
+  'beliefs_to_teach',
+  // Offer
+  'offer_name',
+  'offer_outcome',
+  'offer_problem',
+];
+
+/** Total variables per post = CORE (4) + ROTATING pick (3) = 7 */
+const ROTATING_PICK_COUNT = 3;
+
+/**
+ * Smart variable selector: picks 7 variables per post.
+ * - 4 core (always present for voice consistency)
+ * - 3 randomly selected from the rotating pool (for content variety)
+ *
+ * This keeps prompt size ~70% smaller than sending all 40+ variables,
+ * and creates natural variety across posts in a batch.
+ */
+export function selectSmartVariables(itemIndex?: number): string[] {
+  // Shuffle the rotating pool
+  const pool = [...ROTATING_CONTENT_VARIABLES];
+
+  // Use itemIndex as a seed offset to ensure different posts in a batch get different variables
+  // (but still randomized so batches don't repeat the same pattern)
+  const seed = (itemIndex || 0) + Date.now();
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.abs((seed * (i + 1) * 2654435761) % (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  const picked = pool.slice(0, ROTATING_PICK_COUNT);
+  return [...CORE_CONTENT_VARIABLES, ...picked];
+}
+
+/**
+ * Full essential set (all 14 key variables) — used when user doesn't specify variables
+ * but we want a broader context (e.g. legacy flows).
+ */
+export const ESSENTIAL_CONTENT_VARIABLES: string[] = [
+  ...CORE_CONTENT_VARIABLES,
+  'icp_pains',
+  'icp_desires',
+  'enemy_name',
+  'enemy_description',
+  'message_core',
+  'message_pillars',
+  'positioning_statement',
+  'content_themes',
+  'offer_name',
+  'offer_outcome',
+];
+
 export const VARIABLE_DISPLAY_NAMES: Record<string, string> = {
   icp_demographics: 'ICP Demographics',
   icp_pains: 'ICP Pain Points',

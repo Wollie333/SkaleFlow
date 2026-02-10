@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Button, Card, Textarea, StatusBadge, ActionModal } from '@/components/ui';
+import { Button, Card, StatusBadge, ActionModal } from '@/components/ui';
 import { MediaUpload, UTMBuilderModal, PostActionPopup, AIModelPicker, type UploadedFile, type PublishResult } from '@/components/content';
 import { PreviewPanel } from '@/components/content/preview-panel';
 import { InstanceEditForm, type InstanceSpec } from '@/components/content/instance-edit-form';
@@ -23,6 +23,8 @@ import {
   LinkIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
+import { useBrandVariables } from '@/hooks/useBrandVariables';
+import { VariableTextarea, VariableInput } from '@/components/content/variable-field';
 import type { SocialPlatform, ContentStatus, FunnelStage, StoryBrandStage, PlacementType } from '@/types/database';
 import type { UTMParams } from '@/lib/utm/generate-utm';
 
@@ -145,6 +147,7 @@ export default function PostEditPage() {
   const { selectedModel: orgDefaultModel } = useModelPreference(organizationId, 'content_generation');
   const effectiveModelId = selectedModelId || orgDefaultModel || null;
   const formatCategory = getFormatCategory(selectedFormat);
+  const { categories: brandCategories, flatVariables: brandFlatVariables } = useBrandVariables(organizationId);
 
   // Computed config for ConfigModal / ConfigSummaryChip
   const contentConfig: ContentConfig = {
@@ -575,6 +578,7 @@ export default function PostEditPage() {
               masterCaption={editFields.caption || ''}
               masterHashtags={(editFields.hashtags || '').split(',').map(t => t.trim()).filter(Boolean)}
               instanceSpec={platformSpecs[editingInstance] || {}}
+              organizationId={organizationId}
               onSave={(placement, spec) => {
                 const updated = { ...platformSpecs };
                 if (Object.keys(spec).length === 0) delete updated[placement];
@@ -612,34 +616,38 @@ export default function PostEditPage() {
                       {isAiAssisting ? 'Generating...' : editFields.caption ? 'AI Enhance' : 'AI Generate'}
                     </button>
                   </div>
-                  <Textarea
+                  <VariableTextarea
                     value={editFields.caption || ''}
-                    onChange={e => updateField('caption', e.target.value)}
+                    onValueChange={(v) => updateField('caption', v)}
                     rows={8}
-                    placeholder="Write your post caption..."
+                    placeholder="Write your post caption... (~ for brand variables)"
                     className="text-sm"
+                    brandFlatVariables={brandFlatVariables}
+                    brandCategories={brandCategories}
                   />
                 </div>
 
                 {/* Hashtags */}
                 <div className="mb-4">
-                  <label className="text-sm font-medium text-charcoal-700 mb-1 block">Hashtags</label>
-                  <input
+                  <VariableInput
+                    label="Hashtags"
                     value={editFields.hashtags || ''}
-                    onChange={e => updateField('hashtags', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                    placeholder="hashtag1, hashtag2, hashtag3"
+                    onValueChange={(v) => updateField('hashtags', v)}
+                    placeholder="hashtag1, hashtag2 (~ for brand variables)"
+                    brandFlatVariables={brandFlatVariables}
+                    brandCategories={brandCategories}
                   />
                 </div>
 
                 {/* Topic (small) */}
                 <div className="mb-4">
-                  <label className="text-sm font-medium text-charcoal-700 mb-1 block">Topic</label>
-                  <input
+                  <VariableInput
+                    label="Topic"
                     value={editFields.topic || ''}
-                    onChange={e => updateField('topic', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                    placeholder="Brief topic summary"
+                    onValueChange={(v) => updateField('topic', v)}
+                    placeholder="Brief topic summary (~ for brand variables)"
+                    brandFlatVariables={brandFlatVariables}
+                    brandCategories={brandCategories}
                   />
                 </div>
               </Card>

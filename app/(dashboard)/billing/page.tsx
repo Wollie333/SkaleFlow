@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Card, Button, Badge, PageHeader } from '@/components/ui';
 import { CreditBalanceCard } from '@/components/billing/credit-balance-card';
 import { InvoiceTemplate } from '@/components/billing/invoice-template';
 import { useCreditBalance } from '@/hooks/useCreditBalance';
-import { ArrowDownTrayIcon, EyeIcon, XMarkIcon, CreditCardIcon } from '@heroicons/react/24/outline';
+import { ArrowDownTrayIcon, EyeIcon, XMarkIcon, CreditCardIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 interface TopupPack {
   id: string;
@@ -44,6 +45,53 @@ interface Invoice {
   paystack_reference: string | null;
 }
 
+interface ModelUsageRow {
+  modelKey: string;
+  modelName: string;
+  provider: string;
+  isFree: boolean;
+  requests: number;
+  inputTokens: number;
+  outputTokens: number;
+  creditsCharged: number;
+}
+
+interface FeatureUsageRow {
+  feature: string;
+  requests: number;
+  creditsCharged: number;
+}
+
+interface UsageData {
+  summary: { totalRequests: number; totalCredits: number; freeRequests: number };
+  byModel: ModelUsageRow[];
+  byFeature: FeatureUsageRow[];
+}
+
+type UsagePeriod = '7d' | '30d' | '90d' | 'all';
+
+const USAGE_PERIODS: { value: UsagePeriod; label: string }[] = [
+  { value: '7d', label: '7 Days' },
+  { value: '30d', label: '30 Days' },
+  { value: '90d', label: '90 Days' },
+  { value: 'all', label: 'All Time' },
+];
+
+const FEATURE_LABELS: Record<string, string> = {
+  brand_chat: 'Brand Engine',
+  brand_engine: 'Brand Engine',
+  brand_import: 'Brand Import',
+  content_generation: 'Content Generation',
+  logo_generation: 'Logo Generation',
+  ad_generation: 'Ad Generation',
+};
+
+function formatTokens(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+  return n.toString();
+}
+
 function formatZAR(cents: number): string {
   return `R${(cents / 100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 }
@@ -59,6 +107,7 @@ const TRANSACTION_TYPE_LABELS: Record<string, { label: string; color: string }> 
 
 export default function BillingPage() {
   const supabase = createClient();
+  const router = useRouter();
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [orgName, setOrgName] = useState('');
   const [packs, setPacks] = useState<TopupPack[]>([]);
@@ -66,10 +115,13 @@ export default function BillingPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [txPage, setTxPage] = useState(1);
   const [txTotalPages, setTxTotalPages] = useState(1);
-  const [activeTab, setActiveTab] = useState<'transactions' | 'invoices'>('transactions');
+  const [activeTab, setActiveTab] = useState<'usage' | 'transactions' | 'invoices'>('usage');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isCheckingOut, setIsCheckingOut] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [usageData, setUsageData] = useState<UsageData | null>(null);
+  const [usagePeriod, setUsagePeriod] = useState<UsagePeriod>('30d');
+  const [usageLoading, setUsageLoading] = useState(false);
 
   const { balance, refetch: refetchBalance } = useCreditBalance(organizationId);
 
@@ -134,6 +186,24 @@ export default function BillingPage() {
     }
   }
 
+  useEffect(() => {
+    if (!organizationId) return;
+    async function fetchUsage() {
+      setUsageLoading(true);
+      try {
+        const res = await fetch(`/api/billing/usage?organizationId=${organizationId}&period=${usagePeriod}`);
+        if (res.ok) {
+          setUsageData(await res.json());
+        }
+      } catch {
+        // silent
+      } finally {
+        setUsageLoading(false);
+      }
+    }
+    fetchUsage();
+  }, [organizationId, usagePeriod]);
+
   async function handleBuyPack(packSlug: string) {
     if (!organizationId) return;
     setIsCheckingOut(packSlug);
@@ -188,6 +258,9 @@ export default function BillingPage() {
             monthlyTotal={balance.monthlyTotal}
             topupRemaining={balance.topupRemaining}
             periodEnd={balance.periodEnd}
+            isSuperAdmin={balance.isSuperAdmin}
+            apiCostUSD30d={balance.apiCostUSD30d}
+            apiCostUSDAllTime={balance.apiCostUSDAllTime}
           />
         </div>
       )}
@@ -219,8 +292,18 @@ export default function BillingPage() {
         </div>
       </div>
 
-      {/* Tabs: Transactions / Invoices */}
+      {/* Tabs: Usage / Transactions / Invoices */}
       <div className="mb-4 flex gap-4 border-b border-stone/10">
+        <button
+          onClick={() => setActiveTab('usage')}
+          className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'usage'
+              ? 'border-teal text-teal'
+              : 'border-transparent text-stone hover:text-charcoal'
+          }`}
+        >
+          AI Usage
+        </button>
         <button
           onClick={() => setActiveTab('transactions')}
           className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
@@ -242,6 +325,145 @@ export default function BillingPage() {
           Invoices
         </button>
       </div>
+
+      {activeTab === 'usage' && (
+        <div className="space-y-6">
+          {/* Period Filter */}
+          <div className="flex items-center gap-1 bg-white rounded-lg border border-stone/10 p-1 w-fit">
+            {USAGE_PERIODS.map((p) => (
+              <button
+                key={p.value}
+                onClick={() => setUsagePeriod(p.value)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  usagePeriod === p.value
+                    ? 'bg-teal text-white'
+                    : 'text-stone hover:text-charcoal hover:bg-cream-warm'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Summary */}
+          {usageData?.summary && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-white rounded-xl border border-stone/10 p-5">
+                <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Total Requests</p>
+                <p className="text-2xl font-bold text-charcoal">{usageData.summary.totalRequests.toLocaleString()}</p>
+                {usageData.summary.freeRequests > 0 && (
+                  <p className="text-sm text-stone mt-1">{usageData.summary.freeRequests.toLocaleString()} free</p>
+                )}
+              </div>
+              <div className="bg-white rounded-xl border border-stone/10 p-5">
+                <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Credits Used</p>
+                <p className="text-2xl font-bold text-charcoal">{usageData.summary.totalCredits.toLocaleString()}</p>
+              </div>
+              <div className="bg-white rounded-xl border border-stone/10 p-5">
+                <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Models Used</p>
+                <p className="text-2xl font-bold text-charcoal">{usageData.byModel?.length || 0}</p>
+              </div>
+            </div>
+          )}
+
+          {/* By Model — clickable rows */}
+          {usageData?.byModel && usageData.byModel.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-charcoal mb-3 uppercase tracking-wider">By Model</h3>
+              <Card className="overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-cream-warm text-left">
+                      <th className="px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Model</th>
+                      <th className="px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Provider</th>
+                      <th className="px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider text-right">Requests</th>
+                      <th className="px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider text-right">Tokens</th>
+                      <th className="px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider text-right">Credits</th>
+                      <th className="px-5 py-3 w-8"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone/5">
+                    {usageData.byModel.map((m) => (
+                      <tr
+                        key={m.modelKey}
+                        onClick={() => router.push(`/billing/usage/${encodeURIComponent(m.modelKey)}`)}
+                        className="hover:bg-teal/5 cursor-pointer transition-colors group"
+                      >
+                        <td className="px-5 py-3.5">
+                          <span className="text-sm font-medium text-charcoal group-hover:text-teal transition-colors">{m.modelName}</span>
+                          {m.isFree && (
+                            <span className="ml-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+                              Free
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3.5 text-sm text-stone capitalize">{m.provider}</td>
+                        <td className="px-5 py-3.5 text-sm text-stone text-right">{m.requests.toLocaleString()}</td>
+                        <td className="px-5 py-3.5 text-sm text-stone text-right">
+                          {formatTokens(m.inputTokens + m.outputTokens)}
+                        </td>
+                        <td className="px-5 py-3.5 text-sm font-medium text-charcoal text-right">
+                          {m.isFree ? (
+                            <span className="text-xs text-emerald-600">Free</span>
+                          ) : (
+                            m.creditsCharged.toLocaleString()
+                          )}
+                        </td>
+                        <td className="px-3 py-3.5">
+                          <ChevronRightIcon className="w-4 h-4 text-stone/40 group-hover:text-teal transition-colors" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
+          )}
+
+          {/* By Feature */}
+          {usageData?.byFeature && usageData.byFeature.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-charcoal mb-3 uppercase tracking-wider">By Feature</h3>
+              <Card className="overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-cream-warm text-left">
+                      <th className="px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Feature</th>
+                      <th className="px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider text-right">Requests</th>
+                      <th className="px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider text-right">Credits</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone/5">
+                    {usageData.byFeature.map((f) => (
+                      <tr key={f.feature} className="hover:bg-cream-warm/50">
+                        <td className="px-5 py-3 text-sm font-medium text-charcoal">
+                          {FEATURE_LABELS[f.feature] || f.feature}
+                        </td>
+                        <td className="px-5 py-3 text-sm text-stone text-right">{f.requests.toLocaleString()}</td>
+                        <td className="px-5 py-3 text-sm font-medium text-charcoal text-right">{f.creditsCharged.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {usageData?.summary?.totalRequests === 0 && !usageLoading && (
+            <Card className="p-12 text-center">
+              <p className="text-stone">No AI usage data for this period.</p>
+            </Card>
+          )}
+
+          {usageLoading && !usageData && (
+            <div className="animate-pulse space-y-4">
+              <div className="h-24 bg-stone/10 rounded-xl" />
+              <div className="h-48 bg-stone/10 rounded-xl" />
+            </div>
+          )}
+        </div>
+      )}
 
       {activeTab === 'transactions' && (
         <Card className="overflow-hidden">

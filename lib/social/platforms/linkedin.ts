@@ -255,7 +255,7 @@ export const linkedinAdapter: PlatformAdapter = {
 function buildLinkedInText(post: PostPayload): string {
   let text = post.text || post.caption || '';
   if (post.hashtags && post.hashtags.length > 0) {
-    text += '\n\n' + post.hashtags.join(' ');
+    text += '\n\n' + post.hashtags.map(h => h.startsWith('#') ? h : `#${h}`).join(' ');
   }
   // LinkedIn limit: 3000 chars
   return text.slice(0, 3000);

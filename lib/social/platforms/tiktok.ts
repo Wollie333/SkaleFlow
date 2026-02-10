@@ -221,7 +221,7 @@ export const tiktokAdapter: PlatformAdapter = {
 function buildTikTokDescription(post: PostPayload): string {
   let desc = post.caption || post.text || '';
   if (post.hashtags && post.hashtags.length > 0) {
-    desc += ' ' + post.hashtags.join(' ');
+    desc += ' ' + post.hashtags.map(h => h.startsWith('#') ? h : `#${h}`).join(' ');
   }
   return desc.slice(0, 2200);
 }

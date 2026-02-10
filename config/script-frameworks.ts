@@ -610,7 +610,7 @@ const LONG_DURATION_GUIDANCE: Record<string, string> = {
 // OUTPUT FORMAT DEFINITIONS
 // ============================================================
 
-const CAPTION_INSTRUCTIONS = `The "caption" is a UNIVERSAL fallback post description. But the REAL descriptions go in "platform_captions" — see below.`;
+const CAPTION_INSTRUCTIONS = `Write a DETAILED, multi-paragraph social media post (300-800 chars). This is the PRIMARY post text the user sees. Include a compelling opening line, substantive value in the middle, and a clear CTA at the end. Do NOT write a short summary — write a REAL, publishable social media post.`;
 
 // Helper to build platform-specific output instructions
 function buildPlatformOutputFields(platforms: string[]): string {
@@ -631,7 +631,7 @@ function buildPlatformOutputFields(platforms: string[]): string {
     return `    "${p}": ["hashtag1", "hashtag2"] // max ${maxTags[p] || 5} hashtags, NO # prefix`;
   }).join(',\n');
 
-  return `  "caption": "Universal fallback post description (~300 chars, used if platform-specific not available)",
+  return `  "caption": "THE MAIN POST TEXT (300-800 chars). Write a full, detailed social media post with hook + value + CTA. NOT a summary.",
   "platform_captions": {
 ${platformCaptionFields}
   },

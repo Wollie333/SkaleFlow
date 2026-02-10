@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { Button, Card } from '@/components/ui';
+import { VariableTextarea, VariableInput } from '@/components/content/variable-field';
+import { useBrandVariables } from '@/hooks/useBrandVariables';
 import {
   getPlacementConfig,
   getPlacementLabel,
@@ -24,6 +26,7 @@ interface InstanceEditFormProps {
   instanceSpec: InstanceSpec;
   onSave: (placementType: PlacementType, spec: InstanceSpec) => void;
   onCancel: () => void;
+  organizationId?: string | null;
 }
 
 export function InstanceEditForm({
@@ -33,10 +36,12 @@ export function InstanceEditForm({
   instanceSpec,
   onSave,
   onCancel,
+  organizationId,
 }: InstanceEditFormProps) {
   const [caption, setCaption] = useState(instanceSpec.caption || '');
   const [hashtags, setHashtags] = useState(instanceSpec.hashtags?.join(', ') || '');
   const [title, setTitle] = useState(instanceSpec.title || '');
+  const { categories: brandCategories, flatVariables: brandFlatVariables } = useBrandVariables(organizationId || null);
 
   const config = getPlacementConfig(placementType);
   const platform = getPlatformFromPlacement(placementType);
@@ -95,15 +100,14 @@ export function InstanceEditForm({
         <div className="space-y-4">
           {/* Title (conditional) */}
           {showTitle && (
-            <div>
-              <label className="text-sm font-medium text-charcoal-700 mb-1 block">Title</label>
-              <input
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                placeholder="Leave blank to use master topic..."
-                className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-              />
-            </div>
+            <VariableInput
+              label="Title"
+              value={title}
+              onValueChange={setTitle}
+              placeholder="Leave blank to use master topic... (~ for brand variables)"
+              brandFlatVariables={brandFlatVariables}
+              brandCategories={brandCategories}
+            />
           )}
 
           {/* Caption */}
@@ -114,27 +118,28 @@ export function InstanceEditForm({
                 {caption.length.toLocaleString()} / {maxCaption.toLocaleString()}
               </span>
             </div>
-            <textarea
+            <VariableTextarea
               value={caption}
-              onChange={e => setCaption(e.target.value)}
+              onValueChange={setCaption}
               rows={6}
               maxLength={maxCaption}
-              placeholder={masterCaption || 'Leave blank to use master caption...'}
-              className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal resize-none"
+              placeholder={masterCaption || 'Leave blank to use master caption... (~ for brand variables)'}
+              className="resize-none"
+              brandFlatVariables={brandFlatVariables}
+              brandCategories={brandCategories}
             />
           </div>
 
           {/* Hashtags (conditional) */}
           {showHashtags && (
-            <div>
-              <label className="text-sm font-medium text-charcoal-700 mb-1 block">Hashtags</label>
-              <input
-                value={hashtags}
-                onChange={e => setHashtags(e.target.value)}
-                placeholder={masterHashtags.join(', ') || 'Leave blank to use master hashtags...'}
-                className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-              />
-            </div>
+            <VariableInput
+              label="Hashtags"
+              value={hashtags}
+              onValueChange={setHashtags}
+              placeholder={masterHashtags.join(', ') || 'Leave blank to use master hashtags... (~ for brand variables)'}
+              brandFlatVariables={brandFlatVariables}
+              brandCategories={brandCategories}
+            />
           )}
 
           {/* Rules info bar */}

@@ -1,29 +1,21 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Button, Card, Badge, Textarea, PageHeader, ActionModal } from '@/components/ui';
-import { BrandVariablesPanel, ScriptTemplateBadge, CreativeAssetSpecs, PlatformOverrideTabs, MediaUpload, GenerationBatchTracker, UTMBuilderModal, PostActionPopup, AIModelPicker, type UploadedFile, type PublishResult } from '@/components/content';
-import { BrandVariableModal } from '@/components/content/brand-variable-modal';
-import { EngineVariationCard } from '@/components/content/engine-variation-card';
-import { VariationSlotEditor, type VariationSlotConfig } from '@/components/content/variation-slot-editor';
-import { RejectionModal } from '@/components/content/rejection-modal';
+import { Button, Card, PageHeader, ActionModal } from '@/components/ui';
+import { BrandVariablesPanel, CreativeAssetSpecs, MediaUpload, UTMBuilderModal, PostActionPopup, AIModelPicker, type UploadedFile, type PublishResult } from '@/components/content';
 import { DriveFilePicker } from '@/components/content/drive-file-picker';
 import { PreviewPanel } from '@/components/content/preview-panel';
 import { InstanceEditForm, type InstanceSpec } from '@/components/content/instance-edit-form';
 import ScriptModal, { type ScriptData } from '@/components/content/script-modal';
 import ConfigModal, { ConfigSummaryChip, type ContentConfig } from '@/components/content/config-modal';
-import { createDefaultPlacementsMap, getSelectedPlacements, getEnabledPlatforms, type PlatformPlacementsMap } from '@/config/placement-types';
+import { createDefaultPlacementsMap, getEnabledPlatforms, type PlatformPlacementsMap } from '@/config/placement-types';
 import {
   SparklesIcon,
   BeakerIcon,
-  ArrowPathIcon,
-  CalendarDaysIcon,
-  CheckIcon,
   PencilSquareIcon,
   BoltIcon,
-  CheckCircleIcon,
   XMarkIcon,
   LinkIcon,
   PaperAirplaneIcon,
@@ -36,19 +28,14 @@ import {
   type ContentFormat,
   type FormatCategory,
 } from '@/config/script-frameworks';
-import { type ClientModelOption } from '@/lib/ai/client-models';
 import { useAvailableModels } from '@/hooks/useAvailableModels';
 import { useCreditBalance } from '@/hooks/useCreditBalance';
 import { useModelPreference } from '@/hooks/useModelPreference';
 import { cn } from '@/lib/utils';
-import {
-  BRAND_VARIABLE_CATEGORIES,
-  AI_GENERATION_VARIABLES,
-} from '@/lib/content-engine/brand-variable-categories';
+import { useBrandVariables } from '@/hooks/useBrandVariables';
+import { VariableTextarea, VariableInput } from '@/components/content/variable-field';
 import type { FunnelStage, StoryBrandStage, ContentStatus, Json, SocialPlatform, PlacementType } from '@/types/database';
 import type { UTMParams } from '@/lib/utm/generate-utm';
-
-type CreateMode = 'single' | 'engine';
 
 interface GeneratedContent {
   id?: string;
@@ -126,9 +113,6 @@ export default function ContentCreatePage() {
   const [contentEngineEnabled, setContentEngineEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mode
-  const [mode, setMode] = useState<CreateMode>('single');
-
   // Shared configuration state
   const [selectedFormat, setSelectedFormat] = useState<ContentFormat>('short_video_30_60');
   const [funnelStage, setFunnelStage] = useState<FunnelStage>('awareness');
@@ -190,44 +174,12 @@ export default function ContentCreatePage() {
   const [showUtmModal, setShowUtmModal] = useState(false);
   const [targetUrl, setTargetUrl] = useState('');
 
-  // Engine tab state
-  const [engineSlots, setEngineSlots] = useState<VariationSlotConfig[]>([
-    { id: crypto.randomUUID(), funnelStage: 'awareness', storybrandStage: 'character', format: 'short_video_30_60', templateOverride: null },
-  ]);
-  const [selectedBrandVars, setSelectedBrandVars] = useState<Set<string>>(
-    new Set(AI_GENERATION_VARIABLES)
-  );
-  const [engineModelId, setEngineModelId] = useState<string | null>(null);
-  const [engineBatchId, setEngineBatchId] = useState<string | null>(null);
-  const [engineIsGenerating, setEngineIsGenerating] = useState(false);
-  const [engineError, setEngineError] = useState<string | null>(null);
-  const [engineAvailableTemplates, setEngineAvailableTemplates] = useState<Array<{ template_key: string; name: string; category: string; format_category: string | null }>>([]);
+  // Content angles for config modal
   const [contentAngles, setContentAngles] = useState<Array<{
     id: string; name: string; emotional_target: string | null;
   }>>([]);
   const [showAdvancedFields, setShowAdvancedFields] = useState(false);
   const [showTargetUrl, setShowTargetUrl] = useState(false);
-
-  // Engine 3-phase state
-  const [enginePhase, setEnginePhase] = useState<'configure' | 'generating' | 'review'>('configure');
-  const [engineFullItems, setEngineFullItems] = useState<Array<{
-    id: string; topic: string | null; caption: string | null; hashtags: string[] | null;
-    funnel_stage: string; storybrand_stage: string; format: string; platforms: string[] | null;
-    media_urls: string[] | null; scheduled_date: string;
-  }>>([]);
-  const [engineEditFields, setEngineEditFields] = useState<Record<string, Record<string, string>>>({});
-  const [engineMediaFiles, setEngineMediaFiles] = useState<Record<string, UploadedFile[]>>({});
-  const [engineSelectedIds, setEngineSelectedIds] = useState<Set<string>>(new Set());
-  const [showBrandVarModal, setShowBrandVarModal] = useState(false);
-  const [showEngineModelModal, setShowEngineModelModal] = useState(false);
-  const [showEnginePostAction, setShowEnginePostAction] = useState(false);
-  const [engineSaving, setEngineSaving] = useState(false);
-  const [engineRegeneratingIds, setEngineRegeneratingIds] = useState<Set<string>>(new Set());
-  const [engineRejectedIds, setEngineRejectedIds] = useState<Set<string>>(new Set());
-  const [showRejectionModal, setShowRejectionModal] = useState(false);
-  const [rejectingItemId, setRejectingItemId] = useState<string | null>(null);
-  const [rejectionLoading, setRejectionLoading] = useState(false);
-  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   // New state for single/manual redesign
   const [platformPlacements, setPlatformPlacements] = useState<PlatformPlacementsMap>(
@@ -282,7 +234,7 @@ export default function ContentCreatePage() {
           .maybeSingle();
         setHasDriveConnection(!!driveConn);
 
-        // Load content angles for engine tab
+        // Load content angles for config modal
         const { data: angles } = await supabase
           .from('content_angles')
           .select('id, name, emotional_target')
@@ -290,14 +242,6 @@ export default function ContentCreatePage() {
           .eq('is_active', true)
           .order('sort_order');
         if (angles) setContentAngles(angles);
-
-        // Load available templates for engine tab override dropdown
-        const { data: tmplData } = await supabase
-          .from('content_templates')
-          .select('template_key, name, category, format_category')
-          .eq('is_active', true)
-          .order('sort_order');
-        if (tmplData) setEngineAvailableTemplates(tmplData);
       }
 
       setIsLoading(false);
@@ -309,6 +253,7 @@ export default function ContentCreatePage() {
   const { models } = useAvailableModels('content_generation');
   const { selectedModel: orgDefaultModel } = useModelPreference(organizationId, 'content_generation');
   const { balance, isLoading: balanceLoading } = useCreditBalance(organizationId);
+  const { categories: brandCategories, flatVariables: brandFlatVariables } = useBrandVariables(organizationId);
 
   const effectiveModelId = selectedModelId || orgDefaultModel || null;
   const selectedModel = effectiveModelId ? models.find(m => m.id === effectiveModelId) : null;
@@ -580,9 +525,7 @@ export default function ContentCreatePage() {
     const itemId = generated?.id;
     setIsSaving(true);
 
-    const activePlatforms = (mode === 'single')
-      ? getEnabledPlatforms(platformPlacements) as string[]
-      : platforms;
+    const activePlatforms = getEnabledPlatforms(platformPlacements) as string[];
 
     try {
       const updateBody: Record<string, unknown> = {
@@ -885,310 +828,32 @@ export default function ContentCreatePage() {
     setBulkBatchId(null);
   }, []);
 
-  // Engine tab helpers
-  const engineEffectiveModelId = engineModelId || orgDefaultModel || null;
-  const engineSelectedModel = engineEffectiveModelId ? models.find(m => m.id === engineEffectiveModelId) : null;
-
-  const toggleBrandVar = (key: string) => {
-    setSelectedBrandVars(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  };
-
-  const toggleCategoryVars = (categoryKey: string, selectAll: boolean) => {
-    const category = BRAND_VARIABLE_CATEGORIES.find(c => c.key === categoryKey);
-    if (!category) return;
-    setSelectedBrandVars(prev => {
-      const next = new Set(prev);
-      for (const k of category.outputKeys) {
-        if (selectAll) next.add(k);
-        else next.delete(k);
-      }
-      return next;
-    });
-  };
-
-
-  const handleEngineGenerate = async () => {
-    const enginePlatformsArr = getEnabledPlatforms(platformPlacements) as string[];
-    if (!organizationId || enginePlatformsArr.length === 0 || !engineEffectiveModelId) return;
-    setEngineIsGenerating(true);
-    setEngineError(null);
-    setEngineFullItems([]);
-    setEngineBatchId(null);
-    setEngineRejectedIds(new Set());
-    setEngineRegeneratingIds(new Set());
-    setEnginePhase('generating');
-
-    try {
-      const today = format(new Date(), 'yyyy-MM-dd');
-
-      // Create one content item per slot with its own config
-      const createdIds: string[] = [];
-      for (const slot of engineSlots) {
-        const createRes = await fetch('/api/content/items', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            organizationId,
-            format: slot.format,
-            funnel_stage: slot.funnelStage,
-            storybrand_stage: slot.storybrandStage,
-            platforms: enginePlatformsArr,
-            scheduled_date: today,
-            ai_generated: true,
-            status: 'idea',
-          }),
-        });
-        const createData = await createRes.json();
-        if (createData.error) throw new Error(createData.error);
-        if (createData.item?.id) createdIds.push(createData.item.id);
-      }
-
-      if (createdIds.length === 0) throw new Error('No content items were created');
-
-      // Enqueue with selected brand variables
-      const queueRes = await fetch('/api/content/generate/queue', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          organizationId,
-          contentItemIds: createdIds,
-          modelOverride: engineEffectiveModelId,
-          selectedBrandVariables: Array.from(selectedBrandVars),
-        }),
-      });
-
-      const queueData = await queueRes.json();
-      if (!queueRes.ok) throw new Error(queueData.error || 'Failed to enqueue generation');
-      if (queueData.batchId) {
-        setEngineBatchId(queueData.batchId);
-      }
-    } catch (error) {
-      console.error('Engine generation failed:', error);
-      setEngineError(error instanceof Error ? error.message : 'Generation failed');
-      setEnginePhase('configure');
-    }
-
-    setEngineIsGenerating(false);
-  };
-
-  const handleEngineBatchComplete = useCallback(async () => {
-    const batchId = engineBatchId;
-    setEngineBatchId(null);
-    if (!batchId || !organizationId) return;
-
-    // Fetch the generated items from the batch
-    const { data: queueItems } = await supabase
-      .from('generation_queue')
-      .select('content_item_id')
-      .eq('batch_id', batchId)
-      .eq('status', 'completed');
-
-    if (queueItems && queueItems.length > 0) {
-      const ids = queueItems.map(q => q.content_item_id);
-      const { data: items } = await supabase
-        .from('content_items')
-        .select('id, topic, caption, hashtags, funnel_stage, storybrand_stage, format, platforms, media_urls, scheduled_date')
-        .in('id', ids);
-
-      if (items && items.length > 0) {
-        setEngineFullItems(items);
-        // Populate edit fields from generated content
-        const editMap: Record<string, Record<string, string>> = {};
-        const selectedSet = new Set<string>();
-        for (const item of items) {
-          editMap[item.id] = {};
-          if (item.caption) editMap[item.id].caption = item.caption;
-          if (item.hashtags) editMap[item.id].hashtags = (item.hashtags as string[]).join(', ');
-          if (item.topic) editMap[item.id].topic = item.topic;
-          selectedSet.add(item.id);
-        }
-        setEngineEditFields(editMap);
-        setEngineSelectedIds(selectedSet);
-        setEngineMediaFiles({});
-        setEnginePhase('review');
-      }
-    }
-  }, [engineBatchId, organizationId, supabase]);
-
-  const handleEngineBatchCancel = useCallback(() => {
-    setEngineBatchId(null);
-    setEnginePhase('configure');
-  }, []);
-
-  const handleBulkPush = async () => {
-    const selectedIds = bulkItems.filter(i => i.selected && i.id).map(i => i.id!);
-    if (selectedIds.length === 0) return;
-    setIsBulkPushing(true);
-
-    try {
-      await fetch('/api/content/items/bulk-action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          itemIds: selectedIds,
-          action: 'change_status',
-          value: 'scheduled',
-        }),
-      });
-
-      setBulkItems(prev => prev.map(i =>
-        i.selected ? { ...i, status: 'scheduled' as ContentStatus } : i
-      ));
-    } catch (error) {
-      console.error('Bulk push failed:', error);
-    }
-
-    setIsBulkPushing(false);
-  };
-
-  const toggleBulkSelect = (index: number) => {
-    setBulkItems(prev => prev.map((item, i) =>
-      i === index ? { ...item, selected: !item.selected } : item
-    ));
-  };
-
-  const selectAllBulk = () => {
-    const allSelected = bulkItems.every(i => i.selected);
-    setBulkItems(prev => prev.map(i => ({ ...i, selected: !allSelected })));
-  };
-
-  // Reset when switching modes
-  const handleModeChange = (newMode: CreateMode) => {
-    setMode(newMode);
-    if (newMode === 'single') {
-      setManualItemId(null);
-      setGenerated(null);
-      setEditFields({});
-      setUploadedFiles([]);
-      setSaveSuccess(false);
-      setScriptData({
-        hook: null, script_body: null, cta: null, filming_notes: null,
-        context_section: null, teaching_points: null, reframe: null,
-        problem_expansion: null, framework_teaching: null, case_study: null,
-      });
-    } else if (newMode === 'engine') {
-      setEngineBatchId(null);
-      setEngineFullItems([]);
-      setEngineEditFields({});
-      setEngineMediaFiles({});
-      setEngineSelectedIds(new Set());
-      setEngineError(null);
-      setEnginePhase('configure');
-    }
-  };
-
-  // Save and return item ID (for post action popup)
-  const handleSaveAndReturnId = async (status?: ContentStatus): Promise<string | null> => {
-    const itemId = generated?.id;
-    setIsSaving(true);
-
-    const activePlatforms = (mode === 'single')
-      ? getEnabledPlatforms(platformPlacements) as string[]
-      : platforms;
-
-    try {
-      const updateBody: Record<string, unknown> = {
-        topic: editFields.topic || null,
-        caption: editFields.caption || null,
-        hashtags: editFields.hashtags ? editFields.hashtags.split(',').map(h => h.trim()).filter(Boolean) : null,
-        media_urls: uploadedFiles.length > 0 ? uploadedFiles.map(f => f.url) : null,
-        target_url: targetUrl || null,
-        utm_parameters: utmParams || null,
-        platform_specs: Object.keys(platformSpecs).length > 0 ? platformSpecs : null,
-        ...buildScriptFields(),
-      };
-
-      if (status) updateBody.status = status;
-
-      if (!itemId) {
-        const createRes = await fetch('/api/content/items', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            organizationId,
-            format: selectedFormat,
-            funnel_stage: funnelStage,
-            storybrand_stage: storybrandStage,
-            platforms: activePlatforms,
-            scheduled_date: scheduleDate || format(new Date(), 'yyyy-MM-dd'),
-            scheduled_time: scheduleTime || null,
-            ai_generated: false,
-            status: status || 'scripted',
-            ...updateBody,
-          }),
-        });
-        const createData = await createRes.json();
-        if (createData.error) throw new Error(createData.error);
-        const newId = createData.item?.id || null;
-        setManualItemId(newId);
-        return newId;
-      }
-
-      if (status === 'scheduled' && scheduleDate) {
-        updateBody.scheduled_date = scheduleDate;
-        updateBody.scheduled_time = scheduleTime || null;
-      }
-
-      const res = await fetch(`/api/content/items/${itemId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateBody),
-      });
-
-      if (!res.ok) throw new Error('Save failed');
-      return itemId;
-    } catch (error) {
-      console.error('Save failed:', error);
-      setActionModalConfig({ variant: 'error', title: 'Save Failed', subtitle: 'Please try again' });
-      setShowActionModal(true);
-      return null;
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   // Post action popup handlers
   const handlePopupSaveDraft = async (): Promise<string | null> => {
-    const id = await handleSaveAndReturnId('scripted');
-    if (id) {
-      setActionModalConfig({ variant: 'success', title: 'Post Saved as Draft', savedItemId: id });
-      setShowActionModal(true);
-    }
-    return id;
+    await handleSave(false);
+    return generated?.id || manualItemId || null;
   };
 
   const handlePopupSchedule = async (date: string, time: string): Promise<string | null> => {
-    setScheduleDate(date);
-    setScheduleTime(time);
-    // Need to use the date/time directly since setState is async
-    const itemId = generated?.id;
+    const itemId = generated?.id || manualItemId;
     setIsSaving(true);
-
-    const activePlatforms = (mode === 'single')
-      ? getEnabledPlatforms(platformPlacements) as string[]
-      : platforms;
-
     try {
+      const activePlatforms = getEnabledPlatforms(platformPlacements) as string[];
+
       const updateBody: Record<string, unknown> = {
         topic: editFields.topic || null,
         caption: editFields.caption || null,
         hashtags: editFields.hashtags ? editFields.hashtags.split(',').map(h => h.trim()).filter(Boolean) : null,
         media_urls: uploadedFiles.length > 0 ? uploadedFiles.map(f => f.url) : null,
-        target_url: targetUrl || null,
-        utm_parameters: utmParams || null,
         platform_specs: Object.keys(platformSpecs).length > 0 ? platformSpecs : null,
-        scheduled_date: date,
-        scheduled_time: time || null,
-        status: 'scheduled',
         ...buildScriptFields(),
+        scheduled_date: date,
+        scheduled_time: time,
+        status: 'scheduled',
       };
 
       if (!itemId) {
+        // Create new item with scheduled status
         const createRes = await fetch('/api/content/items', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1198,6 +863,7 @@ export default function ContentCreatePage() {
             funnel_stage: funnelStage,
             storybrand_stage: storybrandStage,
             platforms: activePlatforms,
+            ai_generated: false,
             ...updateBody,
           }),
         });
@@ -1205,6 +871,8 @@ export default function ContentCreatePage() {
         if (createData.error) throw new Error(createData.error);
         const newId = createData.item?.id || null;
         setManualItemId(newId);
+        setScheduleDate(date);
+        setScheduleTime(time);
         setActionModalConfig({
           variant: 'success',
           title: 'Post Scheduled!',
@@ -1221,17 +889,21 @@ export default function ContentCreatePage() {
         body: JSON.stringify(updateBody),
       });
 
-      if (!res.ok) throw new Error('Save failed');
-      setActionModalConfig({
-        variant: 'success',
-        title: 'Post Scheduled!',
-        subtitle: `Scheduled for ${format(new Date(date + 'T00:00:00'), 'MMM d, yyyy')} at ${time}`,
-        savedItemId: itemId,
-      });
-      setShowActionModal(true);
-      return itemId;
-    } catch (error) {
-      console.error('Schedule failed:', error);
+      if (res.ok) {
+        setScheduleDate(date);
+        setScheduleTime(time);
+        setActionModalConfig({
+          variant: 'success',
+          title: 'Post Scheduled!',
+          subtitle: `Scheduled for ${format(new Date(date + 'T00:00:00'), 'MMM d, yyyy')} at ${time}`,
+          savedItemId: itemId,
+        });
+        setShowActionModal(true);
+        return itemId;
+      }
+      throw new Error('Schedule failed');
+    } catch (err) {
+      console.error('Schedule failed:', err);
       setActionModalConfig({ variant: 'error', title: 'Schedule Failed', subtitle: 'Please try again' });
       setShowActionModal(true);
       return null;
@@ -1242,260 +914,24 @@ export default function ContentCreatePage() {
 
   const handlePopupPublishNow = async (publishPlatforms: string[]): Promise<PublishResult[]> => {
     // Save first
-    const savedId = await handleSaveAndReturnId();
-    if (!savedId) return [{ platform: 'all', success: false, error: 'Could not save post' }];
+    await handleSave(false);
+    const itemId = generated?.id || manualItemId;
+    if (!itemId) return [{ platform: 'all', success: false, error: 'No item to publish' }];
 
     try {
       const res = await fetch('/api/content/publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contentItemId: savedId, platforms: publishPlatforms }),
+        body: JSON.stringify({ contentItemId: itemId, platforms: publishPlatforms }),
       });
       const data = await res.json();
       if (!res.ok) return [{ platform: 'all', success: false, error: data.error || 'Publish failed' }];
       return data.results || [];
-    } catch (error) {
+    } catch {
       return [{ platform: 'all', success: false, error: 'Publish failed. Please try again.' }];
     }
   };
 
-  // Engine review phase: bulk action handlers
-  const engineSelectedCount = engineSelectedIds.size;
-
-  const updateEngineField = (itemId: string, field: string, value: string) => {
-    setEngineEditFields(prev => ({
-      ...prev,
-      [itemId]: { ...(prev[itemId] || {}), [field]: value },
-    }));
-  };
-
-  const saveVariation = useCallback(async (itemId: string) => {
-    const fields = engineEditFields[itemId] || {};
-    const mediaFiles = engineMediaFiles[itemId] || [];
-    if (Object.keys(fields).length === 0 && mediaFiles.length === 0) return;
-    try {
-      await fetch(`/api/content/items/${itemId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          caption: fields.caption || null,
-          hashtags: fields.hashtags ? fields.hashtags.split(',').map((h: string) => h.trim()).filter(Boolean) : null,
-          topic: fields.topic || null,
-          media_urls: mediaFiles.length > 0 ? mediaFiles.map(f => f.url) : null,
-        }),
-      });
-    } catch (err) {
-      console.error('Auto-save variation failed:', err);
-    }
-  }, [engineEditFields, engineMediaFiles]);
-
-  const handleExpandCard = useCallback((itemId: string) => {
-    setExpandedCardId(prev => {
-      if (prev && prev !== itemId) {
-        saveVariation(prev);
-      }
-      return itemId;
-    });
-  }, [saveVariation]);
-
-  const handleCollapseCard = useCallback((itemId: string) => {
-    saveVariation(itemId);
-    setExpandedCardId(null);
-  }, [saveVariation]);
-
-  const handleEngineBulkDraft = async (): Promise<string | null> => {
-    setEngineSaving(true);
-    try {
-      for (const itemId of Array.from(engineSelectedIds)) {
-        const fields = engineEditFields[itemId] || {};
-        const mediaFiles = engineMediaFiles[itemId] || [];
-        await fetch(`/api/content/items/${itemId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            caption: fields.caption || null,
-            hashtags: fields.hashtags ? fields.hashtags.split(',').map((h: string) => h.trim()).filter(Boolean) : null,
-            topic: fields.topic || null,
-            media_urls: mediaFiles.length > 0 ? mediaFiles.map(f => f.url) : null,
-            status: 'scripted',
-          }),
-        });
-      }
-      setActionModalConfig({
-        variant: 'success',
-        title: `${engineSelectedCount} Post${engineSelectedCount !== 1 ? 's' : ''} Saved as Drafts`,
-      });
-      setShowActionModal(true);
-      return 'bulk';
-    } catch (error) {
-      console.error('Bulk draft save failed:', error);
-      setActionModalConfig({ variant: 'error', title: 'Save Failed', subtitle: 'Please try again' });
-      setShowActionModal(true);
-      return null;
-    } finally {
-      setEngineSaving(false);
-    }
-  };
-
-  const handleEngineBulkSchedule = async (date: string, time: string): Promise<string | null> => {
-    setEngineSaving(true);
-    try {
-      for (const itemId of Array.from(engineSelectedIds)) {
-        const fields = engineEditFields[itemId] || {};
-        const mediaFiles = engineMediaFiles[itemId] || [];
-        await fetch(`/api/content/items/${itemId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            caption: fields.caption || null,
-            hashtags: fields.hashtags ? fields.hashtags.split(',').map((h: string) => h.trim()).filter(Boolean) : null,
-            topic: fields.topic || null,
-            media_urls: mediaFiles.length > 0 ? mediaFiles.map(f => f.url) : null,
-            scheduled_date: date,
-            scheduled_time: time || null,
-            status: 'scheduled',
-          }),
-        });
-      }
-      setActionModalConfig({
-        variant: 'success',
-        title: `${engineSelectedCount} Post${engineSelectedCount !== 1 ? 's' : ''} Scheduled!`,
-        subtitle: `Scheduled for ${format(new Date(date + 'T00:00:00'), 'MMM d, yyyy')} at ${time}`,
-      });
-      setShowActionModal(true);
-      return 'bulk';
-    } catch (error) {
-      console.error('Bulk schedule failed:', error);
-      setActionModalConfig({ variant: 'error', title: 'Schedule Failed', subtitle: 'Please try again' });
-      setShowActionModal(true);
-      return null;
-    } finally {
-      setEngineSaving(false);
-    }
-  };
-
-  const handleEngineBulkPublish = async (publishPlatforms: string[]): Promise<PublishResult[]> => {
-    setEngineSaving(true);
-    const allResults: PublishResult[] = [];
-    try {
-      for (const itemId of Array.from(engineSelectedIds)) {
-        // Save edits first
-        const fields = engineEditFields[itemId] || {};
-        const mediaFiles = engineMediaFiles[itemId] || [];
-        await fetch(`/api/content/items/${itemId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            caption: fields.caption || null,
-            hashtags: fields.hashtags ? fields.hashtags.split(',').map((h: string) => h.trim()).filter(Boolean) : null,
-            topic: fields.topic || null,
-            media_urls: mediaFiles.length > 0 ? mediaFiles.map(f => f.url) : null,
-          }),
-        });
-
-        // Publish
-        const res = await fetch('/api/content/publish', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contentItemId: itemId, platforms: publishPlatforms }),
-        });
-        const data = await res.json();
-        if (data.results) {
-          allResults.push(...data.results);
-        } else {
-          allResults.push({ platform: 'all', success: false, error: data.error || 'Publish failed' });
-        }
-      }
-    } catch (error) {
-      allResults.push({ platform: 'all', success: false, error: 'Publish failed. Please try again.' });
-    }
-    setEngineSaving(false);
-    return allResults;
-  };
-
-  const nonRejectedItems = engineFullItems.filter(i => !engineRejectedIds.has(i.id));
-
-  const toggleEngineSelectAll = () => {
-    if (engineSelectedIds.size === nonRejectedItems.length) {
-      setEngineSelectedIds(new Set());
-    } else {
-      setEngineSelectedIds(new Set(nonRejectedItems.map(i => i.id)));
-    }
-  };
-
-  // Regenerate handler
-  const handleEngineRegenerate = async (itemId: string) => {
-    setEngineRegeneratingIds(prev => new Set(prev).add(itemId));
-    try {
-      const res = await fetch(`/api/content/items/${itemId}/regenerate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          modelOverride: engineEffectiveModelId,
-          selectedBrandVariables: Array.from(selectedBrandVars),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Regeneration failed');
-      if (data.item) {
-        // Replace item in list
-        setEngineFullItems(prev => prev.map(i => i.id === itemId ? data.item : i));
-        // Update edit fields
-        setEngineEditFields(prev => ({
-          ...prev,
-          [itemId]: {
-            ...(data.item.caption ? { caption: data.item.caption } : {}),
-            ...(data.item.hashtags ? { hashtags: (data.item.hashtags as string[]).join(', ') } : {}),
-            ...(data.item.topic ? { topic: data.item.topic } : {}),
-          },
-        }));
-      }
-    } catch (error) {
-      console.error('Regenerate failed:', error);
-      setEngineError(error instanceof Error ? error.message : 'Regeneration failed');
-    }
-    setEngineRegeneratingIds(prev => {
-      const next = new Set(prev);
-      next.delete(itemId);
-      return next;
-    });
-  };
-
-  // Reject handler — opens modal
-  const handleEngineRejectStart = (itemId: string) => {
-    setRejectingItemId(itemId);
-    setShowRejectionModal(true);
-  };
-
-  // Reject confirm — POST feedback, mark rejected
-  const handleEngineRejectConfirm = async (reason: string, tags: string[]) => {
-    if (!rejectingItemId) return;
-    setRejectionLoading(true);
-    try {
-      await fetch('/api/content/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contentItemId: rejectingItemId,
-          feedbackType: 'rejected',
-          reason,
-          tags,
-        }),
-      });
-      // Mark as rejected + deselect
-      setEngineRejectedIds(prev => new Set(prev).add(rejectingItemId));
-      setEngineSelectedIds(prev => {
-        const next = new Set(prev);
-        next.delete(rejectingItemId);
-        return next;
-      });
-    } catch (error) {
-      console.error('Reject failed:', error);
-    }
-    setRejectionLoading(false);
-    setShowRejectionModal(false);
-    setRejectingItemId(null);
-  };
 
   // Current content item ID (for media upload)
   const currentItemId = generated?.id;
@@ -1533,7 +969,7 @@ export default function ContentCreatePage() {
           <label className="block text-sm font-medium text-charcoal mb-1">Format</label>
           <select
             value={selectedFormat}
-            onChange={e => { setSelectedFormat(e.target.value as ContentFormat); if (mode === 'single') setGenerated(null); }}
+            onChange={e => { setSelectedFormat(e.target.value as ContentFormat); setGenerated(null); }}
             className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
           >
             {FORMAT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -1544,7 +980,7 @@ export default function ContentCreatePage() {
           <label className="block text-sm font-medium text-charcoal mb-1">Funnel Stage</label>
           <select
             value={funnelStage}
-            onChange={e => { setFunnelStage(e.target.value as FunnelStage); if (mode === 'single') setGenerated(null); }}
+            onChange={e => { setFunnelStage(e.target.value as FunnelStage); setGenerated(null); }}
             className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
           >
             {FUNNEL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -1555,7 +991,7 @@ export default function ContentCreatePage() {
           <label className="block text-sm font-medium text-charcoal mb-1">StoryBrand Stage</label>
           <select
             value={storybrandStage}
-            onChange={e => { setStorybrandStage(e.target.value as StoryBrandStage); if (mode === 'single') setGenerated(null); }}
+            onChange={e => { setStorybrandStage(e.target.value as StoryBrandStage); setGenerated(null); }}
             className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
           >
             {STORYBRAND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -1618,6 +1054,7 @@ export default function ContentCreatePage() {
               masterCaption={editFields.caption || ''}
               masterHashtags={(editFields.hashtags || '').split(',').map(t => t.trim()).filter(Boolean)}
               instanceSpec={platformSpecs[editingInstance] || {}}
+              organizationId={organizationId}
               onSave={(placement, spec) => {
                 const updated = { ...platformSpecs };
                 if (Object.keys(spec).length === 0) delete updated[placement];
@@ -1630,17 +1067,6 @@ export default function ContentCreatePage() {
           ) : (
             <>
               <Card>
-                {/* Config summary + Configure button */}
-                <div className="flex items-center justify-between mb-4">
-                  <ConfigSummaryChip config={contentConfig} angles={contentAngles} />
-                  <button
-                    onClick={() => setShowConfigModal(true)}
-                    className="text-xs font-medium text-teal hover:underline"
-                  >
-                    Configure
-                  </button>
-                </div>
-
                 {/* Caption - PRIMARY FIELD */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-1">
@@ -1654,34 +1080,38 @@ export default function ContentCreatePage() {
                       {isAiAssisting ? 'Generating...' : editFields.caption ? 'AI Enhance' : 'AI Generate'}
                     </button>
                   </div>
-                  <Textarea
+                  <VariableTextarea
                     value={editFields.caption || ''}
-                    onChange={e => updateField('caption', e.target.value)}
+                    onValueChange={(v) => updateField('caption', v)}
                     rows={8}
-                    placeholder="Write your post caption..."
+                    placeholder="Write your post caption... (~ for brand variables)"
                     className="text-sm"
+                    brandFlatVariables={brandFlatVariables}
+                    brandCategories={brandCategories}
                   />
                 </div>
 
                 {/* Hashtags */}
                 <div className="mb-4">
-                  <label className="text-sm font-medium text-charcoal-700 mb-1 block">Hashtags</label>
-                  <input
+                  <VariableInput
+                    label="Hashtags"
                     value={editFields.hashtags || ''}
-                    onChange={e => updateField('hashtags', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                    placeholder="hashtag1, hashtag2, hashtag3"
+                    onValueChange={(v) => updateField('hashtags', v)}
+                    placeholder="hashtag1, hashtag2 (~ for brand variables)"
+                    brandFlatVariables={brandFlatVariables}
+                    brandCategories={brandCategories}
                   />
                 </div>
 
                 {/* Topic (small) */}
                 <div className="mb-4">
-                  <label className="text-sm font-medium text-charcoal-700 mb-1 block">Topic</label>
-                  <input
+                  <VariableInput
+                    label="Topic"
                     value={editFields.topic || ''}
-                    onChange={e => updateField('topic', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                    placeholder="Brief topic summary"
+                    onValueChange={(v) => updateField('topic', v)}
+                    placeholder="Brief topic summary (~ for brand variables)"
+                    brandFlatVariables={brandFlatVariables}
+                    brandCategories={brandCategories}
                   />
                 </div>
               </Card>
@@ -1743,7 +1173,7 @@ export default function ContentCreatePage() {
                           utmParams.utm_source && `source: ${utmParams.utm_source}`,
                           utmParams.utm_medium && `medium: ${utmParams.utm_medium}`,
                           utmParams.utm_campaign && `campaign: ${utmParams.utm_campaign}`,
-                        ].filter(Boolean).join(' Â· ')}
+                        ].filter(Boolean).join(' Ã‚Â· ')}
                       </p>
                     </div>
                   )}
@@ -1771,17 +1201,6 @@ export default function ContentCreatePage() {
                       className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
                     />
                   </div>
-                </div>
-
-                {/* AI Model selector */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-charcoal mb-2">AI Model</label>
-                  <AIModelPicker
-                    models={models}
-                    selectedModelId={effectiveModelId}
-                    onSelect={setSelectedModelId}
-                    costLabelFn={m => m.isFree ? 'Free' : `~${m.estimatedCreditsPerMessage} cr`}
-                  />
                 </div>
 
                 <Button
@@ -1838,8 +1257,7 @@ export default function ContentCreatePage() {
           { label: 'Content' },
           { label: 'Create' },
         ]}
-        subtitle={mode === 'single' ? 'Generate a single post with AI' :
-          'Targeted content with brand variable control'}
+        subtitle="Generate a single post with AI"
         action={
           <Button onClick={() => setShowBrandPanel(true)} variant="ghost" size="sm">
             <BeakerIcon className="w-4 h-4 mr-2" />
@@ -1848,325 +1266,9 @@ export default function ContentCreatePage() {
         }
       />
 
-      {/* Mode selector cards */}
-      <div className="grid grid-cols-2 gap-3">
-        {([
-          { key: 'single' as CreateMode, icon: SparklesIcon, label: 'Single AI Post', desc: 'Generate one post with AI' },
-          { key: 'engine' as CreateMode, icon: BoltIcon, label: 'Content Engine', desc: 'Advanced brand-controlled generation' },
-        ]).map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => handleModeChange(tab.key)}
-            className={cn(
-              'relative flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all',
-              mode === tab.key
-                ? 'border-teal bg-teal/5 shadow-sm'
-                : 'border-stone/10 bg-white hover:border-stone/25'
-            )}
-          >
-            <div className={cn(
-              'shrink-0 p-2 rounded-lg',
-              mode === tab.key ? 'bg-teal/10 text-teal' : 'bg-stone/5 text-stone'
-            )}>
-              <tab.icon className="w-5 h-5" />
-            </div>
-            <div>
-              <p className={cn('text-sm font-semibold', mode === tab.key ? 'text-teal' : 'text-charcoal')}>{tab.label}</p>
-              <p className="text-xs text-stone mt-0.5">{tab.desc}</p>
-            </div>
-            {mode === tab.key && (
-              <div className="absolute top-2 right-2">
-                <CheckCircleIcon className="w-4 h-4 text-teal" />
-              </div>
-            )}
-          </button>
-        ))}
-      </div>
+      {/* Single AI Post Layout */}
+      {renderSingleManualLayout()}
 
-      {/* ============================================================ */}
-      {/* MODE 1: SINGLE POST (AI) â€” New caption-first layout */}
-      {/* ============================================================ */}
-      {mode === 'single' && renderSingleManualLayout()}
-
-      {/* ============================================================ */}
-      {/* MODE 2: CONTENT ENGINE â€” 3-Phase UI */}
-      {/* ============================================================ */}
-      {mode === 'engine' && enginePhase === 'configure' && (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Left column: Config + Generate (3/5) */}
-          <div className="lg:col-span-3 space-y-4">
-            {/* Variation Slots */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-charcoal">Variations ({engineSlots.length}/5)</h3>
-                {engineSlots.length < 5 && (
-                  <button
-                    onClick={() => setEngineSlots(prev => [
-                      ...prev,
-                      { id: crypto.randomUUID(), funnelStage: 'awareness', storybrandStage: 'character', format: 'short_video_30_60', templateOverride: null },
-                    ])}
-                    className="text-xs font-medium text-teal hover:underline"
-                  >
-                    + Add Variation
-                  </button>
-                )}
-              </div>
-              {engineSlots.map((slot, idx) => (
-                <VariationSlotEditor
-                  key={slot.id}
-                  slot={slot}
-                  onChange={(updated) => setEngineSlots(prev => prev.map(s => s.id === slot.id ? updated : s))}
-                  onRemove={() => setEngineSlots(prev => prev.filter(s => s.id !== slot.id))}
-                  onDuplicate={() => setEngineSlots(prev => {
-                    const dup = { ...slot, id: crypto.randomUUID() };
-                    const insertAt = prev.findIndex(s => s.id === slot.id) + 1;
-                    const next = [...prev];
-                    next.splice(insertAt, 0, dup);
-                    return next.slice(0, 5); // cap at 5
-                  })}
-                  canRemove={engineSlots.length > 1}
-                  index={idx}
-                  templates={engineAvailableTemplates}
-                />
-              ))}
-            </div>
-
-            {/* Shared Controls */}
-            <Card>
-              {/* Brand Variables pill */}
-              <div className="mb-4">
-                <button
-                  onClick={() => setShowBrandVarModal(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-charcoal hover:border-teal/30 hover:text-teal transition-colors w-full justify-between"
-                >
-                  <span>Brand Variables</span>
-                  <span className={cn(
-                    'text-xs px-2 py-0.5 rounded-full font-medium',
-                    selectedBrandVars.size === AI_GENERATION_VARIABLES.length
-                      ? 'bg-teal/10 text-teal'
-                      : selectedBrandVars.size === 0
-                      ? 'bg-stone/10 text-stone'
-                      : 'bg-gold/10 text-gold'
-                  )}>
-                    {selectedBrandVars.size} of {AI_GENERATION_VARIABLES.length}
-                  </span>
-                </button>
-              </div>
-
-              {/* AI Model row */}
-              <div>
-                <div className="flex items-center justify-between px-4 py-2.5 rounded-lg border border-stone/20">
-                  <div className="flex items-center gap-2">
-                    <SparklesIcon className="w-4 h-4 text-stone" />
-                    <span className="text-sm text-charcoal">
-                      {engineSelectedModel ? engineSelectedModel.name : 'Select AI Model'}
-                    </span>
-                    {engineSelectedModel && (
-                      <span className={cn(
-                        'text-xs px-1.5 py-0.5 rounded-full font-medium',
-                        engineSelectedModel.isFree ? 'bg-teal/10 text-teal' : 'bg-gold/10 text-gold'
-                      )}>
-                        {engineSelectedModel.isFree ? 'Free' : `~${engineSelectedModel.estimatedCreditsPerMessage * engineSlots.length} cr`}
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => setShowEngineModelModal(true)}
-                    className="text-xs font-medium text-teal hover:underline"
-                  >
-                    Change
-                  </button>
-                </div>
-              </div>
-            </Card>
-
-            {/* Generate Button Card */}
-            <Card>
-              {/* Cost estimate */}
-              {engineSelectedModel && !engineSelectedModel.isFree && !balanceLoading && balance && (
-                <div className="mb-4 bg-cream-warm rounded-xl p-3 space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-stone">Estimated total cost</span>
-                    <span className="font-semibold text-charcoal">
-                      ~{engineSelectedModel.estimatedCreditsPerMessage * engineSlots.length} credits
-                      <span className="text-xs text-stone ml-1">({creditsToRand(engineSelectedModel.estimatedCreditsPerMessage * engineSlots.length)})</span>
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs border-t border-stone/10 pt-1">
-                    <span className="text-stone">Your balance</span>
-                    <span className={cn(
-                      'font-medium',
-                      balance.totalRemaining >= engineSelectedModel.estimatedCreditsPerMessage * engineSlots.length ? 'text-teal' : 'text-red-500'
-                    )}>
-                      {balance.totalRemaining.toLocaleString()} credits
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <Button
-                onClick={handleEngineGenerate}
-                isLoading={engineIsGenerating}
-                disabled={
-                  getEnabledPlatforms(platformPlacements).length === 0 ||
-                  !engineEffectiveModelId
-                }
-                className="w-full"
-              >
-                <BoltIcon className="w-4 h-4 mr-2" />
-                {engineIsGenerating ? 'Creating...' : `Generate ${engineSlots.length} Variation${engineSlots.length !== 1 ? 's' : ''}`}
-              </Button>
-
-              {engineError && (
-                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-700">{engineError}</p>
-                </div>
-              )}
-            </Card>
-          </div>
-
-          {/* Right column: Preview Panel (2/5) */}
-          <div className="lg:col-span-2">
-            <div className="sticky top-6">
-              <Card className="p-5">
-                <PreviewPanel
-                  platformPlacements={platformPlacements}
-                  onPlatformPlacementsChange={setPlatformPlacements}
-                  caption=""
-                  hashtags={[]}
-                  mediaUrls={[]}
-                  userName={userName}
-                  instanceSpecs={{}}
-                  hasMedia={false}
-                  hasVideo={false}
-                />
-              </Card>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Engine: Generating Phase */}
-      {mode === 'engine' && enginePhase === 'generating' && (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <div className="lg:col-span-3">
-            {engineBatchId ? (
-              <GenerationBatchTracker
-                batchId={engineBatchId}
-                onComplete={handleEngineBatchComplete}
-                onCancel={handleEngineBatchCancel}
-              />
-            ) : (
-              <Card className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal mx-auto mb-3" />
-                <p className="text-sm text-stone">Setting up generation...</p>
-              </Card>
-            )}
-          </div>
-          <div className="lg:col-span-2">
-            <div className="sticky top-6">
-              <Card className="p-5">
-                <PreviewPanel
-                  platformPlacements={platformPlacements}
-                  onPlatformPlacementsChange={setPlatformPlacements}
-                  caption=""
-                  hashtags={[]}
-                  mediaUrls={[]}
-                  userName={userName}
-                  instanceSpecs={{}}
-                  hasMedia={false}
-                  hasVideo={false}
-                />
-              </Card>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Engine: Review Phase */}
-      {mode === 'engine' && enginePhase === 'review' && (
-        <div className="space-y-4">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setEnginePhase('configure')}
-                className="text-sm text-stone hover:text-charcoal transition-colors flex items-center gap-1"
-              >
-                <ArrowPathIcon className="w-4 h-4" />
-                Back
-              </button>
-              <h3 className="text-heading-sm text-charcoal">
-                {engineFullItems.length} Variation{engineFullItems.length !== 1 ? 's' : ''} Generated
-              </h3>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={toggleEngineSelectAll}
-                className="text-xs font-medium text-teal hover:underline"
-              >
-                {engineSelectedIds.size === nonRejectedItems.length ? 'Deselect All' : 'Select All'}
-              </button>
-              <Button
-                onClick={() => setShowEnginePostAction(true)}
-                disabled={engineSelectedCount === 0 || engineSaving}
-                size="sm"
-              >
-                <PaperAirplaneIcon className="w-4 h-4 mr-1" />
-                Save &amp; Publish ({engineSelectedCount})
-              </Button>
-            </div>
-          </div>
-
-          {/* Variation cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {engineFullItems.map(item => (
-              <EngineVariationCard
-                key={item.id}
-                item={item}
-                editFields={engineEditFields[item.id] || {}}
-                onFieldChange={(field, value) => updateEngineField(item.id, field, value)}
-                uploadedFiles={engineMediaFiles[item.id] || []}
-                onFilesChange={(files) => setEngineMediaFiles(prev => ({ ...prev, [item.id]: files }))}
-                platforms={getEnabledPlatforms(platformPlacements)}
-                organizationId={organizationId || ''}
-                userName={userName}
-                isSelected={engineSelectedIds.has(item.id)}
-                onToggleSelect={() => {
-                  if (engineRejectedIds.has(item.id)) return;
-                  setEngineSelectedIds(prev => {
-                    const next = new Set(prev);
-                    if (next.has(item.id)) next.delete(item.id);
-                    else next.add(item.id);
-                    return next;
-                  });
-                }}
-                onRegenerate={handleEngineRegenerate}
-                onReject={handleEngineRejectStart}
-                isRegenerating={engineRegeneratingIds.has(item.id)}
-                isRejected={engineRejectedIds.has(item.id)}
-                isExpanded={expandedCardId === item.id}
-                onExpand={() => handleExpandCard(item.id)}
-                onCollapse={() => handleCollapseCard(item.id)}
-              />
-            ))}
-          </div>
-
-          {/* Sticky bottom bar */}
-          {engineSelectedCount > 0 && (
-            <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-stone/10 -mx-6 px-6 py-4 flex items-center justify-between">
-              <span className="text-sm text-stone">{engineSelectedCount} selected</span>
-              <Button
-                onClick={() => setShowEnginePostAction(true)}
-                disabled={engineSaving}
-              >
-                <PaperAirplaneIcon className="w-4 h-4 mr-1" />
-                Save &amp; Publish
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Brand variables panel */}
       {organizationId && (
@@ -2280,9 +1382,7 @@ export default function ContentCreatePage() {
         initialParams={utmParams}
         onApply={setUtmParams}
         autoGenerateContext={{
-          platform: (mode === 'single')
-            ? (getEnabledPlatforms(platformPlacements)[0] || 'linkedin')
-            : (platforms[0] || 'linkedin'),
+          platform: getEnabledPlatforms(platformPlacements)[0] || 'linkedin',
           funnelStage,
           format: selectedFormat,
           topic: editFields.topic || null,
@@ -2294,9 +1394,7 @@ export default function ContentCreatePage() {
       <PostActionPopup
         open={showPostActionPopup}
         onClose={() => setShowPostActionPopup(false)}
-        platforms={(mode === 'single')
-          ? getEnabledPlatforms(platformPlacements) as string[]
-          : platforms}
+        platforms={getEnabledPlatforms(platformPlacements) as string[]}
         onSaveDraft={handlePopupSaveDraft}
         onSchedule={handlePopupSchedule}
         onPublishNow={handlePopupPublishNow}
@@ -2317,7 +1415,7 @@ export default function ContentCreatePage() {
         ] : [
           { label: 'View in Calendar', onClick: () => router.push('/calendar'), variant: 'primary' },
           ...(actionModalConfig.savedItemId ? [{ label: 'Edit Post', onClick: () => router.push(`/content/${actionModalConfig.savedItemId}`), variant: 'ghost' as const }] : []),
-          { label: 'Create Another', onClick: () => { setShowActionModal(false); handleModeChange(mode); }, variant: 'ghost' as const },
+          { label: 'Create Another', onClick: () => { setShowActionModal(false); setGenerated(null); setEditFields({}); setUploadedFiles([]); }, variant: 'ghost' as const },
         ]}
       />
 
@@ -2336,7 +1434,7 @@ export default function ContentCreatePage() {
         format={selectedFormat}
       />
 
-      {/* Config Modal â€" single mode only */}
+      {/* Config Modal Ã¢â‚¬" single mode only */}
       <ConfigModal
         isOpen={showConfigModal}
         onClose={() => setShowConfigModal(false)}
@@ -2349,96 +1447,6 @@ export default function ContentCreatePage() {
         angles={contentAngles}
       />
 
-      {/* Brand Variable Modal (engine tab) */}
-      <BrandVariableModal
-        isOpen={showBrandVarModal}
-        onClose={() => setShowBrandVarModal(false)}
-        selectedBrandVars={selectedBrandVars}
-        onToggle={toggleBrandVar}
-        onSelectAll={() => setSelectedBrandVars(new Set(AI_GENERATION_VARIABLES))}
-        onClearAll={() => setSelectedBrandVars(new Set())}
-      />
-
-      {/* Engine AI Model Selection Modal */}
-      {showEngineModelModal && (
-        <div className="fixed inset-0 bg-dark/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-teal/10 flex items-center justify-center">
-                  <SparklesIcon className="w-5 h-5 text-teal" />
-                </div>
-                <div>
-                  <h2 className="text-heading-lg text-charcoal">AI Model</h2>
-                  <p className="text-sm text-stone">Select a model for content generation</p>
-                </div>
-              </div>
-              <button onClick={() => setShowEngineModelModal(false)} className="p-1 rounded-lg hover:bg-stone/10">
-                <XMarkIcon className="w-5 h-5 text-stone" />
-              </button>
-            </div>
-
-            <AIModelPicker
-              models={models}
-              selectedModelId={engineEffectiveModelId}
-              onSelect={setEngineModelId}
-              costLabelFn={m => m.isFree ? 'Free' : `~${m.estimatedCreditsPerMessage * engineSlots.length} cr total`}
-            />
-
-            {engineSelectedModel && !engineSelectedModel.isFree && !balanceLoading && balance && (
-              <div className="mt-4 bg-cream-warm rounded-xl p-3 space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-stone">Estimated total cost</span>
-                  <span className="font-semibold text-charcoal">
-                    ~{engineSelectedModel.estimatedCreditsPerMessage * engineSlots.length} credits
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-xs border-t border-stone/10 pt-1">
-                  <span className="text-stone">Your balance</span>
-                  <span className={cn(
-                    'font-medium',
-                    balance.totalRemaining >= engineSelectedModel.estimatedCreditsPerMessage * engineSlots.length ? 'text-teal' : 'text-red-500'
-                  )}>
-                    {balance.totalRemaining.toLocaleString()} credits
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {engineSelectedModel?.isFree && (
-              <div className="mt-4 bg-teal/5 rounded-xl p-3 flex items-center gap-2">
-                <BoltIcon className="w-4 h-4 text-teal shrink-0" />
-                <p className="text-sm text-teal font-medium">This model is free -- no credits required</p>
-              </div>
-            )}
-
-            <Button onClick={() => setShowEngineModelModal(false)} className="w-full mt-6">
-              Done
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Engine Post Action Popup (bulk mode) */}
-      <PostActionPopup
-        open={showEnginePostAction}
-        onClose={() => setShowEnginePostAction(false)}
-        platforms={getEnabledPlatforms(platformPlacements) as string[]}
-        onSaveDraft={handleEngineBulkDraft}
-        onSchedule={handleEngineBulkSchedule}
-        onPublishNow={handleEngineBulkPublish}
-        isLoading={engineSaving}
-        bulkMode={true}
-        bulkCount={engineSelectedCount}
-      />
-
-      {/* Rejection modal */}
-      <RejectionModal
-        isOpen={showRejectionModal}
-        onClose={() => { setShowRejectionModal(false); setRejectingItemId(null); }}
-        onConfirm={handleEngineRejectConfirm}
-        isLoading={rejectionLoading}
-      />
     </div>
   );
 }

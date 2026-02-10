@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { AIProviderAdapter, AICompletionRequest, AICompletionResponse } from './types';
+import { withTimeout, AI_TIMEOUT_MS } from './timeout';
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 4000; // 4s base — Gemini free tier allows 15 RPM (~4s between requests)
@@ -50,6 +51,7 @@ export const googleAdapter: AIProviderAdapter = {
       history,
       generationConfig: {
         maxOutputTokens: request.maxTokens || 4096,
+        responseMimeType: 'application/json',
         ...(request.temperature !== undefined ? { temperature: request.temperature } : {}),
       },
     });
@@ -65,7 +67,11 @@ export const googleAdapter: AIProviderAdapter = {
         }
 
         console.log(`[AI-GOOGLE] Sending message to Gemini (${(lastMessage?.content || '').length} chars)${attempt > 0 ? ` [attempt ${attempt + 1}]` : ''}...`);
-        const result = await chat.sendMessage(lastMessage?.content || '');
+        const result = await withTimeout(
+          chat.sendMessage(lastMessage?.content || ''),
+          AI_TIMEOUT_MS,
+          'Google Gemini'
+        );
         const response = result.response;
         const text = response.text();
 

@@ -40,6 +40,7 @@ export default async function DashboardLayout({
   let contentEngineEnabled = false;
   let notificationCount = 0;
   let pendingReviewCount = 0;
+  let draftCount = 0;
   const orgRole = (membership?.role || null) as string | null;
   let teamPermissions: Record<string, FeaturePermissions> = {};
 
@@ -81,8 +82,15 @@ export default async function DashboardLayout({
             .in('status', ['pending', 'revision_requested'])
         : null;
 
+      // Draft count query
+      const draftCountPromise = supabase
+        .from('content_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', orgId)
+        .eq('status', 'scripted');
+
       // Run ALL queries in parallel (org-scoped + global)
-      const [orgResult, subscriptionResult, phasesResult, contentCountResult, notifResult, pipelineResult, teamPermsResult, pendingReviewResult] = await Promise.all([
+      const [orgResult, subscriptionResult, phasesResult, contentCountResult, notifResult, pipelineResult, teamPermsResult, pendingReviewResult, draftCountResult] = await Promise.all([
         supabase
           .from('organizations')
           .select('content_engine_enabled')
@@ -108,6 +116,7 @@ export default async function DashboardLayout({
         pipelinePromise,
         teamPermsPromise,
         pendingReviewPromise,
+        draftCountPromise,
       ]);
 
       contentEngineEnabled = orgResult.data?.content_engine_enabled ?? false;
@@ -132,6 +141,7 @@ export default async function DashboardLayout({
       pipelineCount = pipelineResult?.count || 0;
       notificationCount = notifResult.count || 0;
       pendingReviewCount = pendingReviewResult?.count || 0;
+      draftCount = draftCountResult?.count || 0;
 
       // Build team permissions map for non-admin users
       if (teamPermsResult?.data) {
@@ -164,7 +174,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-cream">
-      <Header user={{ email: user.email!, full_name: userData?.full_name }} initialUnreadCount={notificationCount || 0} organizationId={membership?.organization_id} />
+      <Header user={{ email: user.email!, full_name: userData?.full_name }} initialUnreadCount={notificationCount || 0} organizationId={membership?.organization_id} draftCount={draftCount} />
       <Sidebar
         brandProgress={brandProgress}
         contentStats={contentStats}

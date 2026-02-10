@@ -7,6 +7,7 @@ import {
   DocumentTextIcon,
   PlusIcon,
   ArrowUpTrayIcon,
+  DocumentDuplicateIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   PencilSquareIcon,
@@ -14,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { TemplateEditModal } from '@/components/admin/templates/template-edit-modal';
 import { TemplateUploadModal } from '@/components/admin/templates/template-upload-modal';
+import { BulkImportModal } from '@/components/admin/templates/bulk-import-modal';
 
 interface StageMappingRow {
   id: string;
@@ -105,6 +107,7 @@ export default function AdminTemplatesPage() {
   const [editTemplate, setEditTemplate] = useState<TemplateRow | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -192,6 +195,14 @@ export default function AdminTemplatesPage() {
             >
               <ArrowUpTrayIcon className="w-4 h-4 mr-1.5" />
               Upload .md
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowBulkImportModal(true)}
+            >
+              <DocumentDuplicateIcon className="w-4 h-4 mr-1.5" />
+              Bulk Import
             </Button>
             <Button
               size="sm"
@@ -514,6 +525,17 @@ export default function AdminTemplatesPage() {
         <TemplateUploadModal
           onClose={() => setShowUploadModal(false)}
           onSaved={handleSaved}
+        />
+      )}
+
+      {/* Bulk Import Modal */}
+      {showBulkImportModal && (
+        <BulkImportModal
+          onClose={() => setShowBulkImportModal(false)}
+          onSaved={() => {
+            setShowBulkImportModal(false);
+            fetchTemplates();
+          }}
         />
       )}
     </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { CalendarView, ContentEditor, TableView, ViewToggle, ApprovalQueue, BrandVariablesPanel, QuickCreateModal, KanbanView, GenerateWeekModal, DeleteConfirmationModal, ContentFilterBar, applyContentFilters, EMPTY_FILTERS, GenerationBatchTracker, CreateCalendarModal, type BatchStatus, type ViewMode, type ContentFilters } from '@/components/content';
 import { Button, Card, PageHeader } from '@/components/ui';
@@ -60,6 +60,8 @@ interface Calendar {
 export default function CalendarPage() {
   const supabase = createClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlCalendarId = searchParams.get('calendarId');
 
   const [items, setItems] = useState<ContentItem[]>([]);
   const [calendars, setCalendars] = useState<Calendar[]>([]);
@@ -132,30 +134,54 @@ export default function CalendarPage() {
         const approvalSettings = getApprovalSettings(orgData?.settings || null);
         setUserCanApprove(canApproveContent(membership.role as OrgMemberRole, approvalSettings));
 
-        const { data: calendarsData } = await supabase
+        let { data: calendarsData } = await supabase
           .from('content_calendars')
           .select('id, name, start_date, end_date, generation_progress')
           .eq('organization_id', membership.organization_id)
           .order('created_at', { ascending: false });
+
+        // Auto-create Main Calendar if none exist
+        if (!calendarsData || calendarsData.length === 0) {
+          const { data: newCal } = await supabase
+            .from('content_calendars')
+            .insert({
+              name: 'Main Calendar',
+              organization_id: membership.organization_id,
+              start_date: '2025-01-01',
+              end_date: '2030-12-31',
+              status: 'active',
+              settings: { frequency: 'moderate', platforms: ['linkedin', 'facebook', 'instagram'], timezone: 'Africa/Johannesburg' },
+              generation_progress: null,
+            })
+            .select('id, name, start_date, end_date, generation_progress')
+            .single();
+
+          calendarsData = newCal ? [newCal] : [];
+        }
 
         if (calendarsData && calendarsData.length > 0) {
           const parsedCalendars = calendarsData.map(c => ({
             ...c,
             generation_progress: c.generation_progress as { weeks_generated: number; total_weeks: number } | null,
           }));
-          // Sort "Default" calendar first, then by created_at desc
+          // Sort Main Calendar first, then by created_at desc
           parsedCalendars.sort((a, b) => {
-            if (a.name === 'Default') return -1;
-            if (b.name === 'Default') return 1;
+            if (a.name === 'Main Calendar' || a.name === 'Default') return -1;
+            if (b.name === 'Main Calendar' || b.name === 'Default') return 1;
             return 0; // keep original order for others
           });
           setCalendars(parsedCalendars);
-          setCurrentCalendar(parsedCalendars[0]);
+
+          // If URL has calendarId param, prefer that calendar
+          const targetCalendar = urlCalendarId
+            ? parsedCalendars.find(c => c.id === urlCalendarId) || parsedCalendars[0]
+            : parsedCalendars[0];
+          setCurrentCalendar(targetCalendar);
 
           const { data: itemsData } = await supabase
             .from('content_items')
             .select('*')
-            .eq('calendar_id', parsedCalendars[0].id)
+            .eq('calendar_id', targetCalendar.id)
             .order('scheduled_date');
 
           setItems((itemsData || []) as ContentItem[]);
@@ -261,8 +287,18 @@ export default function CalendarPage() {
           ...c,
           generation_progress: c.generation_progress as { weeks_generated: number; total_weeks: number } | null,
         }));
+        // Remember the newest calendar ID before sorting (it was just created)
+        const newestCalId = parsedCalendars[0].id;
+        // Sort Main Calendar first
+        parsedCalendars.sort((a, b) => {
+          if (a.name === 'Main Calendar' || a.name === 'Default') return -1;
+          if (b.name === 'Main Calendar' || b.name === 'Default') return 1;
+          return 0;
+        });
         setCalendars(parsedCalendars);
-        setCurrentCalendar(parsedCalendars[0]);
+        // Select the newly created campaign calendar
+        const newCal = parsedCalendars.find(c => c.id === newestCalId) || parsedCalendars[0];
+        setCurrentCalendar(newCal);
 
         // DON'T load items yet â€” they're all "idea" status.
         // Items will appear one by one as AI generates them via onProgress.
@@ -271,12 +307,11 @@ export default function CalendarPage() {
         setShowCreateModal(false);
 
         // Queue-based generation: enqueue all 'idea' items
-        const newCalendar = parsedCalendars[0];
         if (modelOverride) {
           const { data: ideaItems } = await supabase
             .from('content_items')
             .select('id')
-            .eq('calendar_id', newCalendar.id)
+            .eq('calendar_id', newCal.id)
             .eq('status', 'idea');
 
           if (ideaItems && ideaItems.length > 0) {
@@ -286,7 +321,7 @@ export default function CalendarPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   organizationId,
-                  calendarId: newCalendar.id,
+                  calendarId: newCal.id,
                   contentItemIds: ideaItems.map(i => i.id),
                   modelOverride,
                 }),
@@ -297,20 +332,20 @@ export default function CalendarPage() {
               } else {
                 console.error('Queue enqueue failed:', queueData);
                 // Load all items as fallback so user can see them
-                await reloadItems(newCalendar.id);
+                await reloadItems(newCal.id);
                 setIsGenerating(false);
               }
             } catch (err) {
               console.error('Failed to enqueue generation:', err);
-              await reloadItems(newCalendar.id);
+              await reloadItems(newCal.id);
               setIsGenerating(false);
             }
           } else {
             setIsGenerating(false);
           }
         } else {
-          // No model selected â€” just load the idea items normally
-          await reloadItems(parsedCalendars[0].id);
+          // No model selected â€" just load the idea items normally
+          await reloadItems(newCal.id);
           setIsGenerating(false);
         }
         return;
@@ -524,12 +559,34 @@ export default function CalendarPage() {
 
       if (res.ok) {
         const remaining = calendars.filter(c => c.id !== currentCalendar.id);
-        setCalendars(remaining);
         if (remaining.length > 0) {
+          setCalendars(remaining);
           setCurrentCalendar(remaining[0]);
           await reloadItems(remaining[0].id);
         } else {
-          setCurrentCalendar(null);
+          // Re-create Main Calendar so the page always has one
+          const { data: newCal } = await supabase
+            .from('content_calendars')
+            .insert({
+              name: 'Main Calendar',
+              organization_id: organizationId!,
+              start_date: '2025-01-01',
+              end_date: '2030-12-31',
+              status: 'active',
+              settings: { frequency: 'moderate', platforms: ['linkedin', 'facebook', 'instagram'], timezone: 'Africa/Johannesburg' },
+              generation_progress: null,
+            })
+            .select('id, name, start_date, end_date, generation_progress')
+            .single();
+
+          if (newCal) {
+            const parsed = { ...newCal, generation_progress: null };
+            setCalendars([parsed]);
+            setCurrentCalendar(parsed);
+          } else {
+            setCalendars([]);
+            setCurrentCalendar(null);
+          }
           setItems([]);
         }
       }
@@ -632,7 +689,7 @@ export default function CalendarPage() {
                       <DocumentArrowDownIcon className="w-4 h-4 text-stone" />
                       Export CSV
                     </button>
-                    {currentCalendar && (userRole === 'owner' || userRole === 'admin') && (
+                    {currentCalendar && currentCalendar.name !== 'Main Calendar' && currentCalendar.name !== 'Default' && (userRole === 'owner' || userRole === 'admin') && (
                       <>
                         <div className="border-t border-stone/10 my-1" />
                         <button
@@ -652,33 +709,38 @@ export default function CalendarPage() {
         }
       />
 
-      {/* Calendar selector */}
-      {calendars.length > 0 && (
+      {/* Calendar selector — only show when there are multiple calendars */}
+      {calendars.length > 1 && (
         calendars.length <= 4 ? (
           <div className="flex gap-2 flex-wrap">
-            {calendars.map(cal => (
-              <button
-                key={cal.id}
-                onClick={async () => {
-                  setCurrentCalendar(cal);
-                  await reloadItems(cal.id);
-                }}
-                className={cn(
-                  'px-4 py-2 rounded-lg text-left transition-colors',
-                  currentCalendar?.id === cal.id
-                    ? 'bg-teal text-cream'
-                    : 'bg-cream-warm text-charcoal hover:bg-stone/10'
-                )}
-              >
-                <span className="text-sm font-medium block">{cal.name}</span>
-                <span className={cn(
-                  'text-xs block',
-                  currentCalendar?.id === cal.id ? 'text-cream/70' : 'text-stone'
-                )}>
-                  {format(new Date(cal.start_date + 'T00:00:00'), 'MMM d')} â€“ {format(new Date(cal.end_date + 'T00:00:00'), 'MMM d')}
-                </span>
-              </button>
-            ))}
+            {calendars.map(cal => {
+              const isMainCal = cal.name === 'Main Calendar' || cal.name === 'Default';
+              return (
+                <button
+                  key={cal.id}
+                  onClick={async () => {
+                    setCurrentCalendar(cal);
+                    await reloadItems(cal.id);
+                  }}
+                  className={cn(
+                    'px-4 py-2 rounded-lg text-left transition-colors',
+                    currentCalendar?.id === cal.id
+                      ? 'bg-teal text-cream'
+                      : 'bg-cream-warm text-charcoal hover:bg-stone/10'
+                  )}
+                >
+                  <span className="text-sm font-medium block">{cal.name}</span>
+                  {!isMainCal && (
+                    <span className={cn(
+                      'text-xs block',
+                      currentCalendar?.id === cal.id ? 'text-cream/70' : 'text-stone'
+                    )}>
+                      {format(new Date(cal.start_date + 'T00:00:00'), 'MMM d')} – {format(new Date(cal.end_date + 'T00:00:00'), 'MMM d')}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         ) : (
           <select
@@ -692,11 +754,14 @@ export default function CalendarPage() {
             }}
             className="px-4 py-2.5 rounded-xl border border-stone/20 bg-white text-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
           >
-            {calendars.map(cal => (
-              <option key={cal.id} value={cal.id}>
-                {cal.name} ({format(new Date(cal.start_date + 'T00:00:00'), 'MMM d')} â€“ {format(new Date(cal.end_date + 'T00:00:00'), 'MMM d')})
-              </option>
-            ))}
+            {calendars.map(cal => {
+              const isMainCal = cal.name === 'Main Calendar' || cal.name === 'Default';
+              return (
+                <option key={cal.id} value={cal.id}>
+                  {isMainCal ? cal.name : `${cal.name} (${format(new Date(cal.start_date + 'T00:00:00'), 'MMM d')} – ${format(new Date(cal.end_date + 'T00:00:00'), 'MMM d')})`}
+                </option>
+              );
+            })}
           </select>
         )
       )}
@@ -750,50 +815,38 @@ export default function CalendarPage() {
         />
       )}
 
-      {/* Content views */}
-      {items.length > 0 ? (
-        viewMode === 'calendar' ? (
-          <CalendarView
-            items={filteredItems}
-            onItemClick={handleItemClick}
-            onMovePost={handleMovePost}
-            onAddPost={handleAddPost}
-            selectionMode={calendarSelectionMode}
-            selectedIds={calendarSelectedIds}
-            onSelectionChange={setCalendarSelectedIds}
-          />
-        ) : viewMode === 'kanban' ? (
-          <KanbanView
-            items={filteredItems}
-            onItemClick={handleItemClick}
-            onStatusChange={async (itemId, newStatus) => {
-              const res = await fetch(`/api/content/items/${itemId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus }),
-              });
-              if (res.ok && currentCalendar) {
-                await reloadItems(currentCalendar.id);
-              }
-            }}
-          />
-        ) : (
-          <TableView
-            items={filteredItems}
-            onItemClick={handleItemClick}
-            onBulkAction={handleBulkAction}
-          />
-        )
+      {/* Content views — always show the calendar */}
+      {viewMode === 'calendar' ? (
+        <CalendarView
+          items={filteredItems}
+          onItemClick={handleItemClick}
+          onMovePost={handleMovePost}
+          onAddPost={handleAddPost}
+          selectionMode={calendarSelectionMode}
+          selectedIds={calendarSelectedIds}
+          onSelectionChange={setCalendarSelectedIds}
+        />
+      ) : viewMode === 'kanban' ? (
+        <KanbanView
+          items={filteredItems}
+          onItemClick={handleItemClick}
+          onStatusChange={async (itemId, newStatus) => {
+            const res = await fetch(`/api/content/items/${itemId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: newStatus }),
+            });
+            if (res.ok && currentCalendar) {
+              await reloadItems(currentCalendar.id);
+            }
+          }}
+        />
       ) : (
-        <Card className="text-center py-16">
-          <SparklesIcon className="w-16 h-16 mx-auto text-stone/30 mb-4" />
-          <h3 className="text-heading-md text-charcoal mb-2">No Calendar Yet</h3>
-          <p className="text-stone mb-6">Create your first content calendar to start planning and generating content.</p>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <PlusIcon className="w-4 h-4 mr-2" />
-            Create Calendar
-          </Button>
-        </Card>
+        <TableView
+          items={filteredItems}
+          onItemClick={handleItemClick}
+          onBulkAction={handleBulkAction}
+        />
       )}
 
       {/* Content editor slide panel */}

@@ -27,6 +27,8 @@ export async function GET(request: NextRequest) {
   // When the tracker requests processing, generate ONE item synchronously
   // before returning the updated status. This ensures the AI call completes
   // within the request lifecycle (not fire-and-forget).
+  let processError: string | null = null;
+
   if (action === 'process') {
     console.log('[QUEUE-STATUS] Starting processOneBatchItem...');
     const startTime = Date.now();
@@ -34,8 +36,11 @@ export async function GET(request: NextRequest) {
       const result = await processOneBatchItem(serviceClient, batchId);
       const elapsed = Date.now() - startTime;
       console.log(`[QUEUE-STATUS] processOneBatchItem completed in ${elapsed}ms:`, JSON.stringify(result));
+      // Capture item-level errors so the tracker can display them
+      if (result.error) processError = result.error;
     } catch (err) {
       const elapsed = Date.now() - startTime;
+      processError = err instanceof Error ? err.message : 'Processing failed';
       console.error(`[QUEUE-STATUS] processOneBatchItem FAILED after ${elapsed}ms:`, err);
     }
   }
@@ -47,6 +52,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Batch not found' }, { status: 404 });
   }
 
-  console.log(`[QUEUE-STATUS] Returning status: ${status.status}, ${status.completedItems}/${status.totalItems} done, ${status.failedItems} failed`);
-  return NextResponse.json(status);
+  console.log(`[QUEUE-STATUS] Returning status: ${status.status}, ${status.completedItems}/${status.totalItems} done, ${status.failedItems} failed, processError=${processError || 'none'}`);
+  return NextResponse.json({ ...status, processError });
 }

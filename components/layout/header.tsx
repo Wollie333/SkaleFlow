@@ -76,9 +76,10 @@ interface HeaderProps {
   };
   initialUnreadCount?: number;
   organizationId?: string;
+  draftCount?: number;
 }
 
-export function Header({ user, initialUnreadCount = 0, organizationId }: HeaderProps) {
+export function Header({ user, initialUnreadCount = 0, organizationId, draftCount = 0 }: HeaderProps) {
   const router = useRouter();
   const supabase = createClient();
   const [isOpen, setIsOpen] = useState(false);
@@ -166,18 +167,41 @@ export function Header({ user, initialUnreadCount = 0, organizationId }: HeaderP
             <Link
               href="/billing"
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                !creditBalance.hasCredits
-                  ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
-                  : creditBalance.totalRemaining < 2000
-                    ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25'
-                    : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'
+                creditBalance.isSuperAdmin
+                  ? 'bg-teal/20 text-teal-300 hover:bg-teal/30'
+                  : !creditBalance.hasCredits
+                    ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
+                    : creditBalance.totalRemaining < 2000
+                      ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25'
+                      : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'
               }`}
-              title={`Monthly: ${creditBalance.monthlyRemaining.toLocaleString()} / ${creditBalance.monthlyTotal.toLocaleString()} | Top-up: ${creditBalance.topupRemaining.toLocaleString()}`}
+              title={creditBalance.isSuperAdmin
+                ? `API Spend: $${(creditBalance.apiCostUSDAllTime || 0).toFixed(2)} all time | $${(creditBalance.apiCostUSD30d || 0).toFixed(2)} (30d) | Credits bypass active`
+                : `Monthly: ${creditBalance.monthlyRemaining.toLocaleString()} / ${creditBalance.monthlyTotal.toLocaleString()} | Top-up: ${creditBalance.topupRemaining.toLocaleString()}`
+              }
             >
               <BoltIcon className="w-3.5 h-3.5" />
-              <span>{creditBalance.totalRemaining.toLocaleString()}</span>
+              {creditBalance.isSuperAdmin ? (
+                <span>${(creditBalance.apiCostUSDAllTime || 0).toFixed(2)} spent</span>
+              ) : (
+                <span>{creditBalance.totalRemaining.toLocaleString()}</span>
+              )}
             </Link>
           )}
+
+          {/* Drafts */}
+          <Link
+            href="/content/drafts"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-dark-light/80 text-stone hover:text-cream hover:bg-teal/15 transition-colors"
+          >
+            <DocumentTextIcon className="w-3.5 h-3.5" />
+            <span>Drafts</span>
+            {draftCount > 0 && (
+              <span className="min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-gold text-dark text-[10px] font-bold px-1">
+                {draftCount > 99 ? '99+' : draftCount}
+              </span>
+            )}
+          </Link>
 
           {/* Notifications */}
           <div ref={dropdownRef} className="relative">

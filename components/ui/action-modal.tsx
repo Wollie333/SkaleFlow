@@ -13,7 +13,7 @@ export interface ActionModalAction {
   label: string;
   href?: string;
   onClick?: () => void;
-  variant?: 'primary' | 'ghost';
+  variant?: 'primary' | 'ghost' | 'danger';
 }
 
 export interface ActionModalProps {
@@ -85,12 +85,13 @@ export function ActionModal({ open, onClose, variant, title, subtitle, actions }
           {actions.length > 0 && (
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
               {actions.map((action, i) => {
-                const isPrimary = action.variant !== 'ghost';
                 const baseClass = cn(
                   'px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 w-full sm:w-auto',
-                  isPrimary
-                    ? 'bg-teal text-cream hover:bg-teal-light'
-                    : 'bg-transparent text-charcoal hover:bg-cream-warm border border-stone/20'
+                  action.variant === 'danger'
+                    ? 'bg-red-500 text-white hover:bg-red-600'
+                    : action.variant === 'ghost'
+                    ? 'bg-transparent text-charcoal hover:bg-cream-warm border border-stone/20'
+                    : 'bg-teal text-cream hover:bg-teal-light'
                 );
 
                 if (action.href) {
@@ -106,7 +107,7 @@ export function ActionModal({ open, onClose, variant, title, subtitle, actions }
                     key={i}
                     onClick={() => {
                       action.onClick?.();
-                      onClose();
+                      if (action.variant !== 'danger') onClose();
                     }}
                     className={baseClass}
                   >

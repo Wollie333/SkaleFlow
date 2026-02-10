@@ -175,7 +175,7 @@ export const facebookAdapter: PlatformAdapter = {
 function buildFacebookMessage(post: PostPayload): string {
   let message = post.text || post.caption || '';
   if (post.hashtags && post.hashtags.length > 0) {
-    message += '\n\n' + post.hashtags.join(' ');
+    message += '\n\n' + post.hashtags.map(h => h.startsWith('#') ? h : `#${h}`).join(' ');
   }
   return message;
 }

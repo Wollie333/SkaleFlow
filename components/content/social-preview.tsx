@@ -79,7 +79,7 @@ function MediaPreview({ urls, aspect = 'square' }: { urls: string[]; aspect?: 's
 }
 
 function formatCaption(caption: string, hashtags: string[]) {
-  const hashtagStr = hashtags.length > 0 ? '\n\n' + hashtags.join(' ') : '';
+  const hashtagStr = hashtags.length > 0 ? '\n\n' + hashtags.map(h => h.startsWith('#') ? h : `#${h}`).join(' ') : '';
   return caption + hashtagStr;
 }
 

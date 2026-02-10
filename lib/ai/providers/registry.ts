@@ -73,8 +73,8 @@ export function getProviderAdapter(provider: string): AIProviderAdapter {
 }
 
 export function getDefaultModelForFeature(feature: AIFeature): AIModelConfig {
-  // Default to Claude Sonnet 4.5 for all features
-  const defaultModel = MODEL_CATALOG.find(m => m.id === 'claude-sonnet-4-5' && m.features.includes(feature));
+  // Default to Llama 3.3 70B (Groq) — free, fast, and reliable
+  const defaultModel = MODEL_CATALOG.find(m => m.id === 'llama-3-3-70b' && m.features.includes(feature));
   if (defaultModel) return defaultModel;
 
   // Fallback to any model that supports the feature

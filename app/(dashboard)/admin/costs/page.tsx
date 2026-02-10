@@ -4,6 +4,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/ui';
 import { CurrencyDollarIcon } from '@heroicons/react/24/outline';
 
+interface AdminModel {
+  id: string;
+  name: string;
+  provider: string;
+  isFree: boolean;
+  isEnabled: boolean;
+}
+
 interface Summary {
   totalApiCostUSD: number;
   totalApiCostZAR: number;
@@ -98,6 +106,8 @@ export default function AdminCostsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [orgSort, setOrgSort] = useState<{ key: keyof OrgRow; desc: boolean }>({ key: 'totalCreditsUsed', desc: true });
+  const [adminModels, setAdminModels] = useState<AdminModel[]>([]);
+  const [togglingModel, setTogglingModel] = useState<string | null>(null);
 
   const fetchData = useCallback(async (p: Period) => {
     setIsLoading(true);
@@ -120,6 +130,42 @@ export default function AdminCostsPage() {
   useEffect(() => {
     fetchData(period);
   }, [period, fetchData]);
+
+  // Fetch model toggle states
+  useEffect(() => {
+    async function fetchModels() {
+      try {
+        const res = await fetch('/api/admin/models');
+        if (res.ok) {
+          const json = await res.json();
+          setAdminModels(json.models || []);
+        }
+      } catch {
+        // silent
+      }
+    }
+    fetchModels();
+  }, []);
+
+  async function handleToggleModel(modelId: string, isEnabled: boolean) {
+    setTogglingModel(modelId);
+    try {
+      const res = await fetch('/api/admin/models', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modelId, isEnabled }),
+      });
+      if (res.ok) {
+        setAdminModels(prev =>
+          prev.map(m => m.id === modelId ? { ...m, isEnabled } : m)
+        );
+      }
+    } catch {
+      // silent
+    } finally {
+      setTogglingModel(null);
+    }
+  }
 
   const handlePeriodChange = (p: Period) => {
     setPeriod(p);
@@ -243,6 +289,62 @@ export default function AdminCostsPage() {
             <p className={`text-sm mt-1 font-medium ${s.profitMargin >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
               {s.profitMargin >= 0 ? '+' : ''}{s.profitMargin}% margin
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Model Controls — toggle on/off */}
+      {adminModels.length > 0 && (
+        <div className="mb-8">
+          <h2 className="font-serif text-xl font-bold text-charcoal mb-4">
+            Model Controls
+          </h2>
+          <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-cream">
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Model</th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Provider</th>
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Type</th>
+                    <th className="text-right px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {adminModels.map((m) => (
+                    <tr key={m.id} className="border-b border-cream/50 last:border-0">
+                      <td className="px-6 py-4 font-medium text-charcoal">{m.name}</td>
+                      <td className="px-6 py-4 text-stone capitalize">{m.provider}</td>
+                      <td className="px-6 py-4">
+                        {m.isFree ? (
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600">Free</span>
+                        ) : (
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-teal/10 text-teal">Paid</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => handleToggleModel(m.id, !m.isEnabled)}
+                          disabled={togglingModel === m.id}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-teal/30 ${
+                            m.isEnabled ? 'bg-teal' : 'bg-stone/20'
+                          } ${togglingModel === m.id ? 'opacity-50' : ''}`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+                              m.isEnabled ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-6 py-3 bg-cream-warm/30 border-t border-cream">
+              <p className="text-xs text-stone">Disabled models are hidden from all users across the platform.</p>
+            </div>
           </div>
         </div>
       )}

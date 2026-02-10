@@ -64,28 +64,32 @@ export async function POST(request: Request) {
     const defaultStatus: ContentStatus = !ai_generated && hasContent ? 'scripted' : 'idea';
     const status = (requestedStatus || defaultStatus) as ContentStatus;
 
-    // Auto-create or find "Default" calendar when calendarId is not provided
+    // Auto-create or find "Main Calendar" when calendarId is not provided
     let resolvedCalendarId = calendarId || null;
     if (!resolvedCalendarId && organizationId) {
-      // Look for existing Default calendar
-      const { data: defaultCal } = await supabase
+      // Look for existing Main Calendar (or legacy "Default")
+      const { data: mainCal } = await supabase
         .from('content_calendars')
         .select('id')
         .eq('organization_id', organizationId)
-        .eq('name', 'Default')
+        .in('name', ['Main Calendar', 'Default'])
+        .order('created_at', { ascending: true })
+        .limit(1)
         .maybeSingle();
 
-      if (defaultCal) {
-        resolvedCalendarId = defaultCal.id;
+      if (mainCal) {
+        resolvedCalendarId = mainCal.id;
       } else {
-        // Create a Default calendar that spans all time
+        // Create a Main Calendar that spans all time
         const { data: newCal } = await supabase
           .from('content_calendars')
           .insert({
-            name: 'Default',
+            name: 'Main Calendar',
             organization_id: organizationId,
             start_date: '2025-01-01',
             end_date: '2030-12-31',
+            status: 'active',
+            settings: { frequency: 'moderate', platforms: ['linkedin', 'facebook', 'instagram'], timezone: 'Africa/Johannesburg' },
           })
           .select('id')
           .single();

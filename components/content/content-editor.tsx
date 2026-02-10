@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
-import { Button, Input, Textarea, Badge, StatusBadge } from '@/components/ui';
+import { Button, Badge, StatusBadge } from '@/components/ui';
+import { VariableTextarea, VariableInput } from '@/components/content/variable-field';
+import { useBrandVariables } from '@/hooks/useBrandVariables';
 import { XMarkIcon, SparklesIcon, PaperAirplaneIcon, ArrowTopRightOnSquareIcon, CalendarIcon, ArrowPathIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
 import type { FunnelStage, StoryBrandStage, TimeSlot, ContentStatus, SocialPlatform } from '@/types/database';
 import { PlatformSelector } from './platform-selector';
@@ -118,6 +120,7 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
     loadTeam();
   }, [organizationId]);
 
+  const { categories: brandCategories, flatVariables: brandFlatVariables } = useBrandVariables(organizationId || null);
   const formatCategory = getFormatCategory(item.format as ContentFormat);
   const availableTemplates = getAvailableTemplates(item.format as ContentFormat);
 
@@ -289,11 +292,13 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
         </div>
 
         {/* Topic */}
-        <Input
+        <VariableInput
           label="Topic"
           value={formData.topic || ''}
-          onChange={(e) => updateField('topic', e.target.value)}
+          onValueChange={(v) => updateField('topic', v)}
           placeholder="Content topic..."
+          brandFlatVariables={brandFlatVariables}
+          brandCategories={brandCategories}
         />
 
         {/* FORMAT-SPECIFIC FIELDS */}
@@ -301,38 +306,46 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
         {/* SHORT-FORM: Hook, Script Body, CTA, Filming Notes */}
         {formatCategory === 'short' && (
           <>
-            <Textarea
+            <VariableTextarea
               label="Hook"
               hint="First 3 seconds / first line that stops the scroll"
               value={formData.hook || ''}
-              onChange={(e) => updateField('hook', e.target.value)}
+              onValueChange={(v) => updateField('hook', v)}
               placeholder="Attention-grabbing opening..."
               rows={2}
+              brandFlatVariables={brandFlatVariables}
+              brandCategories={brandCategories}
             />
             <p className="text-xs text-stone -mt-4">{(formData.hook || '').length}/100 characters</p>
 
-            <Textarea
+            <VariableTextarea
               label="Script Body"
               value={formData.script_body || ''}
-              onChange={(e) => updateField('script_body', e.target.value)}
+              onValueChange={(v) => updateField('script_body', v)}
               placeholder="Main content..."
               rows={6}
+              brandFlatVariables={brandFlatVariables}
+              brandCategories={brandCategories}
             />
 
-            <Input
+            <VariableInput
               label="Call to Action"
               value={formData.cta || ''}
-              onChange={(e) => updateField('cta', e.target.value)}
+              onValueChange={(v) => updateField('cta', v)}
               placeholder="What should they do next?"
+              brandFlatVariables={brandFlatVariables}
+              brandCategories={brandCategories}
             />
 
-            <Textarea
+            <VariableTextarea
               label="Filming Notes"
               hint="Visual directions for the creator"
               value={formData.filming_notes || ''}
-              onChange={(e) => updateField('filming_notes', e.target.value)}
+              onValueChange={(v) => updateField('filming_notes', v)}
               placeholder="Camera angles, B-roll, visual cues..."
               rows={3}
+              brandFlatVariables={brandFlatVariables}
+              brandCategories={brandCategories}
             />
           </>
         )}
@@ -340,26 +353,26 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
         {/* MEDIUM-FORM: Hook, Context, Teaching Points, Reframe, CTA, Filming Notes */}
         {formatCategory === 'medium' && (
           <>
-            <Textarea label="Hook" hint="0-10 seconds" value={formData.hook || ''} onChange={e => updateField('hook', e.target.value)} placeholder="Opening hook..." rows={2} />
-            <Textarea label="Context Section" hint="10-30 seconds. Who this is for and what's at stake." value={formData.context_section || ''} onChange={e => updateField('context_section', e.target.value)} placeholder="Set up the context..." rows={3} />
-            <Textarea label="Teaching Points" hint="Core teaching body" value={formData.teaching_points || ''} onChange={e => updateField('teaching_points', e.target.value)} placeholder="Main teaching content..." rows={8} />
-            <Textarea label="Reframe" value={formData.reframe || ''} onChange={e => updateField('reframe', e.target.value)} placeholder="Tie everything together..." rows={3} />
-            <Input label="Call to Action" value={formData.cta || ''} onChange={e => updateField('cta', e.target.value)} placeholder="CTA..." />
-            <Textarea label="Filming Notes" value={formData.filming_notes || ''} onChange={e => updateField('filming_notes', e.target.value)} placeholder="Visual/B-roll directions..." rows={3} />
+            <VariableTextarea label="Hook" hint="0-10 seconds" value={formData.hook || ''} onValueChange={v => updateField('hook', v)} placeholder="Opening hook..." rows={2} brandFlatVariables={brandFlatVariables} brandCategories={brandCategories} />
+            <VariableTextarea label="Context Section" hint="10-30 seconds. Who this is for and what's at stake." value={formData.context_section || ''} onValueChange={v => updateField('context_section', v)} placeholder="Set up the context..." rows={3} brandFlatVariables={brandFlatVariables} brandCategories={brandCategories} />
+            <VariableTextarea label="Teaching Points" hint="Core teaching body" value={formData.teaching_points || ''} onValueChange={v => updateField('teaching_points', v)} placeholder="Main teaching content..." rows={8} brandFlatVariables={brandFlatVariables} brandCategories={brandCategories} />
+            <VariableTextarea label="Reframe" value={formData.reframe || ''} onValueChange={v => updateField('reframe', v)} placeholder="Tie everything together..." rows={3} brandFlatVariables={brandFlatVariables} brandCategories={brandCategories} />
+            <VariableInput label="Call to Action" value={formData.cta || ''} onValueChange={v => updateField('cta', v)} placeholder="CTA..." brandFlatVariables={brandFlatVariables} brandCategories={brandCategories} />
+            <VariableTextarea label="Filming Notes" value={formData.filming_notes || ''} onValueChange={v => updateField('filming_notes', v)} placeholder="Visual/B-roll directions..." rows={3} brandFlatVariables={brandFlatVariables} brandCategories={brandCategories} />
           </>
         )}
 
         {/* LONG-FORM: Hook, Context, Problem Expansion, Framework Teaching, Case Study, Reframe, CTA, Filming Notes */}
         {formatCategory === 'long' && (
           <>
-            <Textarea label="Hook" hint="0-30 seconds" value={formData.hook || ''} onChange={e => updateField('hook', e.target.value)} placeholder="Bold opening..." rows={3} />
-            <Textarea label="Context Section" hint="30s-2min. Authority and framing." value={formData.context_section || ''} onChange={e => updateField('context_section', e.target.value)} placeholder="Context..." rows={4} />
-            <Textarea label="Problem Expansion" hint="Deep dive into the problem landscape" value={formData.problem_expansion || ''} onChange={e => updateField('problem_expansion', e.target.value)} placeholder="Problem analysis..." rows={6} />
-            <Textarea label="Framework Teaching" hint="Core framework content" value={formData.framework_teaching || ''} onChange={e => updateField('framework_teaching', e.target.value)} placeholder="Framework/teaching content..." rows={10} />
-            <Textarea label="Case Study" value={formData.case_study || ''} onChange={e => updateField('case_study', e.target.value)} placeholder="Real-world example..." rows={6} />
-            <Textarea label="Reframe" value={formData.reframe || ''} onChange={e => updateField('reframe', e.target.value)} placeholder="Synthesis and worldview shift..." rows={3} />
-            <Input label="Call to Action" value={formData.cta || ''} onChange={e => updateField('cta', e.target.value)} placeholder="CTA..." />
-            <Textarea label="Filming Notes" value={formData.filming_notes || ''} onChange={e => updateField('filming_notes', e.target.value)} placeholder="Visual/production directions..." rows={4} />
+            <VariableTextarea label="Hook" hint="0-30 seconds" value={formData.hook || ''} onValueChange={v => updateField('hook', v)} placeholder="Bold opening..." rows={3} brandFlatVariables={brandFlatVariables} brandCategories={brandCategories} />
+            <VariableTextarea label="Context Section" hint="30s-2min. Authority and framing." value={formData.context_section || ''} onValueChange={v => updateField('context_section', v)} placeholder="Context..." rows={4} brandFlatVariables={brandFlatVariables} brandCategories={brandCategories} />
+            <VariableTextarea label="Problem Expansion" hint="Deep dive into the problem landscape" value={formData.problem_expansion || ''} onValueChange={v => updateField('problem_expansion', v)} placeholder="Problem analysis..." rows={6} brandFlatVariables={brandFlatVariables} brandCategories={brandCategories} />
+            <VariableTextarea label="Framework Teaching" hint="Core framework content" value={formData.framework_teaching || ''} onValueChange={v => updateField('framework_teaching', v)} placeholder="Framework/teaching content..." rows={10} brandFlatVariables={brandFlatVariables} brandCategories={brandCategories} />
+            <VariableTextarea label="Case Study" value={formData.case_study || ''} onValueChange={v => updateField('case_study', v)} placeholder="Real-world example..." rows={6} brandFlatVariables={brandFlatVariables} brandCategories={brandCategories} />
+            <VariableTextarea label="Reframe" value={formData.reframe || ''} onValueChange={v => updateField('reframe', v)} placeholder="Synthesis and worldview shift..." rows={3} brandFlatVariables={brandFlatVariables} brandCategories={brandCategories} />
+            <VariableInput label="Call to Action" value={formData.cta || ''} onValueChange={v => updateField('cta', v)} placeholder="CTA..." brandFlatVariables={brandFlatVariables} brandCategories={brandCategories} />
+            <VariableTextarea label="Filming Notes" value={formData.filming_notes || ''} onValueChange={v => updateField('filming_notes', v)} placeholder="Visual/production directions..." rows={4} brandFlatVariables={brandFlatVariables} brandCategories={brandCategories} />
           </>
         )}
 
@@ -371,24 +384,28 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
               {carouselSlides.map((slide: { slide_number: number; text: string; visual_direction: string }, idx: number) => (
                 <div key={idx} className="p-3 bg-cream-warm rounded-lg space-y-2">
                   <p className="text-xs font-medium text-charcoal">Slide {slide.slide_number || idx + 1}</p>
-                  <Textarea
+                  <VariableTextarea
                     value={slide.text || ''}
-                    onChange={e => {
+                    onValueChange={v => {
                       const updated = [...carouselSlides];
-                      updated[idx] = { ...updated[idx], text: e.target.value };
+                      updated[idx] = { ...updated[idx], text: v };
                       updateField('script_body', JSON.stringify(updated));
                     }}
                     rows={2}
                     placeholder="Slide text..."
+                    brandFlatVariables={brandFlatVariables}
+                    brandCategories={brandCategories}
                   />
-                  <Input
+                  <VariableInput
                     value={slide.visual_direction || ''}
-                    onChange={e => {
+                    onValueChange={v => {
                       const updated = [...carouselSlides];
-                      updated[idx] = { ...updated[idx], visual_direction: e.target.value };
+                      updated[idx] = { ...updated[idx], visual_direction: v };
                       updateField('script_body', JSON.stringify(updated));
                     }}
                     placeholder="Visual direction..."
+                    brandFlatVariables={brandFlatVariables}
+                    brandCategories={brandCategories}
                   />
                 </div>
               ))}
@@ -399,34 +416,40 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
         {/* STATIC: Headline, Body Text, Visual Direction */}
         {formatCategory === 'static' && (
           <>
-            <Input
+            <VariableInput
               label="Headline"
               value={staticContent.headline || ''}
-              onChange={e => {
-                const updated = { ...staticContent, headline: e.target.value };
+              onValueChange={v => {
+                const updated = { ...staticContent, headline: v };
                 updateField('script_body', JSON.stringify(updated));
               }}
               placeholder="Bold headline/stat..."
+              brandFlatVariables={brandFlatVariables}
+              brandCategories={brandCategories}
             />
-            <Textarea
+            <VariableTextarea
               label="Body Text"
               value={staticContent.body_text || ''}
-              onChange={e => {
-                const updated = { ...staticContent, body_text: e.target.value };
+              onValueChange={v => {
+                const updated = { ...staticContent, body_text: v };
                 updateField('script_body', JSON.stringify(updated));
               }}
               rows={4}
               placeholder="Supporting text..."
+              brandFlatVariables={brandFlatVariables}
+              brandCategories={brandCategories}
             />
-            <Textarea
+            <VariableTextarea
               label="Visual Direction"
               value={staticContent.visual_direction || ''}
-              onChange={e => {
-                const updated = { ...staticContent, visual_direction: e.target.value };
+              onValueChange={v => {
+                const updated = { ...staticContent, visual_direction: v };
                 updateField('script_body', JSON.stringify(updated));
               }}
               rows={3}
               placeholder="Design directions..."
+              brandFlatVariables={brandFlatVariables}
+              brandCategories={brandCategories}
             />
           </>
         )}
@@ -436,11 +459,13 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
           <div>
             <label className="block text-sm font-medium text-charcoal mb-1">Post Description</label>
             <p className="text-xs text-stone mb-2">The text posted alongside your content on social media</p>
-            <Textarea
+            <VariableTextarea
               value={formData.caption || ''}
-              onChange={(e) => updateField('caption', e.target.value)}
-              placeholder="Write the social media description that appears with your post..."
+              onValueChange={(v) => updateField('caption', v)}
+              placeholder="Write the social media description... (~ for brand variables)"
               rows={4}
+              brandFlatVariables={brandFlatVariables}
+              brandCategories={brandCategories}
             />
             <div className="flex items-center justify-between mt-1">
               <p className="text-xs text-stone">{(formData.caption || '').length} characters</p>
@@ -455,13 +480,13 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
 
         {/* Target URL & UTM Parameters */}
         <div className="border-t border-stone/10 pt-6 space-y-4">
-          <Input
+          <VariableInput
             label="Target URL"
             value={formData.target_url || ''}
-            onChange={(e) => {
-              updateField('target_url', e.target.value || null);
+            onValueChange={(v) => {
+              updateField('target_url', v || null);
               // Auto-generate UTM params when URL is entered and no UTM exists yet
-              if (e.target.value && (!formData.utm_parameters || Object.keys(formData.utm_parameters).length === 0)) {
+              if (v && (!formData.utm_parameters || Object.keys(formData.utm_parameters).length === 0)) {
                 const utm = generateUTMParams({
                   platform: formData.platforms[0] || 'social',
                   funnelStage: formData.funnel_stage,
@@ -473,6 +498,8 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
               }
             }}
             placeholder="https://example.com/landing-page"
+            brandFlatVariables={brandFlatVariables}
+            brandCategories={brandCategories}
           />
 
           {formData.target_url && (
@@ -497,36 +524,46 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Input
+                <VariableInput
                   label="Source"
                   value={(formData.utm_parameters as Record<string, string>)?.utm_source || ''}
-                  onChange={e => updateField('utm_parameters', { ...(formData.utm_parameters || {}), utm_source: e.target.value } as Record<string, string>)}
+                  onValueChange={v => updateField('utm_parameters', { ...(formData.utm_parameters || {}), utm_source: v } as Record<string, string>)}
                   placeholder="e.g. linkedin"
+                  brandFlatVariables={brandFlatVariables}
+                  brandCategories={brandCategories}
                 />
-                <Input
+                <VariableInput
                   label="Medium"
                   value={(formData.utm_parameters as Record<string, string>)?.utm_medium || ''}
-                  onChange={e => updateField('utm_parameters', { ...(formData.utm_parameters || {}), utm_medium: e.target.value } as Record<string, string>)}
+                  onValueChange={v => updateField('utm_parameters', { ...(formData.utm_parameters || {}), utm_medium: v } as Record<string, string>)}
                   placeholder="e.g. social"
+                  brandFlatVariables={brandFlatVariables}
+                  brandCategories={brandCategories}
                 />
-                <Input
+                <VariableInput
                   label="Campaign"
                   value={(formData.utm_parameters as Record<string, string>)?.utm_campaign || ''}
-                  onChange={e => updateField('utm_parameters', { ...(formData.utm_parameters || {}), utm_campaign: e.target.value } as Record<string, string>)}
+                  onValueChange={v => updateField('utm_parameters', { ...(formData.utm_parameters || {}), utm_campaign: v } as Record<string, string>)}
                   placeholder="e.g. 2026-02-awareness"
+                  brandFlatVariables={brandFlatVariables}
+                  brandCategories={brandCategories}
                 />
-                <Input
+                <VariableInput
                   label="Content"
                   value={(formData.utm_parameters as Record<string, string>)?.utm_content || ''}
-                  onChange={e => updateField('utm_parameters', { ...(formData.utm_parameters || {}), utm_content: e.target.value } as Record<string, string>)}
+                  onValueChange={v => updateField('utm_parameters', { ...(formData.utm_parameters || {}), utm_content: v } as Record<string, string>)}
                   placeholder="e.g. short-video-topic"
+                  brandFlatVariables={brandFlatVariables}
+                  brandCategories={brandCategories}
                 />
                 <div className="col-span-2">
-                  <Input
+                  <VariableInput
                     label="Term (optional)"
                     value={(formData.utm_parameters as Record<string, string>)?.utm_term || ''}
-                    onChange={e => updateField('utm_parameters', { ...(formData.utm_parameters || {}), utm_term: e.target.value } as Record<string, string>)}
+                    onValueChange={v => updateField('utm_parameters', { ...(formData.utm_parameters || {}), utm_term: v } as Record<string, string>)}
                     placeholder="Optional keyword term"
+                    brandFlatVariables={brandFlatVariables}
+                    brandCategories={brandCategories}
                   />
                 </div>
               </div>
@@ -550,6 +587,7 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
             universalCaption={formData.caption || ''}
             universalHashtags={formData.hashtags || []}
             platformSpecs={(formData.platform_specs || {}) as Record<string, { caption?: string; hashtags?: string[]; customized?: boolean }>}
+            organizationId={organizationId}
             onUniversalChange={(caption, hashtags) => {
               setFormData(prev => ({ ...prev, caption, hashtags }));
             }}
@@ -716,11 +754,13 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
         {formData.status === 'pending_review' && canApprove && onApprove && onReject && (
           <div className="border-t border-stone/10 pt-6 space-y-3">
             <h3 className="font-medium text-charcoal">Review</h3>
-            <Textarea
+            <VariableTextarea
               value={reviewComment}
-              onChange={e => setReviewComment(e.target.value)}
+              onValueChange={setReviewComment}
               placeholder="Add a comment (optional for approval, required for rejection/revision)..."
               rows={2}
+              brandFlatVariables={brandFlatVariables}
+              brandCategories={brandCategories}
             />
             <div className="flex gap-3">
               <Button onClick={() => onApprove(item.id, reviewComment)} className="flex-1 bg-green-600 hover:bg-green-700">

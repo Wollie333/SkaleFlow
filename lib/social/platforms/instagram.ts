@@ -209,7 +209,7 @@ export const instagramAdapter: PlatformAdapter = {
 function buildInstagramCaption(post: PostPayload): string {
   let caption = post.caption || post.text || '';
   if (post.hashtags && post.hashtags.length > 0) {
-    caption += '\n\n' + post.hashtags.join(' ');
+    caption += '\n\n' + post.hashtags.map(h => h.startsWith('#') ? h : `#${h}`).join(' ');
   }
   // Instagram caption limit: 2200 chars
   return caption.slice(0, 2200);

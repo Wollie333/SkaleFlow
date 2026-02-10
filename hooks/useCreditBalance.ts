@@ -10,6 +10,9 @@ interface CreditBalance {
   totalRemaining: number;
   periodEnd: string | null;
   hasCredits: boolean;
+  isSuperAdmin?: boolean;
+  apiCostUSD30d?: number;
+  apiCostUSDAllTime?: number;
 }
 
 export function useCreditBalance(organizationId: string | null) {

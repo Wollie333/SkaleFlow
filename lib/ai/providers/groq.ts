@@ -1,5 +1,6 @@
 import Groq from 'groq-sdk';
 import type { AIProviderAdapter, AICompletionRequest, AICompletionResponse } from './types';
+import { withTimeout, AI_TIMEOUT_MS } from './timeout';
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 3000; // 3s base for Groq rate limits
@@ -55,12 +56,17 @@ export const groqAdapter: AIProviderAdapter = {
         }
 
         console.log(`[AI-GROQ] Sending request to Groq${attempt > 0 ? ` [attempt ${attempt + 1}]` : ''}...`);
-        const response = await groq.chat.completions.create({
-          model: request.modelId || 'llama-3.3-70b-versatile',
-          max_tokens: request.maxTokens || 4096,
-          messages,
-          ...(request.temperature !== undefined ? { temperature: request.temperature } : {}),
-        });
+        const response = await withTimeout(
+          groq.chat.completions.create({
+            model: request.modelId || 'llama-3.3-70b-versatile',
+            max_tokens: request.maxTokens || 4096,
+            messages,
+            response_format: { type: 'json_object' },
+            ...(request.temperature !== undefined ? { temperature: request.temperature } : {}),
+          }),
+          AI_TIMEOUT_MS,
+          'Groq'
+        );
 
         const text = response.choices[0]?.message?.content || '';
         const usage = response.usage;

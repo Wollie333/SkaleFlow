@@ -29,7 +29,8 @@ export async function getScriptFrameworkFromDB(
   format: ContentFormat,
   funnelStage: FunnelStage,
   storybrandStage: StoryBrandStage,
-  platforms?: string[]
+  platforms?: string[],
+  templateOverrides?: { script?: string; hook?: string; cta?: string }
 ): Promise<ScriptFrameworkResult> {
   try {
     const formatCategory = getFormatCategory(format);
@@ -88,11 +89,33 @@ export async function getScriptFrameworkFromDB(
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const best = (formatMatched.length > 0 ? formatMatched[0] : matched[0]) as any;
-    const template = best.content_templates as TemplateRow;
+    let template = best.content_templates as TemplateRow;
 
-    // Resolve hook + CTA from DB or fallback
-    const hookResult = await resolveHookFromDB(supabase, funnelStage);
-    const ctaResult = await resolveCTAFromDB(supabase, funnelStage);
+    // If script template is overridden, try to find that specific template in DB
+    if (templateOverrides?.script) {
+      const overrideKey = templateOverrides.script;
+      const { data: overrideTemplate } = await supabase
+        .from('content_templates')
+        .select('*')
+        .eq('template_key', overrideKey)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (overrideTemplate) {
+        console.log(`${LOG_PREFIX} Script override found in DB: ${overrideKey} (${overrideTemplate.name})`);
+        template = overrideTemplate;
+      } else {
+        console.log(`${LOG_PREFIX} Script override "${overrideKey}" not found in DB, using auto-selected`);
+      }
+    }
+
+    // Resolve hook + CTA from DB or fallback (with overrides)
+    const hookResult = templateOverrides?.hook
+      ? await resolveHookFromDB(supabase, funnelStage, templateOverrides.hook)
+      : await resolveHookFromDB(supabase, funnelStage);
+    const ctaResult = templateOverrides?.cta
+      ? await resolveCTAFromDB(supabase, funnelStage, templateOverrides.cta)
+      : await resolveCTAFromDB(supabase, funnelStage);
 
     // Build output format (keep using the config function — it's format-specific)
     const outputFormat = platforms && platforms.length > 0
@@ -269,7 +292,8 @@ export async function getTemplatesForGeneration(
 
 async function resolveHookFromDB(
   supabase: SupabaseClient<Database>,
-  funnelStage: FunnelStage
+  funnelStage: FunnelStage,
+  overrideKey?: string
 ): Promise<{ key: string; name: string; promptInstructions: string }> {
   // Map funnel stage to hook key
   const hookKeyMap: Record<string, string> = {
@@ -278,7 +302,8 @@ async function resolveHookFromDB(
     conversion: 'hook_outcome_first',
   };
 
-  const hookKey = hookKeyMap[funnelStage];
+  // Use override key if provided, otherwise use funnel-based mapping
+  const hookKey = overrideKey ? `hook_${overrideKey}` : hookKeyMap[funnelStage];
   if (hookKey) {
     const { data } = await supabase
       .from('content_templates')
@@ -302,7 +327,7 @@ async function resolveHookFromDB(
     consideration: 'curiosity_gap',
     conversion: 'outcome_first',
   };
-  const configKey = configKeyMap[funnelStage] || 'direct_pain';
+  const configKey = overrideKey || configKeyMap[funnelStage] || 'direct_pain';
   const hook = HOOK_TEMPLATES[configKey as keyof typeof HOOK_TEMPLATES];
   return {
     key: configKey,
@@ -313,7 +338,8 @@ async function resolveHookFromDB(
 
 async function resolveCTAFromDB(
   supabase: SupabaseClient<Database>,
-  funnelStage: FunnelStage
+  funnelStage: FunnelStage,
+  overrideKey?: string
 ): Promise<{ key: string; name: string; promptInstructions: string }> {
   const ctaKeyMap: Record<string, string> = {
     awareness: 'cta_soft_engagement',
@@ -321,7 +347,8 @@ async function resolveCTAFromDB(
     conversion: 'cta_direct_action',
   };
 
-  const ctaKey = ctaKeyMap[funnelStage];
+  // Use override key if provided, otherwise use funnel-based mapping
+  const ctaKey = overrideKey ? `cta_${overrideKey}` : ctaKeyMap[funnelStage];
   if (ctaKey) {
     const { data } = await supabase
       .from('content_templates')
@@ -345,7 +372,7 @@ async function resolveCTAFromDB(
     consideration: 'consideration',
     conversion: 'direct_action',
   };
-  const configKey = configKeyMap[funnelStage] || 'soft_engagement';
+  const configKey = overrideKey || configKeyMap[funnelStage] || 'soft_engagement';
   const cta = CTA_TEMPLATES[configKey as keyof typeof CTA_TEMPLATES];
   return {
     key: configKey,

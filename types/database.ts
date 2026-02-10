@@ -2617,6 +2617,7 @@ export interface Database {
           selected_brand_variables: Json | null;
           generate_scripts: boolean;
           selected_placements: Json | null;
+          template_overrides: Json | null;
           created_at: string;
           updated_at: string;
           completed_at: string | null;
@@ -2635,6 +2636,7 @@ export interface Database {
           selected_brand_variables?: Json | null;
           generate_scripts?: boolean;
           selected_placements?: Json | null;
+          template_overrides?: Json | null;
           created_at?: string;
           updated_at?: string;
           completed_at?: string | null;
@@ -2653,6 +2655,7 @@ export interface Database {
           selected_brand_variables?: Json | null;
           generate_scripts?: boolean;
           selected_placements?: Json | null;
+          template_overrides?: Json | null;
           created_at?: string;
           updated_at?: string;
           completed_at?: string | null;

@@ -22,6 +22,7 @@ interface EnqueueParams {
   selectedBrandVariables?: string[] | null;
   generateScripts?: boolean;
   selectedPlacements?: string[] | null;
+  templateOverrides?: { script?: string; hook?: string; cta?: string } | null;
 }
 
 /**
@@ -30,7 +31,7 @@ interface EnqueueParams {
  */
 export async function enqueueBatch(
   supabase: ServiceClient,
-  { orgId, calendarId, userId, contentItemIds, modelId, selectedBrandVariables, generateScripts, selectedPlacements }: EnqueueParams
+  { orgId, calendarId, userId, contentItemIds, modelId, selectedBrandVariables, generateScripts, selectedPlacements, templateOverrides }: EnqueueParams
 ): Promise<{ batchId: string; totalItems: number }> {
   console.log(`[QUEUE-ENQUEUE-SVC] enqueueBatch: orgId=${orgId}, modelId=${modelId}, items=${contentItemIds.length}, userId=${userId}`);
 
@@ -57,6 +58,7 @@ export async function enqueueBatch(
       selected_brand_variables: (selectedBrandVariables || null) as unknown as Json,
       generate_scripts: generateScripts || false,
       selected_placements: (selectedPlacements || null) as unknown as Json,
+      template_overrides: (templateOverrides || null) as unknown as Json,
     })
     .select('id')
     .single();
@@ -144,10 +146,10 @@ export async function processNextItems(
 
   // 4. Process each item sequentially
   for (const queueItem of pendingItems) {
-    // Load batch to get model_id, user_id, uniqueness_log, and selected_brand_variables
+    // Load batch to get model_id, user_id, uniqueness_log, selected_brand_variables, template_overrides
     const { data: batch } = await supabase
       .from('generation_batches')
-      .select('model_id, user_id, uniqueness_log, selected_brand_variables')
+      .select('model_id, user_id, uniqueness_log, selected_brand_variables, template_overrides')
       .eq('id', queueItem.batch_id)
       .single();
 
@@ -193,6 +195,10 @@ export async function processNextItems(
         ? batch.selected_brand_variables as string[]
         : null;
 
+      const cronTemplateOverrides = batch.template_overrides && typeof batch.template_overrides === 'object' && !Array.isArray(batch.template_overrides)
+        ? batch.template_overrides as { script?: string; hook?: string; cta?: string }
+        : undefined;
+
       const result = await generateSingleItem(
         supabase,
         queueItem.organization_id,
@@ -200,7 +206,9 @@ export async function processNextItems(
         queueItem.content_item_id,
         batch.model_id,
         allPrevious,
-        cronSelectedVars
+        cronSelectedVars,
+        undefined,
+        cronTemplateOverrides
       );
 
       if (result.success && result.content) {
@@ -308,17 +316,21 @@ export async function processNextItems(
           })
           .eq('id', batchId);
 
-        // Send notification
-        await createNotification({
-          supabase,
-          userId: batchData.user_id,
-          orgId: batchData.organization_id,
-          type: 'generation_completed',
-          title: 'Content generation complete',
-          body: `${batchData.completed_items} of ${batchData.total_items} posts generated successfully.${batchData.failed_items > 0 ? ` ${batchData.failed_items} failed.` : ''}`,
-          link: '/calendar',
-          metadata: { batch_id: batchId },
-        });
+        // Send notification (don't let this break batch finalization)
+        try {
+          await createNotification({
+            supabase,
+            userId: batchData.user_id,
+            orgId: batchData.organization_id,
+            type: 'generation_completed',
+            title: 'Content generation complete',
+            body: `${batchData.completed_items} of ${batchData.total_items} posts generated successfully.${batchData.failed_items > 0 ? ` ${batchData.failed_items} failed.` : ''}`,
+            link: '/calendar',
+            metadata: { batch_id: batchId },
+          });
+        } catch (notifErr) {
+          console.error('[QUEUE-CRON] Notification failed (non-fatal):', notifErr);
+        }
 
         batchesCompleted.push(batchId);
       }
@@ -497,7 +509,7 @@ export async function processOneBatchItem(
   // Load batch context
   const { data: batch, error: batchLoadError } = await supabase
     .from('generation_batches')
-    .select('model_id, user_id, uniqueness_log, selected_brand_variables')
+    .select('model_id, user_id, uniqueness_log, selected_brand_variables, template_overrides')
     .eq('id', batchId)
     .single();
 
@@ -565,6 +577,10 @@ export async function processOneBatchItem(
       ? batch.selected_brand_variables as string[]
       : null;
 
+    const batchTemplateOverrides = batch.template_overrides && typeof batch.template_overrides === 'object' && !Array.isArray(batch.template_overrides)
+      ? batch.template_overrides as { script?: string; hook?: string; cta?: string }
+      : undefined;
+
     const result = await generateSingleItem(
       supabase,
       queueItem.organization_id,
@@ -573,7 +589,8 @@ export async function processOneBatchItem(
       batch.model_id,
       allPrevious,
       selectedVars,
-      rejectionFeedback || undefined
+      rejectionFeedback || undefined,
+      batchTemplateOverrides
     );
 
     const genElapsed = Date.now() - genStartTime;
@@ -709,17 +726,21 @@ async function finalizeBatchIfComplete(
     })
     .eq('id', batchId);
 
-  // Send notification
-  await createNotification({
-    supabase,
-    userId: batchData.user_id,
-    orgId: batchData.organization_id,
-    type: 'generation_completed',
-    title: 'Content generation complete',
-    body: `${batchData.completed_items} of ${batchData.total_items} posts generated successfully.${batchData.failed_items > 0 ? ` ${batchData.failed_items} failed.` : ''}`,
-    link: '/calendar',
-    metadata: { batch_id: batchId },
-  });
+  // Send notification (don't let this break batch finalization)
+  try {
+    await createNotification({
+      supabase,
+      userId: batchData.user_id,
+      orgId: batchData.organization_id,
+      type: 'generation_completed',
+      title: 'Content generation complete',
+      body: `${batchData.completed_items} of ${batchData.total_items} posts generated successfully.${batchData.failed_items > 0 ? ` ${batchData.failed_items} failed.` : ''}`,
+      link: '/calendar',
+      metadata: { batch_id: batchId },
+    });
+  } catch (notifErr) {
+    console.error('[QUEUE-PROCESS] Notification failed (non-fatal):', notifErr);
+  }
 
   return true;
 }

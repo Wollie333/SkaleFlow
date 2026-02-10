@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+
+const REMEMBER_KEY = 'skaleflow_remember_email';
 
 type FormMode = 'login' | 'forgot' | 'reset-sent';
 
@@ -14,8 +17,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    const saved = localStorage.getItem(REMEMBER_KEY);
+    if (saved) {
+      setEmail(saved);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +61,12 @@ export default function LoginPage() {
         setIsLoading(false);
         return;
       }
+    }
+
+    if (rememberMe) {
+      localStorage.setItem(REMEMBER_KEY, email.trim());
+    } else {
+      localStorage.removeItem(REMEMBER_KEY);
     }
 
     router.push('/dashboard');
@@ -156,17 +175,40 @@ export default function LoginPage() {
                   <label className="block text-sm font-semibold text-charcoal mb-2">
                     Password *
                   </label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
-                    required
-                    className="w-full px-4 py-3.5 bg-cream border border-teal/15 rounded-lg text-charcoal placeholder:text-stone transition-all focus:outline-none focus:border-teal focus:shadow-[0_0_0_3px_rgba(30,107,99,0.1)]"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      required
+                      className="w-full px-4 py-3.5 pr-12 bg-cream border border-teal/15 rounded-lg text-charcoal placeholder:text-stone transition-all focus:outline-none focus:border-teal focus:shadow-[0_0_0_3px_rgba(30,107,99,0.1)]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone hover:text-charcoal transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? (
+                        <EyeSlashIcon className="w-5 h-5" />
+                      ) : (
+                        <EyeIcon className="w-5 h-5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
-                <div className="text-right">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="w-4 h-4 rounded border-stone/30 text-teal focus:ring-teal/30 focus:ring-offset-0 cursor-pointer"
+                    />
+                    <span className="text-sm text-stone">Remember me</span>
+                  </label>
                   <button
                     type="button"
                     onClick={() => { setMode('forgot'); setError(''); }}

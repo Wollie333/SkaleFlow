@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
+import { NavigationProgress } from '@/components/layout/navigation-progress';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -13,7 +15,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-sans antialiased bg-cream text-charcoal">
+      <body className="font-sans antialiased bg-cream text-charcoal" suppressHydrationWarning>
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
         {children}
       </body>
     </html>

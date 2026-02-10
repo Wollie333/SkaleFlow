@@ -10,6 +10,7 @@ import { resolveModel, calculateCreditCost, deductCredits, getProviderAdapter, c
 import type { AIFeature } from '@/lib/ai';
 import { MAX_VALIDATION_RETRIES } from './queue-config';
 import { getScriptFrameworkFromDB } from './template-service';
+import { ESSENTIAL_CONTENT_VARIABLES, selectSmartVariables } from './brand-variable-categories';
 
 export interface GenerateContentResult {
   results: Array<{
@@ -89,7 +90,8 @@ export async function generateContentForItems(
   const contentThemes = extractContentThemes(brandContext);
 
   // Build the system prompt once (shared across all items in batch)
-  const systemPrompt = buildSystemPrompt(brandContext, org?.name || 'Your Brand');
+  // Use essential variables only to keep prompt size manageable
+  const systemPrompt = buildSystemPrompt(brandContext, org?.name || 'Your Brand', ESSENTIAL_CONTENT_VARIABLES);
 
   // Higher temperature for free/weaker models to force more variety
   const temperature = resolvedModel.isFree ? 0.95 : 0.8;
@@ -129,8 +131,8 @@ export async function generateContentForItems(
       themeHint
     );
 
-    const maxTokens = framework.formatCategory === 'long' ? 4096 :
-                       framework.formatCategory === 'medium' ? 3072 : 2048;
+    const maxTokens = framework.formatCategory === 'long' ? 6144 :
+                       framework.formatCategory === 'medium' ? 4096 : 3072;
 
     // Retry loop with validation
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -434,6 +436,14 @@ Write each sentence in the script on its own line for readability.
 OUTPUT FORMAT:
 ${framework.outputFormat}
 
+CONTENT LENGTH REQUIREMENTS (CRITICAL — DO NOT write skeletal content):
+- caption: THIS IS THE MAIN POST. Write a full, detailed social media post (300-800 chars). Multiple paragraphs. Hook + value + CTA. NOT a 2-sentence summary.
+- hook: 1-3 punchy sentences (50-150 chars minimum)
+- script_body: Detailed multi-paragraph script (400+ chars for short-form, 800+ for medium, 1500+ for long)
+- Each platform_caption: Substantial post description (150-600 chars for LinkedIn/Facebook/IG, under 250 for Twitter)
+- cta: 1-2 clear action sentences (30-100 chars)
+Every section must be COMPLETE and DETAILED. Do not abbreviate or summarize.
+
 Return ONLY valid JSON. No markdown, no code blocks, no explanation.`;
 }
 
@@ -463,23 +473,60 @@ function getStoryBrandGuidance(stage: string): string {
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function parseEnhancedResponse(text: string, formatCategory: string): Record<string, any> {
-  // Try to extract JSON from response
+  // Try to extract JSON from response — try multiple patterns
+  // Some models wrap in ```json...```, some return raw JSON, some include text before/after
   const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/) ||
-                    text.match(/\{[\s\S]*\}/);
+                    text.match(/```\n?([\s\S]*?)\n?```/) ||
+                    text.match(/(\{[\s\S]*\})/);
 
   if (jsonMatch) {
     try {
-      const json = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+      const raw = jsonMatch[1] || jsonMatch[0];
+      const json = JSON.parse(raw);
+
       // Normalize: ensure title exists
       if (!json.title && json.topic) json.title = json.topic;
       if (!json.topic && json.title) json.topic = json.title;
+
+      // Normalize: if caption is missing/empty, build it from platform_captions or other fields
+      if (!json.caption || (typeof json.caption === 'string' && json.caption.trim().length < 50)) {
+        const platformCaptions = json.platform_captions || {};
+        const firstCaption = Object.values(platformCaptions).find(
+          (v): v is string => typeof v === 'string' && v.trim().length > 50
+        );
+        if (firstCaption) {
+          json.caption = firstCaption;
+          console.log(`[PARSE] Caption was empty/short — populated from platform_captions (${json.caption.length} chars)`);
+        } else if (json.script_body && typeof json.script_body === 'string' && json.script_body.length > 100) {
+          // Last resort: use hook + script_body as caption
+          const hookPart = json.hook ? `${json.hook}\n\n` : '';
+          const ctaPart = json.cta ? `\n\n${json.cta}` : '';
+          json.caption = `${hookPart}${json.script_body}${ctaPart}`;
+          console.log(`[PARSE] Caption was empty — built from hook+script_body+cta (${json.caption.length} chars)`);
+        }
+      }
+
+      // Normalize: if script_body is missing but we have teaching_points or context_section, combine them
+      if (!json.script_body || (typeof json.script_body === 'string' && json.script_body.trim().length < 50)) {
+        const parts = [json.context_section, json.teaching_points, json.reframe, json.problem_expansion, json.framework_teaching].filter(
+          (v): v is string => typeof v === 'string' && v.trim().length > 0
+        );
+        if (parts.length > 0) {
+          json.script_body = parts.join('\n\n');
+          console.log(`[PARSE] script_body was empty — built from sub-sections (${json.script_body.length} chars)`);
+        }
+      }
+
       return json;
     } catch (e) {
-      console.error('Failed to parse JSON:', e);
+      console.error('[PARSE] Failed to parse JSON from AI response:', e);
+      console.error('[PARSE] Raw text (first 500 chars):', text.substring(0, 500));
     }
+  } else {
+    console.error('[PARSE] No JSON found in AI response. First 500 chars:', text.substring(0, 500));
   }
 
-  // Fallback based on format
+  // Fallback based on format — this should be caught by validation and retried
   const fallback: Record<string, any> = {
     title: 'Generated content',
     topic: 'Generated content',
@@ -521,11 +568,17 @@ export function validateGeneratedContent(
 ): { valid: boolean; reason?: string } {
   // Check title/topic exists and isn't a placeholder
   const title = (parsed.title || parsed.topic || '').trim();
-  if (title.length < 5) {
-    return { valid: false, reason: `Title too short (${title.length} chars, need 5+)` };
+  if (title.length < 10) {
+    return { valid: false, reason: `Title too short (${title.length} chars, need 10+)` };
   }
   if (PLACEHOLDER_TITLES.includes(title.toLowerCase())) {
     return { valid: false, reason: `Placeholder title detected: "${title}"` };
+  }
+
+  // Caption is the primary post text — must be substantial
+  const caption = (parsed.caption || '').trim();
+  if (caption.length < 200) {
+    return { valid: false, reason: `Caption too short (${caption.length} chars, need 200+). Write a full social media post, not a summary.` };
   }
 
   // Format-specific checks
@@ -537,21 +590,21 @@ export function validateGeneratedContent(
   } else if (formatCategory === 'static') {
     const headline = (parsed.headline || '').trim();
     const bodyText = (parsed.body_text || '').trim();
-    if (headline.length < 5) {
-      return { valid: false, reason: `Static headline too short (${headline.length} chars, need 5+)` };
+    if (headline.length < 10) {
+      return { valid: false, reason: `Static headline too short (${headline.length} chars, need 10+)` };
     }
-    if (bodyText.length < 15) {
-      return { valid: false, reason: `Static body_text too short (${bodyText.length} chars, need 15+)` };
+    if (bodyText.length < 40) {
+      return { valid: false, reason: `Static body_text too short (${bodyText.length} chars, need 40+)` };
     }
   } else {
     // short, medium, long
     const hook = (parsed.hook || '').trim();
     const scriptBody = (parsed.script_body || '').trim();
-    if (hook.length < 10) {
-      return { valid: false, reason: `Hook too short (${hook.length} chars, need 10+)` };
+    if (hook.length < 40) {
+      return { valid: false, reason: `Hook too short (${hook.length} chars, need 40+)` };
     }
-    if (scriptBody.length < 30) {
-      return { valid: false, reason: `Script body too short (${scriptBody.length} chars, need 30+)` };
+    if (scriptBody.length < 150) {
+      return { valid: false, reason: `Script body too short (${scriptBody.length} chars, need 150+)` };
     }
   }
 
@@ -610,7 +663,8 @@ export async function generateSingleItem(
   modelOverride: string | null,
   previouslyGenerated: Array<{ title: string; hook: string; topic: string }>,
   selectedBrandVariables?: string[] | null,
-  rejectionFeedback?: string
+  rejectionFeedback?: string,
+  templateOverrides?: { script?: string; hook?: string; cta?: string }
 ): Promise<{
   success: boolean;
   error?: string;
@@ -665,7 +719,7 @@ export async function generateSingleItem(
     const balance = await checkCredits(orgId, 140, userId);
     console.log(`[GEN-SINGLE] Credit check: hasCredits=${balance.hasCredits}, remaining=${balance.totalRemaining}`);
     if (!balance.hasCredits) {
-      return { success: false, error: 'Insufficient credits' };
+      return { success: false, error: 'Insufficient credits', retryable: false };
     }
   }
 
@@ -674,8 +728,8 @@ export async function generateSingleItem(
   const storybrandStage = item.storybrand_stage as StoryBrandStage;
   const platforms = item.platforms || [];
 
-  console.log(`[GEN-SINGLE] Getting script framework: format=${format}, funnel=${funnelStage}, storybrand=${storybrandStage}`);
-  const framework = await getScriptFrameworkFromDB(supabase as SupabaseClient<Database>, format, funnelStage, storybrandStage, platforms);
+  console.log(`[GEN-SINGLE] Getting script framework: format=${format}, funnel=${funnelStage}, storybrand=${storybrandStage}, templateOverrides=${JSON.stringify(templateOverrides || null)}`);
+  const framework = await getScriptFrameworkFromDB(supabase as SupabaseClient<Database>, format, funnelStage, storybrandStage, platforms, templateOverrides);
   console.log(`[GEN-SINGLE] Framework: category=${framework.formatCategory}, script=${framework.scriptTemplateName}, hook=${framework.hookTemplateName}`);
 
   // Content themes for topic diversity
@@ -685,7 +739,15 @@ export async function generateSingleItem(
     ? contentThemes[itemIndex % contentThemes.length]
     : null;
 
-  const systemPrompt = buildSystemPrompt(brandContext, org?.name || 'Your Brand', selectedBrandVariables || undefined, rejectionFeedback);
+  // Smart variable selection: 7 per post (4 core + 3 random rotating)
+  // If user explicitly selected variables, respect their choice
+  const effectiveVars = selectedBrandVariables && selectedBrandVariables.length > 0
+    ? selectedBrandVariables
+    : selectSmartVariables(previouslyGenerated.length);
+  console.log(`[GEN-SINGLE] Brand variables: ${effectiveVars.length} selected (${selectedBrandVariables ? 'user-chosen' : 'smart-random'}): ${effectiveVars.join(', ')}`);
+
+  const systemPrompt = buildSystemPrompt(brandContext, org?.name || 'Your Brand', effectiveVars, rejectionFeedback);
+  console.log(`[GEN-SINGLE] System prompt size: ${systemPrompt.length} chars`);
 
   // Higher temperature for free/weaker models
   const temperature = resolvedModel.isFree ? 0.95 : 0.8;
@@ -700,8 +762,8 @@ export async function generateSingleItem(
     themeHint
   );
 
-  const maxTokens = framework.formatCategory === 'long' ? 4096 :
-                     framework.formatCategory === 'medium' ? 3072 : 2048;
+  const maxTokens = framework.formatCategory === 'long' ? 6144 :
+                     framework.formatCategory === 'medium' ? 4096 : 3072;
 
   // Retry loop: attempt AI call + validation up to MAX_VALIDATION_RETRIES times
   let lastValidationReason = '';
@@ -752,6 +814,18 @@ export async function generateSingleItem(
       const message = err instanceof Error ? err.message : 'Unknown AI error';
       console.error(`[GEN-SINGLE] EXCEPTION on attempt ${attempt}/${MAX_VALIDATION_RETRIES}:`, message, err);
       lastValidationReason = message;
+
+      // Rate limit / quota exhaustion — stop immediately, don't waste more attempts
+      const msgLower = message.toLowerCase();
+      if (msgLower.includes('429') || msgLower.includes('rate limit') || msgLower.includes('quota') || msgLower.includes('too many requests') || msgLower.includes('resource_exhausted')) {
+        console.error(`[GEN-SINGLE] Rate limit / quota exhaustion detected — aborting all retries`);
+        return {
+          success: false,
+          error: 'AI provider rate limit reached. Please wait a few minutes or switch to a different model.',
+          retryable: false,
+        };
+      }
+
       // On exception during the last attempt, return as a retryable error (let queue handle it)
       if (attempt === MAX_VALIDATION_RETRIES) {
         return { success: false, error: message };
@@ -824,11 +898,30 @@ export async function generateSingleItem(
     .eq('id', item.id);
   if (updateError) {
     console.error(`[GEN-SINGLE] DB UPDATE FAILED for content_items:`, updateError.message);
-  } else {
-    console.log(`[GEN-SINGLE] content_items updated successfully`);
+    return {
+      success: false,
+      error: `Database update failed: ${updateError.message}`,
+      retryable: true,
+    };
+  }
+  console.log(`[GEN-SINGLE] content_items updated successfully`);
+
+  // Verify the update actually wrote data (catches silent RLS blocks)
+  const { data: verifyItem } = await supabase
+    .from('content_items')
+    .select('id, topic, status')
+    .eq('id', item.id)
+    .single();
+  if (!verifyItem || !verifyItem.topic || verifyItem.status !== 'scripted') {
+    console.error(`[GEN-SINGLE] UPDATE VERIFICATION FAILED — topic=${verifyItem?.topic}, status=${verifyItem?.status}`);
+    return {
+      success: false,
+      error: 'Database update was silently rejected (possible RLS issue)',
+      retryable: false,
+    };
   }
 
-  // Track AI usage + deduct credits (only for validated content)
+  // Track AI usage + deduct credits (only for verified content)
   const creditsCharged = calculateCreditCost(resolvedModel.id, validResponse.inputTokens, validResponse.outputTokens);
 
   const { data: usageRow } = await supabase

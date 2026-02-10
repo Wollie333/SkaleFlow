@@ -25,6 +25,7 @@ import {
   ClipboardDocumentCheckIcon,
   EyeIcon,
   DocumentTextIcon,
+  BoltIcon,
 } from '@heroicons/react/24/outline';
 
 interface FeaturePermissions {
@@ -60,6 +61,7 @@ const salesNavigation: NavItem[] = [
 
 const contentNavigation: NavItem[] = [
   { name: 'Content Calendar', href: '/calendar', icon: CalendarDaysIcon },
+  { name: 'Content Machine', href: '/content/machine', icon: BoltIcon },
   { name: 'Publish Log', href: '/content/publish-log', icon: ClipboardDocumentCheckIcon },
   { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
   { name: 'Create Post', href: '/content/create', icon: PencilSquareIcon },
@@ -166,10 +168,10 @@ export function Sidebar({
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                   isActive
                     ? 'bg-teal/10 text-teal'
-                    : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                    : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
                 )}
               >
                 <item.icon className="w-5 h-5" />
@@ -186,10 +188,10 @@ export function Sidebar({
               <Link
                 href="/reviews"
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                   pathname.startsWith('/reviews')
                     ? 'bg-teal/10 text-teal'
-                    : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                    : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
                 )}
               >
                 <EyeIcon className="w-5 h-5" />

@@ -191,7 +191,7 @@ function buildTweetText(post: PostPayload): string {
 
   // Add hashtags if room
   if (post.hashtags && post.hashtags.length > 0) {
-    const hashtagStr = post.hashtags.join(' ');
+    const hashtagStr = post.hashtags.map(h => h.startsWith('#') ? h : `#${h}`).join(' ');
     if (text.length + 2 + hashtagStr.length <= 280) {
       text += '\n\n' + hashtagStr;
     }
