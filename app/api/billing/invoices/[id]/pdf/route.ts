@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import ReactPDF from '@react-pdf/renderer';
+import { renderToStream } from '@react-pdf/renderer';
 import { InvoicePdfDocument } from '@/components/billing/invoice-pdf-document';
 
 export async function GET(
@@ -45,7 +45,7 @@ export async function GET(
       .single();
 
     // Generate PDF
-    const pdfStream = await ReactPDF.renderToStream(
+    const pdfStream = await renderToStream(
       InvoicePdfDocument({
         invoice: {
           ...invoice,

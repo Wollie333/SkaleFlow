@@ -2,6 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import type { Database, Json } from '@/types/database';
 import { getModelConfig, isSuperAdmin } from '@/lib/ai';
 import { generateSingleItem } from './generate-content';
+import { buildFeedbackPromptSection } from './feedback-service';
 import {
   MAX_BATCH_FREE,
   MAX_BATCH_PAID,
@@ -543,6 +544,17 @@ export async function processOneBatchItem(
   const allPrevious = mergedPrevious.slice(-12);
   console.log(`[QUEUE-PROCESS] Total uniqueness context: ${allPrevious.length} entries (capped from ${mergedPrevious.length})`);
 
+  // Fetch rejection feedback once per batch call (lightweight query)
+  let rejectionFeedback = '';
+  try {
+    rejectionFeedback = await buildFeedbackPromptSection(supabase, queueItem.organization_id);
+    if (rejectionFeedback) {
+      console.log(`[QUEUE-PROCESS] Injecting rejection feedback (${rejectionFeedback.length} chars)`);
+    }
+  } catch (fbErr) {
+    console.warn('[QUEUE-PROCESS] Failed to fetch rejection feedback:', fbErr);
+  }
+
   let itemError: string | undefined;
 
   try {
@@ -560,7 +572,8 @@ export async function processOneBatchItem(
       queueItem.content_item_id,
       batch.model_id,
       allPrevious,
-      selectedVars
+      selectedVars,
+      rejectionFeedback || undefined
     );
 
     const genElapsed = Date.now() - genStartTime;

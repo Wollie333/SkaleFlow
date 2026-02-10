@@ -326,15 +326,19 @@ export function extractContentThemes(brandContext: Record<string, unknown>): str
 export function buildSystemPrompt(
   brandContext: Record<string, unknown>,
   orgName: string,
-  selectedBrandVariables?: string[]
+  selectedBrandVariables?: string[],
+  rejectionFeedback?: string
 ): string {
   const brandPrompt = Object.keys(brandContext).length > 0
     ? buildBrandContextPrompt(brandContext, selectedBrandVariables)
     : `No brand context available. Write general professional content for ${orgName}.`;
 
+  const feedbackSection = rejectionFeedback || '';
+
   return `You are a content strategist and scriptwriter for ${orgName}. You create original, brand-specific content.
 
 ${brandPrompt}
+${feedbackSection}
 
 CRITICAL RULES:
 - Every piece of content you create must be 100% UNIQUE — never repeat a topic, hook, angle, or script structure.
@@ -605,7 +609,8 @@ export async function generateSingleItem(
   contentItemId: string,
   modelOverride: string | null,
   previouslyGenerated: Array<{ title: string; hook: string; topic: string }>,
-  selectedBrandVariables?: string[] | null
+  selectedBrandVariables?: string[] | null,
+  rejectionFeedback?: string
 ): Promise<{
   success: boolean;
   error?: string;
@@ -680,7 +685,7 @@ export async function generateSingleItem(
     ? contentThemes[itemIndex % contentThemes.length]
     : null;
 
-  const systemPrompt = buildSystemPrompt(brandContext, org?.name || 'Your Brand', selectedBrandVariables || undefined);
+  const systemPrompt = buildSystemPrompt(brandContext, org?.name || 'Your Brand', selectedBrandVariables || undefined, rejectionFeedback);
 
   // Higher temperature for free/weaker models
   const temperature = resolvedModel.isFree ? 0.95 : 0.8;

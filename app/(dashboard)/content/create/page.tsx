@@ -7,6 +7,8 @@ import { Button, Card, Badge, Textarea, PageHeader, ActionModal } from '@/compon
 import { BrandVariablesPanel, ScriptTemplateBadge, CreativeAssetSpecs, PlatformOverrideTabs, MediaUpload, GenerationBatchTracker, UTMBuilderModal, PostActionPopup, AIModelPicker, type UploadedFile, type PublishResult } from '@/components/content';
 import { BrandVariableModal } from '@/components/content/brand-variable-modal';
 import { EngineVariationCard } from '@/components/content/engine-variation-card';
+import { VariationSlotEditor, type VariationSlotConfig } from '@/components/content/variation-slot-editor';
+import { RejectionModal } from '@/components/content/rejection-modal';
 import { DriveFilePicker } from '@/components/content/drive-file-picker';
 import { PreviewPanel } from '@/components/content/preview-panel';
 import { InstanceEditForm, type InstanceSpec } from '@/components/content/instance-edit-form';
@@ -189,11 +191,9 @@ export default function ContentCreatePage() {
   const [targetUrl, setTargetUrl] = useState('');
 
   // Engine tab state
-  const [engineFunnelStage, setEngineFunnelStage] = useState<FunnelStage>('awareness');
-  const [engineStorybrandStage, setEngineStorybrandStage] = useState<StoryBrandStage>('character');
-  const [engineFormat, setEngineFormat] = useState<ContentFormat>('short_video_30_60');
-  const [engineAngleId, setEngineAngleId] = useState<string | null>(null);
-  const [engineVariationCount, setEngineVariationCount] = useState(3);
+  const [engineSlots, setEngineSlots] = useState<VariationSlotConfig[]>([
+    { id: crypto.randomUUID(), funnelStage: 'awareness', storybrandStage: 'character', format: 'short_video_30_60', templateOverride: null },
+  ]);
   const [selectedBrandVars, setSelectedBrandVars] = useState<Set<string>>(
     new Set(AI_GENERATION_VARIABLES)
   );
@@ -201,7 +201,6 @@ export default function ContentCreatePage() {
   const [engineBatchId, setEngineBatchId] = useState<string | null>(null);
   const [engineIsGenerating, setEngineIsGenerating] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
-  const [engineTemplateOverride, setEngineTemplateOverride] = useState<string | null>(null);
   const [engineAvailableTemplates, setEngineAvailableTemplates] = useState<Array<{ template_key: string; name: string; category: string; format_category: string | null }>>([]);
   const [contentAngles, setContentAngles] = useState<Array<{
     id: string; name: string; emotional_target: string | null;
@@ -223,6 +222,11 @@ export default function ContentCreatePage() {
   const [showEngineModelModal, setShowEngineModelModal] = useState(false);
   const [showEnginePostAction, setShowEnginePostAction] = useState(false);
   const [engineSaving, setEngineSaving] = useState(false);
+  const [engineRegeneratingIds, setEngineRegeneratingIds] = useState<Set<string>>(new Set());
+  const [engineRejectedIds, setEngineRejectedIds] = useState<Set<string>>(new Set());
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
+  const [rejectingItemId, setRejectingItemId] = useState<string | null>(null);
+  const [rejectionLoading, setRejectionLoading] = useState(false);
 
   // New state for single/manual redesign
   const [platformPlacements, setPlatformPlacements] = useState<PlatformPlacementsMap>(
@@ -914,28 +918,28 @@ export default function ContentCreatePage() {
     setEngineError(null);
     setEngineFullItems([]);
     setEngineBatchId(null);
+    setEngineRejectedIds(new Set());
+    setEngineRegeneratingIds(new Set());
     setEnginePhase('generating');
 
     try {
-      // All items created as undated (today's date)
       const today = format(new Date(), 'yyyy-MM-dd');
 
-      // Create content items
+      // Create one content item per slot with its own config
       const createdIds: string[] = [];
-      for (let i = 0; i < engineVariationCount; i++) {
+      for (const slot of engineSlots) {
         const createRes = await fetch('/api/content/items', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             organizationId,
-            format: engineFormat,
-            funnel_stage: engineFunnelStage,
-            storybrand_stage: engineStorybrandStage,
+            format: slot.format,
+            funnel_stage: slot.funnelStage,
+            storybrand_stage: slot.storybrandStage,
             platforms: enginePlatformsArr,
             scheduled_date: today,
             ai_generated: true,
             status: 'idea',
-            ...(engineAngleId ? { angle_id: engineAngleId } : {}),
           }),
         });
         const createData = await createRes.json();
@@ -1374,12 +1378,88 @@ export default function ContentCreatePage() {
     return allResults;
   };
 
+  const nonRejectedItems = engineFullItems.filter(i => !engineRejectedIds.has(i.id));
+
   const toggleEngineSelectAll = () => {
-    if (engineSelectedIds.size === engineFullItems.length) {
+    if (engineSelectedIds.size === nonRejectedItems.length) {
       setEngineSelectedIds(new Set());
     } else {
-      setEngineSelectedIds(new Set(engineFullItems.map(i => i.id)));
+      setEngineSelectedIds(new Set(nonRejectedItems.map(i => i.id)));
     }
+  };
+
+  // Regenerate handler
+  const handleEngineRegenerate = async (itemId: string) => {
+    setEngineRegeneratingIds(prev => new Set(prev).add(itemId));
+    try {
+      const res = await fetch(`/api/content/items/${itemId}/regenerate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          modelOverride: engineEffectiveModelId,
+          selectedBrandVariables: Array.from(selectedBrandVars),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Regeneration failed');
+      if (data.item) {
+        // Replace item in list
+        setEngineFullItems(prev => prev.map(i => i.id === itemId ? data.item : i));
+        // Update edit fields
+        setEngineEditFields(prev => ({
+          ...prev,
+          [itemId]: {
+            ...(data.item.caption ? { caption: data.item.caption } : {}),
+            ...(data.item.hashtags ? { hashtags: (data.item.hashtags as string[]).join(', ') } : {}),
+            ...(data.item.topic ? { topic: data.item.topic } : {}),
+          },
+        }));
+      }
+    } catch (error) {
+      console.error('Regenerate failed:', error);
+      setEngineError(error instanceof Error ? error.message : 'Regeneration failed');
+    }
+    setEngineRegeneratingIds(prev => {
+      const next = new Set(prev);
+      next.delete(itemId);
+      return next;
+    });
+  };
+
+  // Reject handler — opens modal
+  const handleEngineRejectStart = (itemId: string) => {
+    setRejectingItemId(itemId);
+    setShowRejectionModal(true);
+  };
+
+  // Reject confirm — POST feedback, mark rejected
+  const handleEngineRejectConfirm = async (reason: string, tags: string[]) => {
+    if (!rejectingItemId) return;
+    setRejectionLoading(true);
+    try {
+      await fetch('/api/content/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contentItemId: rejectingItemId,
+          feedbackType: 'rejected',
+          reason,
+          tags,
+        }),
+      });
+      // Mark as rejected + deselect
+      setEngineRejectedIds(prev => new Set(prev).add(rejectingItemId));
+      setEngineSelectedIds(prev => {
+        const next = new Set(prev);
+        next.delete(rejectingItemId);
+        return next;
+      });
+    } catch (error) {
+      console.error('Reject failed:', error);
+    }
+    setRejectionLoading(false);
+    setShowRejectionModal(false);
+    setRejectingItemId(null);
   };
 
   // Current content item ID (for media upload)
@@ -1780,62 +1860,44 @@ export default function ContentCreatePage() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Left column: Config + Generate (3/5) */}
           <div className="lg:col-span-3 space-y-4">
-            {/* Config Card */}
-            <Card>
-              <div className="flex items-center justify-between mb-4">
-                <ConfigSummaryChip
-                  config={{
-                    format: engineFormat,
-                    funnelStage: engineFunnelStage,
-                    storybrandStage: engineStorybrandStage,
-                    angleId: engineAngleId,
-                  }}
-                  angles={contentAngles}
+            {/* Variation Slots */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-charcoal">Variations ({engineSlots.length}/5)</h3>
+                {engineSlots.length < 5 && (
+                  <button
+                    onClick={() => setEngineSlots(prev => [
+                      ...prev,
+                      { id: crypto.randomUUID(), funnelStage: 'awareness', storybrandStage: 'character', format: 'short_video_30_60', templateOverride: null },
+                    ])}
+                    className="text-xs font-medium text-teal hover:underline"
+                  >
+                    + Add Variation
+                  </button>
+                )}
+              </div>
+              {engineSlots.map((slot, idx) => (
+                <VariationSlotEditor
+                  key={slot.id}
+                  slot={slot}
+                  onChange={(updated) => setEngineSlots(prev => prev.map(s => s.id === slot.id ? updated : s))}
+                  onRemove={() => setEngineSlots(prev => prev.filter(s => s.id !== slot.id))}
+                  onDuplicate={() => setEngineSlots(prev => {
+                    const dup = { ...slot, id: crypto.randomUUID() };
+                    const insertAt = prev.findIndex(s => s.id === slot.id) + 1;
+                    const next = [...prev];
+                    next.splice(insertAt, 0, dup);
+                    return next.slice(0, 5); // cap at 5
+                  })}
+                  canRemove={engineSlots.length > 1}
+                  index={idx}
+                  templates={engineAvailableTemplates}
                 />
-                <button
-                  onClick={() => setShowConfigModal(true)}
-                  className="text-xs font-medium text-teal hover:underline"
-                >
-                  Configure
-                </button>
-              </div>
+              ))}
+            </div>
 
-              {/* Content Angle */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-charcoal mb-1">Content Angle</label>
-                <select
-                  value={engineAngleId || ''}
-                  onChange={e => setEngineAngleId(e.target.value || null)}
-                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                >
-                  <option value="">Auto-select</option>
-                  {contentAngles.map(a => (
-                    <option key={a.id} value={a.id}>{a.name}{a.emotional_target ? ` (${a.emotional_target})` : ''}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Variation Count */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-charcoal mb-1">Variations</label>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setEngineVariationCount(prev => Math.max(1, prev - 1))}
-                    className="w-8 h-8 rounded-lg border border-stone/20 text-sm font-medium text-charcoal hover:bg-stone/5 flex items-center justify-center"
-                  >
-                    -
-                  </button>
-                  <span className="text-lg font-semibold text-charcoal w-8 text-center">{engineVariationCount}</span>
-                  <button
-                    onClick={() => setEngineVariationCount(prev => Math.min(3, prev + 1))}
-                    className="w-8 h-8 rounded-lg border border-stone/20 text-sm font-medium text-charcoal hover:bg-stone/5 flex items-center justify-center"
-                  >
-                    +
-                  </button>
-                  <span className="text-xs text-stone">posts (1-3)</span>
-                </div>
-              </div>
-
+            {/* Shared Controls */}
+            <Card>
               {/* Brand Variables pill */}
               <div className="mb-4">
                 <button
@@ -1857,7 +1919,7 @@ export default function ContentCreatePage() {
               </div>
 
               {/* AI Model row */}
-              <div className="mb-4">
+              <div>
                 <div className="flex items-center justify-between px-4 py-2.5 rounded-lg border border-stone/20">
                   <div className="flex items-center gap-2">
                     <SparklesIcon className="w-4 h-4 text-stone" />
@@ -1869,7 +1931,7 @@ export default function ContentCreatePage() {
                         'text-xs px-1.5 py-0.5 rounded-full font-medium',
                         engineSelectedModel.isFree ? 'bg-teal/10 text-teal' : 'bg-gold/10 text-gold'
                       )}>
-                        {engineSelectedModel.isFree ? 'Free' : `~${engineSelectedModel.estimatedCreditsPerMessage * engineVariationCount} cr`}
+                        {engineSelectedModel.isFree ? 'Free' : `~${engineSelectedModel.estimatedCreditsPerMessage * engineSlots.length} cr`}
                       </span>
                     )}
                   </div>
@@ -1881,23 +1943,6 @@ export default function ContentCreatePage() {
                   </button>
                 </div>
               </div>
-
-              {/* Template override (optional) */}
-              <div className="mb-4">
-                <label className="block text-xs font-medium text-stone/60 mb-1">Template Override</label>
-                <select
-                  value={engineTemplateOverride || ''}
-                  onChange={(e) => setEngineTemplateOverride(e.target.value || null)}
-                  className="w-full px-3 py-2 text-sm border border-stone/20 rounded-lg bg-white"
-                >
-                  <option value="">AI will choose best fit</option>
-                  {engineAvailableTemplates.map((t) => (
-                    <option key={t.template_key} value={t.template_key}>
-                      {t.name} ({t.category === 'social_framework' ? 'Social' : t.format_category || t.category})
-                    </option>
-                  ))}
-                </select>
-              </div>
             </Card>
 
             {/* Generate Button Card */}
@@ -1908,15 +1953,15 @@ export default function ContentCreatePage() {
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-stone">Estimated total cost</span>
                     <span className="font-semibold text-charcoal">
-                      ~{engineSelectedModel.estimatedCreditsPerMessage * engineVariationCount} credits
-                      <span className="text-xs text-stone ml-1">({creditsToRand(engineSelectedModel.estimatedCreditsPerMessage * engineVariationCount)})</span>
+                      ~{engineSelectedModel.estimatedCreditsPerMessage * engineSlots.length} credits
+                      <span className="text-xs text-stone ml-1">({creditsToRand(engineSelectedModel.estimatedCreditsPerMessage * engineSlots.length)})</span>
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs border-t border-stone/10 pt-1">
                     <span className="text-stone">Your balance</span>
                     <span className={cn(
                       'font-medium',
-                      balance.totalRemaining >= engineSelectedModel.estimatedCreditsPerMessage * engineVariationCount ? 'text-teal' : 'text-red-500'
+                      balance.totalRemaining >= engineSelectedModel.estimatedCreditsPerMessage * engineSlots.length ? 'text-teal' : 'text-red-500'
                     )}>
                       {balance.totalRemaining.toLocaleString()} credits
                     </span>
@@ -1934,7 +1979,7 @@ export default function ContentCreatePage() {
                 className="w-full"
               >
                 <BoltIcon className="w-4 h-4 mr-2" />
-                {engineIsGenerating ? 'Creating...' : `Generate ${engineVariationCount} Variation${engineVariationCount !== 1 ? 's' : ''}`}
+                {engineIsGenerating ? 'Creating...' : `Generate ${engineSlots.length} Variation${engineSlots.length !== 1 ? 's' : ''}`}
               </Button>
 
               {engineError && (
@@ -2025,7 +2070,7 @@ export default function ContentCreatePage() {
                 onClick={toggleEngineSelectAll}
                 className="text-xs font-medium text-teal hover:underline"
               >
-                {engineSelectedIds.size === engineFullItems.length ? 'Deselect All' : 'Select All'}
+                {engineSelectedIds.size === nonRejectedItems.length ? 'Deselect All' : 'Select All'}
               </button>
               <Button
                 onClick={() => setShowEnginePostAction(true)}
@@ -2053,6 +2098,7 @@ export default function ContentCreatePage() {
                 userName={userName}
                 isSelected={engineSelectedIds.has(item.id)}
                 onToggleSelect={() => {
+                  if (engineRejectedIds.has(item.id)) return;
                   setEngineSelectedIds(prev => {
                     const next = new Set(prev);
                     if (next.has(item.id)) next.delete(item.id);
@@ -2060,6 +2106,10 @@ export default function ContentCreatePage() {
                     return next;
                   });
                 }}
+                onRegenerate={handleEngineRegenerate}
+                onReject={handleEngineRejectStart}
+                isRegenerating={engineRegeneratingIds.has(item.id)}
+                isRejected={engineRejectedIds.has(item.id)}
               />
             ))}
           </div>
@@ -2248,23 +2298,15 @@ export default function ContentCreatePage() {
         format={selectedFormat}
       />
 
-      {/* Config Modal â€” handles both single and engine modes */}
+      {/* Config Modal â€" single mode only */}
       <ConfigModal
         isOpen={showConfigModal}
         onClose={() => setShowConfigModal(false)}
-        config={mode === 'engine'
-          ? { format: engineFormat, funnelStage: engineFunnelStage, storybrandStage: engineStorybrandStage, angleId: engineAngleId }
-          : contentConfig}
+        config={contentConfig}
         onSave={(c) => {
-          if (mode === 'engine') {
-            setEngineFormat(c.format);
-            setEngineFunnelStage(c.funnelStage);
-            setEngineStorybrandStage(c.storybrandStage);
-          } else {
-            setSelectedFormat(c.format);
-            setFunnelStage(c.funnelStage);
-            setStorybrandStage(c.storybrandStage);
-          }
+          setSelectedFormat(c.format);
+          setFunnelStage(c.funnelStage);
+          setStorybrandStage(c.storybrandStage);
         }}
         angles={contentAngles}
       />
@@ -2302,7 +2344,7 @@ export default function ContentCreatePage() {
               models={models}
               selectedModelId={engineEffectiveModelId}
               onSelect={setEngineModelId}
-              costLabelFn={m => m.isFree ? 'Free' : `~${m.estimatedCreditsPerMessage * engineVariationCount} cr total`}
+              costLabelFn={m => m.isFree ? 'Free' : `~${m.estimatedCreditsPerMessage * engineSlots.length} cr total`}
             />
 
             {engineSelectedModel && !engineSelectedModel.isFree && !balanceLoading && balance && (
@@ -2310,14 +2352,14 @@ export default function ContentCreatePage() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-stone">Estimated total cost</span>
                   <span className="font-semibold text-charcoal">
-                    ~{engineSelectedModel.estimatedCreditsPerMessage * engineVariationCount} credits
+                    ~{engineSelectedModel.estimatedCreditsPerMessage * engineSlots.length} credits
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs border-t border-stone/10 pt-1">
                   <span className="text-stone">Your balance</span>
                   <span className={cn(
                     'font-medium',
-                    balance.totalRemaining >= engineSelectedModel.estimatedCreditsPerMessage * engineVariationCount ? 'text-teal' : 'text-red-500'
+                    balance.totalRemaining >= engineSelectedModel.estimatedCreditsPerMessage * engineSlots.length ? 'text-teal' : 'text-red-500'
                   )}>
                     {balance.totalRemaining.toLocaleString()} credits
                   </span>
@@ -2350,6 +2392,14 @@ export default function ContentCreatePage() {
         isLoading={engineSaving}
         bulkMode={true}
         bulkCount={engineSelectedCount}
+      />
+
+      {/* Rejection modal */}
+      <RejectionModal
+        isOpen={showRejectionModal}
+        onClose={() => { setShowRejectionModal(false); setRejectingItemId(null); }}
+        onConfirm={handleEngineRejectConfirm}
+        isLoading={rejectionLoading}
       />
     </div>
   );
