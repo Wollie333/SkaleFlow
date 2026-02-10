@@ -5,6 +5,7 @@ import {
   CpuChipIcon,
   SparklesIcon,
   CheckBadgeIcon,
+  UsersIcon,
 } from '@heroicons/react/24/outline';
 
 interface ContentStats {
@@ -42,6 +43,7 @@ interface UserOverviewTabProps {
     platform: string;
     updated_at: string;
   }>;
+  teamMemberCount?: number;
 }
 
 function formatDate(dateStr: string) {
@@ -73,6 +75,7 @@ export function UserOverviewTab({
   subscriptionStatus,
   totalCreditsUsed,
   recentContent,
+  teamMemberCount,
 }: UserOverviewTabProps) {
   const completedPhases = brandProgress.filter(p => p.status === 'completed').length;
   const brandPercent = Math.round((completedPhases / brandProgress.length) * 100);
@@ -121,6 +124,16 @@ export function UserOverviewTab({
           </div>
           <p className="text-2xl font-bold text-charcoal capitalize">{subscriptionStatus || 'None'}</p>
         </div>
+
+        {teamMemberCount !== undefined && (
+          <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <UsersIcon className="w-5 h-5 text-teal" />
+              <p className="text-xs font-semibold text-stone uppercase tracking-wider">Team Members</p>
+            </div>
+            <p className="text-2xl font-bold text-charcoal">{teamMemberCount}</p>
+          </div>
+        )}
       </div>
 
       {/* Brand Progress */}

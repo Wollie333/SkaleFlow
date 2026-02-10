@@ -55,6 +55,7 @@ export async function GET() {
         org_members!org_members_user_id_fkey (
           organization_id,
           role,
+          team_role,
           organizations (
             name,
             subscriptions (

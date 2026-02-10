@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui';
-import { CheckCircleIcon, PauseCircleIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, PauseCircleIcon, PlayIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 interface UserData {
   id: string;
@@ -43,6 +43,9 @@ interface UserProfileCardProps {
   onApprove: () => void;
   onPause: () => void;
   onAssignOrg: () => void;
+  onPauseSubscription?: () => void;
+  onCancelSubscription?: () => void;
+  onReactivateSubscription?: () => void;
   actionLoading: boolean;
 }
 
@@ -75,6 +78,9 @@ export function UserProfileCard({
   onApprove,
   onPause,
   onAssignOrg,
+  onPauseSubscription,
+  onCancelSubscription,
+  onReactivateSubscription,
   actionLoading,
 }: UserProfileCardProps) {
   const badge = roleBadge[user.role] || roleBadge.client;
@@ -190,6 +196,68 @@ export function UserProfileCard({
                   </span>
                 </div>
               )}
+
+              {/* Subscription Quick Actions */}
+              <div className="pt-3 mt-2 border-t border-cream flex flex-col gap-2">
+                {(organization.subscription.status === 'active' || organization.subscription.status === 'trial') && (
+                  <div className="flex items-center gap-2">
+                    {onPauseSubscription && (
+                      <button
+                        onClick={onPauseSubscription}
+                        disabled={actionLoading}
+                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
+                      >
+                        <PauseCircleIcon className="w-3.5 h-3.5" />
+                        Pause
+                      </button>
+                    )}
+                    {onCancelSubscription && (
+                      <button
+                        onClick={onCancelSubscription}
+                        disabled={actionLoading}
+                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
+                      >
+                        <XMarkIcon className="w-3.5 h-3.5" />
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                )}
+                {organization.subscription.status === 'paused' && (
+                  <div className="flex items-center gap-2">
+                    {onReactivateSubscription && (
+                      <button
+                        onClick={onReactivateSubscription}
+                        disabled={actionLoading}
+                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-teal hover:text-teal-light bg-teal/5 hover:bg-teal/10 px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
+                      >
+                        <PlayIcon className="w-3.5 h-3.5" />
+                        Reactivate
+                      </button>
+                    )}
+                    {onCancelSubscription && (
+                      <button
+                        onClick={onCancelSubscription}
+                        disabled={actionLoading}
+                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
+                      >
+                        <XMarkIcon className="w-3.5 h-3.5" />
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                )}
+                {organization.subscription.status === 'cancelled' && onReactivateSubscription && (
+                  <button
+                    onClick={onReactivateSubscription}
+                    disabled={actionLoading}
+                    className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-teal hover:text-teal-light bg-teal/5 hover:bg-teal/10 px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
+                  >
+                    <PlayIcon className="w-3.5 h-3.5" />
+                    Reactivate
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             <p className="text-sm text-stone">No subscription</p>

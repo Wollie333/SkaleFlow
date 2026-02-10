@@ -10,6 +10,7 @@ export type UserRole = 'super_admin' | 'client' | 'team_member';
 export type OrgMemberRole = 'owner' | 'admin' | 'member' | 'viewer';
 export type SubscriptionStatus = 'trial' | 'active' | 'paused' | 'cancelled' | 'expired';
 export type InvitationStatus = 'pending' | 'accepted' | 'expired' | 'cancelled';
+export type InvitationEmailStatus = 'pending' | 'sent' | 'failed' | 'delivered' | 'bounced';
 export type BrandEngineStatus = 'not_started' | 'in_progress' | 'completed';
 export type PhaseStatus = 'not_started' | 'in_progress' | 'completed' | 'locked';
 export type CalendarStatus = 'draft' | 'active' | 'completed' | 'archived';
@@ -79,6 +80,7 @@ export type AdGenerationBatchStatus = 'pending' | 'processing' | 'completed' | '
 export type TemplateCategory = 'video_script' | 'hook' | 'cta' | 'social_framework' | 'seo_content' | 'email_outreach' | 'web_copy';
 export type TemplateTier = 'core_rotation' | 'high_impact' | 'strategic';
 export type TemplateContentType = 'post' | 'script' | 'hook' | 'cta';
+export type ContentFeedbackType = 'rejected' | 'accepted' | 'regenerated';
 
 export interface Database {
   public: {
@@ -183,6 +185,7 @@ export interface Database {
           role: OrgMemberRole;
           invited_by: string | null;
           joined_at: string;
+          team_role: string | null;
         };
         Insert: {
           id?: string;
@@ -191,6 +194,7 @@ export interface Database {
           role?: OrgMemberRole;
           invited_by?: string | null;
           joined_at?: string;
+          team_role?: string | null;
         };
         Update: {
           id?: string;
@@ -199,6 +203,7 @@ export interface Database {
           role?: OrgMemberRole;
           invited_by?: string | null;
           joined_at?: string;
+          team_role?: string | null;
         };
         Relationships: [
           {
@@ -236,6 +241,10 @@ export interface Database {
           expires_at: string;
           created_at: string;
           accepted_at: string | null;
+          email_status: InvitationEmailStatus;
+          email_sent_at: string | null;
+          email_error: string | null;
+          resend_email_id: string | null;
         };
         Insert: {
           id?: string;
@@ -248,6 +257,10 @@ export interface Database {
           expires_at?: string;
           created_at?: string;
           accepted_at?: string | null;
+          email_status?: InvitationEmailStatus;
+          email_sent_at?: string | null;
+          email_error?: string | null;
+          resend_email_id?: string | null;
         };
         Update: {
           id?: string;
@@ -260,6 +273,10 @@ export interface Database {
           expires_at?: string;
           created_at?: string;
           accepted_at?: string | null;
+          email_status?: InvitationEmailStatus;
+          email_sent_at?: string | null;
+          email_error?: string | null;
+          resend_email_id?: string | null;
         };
         Relationships: [
           {
@@ -3646,6 +3663,57 @@ export interface Database {
             columns: ["template_id"];
             isOneToOne: false;
             referencedRelation: "content_templates";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      content_feedback: {
+        Row: {
+          id: string;
+          content_item_id: string;
+          organization_id: string;
+          user_id: string;
+          feedback_type: ContentFeedbackType;
+          reason: string | null;
+          tags: string[];
+          generation_config: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          content_item_id: string;
+          organization_id: string;
+          user_id: string;
+          feedback_type: ContentFeedbackType;
+          reason?: string | null;
+          tags?: string[];
+          generation_config?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          content_item_id?: string;
+          organization_id?: string;
+          user_id?: string;
+          feedback_type?: ContentFeedbackType;
+          reason?: string | null;
+          tags?: string[];
+          generation_config?: Json;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "content_feedback_content_item_id_fkey";
+            columns: ["content_item_id"];
+            isOneToOne: false;
+            referencedRelation: "content_items";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "content_feedback_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
             referencedColumns: ["id"];
           },
         ];

@@ -57,7 +57,7 @@ export async function GET() {
     // Get pending invitations for this org
     const { data: pendingInvites } = await serviceSupabase
       .from('invitations')
-      .select('id, email, created_at, expires_at, status')
+      .select('id, email, created_at, expires_at, status, email_status, email_sent_at, email_error')
       .eq('organization_name', org.name)
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
@@ -144,7 +144,7 @@ export async function POST(request: Request) {
     expiresAt.setDate(expiresAt.getDate() + 7);
 
     // Create invitation record
-    const { error: inviteError } = await serviceSupabase
+    const { data: invitation, error: inviteError } = await serviceSupabase
       .from('invitations')
       .insert({
         email,
@@ -152,9 +152,11 @@ export async function POST(request: Request) {
         token,
         expires_at: expiresAt.toISOString(),
         invited_by: user.id,
-      });
+      })
+      .select('id')
+      .single();
 
-    if (inviteError) {
+    if (inviteError || !invitation) {
       console.error('Failed to create invitation:', inviteError);
       return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 });
     }
@@ -171,22 +173,41 @@ export async function POST(request: Request) {
 
     const inviterName = inviter?.full_name || inviter?.email || 'Your team';
 
-    // Send invite email via Resend
+    // Send invite email via Resend + track status
+    let emailStatus: string = 'pending';
     try {
-      await sendTeamInviteEmail({
+      const emailResult = await sendTeamInviteEmail({
         to: email,
         inviterName,
         organizationName: org.name,
         inviteUrl,
       });
+
+      emailStatus = 'sent';
+      await serviceSupabase
+        .from('invitations')
+        .update({
+          email_status: 'sent',
+          email_sent_at: new Date().toISOString(),
+          resend_email_id: emailResult?.id || null,
+        })
+        .eq('id', invitation.id);
     } catch (emailError) {
       console.error('Failed to send invitation email:', emailError);
-      // Don't fail — invite was created, admin can share link manually
+      emailStatus = 'failed';
+      await serviceSupabase
+        .from('invitations')
+        .update({
+          email_status: 'failed',
+          email_error: emailError instanceof Error ? emailError.message : 'Unknown error',
+        })
+        .eq('id', invitation.id);
     }
 
     return NextResponse.json({
       success: true,
       inviteUrl,
+      emailStatus,
     });
   } catch (error) {
     console.error('Team POST error:', error);
@@ -194,12 +215,12 @@ export async function POST(request: Request) {
   }
 }
 
-// PATCH — Cancel a pending invitation
+// PATCH — Cancel or resend a pending invitation
 export async function PATCH(request: Request) {
   try {
     const { invitationId, action } = await request.json();
 
-    if (action !== 'cancel' || !invitationId) {
+    if (!invitationId || !['cancel', 'resend'].includes(action)) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 
@@ -219,7 +240,7 @@ export async function PATCH(request: Request) {
       .single();
 
     if (!membership || !['owner', 'admin'].includes(membership.role)) {
-      return NextResponse.json({ error: 'Only owners and admins can cancel invitations' }, { status: 403 });
+      return NextResponse.json({ error: 'Only owners and admins can manage invitations' }, { status: 403 });
     }
 
     // Get org name to verify the invitation belongs to this org
@@ -233,22 +254,92 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
-    // Update invitation status
-    const { error: updateError } = await serviceSupabase
-      .from('invitations')
-      .update({ status: 'cancelled' })
-      .eq('id', invitationId)
-      .eq('organization_name', org.name)
-      .eq('status', 'pending');
+    if (action === 'cancel') {
+      const { error: updateError } = await serviceSupabase
+        .from('invitations')
+        .update({ status: 'cancelled' })
+        .eq('id', invitationId)
+        .eq('organization_name', org.name)
+        .eq('status', 'pending');
 
-    if (updateError) {
-      console.error('Failed to cancel invitation:', updateError);
-      return NextResponse.json({ error: 'Failed to cancel invitation' }, { status: 500 });
+      if (updateError) {
+        console.error('Failed to cancel invitation:', updateError);
+        return NextResponse.json({ error: 'Failed to cancel invitation' }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true });
     }
 
-    return NextResponse.json({ success: true });
+    // action === 'resend'
+    const { data: invite } = await serviceSupabase
+      .from('invitations')
+      .select('id, email, token, expires_at, organization_name')
+      .eq('id', invitationId)
+      .eq('organization_name', org.name)
+      .eq('status', 'pending')
+      .single();
+
+    if (!invite) {
+      return NextResponse.json({ error: 'Invitation not found or already used' }, { status: 404 });
+    }
+
+    // Refresh token and expiry if expired
+    let token = invite.token;
+    const isExpired = new Date(invite.expires_at) < new Date();
+    if (isExpired) {
+      token = crypto.randomBytes(32).toString('hex');
+      const newExpiry = new Date();
+      newExpiry.setDate(newExpiry.getDate() + 7);
+      await serviceSupabase
+        .from('invitations')
+        .update({ token, expires_at: newExpiry.toISOString() })
+        .eq('id', invite.id);
+    }
+
+    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${token}`;
+
+    const { data: inviter } = await serviceSupabase
+      .from('users')
+      .select('full_name, email')
+      .eq('id', user.id)
+      .single();
+
+    const inviterName = inviter?.full_name || inviter?.email || 'Your team';
+
+    let emailStatus: string = 'pending';
+    try {
+      const emailResult = await sendTeamInviteEmail({
+        to: invite.email,
+        inviterName,
+        organizationName: invite.organization_name,
+        inviteUrl,
+      });
+
+      emailStatus = 'sent';
+      await serviceSupabase
+        .from('invitations')
+        .update({
+          email_status: 'sent',
+          email_sent_at: new Date().toISOString(),
+          email_error: null,
+          resend_email_id: emailResult?.id || null,
+        })
+        .eq('id', invite.id);
+    } catch (emailError) {
+      console.error('Failed to resend invitation email:', emailError);
+      emailStatus = 'failed';
+      await serviceSupabase
+        .from('invitations')
+        .update({
+          email_status: 'failed',
+          email_error: emailError instanceof Error ? emailError.message : 'Unknown error',
+        })
+        .eq('id', invite.id);
+    }
+
+    return NextResponse.json({ success: true, emailStatus });
   } catch (error) {
     console.error('Team PATCH error:', error);
-    return NextResponse.json({ error: 'Failed to cancel invitation' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to process invitation action' }, { status: 500 });
   }
 }

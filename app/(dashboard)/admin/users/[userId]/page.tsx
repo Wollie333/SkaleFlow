@@ -8,8 +8,10 @@ import { UserProfileCard } from '@/components/admin/user-detail/user-profile-car
 import { UserOverviewTab } from '@/components/admin/user-detail/user-overview-tab';
 import { UserActivityTimeline } from '@/components/admin/user-detail/user-activity-timeline';
 import { UserCreditsTab } from '@/components/admin/user-detail/user-credits-tab';
+import { UserTeamTab } from '@/components/admin/user-detail/user-team-tab';
+import { UserBillingTab } from '@/components/admin/user-detail/user-billing-tab';
 
-type Tab = 'overview' | 'activity' | 'credits';
+type Tab = 'overview' | 'team' | 'billing' | 'activity' | 'credits';
 
 interface UserDetail {
   user: {
@@ -72,6 +74,40 @@ interface UserDetail {
     description: string;
     timestamp: string;
     metadata?: Record<string, unknown>;
+  }>;
+  teamMembers: Array<{
+    id: string;
+    role: string;
+    team_role: string | null;
+    joined_at: string;
+    user_id: string;
+    users: {
+      id: string;
+      email: string;
+      full_name: string;
+      last_login_at: string | null;
+    } | null;
+  }>;
+  pendingInvitations: Array<{
+    id: string;
+    email: string;
+    status: string;
+    created_at: string;
+    expires_at: string;
+    email_status: string;
+    email_sent_at: string | null;
+    email_error: string | null;
+  }>;
+  invoices: Array<{
+    id: string;
+    invoice_number: string;
+    type: string;
+    status: string;
+    subtotal: number;
+    tax_amount: number;
+    total: number;
+    currency: string;
+    created_at: string;
   }>;
 }
 
@@ -234,7 +270,7 @@ export default function AdminUserDetailPage() {
 
   if (!data) return null;
 
-  const { user, organization, creditsByFeature, contentStats, brandProgress, activity } = data;
+  const { user, organization, creditsByFeature, contentStats, brandProgress, activity, teamMembers, pendingInvitations, invoices } = data;
   const currentTierId = organization?.subscription?.tier?.id || '';
 
   // Extract recent content items from activity for the overview tab
@@ -264,6 +300,8 @@ export default function AdminUserDetailPage() {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'overview', label: 'Overview' },
+    { key: 'team', label: `Team (${(teamMembers || []).length})` },
+    { key: 'billing', label: 'Billing' },
     { key: 'activity', label: 'Activity' },
     { key: 'credits', label: 'Credits & Usage' },
   ];
@@ -416,6 +454,32 @@ export default function AdminUserDetailPage() {
               subscriptionStatus={organization?.subscription?.status || null}
               totalCreditsUsed={totalCreditsUsed}
               recentContent={recentContent}
+              teamMemberCount={(teamMembers || []).length}
+            />
+          )}
+
+          {activeTab === 'team' && (
+            <UserTeamTab
+              teamMembers={teamMembers || []}
+              pendingInvitations={pendingInvitations || []}
+              userId={userId}
+              onRefresh={fetchData}
+            />
+          )}
+
+          {activeTab === 'billing' && (
+            <UserBillingTab
+              subscription={organization?.subscription || null}
+              credits={organization?.credits || null}
+              transactions={transactions}
+              invoices={invoices || []}
+              tiers={tiers}
+              onPauseSubscription={() => handleAction({ action: 'pause_subscription' })}
+              onCancelSubscription={() => handleAction({ action: 'cancel_subscription' })}
+              onReactivateSubscription={() => handleAction({ action: 'reactivate_subscription' })}
+              onChangeTier={handleTierChange}
+              actionLoading={actionLoading}
+              tierLoading={tierLoading}
             />
           )}
 
@@ -441,6 +505,9 @@ export default function AdminUserDetailPage() {
             onApprove={() => handleAction({ approved: true })}
             onPause={() => handleAction({ action: 'pause' })}
             onAssignOrg={() => setShowOrgPopup(true)}
+            onPauseSubscription={() => handleAction({ action: 'pause_subscription' })}
+            onCancelSubscription={() => handleAction({ action: 'cancel_subscription' })}
+            onReactivateSubscription={() => handleAction({ action: 'reactivate_subscription' })}
             actionLoading={actionLoading}
           />
         </div>

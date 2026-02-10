@@ -16,6 +16,7 @@ interface SubscriptionTier {
 interface UserOrg {
   organization_id: string;
   role: string;
+  team_role: string | null;
   organizations: {
     name: string;
     subscriptions: {
@@ -335,8 +336,16 @@ export default function AdminUsersPage() {
                       <span className="font-medium text-charcoal">{user.full_name}</span>
                     </td>
                     <td className="px-6 py-4 text-stone">{user.email}</td>
-                    <td className="px-6 py-4 text-stone">
-                      {user.org_members?.[0]?.organizations?.name || (
+                    <td className="px-6 py-4">
+                      {user.org_members?.[0]?.organizations?.name ? (
+                        <div>
+                          <p className="text-charcoal font-medium text-sm">{user.org_members[0].organizations.name}</p>
+                          <p className="text-xs text-stone capitalize">
+                            {user.org_members[0].role === 'owner' ? 'Owner' : user.org_members[0].role}
+                            {user.org_members[0].team_role ? ` / ${user.org_members[0].team_role}` : ''}
+                          </p>
+                        </div>
+                      ) : (
                         <button
                           onClick={(e) => { e.stopPropagation(); setOrgPopup(user.id); }}
                           className="text-teal hover:text-teal-light text-sm font-medium underline"
@@ -425,8 +434,16 @@ export default function AdminUsersPage() {
                       <span className="font-medium text-charcoal">{user.full_name}</span>
                     </td>
                     <td className="px-6 py-4 text-stone">{user.email}</td>
-                    <td className="px-6 py-4 text-stone">
-                      {user.org_members?.[0]?.organizations?.name || (
+                    <td className="px-6 py-4">
+                      {user.org_members?.[0]?.organizations?.name ? (
+                        <div>
+                          <p className="text-charcoal font-medium text-sm">{user.org_members[0].organizations.name}</p>
+                          <p className="text-xs text-stone capitalize">
+                            {user.org_members[0].role === 'owner' ? 'Owner' : user.org_members[0].role}
+                            {user.org_members[0].team_role ? ` / ${user.org_members[0].team_role}` : ''}
+                          </p>
+                        </div>
+                      ) : (
                         <button
                           onClick={(e) => { e.stopPropagation(); setOrgPopup(user.id); }}
                           className="text-teal hover:text-teal-light text-sm font-medium underline"

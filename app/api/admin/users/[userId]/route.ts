@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { initializeCreditBalance } from '@/lib/ai/credits';
+import { sendTeamInviteEmail } from '@/lib/resend';
+import crypto from 'crypto';
 
 const FEATURE_LABELS: Record<string, string> = {
   brand_chat: 'Brand Engine',
@@ -96,6 +98,8 @@ export async function GET(
     const userData = userResult.data;
     const membership = memberResult.data;
     const orgId = membership?.organization_id || null;
+    const orgData = membership?.organizations as Record<string, unknown> | null;
+    const orgName = (orgData?.name as string) || '';
 
     // Phase 2: All org-dependent queries (parallel)
     // Wrap Supabase queries with .then() to convert PromiseLike â†’ Promise
@@ -111,6 +115,9 @@ export async function GET(
       recentContentResult,
       notifResult,
       batchResult,
+      teamMembersResult,
+      pendingInvitationsResult,
+      invoicesResult,
     ] = await Promise.all([
       // Credit balance
       orgId
@@ -142,6 +149,18 @@ export async function GET(
       orgId
         ? wrap(serviceSupabase.from('generation_batches').select('id, status, total_items, completed_items, created_at').eq('organization_id', orgId).order('created_at', { ascending: false }).limit(20))
         : empty([] as Array<{ id: string; status: string; total_items: number; completed_items: number; created_at: string }>),
+      // Team members for the org
+      orgId
+        ? wrap(serviceSupabase.from('org_members').select('id, role, team_role, joined_at, user_id, users(id, email, full_name, last_login_at)').eq('organization_id', orgId).order('joined_at', { ascending: true }))
+        : empty([] as Array<{ id: string; role: string; team_role: string | null; joined_at: string; user_id: string; users: { id: string; email: string; full_name: string; last_login_at: string | null } | null }>),
+      // Pending invitations for the org (with email tracking)
+      orgId
+        ? wrap(serviceSupabase.from('invitations').select('id, email, status, created_at, expires_at, email_status, email_sent_at, email_error').eq('organization_name', orgName).in('status', ['pending']).order('created_at', { ascending: false }))
+        : empty([] as Array<{ id: string; email: string; status: string; created_at: string; expires_at: string; email_status: string; email_sent_at: string | null; email_error: string | null }>),
+      // Invoices for the org
+      orgId
+        ? wrap(serviceSupabase.from('invoices').select('id, invoice_number, type, status, subtotal, tax_amount, total, currency, created_at').eq('organization_id', orgId).order('created_at', { ascending: false }).limit(20))
+        : empty([] as Array<{ id: string; invoice_number: string; type: string; status: string; subtotal: number; tax_amount: number; total: number; currency: string; created_at: string }>),
     ]);
 
     // Build organization response
@@ -288,6 +307,9 @@ export async function GET(
       contentStats,
       brandProgress,
       activity: activity.slice(0, 50),
+      teamMembers: teamMembersResult.data || [],
+      pendingInvitations: pendingInvitationsResult.data || [],
+      invoices: invoicesResult.data || [],
     });
   } catch (error) {
     console.error('Error fetching user detail:', error);
@@ -322,7 +344,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Handle pause
+    // Handle pause (user account)
     if (action === 'pause') {
       const { error } = await serviceSupabase
         .from('users')
@@ -332,6 +354,155 @@ export async function PATCH(
       if (error) {
         return NextResponse.json({ error: 'Failed to pause user' }, { status: 500 });
       }
+      return NextResponse.json({ success: true });
+    }
+
+    // Handle subscription pause
+    if (action === 'pause_subscription') {
+      const { data: mem } = await serviceSupabase
+        .from('org_members')
+        .select('organization_id')
+        .eq('user_id', userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (!mem) return NextResponse.json({ error: 'User has no organization' }, { status: 400 });
+
+      const { error } = await serviceSupabase
+        .from('subscriptions')
+        .update({ status: 'paused', updated_at: new Date().toISOString() })
+        .eq('organization_id', mem.organization_id);
+
+      if (error) return NextResponse.json({ error: 'Failed to pause subscription' }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
+    // Handle subscription cancel
+    if (action === 'cancel_subscription') {
+      const { data: mem } = await serviceSupabase
+        .from('org_members')
+        .select('organization_id')
+        .eq('user_id', userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (!mem) return NextResponse.json({ error: 'User has no organization' }, { status: 400 });
+
+      const { error } = await serviceSupabase
+        .from('subscriptions')
+        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+        .eq('organization_id', mem.organization_id);
+
+      if (error) return NextResponse.json({ error: 'Failed to cancel subscription' }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
+    // Handle subscription reactivate
+    if (action === 'reactivate_subscription') {
+      const { data: mem } = await serviceSupabase
+        .from('org_members')
+        .select('organization_id')
+        .eq('user_id', userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (!mem) return NextResponse.json({ error: 'User has no organization' }, { status: 400 });
+
+      const { error } = await serviceSupabase
+        .from('subscriptions')
+        .update({ status: 'active', updated_at: new Date().toISOString() })
+        .eq('organization_id', mem.organization_id);
+
+      if (error) return NextResponse.json({ error: 'Failed to reactivate subscription' }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
+    // Handle team role update
+    if (action === 'update_team_role') {
+      const { memberId, teamRole } = body;
+      if (!memberId) return NextResponse.json({ error: 'memberId is required' }, { status: 400 });
+
+      const { error } = await serviceSupabase
+        .from('org_members')
+        .update({ team_role: teamRole || null })
+        .eq('id', memberId);
+
+      if (error) return NextResponse.json({ error: 'Failed to update team role' }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
+    // Handle resend invite
+    if (action === 'resend_invite') {
+      const { invitationId } = body;
+      if (!invitationId) return NextResponse.json({ error: 'invitationId is required' }, { status: 400 });
+
+      const { data: invite } = await serviceSupabase
+        .from('invitations')
+        .select('id, email, token, expires_at, organization_name')
+        .eq('id', invitationId)
+        .eq('status', 'pending')
+        .single();
+
+      if (!invite) return NextResponse.json({ error: 'Invitation not found' }, { status: 404 });
+
+      // Refresh token + expiry if expired
+      let token = invite.token;
+      if (new Date(invite.expires_at) < new Date()) {
+        token = crypto.randomBytes(32).toString('hex');
+        const newExpiry = new Date();
+        newExpiry.setDate(newExpiry.getDate() + 7);
+        await serviceSupabase
+          .from('invitations')
+          .update({ token, expires_at: newExpiry.toISOString() })
+          .eq('id', invite.id);
+      }
+
+      const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${token}`;
+
+      try {
+        const emailResult = await sendTeamInviteEmail({
+          to: invite.email,
+          inviterName: 'SkaleFlow Admin',
+          organizationName: invite.organization_name,
+          inviteUrl,
+        });
+
+        await serviceSupabase
+          .from('invitations')
+          .update({
+            email_status: 'sent',
+            email_sent_at: new Date().toISOString(),
+            email_error: null,
+            resend_email_id: emailResult?.id || null,
+          })
+          .eq('id', invite.id);
+
+        return NextResponse.json({ success: true, emailStatus: 'sent' });
+      } catch (emailError) {
+        await serviceSupabase
+          .from('invitations')
+          .update({
+            email_status: 'failed',
+            email_error: emailError instanceof Error ? emailError.message : 'Unknown error',
+          })
+          .eq('id', invite.id);
+
+        return NextResponse.json({ success: true, emailStatus: 'failed' });
+      }
+    }
+
+    // Handle cancel invite
+    if (action === 'cancel_invite') {
+      const { invitationId } = body;
+      if (!invitationId) return NextResponse.json({ error: 'invitationId is required' }, { status: 400 });
+
+      const { error } = await serviceSupabase
+        .from('invitations')
+        .update({ status: 'cancelled' })
+        .eq('id', invitationId)
+        .eq('status', 'pending');
+
+      if (error) return NextResponse.json({ error: 'Failed to cancel invitation' }, { status: 500 });
       return NextResponse.json({ success: true });
     }
 
