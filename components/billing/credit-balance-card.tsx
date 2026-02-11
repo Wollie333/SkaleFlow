@@ -13,6 +13,8 @@ interface CreditBalanceCardProps {
   isSuperAdmin?: boolean;
   apiCostUSD30d?: number;
   apiCostUSDAllTime?: number;
+  systemTotalCredits?: number;
+  systemTotalCostUSD?: number;
 }
 
 export function CreditBalanceCard({
@@ -24,6 +26,8 @@ export function CreditBalanceCard({
   isSuperAdmin = false,
   apiCostUSD30d,
   apiCostUSDAllTime,
+  systemTotalCredits,
+  systemTotalCostUSD,
 }: CreditBalanceCardProps) {
   const totalRemaining = monthlyRemaining + topupRemaining;
   const monthlyPercent = monthlyTotal > 0 ? Math.round((monthlyRemaining / monthlyTotal) * 100) : 0;
@@ -35,10 +39,10 @@ export function CreditBalanceCard({
   if (compact) {
     return (
       <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-cream-warm text-sm">
-        {isSuperAdmin && apiCostUSDAllTime !== undefined ? (
+        {isSuperAdmin && systemTotalCredits !== undefined ? (
           <>
-            <span className="font-semibold text-charcoal">${apiCostUSDAllTime.toFixed(2)}</span>
-            <span className="text-stone">API spent</span>
+            <span className="font-semibold text-charcoal">{systemTotalCredits.toLocaleString()}</span>
+            <span className="text-stone">credits available</span>
           </>
         ) : (
           <>
@@ -47,6 +51,73 @@ export function CreditBalanceCard({
           </>
         )}
       </div>
+    );
+  }
+
+  // Super Admin: Show system-wide available credits
+  if (isSuperAdmin && systemTotalCredits !== undefined && systemTotalCostUSD !== undefined) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-charcoal">System Available Credits</h3>
+          <Badge variant="outline" className="bg-teal/10 text-teal">
+            Real-Time
+          </Badge>
+        </div>
+
+        {/* Main Balance Display */}
+        <div className="mb-6 p-6 rounded-xl bg-gradient-to-br from-teal/5 to-teal/10 border border-teal/20">
+          <div className="flex items-baseline justify-between mb-2">
+            <span className="text-sm text-stone">Total Credits Available</span>
+            <div className="flex items-baseline gap-3">
+              <span className={`text-4xl font-bold ${systemTotalCredits < 0 ? 'text-red-600' : 'text-teal'}`}>
+                {systemTotalCredits.toLocaleString()}
+              </span>
+              <span className="text-lg text-stone">credits</span>
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between pt-3 border-t border-teal/10">
+            <span className="text-sm text-stone">USD Value (Cost Basis)</span>
+            <div className="flex items-baseline gap-3">
+              <span className={`text-3xl font-bold ${systemTotalCostUSD < 0 ? 'text-red-600' : 'text-charcoal'}`}>
+                ${Math.abs(systemTotalCostUSD).toFixed(2)}
+              </span>
+              {systemTotalCostUSD < 0 && (
+                <Badge variant="outline" className="bg-red-100 text-red-700">
+                  Negative
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Explanation */}
+        <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
+          <div className="flex items-start gap-3">
+            <span className="text-xl">ℹ️</span>
+            <div className="flex-1">
+              <h5 className="text-sm font-semibold text-blue-900 mb-1">What This Means</h5>
+              <div className="text-xs text-blue-800 space-y-1">
+                <p>• <strong>Available Credits:</strong> Sum of all credits across all organizations in the system</p>
+                <p>• <strong>USD Value:</strong> Actual API cost value of these credits (what you'd pay providers)</p>
+                <p>• <strong>Real-Time:</strong> Updates every 30 seconds as users consume credits</p>
+                <p>• <strong>Negative Balance:</strong> System has used more than allocated (super admins can go negative)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Status Indicator */}
+        <div className="mt-4 flex items-center justify-between p-3 rounded-lg bg-cream-warm">
+          <span className="text-sm font-medium text-charcoal">System Status</span>
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${systemTotalCredits > 10000 ? 'bg-green-500' : systemTotalCredits > 0 ? 'bg-amber-500' : 'bg-red-500'} animate-pulse`} />
+            <span className="text-sm text-stone">
+              {systemTotalCredits > 10000 ? 'Healthy' : systemTotalCredits > 0 ? 'Low' : 'Negative'}
+            </span>
+          </div>
+        </div>
+      </Card>
     );
   }
 

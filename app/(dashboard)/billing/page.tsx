@@ -283,6 +283,8 @@ export default function BillingPage() {
             isSuperAdmin={balance.isSuperAdmin}
             apiCostUSD30d={balance.apiCostUSD30d}
             apiCostUSDAllTime={balance.apiCostUSDAllTime}
+            systemTotalCredits={balance.systemTotalCredits}
+            systemTotalCostUSD={balance.systemTotalCostUSD}
           />
         </div>
       )}

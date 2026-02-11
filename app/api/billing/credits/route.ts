@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { checkCredits, isSuperAdmin } from '@/lib/ai/server';
 import { MODEL_CATALOG } from '@/lib/ai/providers/registry';
+import { creditsToRealCost } from '@/lib/ai/utils';
 
 function computeApiCostUSD(model: string, inputTokens: number, outputTokens: number): number {
   const config = MODEL_CATALOG.find(m => m.id === model || m.modelId === model);
@@ -52,7 +53,10 @@ export async function GET(request: Request) {
         totalSystemCredits += (bal.monthly_credits_remaining || 0) + (bal.topup_credits_remaining || 0);
       }
 
-      // Get all-time API usage across all orgs
+      // Convert available credits to USD cost value
+      const systemTotalCostUSD = creditsToRealCost(totalSystemCredits);
+
+      // Get all-time API usage across all orgs for the admin tab
       const { data: allUsage } = await supabase
         .from('ai_usage')
         .select('model, input_tokens, output_tokens');
@@ -65,7 +69,7 @@ export async function GET(request: Request) {
       return NextResponse.json({
         ...balance,
         systemTotalCredits: totalSystemCredits,
-        systemTotalCostUSD: Math.round(totalApiCostUSD * 10000) / 10000,
+        systemTotalCostUSD: Math.round(systemTotalCostUSD * 100) / 100,
         apiCostUSD30d: 0, // Deprecated for system view
         apiCostUSDAllTime: Math.round(totalApiCostUSD * 10000) / 10000,
       });
