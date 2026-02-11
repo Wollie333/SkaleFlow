@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isToday, startOfWeek, endOfWeek, isSameMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckCircleIcon, EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import {
   DndContext,
   DragOverlay,
@@ -32,6 +32,7 @@ interface BaseContentItem {
   hashtags: string[] | null;
   platforms: string[];
   status: ContentStatus;
+  media_urls?: string[] | null;
   [key: string]: unknown;
 }
 
@@ -105,34 +106,122 @@ function DraggablePost({ item, onItemClick }: { item: BaseContentItem; onItemCli
     data: { item },
   });
   const isPublished = item.status === 'published';
+  const hasMedia = item.media_urls && item.media_urls.length > 0;
+  const thumbnail = hasMedia ? item.media_urls[0] : null;
+
+  // Get status badge color
+  const getStatusColor = (status: ContentStatus) => {
+    switch (status) {
+      case 'published': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'scheduled': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'approved': return 'bg-purple-100 text-purple-700 border-purple-200';
+      case 'pending_review': return 'bg-amber-100 text-amber-700 border-amber-200';
+      default: return 'bg-stone-100 text-stone-700 border-stone-200';
+    }
+  };
+
+  // Get funnel stage indicator color
+  const getFunnelColor = (stage: FunnelStage) => {
+    switch (stage) {
+      case 'awareness': return 'bg-green-500';
+      case 'consideration': return 'bg-blue-500';
+      case 'conversion': return 'bg-orange-500';
+    }
+  };
 
   return (
-    <button
+    <div
       ref={setNodeRef}
       {...attributes}
       {...listeners}
       onClick={() => onItemClick(item)}
       className={cn(
-        'w-full text-left px-2 py-1 rounded text-xs truncate transition-colors',
-        isPublished ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 ring-1 ring-emerald-300' : FUNNEL_COLORS[item.funnel_stage],
+        'group relative bg-white rounded-lg border border-stone/10 overflow-hidden hover:shadow-md transition-all cursor-pointer',
         isDragging && 'opacity-30'
       )}
     >
-      <div className="flex items-center gap-1">
-        {isPublished && <CheckCircleIcon className="w-3 h-3 shrink-0 text-emerald-600" />}
-        <span className="font-medium">{item.time_slot}</span>
-        <span className="truncate flex-1">
-          {item.topic || item.format.replace(/_/g, ' ')}
-        </span>
-        {item.platforms.length > 0 && (
-          <div className="flex -space-x-0.5 shrink-0">
-            {item.platforms.slice(0, 3).map(p => (
-              <div key={p} className={cn('w-1.5 h-1.5 rounded-full', PLATFORM_DOTS[p] || 'bg-stone')} />
+      {/* Thumbnail */}
+      {hasMedia && thumbnail && (
+        <div className="aspect-video w-full bg-stone/5 overflow-hidden">
+          <img
+            src={thumbnail}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
+      <div className="p-2 space-y-1.5">
+        {/* Header: Time + Status */}
+        <div className="flex items-center justify-between gap-1">
+          <span className="text-xs font-bold text-teal">{item.time_slot}</span>
+          <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full border', getStatusColor(item.status))}>
+            {item.status.replace('_', ' ')}
+          </span>
+        </div>
+
+        {/* Content preview */}
+        <p className="text-[11px] text-charcoal line-clamp-2 leading-tight">
+          {item.caption || item.topic || item.format.replace(/_/g, ' ')}
+        </p>
+
+        {/* Metadata row */}
+        <div className="flex items-center justify-between">
+          {/* Platform dots */}
+          <div className="flex -space-x-1">
+            {item.platforms.slice(0, 4).map(p => (
+              <div
+                key={p}
+                className={cn('w-4 h-4 rounded-full border-2 border-white', PLATFORM_DOTS[p] || 'bg-stone')}
+                title={p}
+              />
             ))}
+            {item.platforms.length > 4 && (
+              <div className="w-4 h-4 rounded-full border-2 border-white bg-stone text-[8px] text-white flex items-center justify-center">
+                +{item.platforms.length - 4}
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Funnel stage indicator */}
+          <div className={cn('w-2 h-2 rounded-full', getFunnelColor(item.funnel_stage))} title={item.funnel_stage} />
+        </div>
       </div>
-    </button>
+
+      {/* Hover actions overlay */}
+      <div className="absolute inset-0 bg-charcoal/90 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onItemClick(item);
+          }}
+          className="p-2 bg-white/10 rounded hover:bg-white/20 transition-colors"
+          title="View"
+        >
+          <EyeIcon className="w-4 h-4 text-white" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onItemClick(item);
+          }}
+          className="p-2 bg-white/10 rounded hover:bg-white/20 transition-colors"
+          title="Edit"
+        >
+          <PencilIcon className="w-4 h-4 text-white" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            // Handle delete
+          }}
+          className="p-2 bg-white/10 rounded hover:bg-white/20 transition-colors"
+          title="Delete"
+        >
+          <TrashIcon className="w-4 h-4 text-white" />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -162,13 +251,13 @@ function DroppableDay({
     <div
       ref={selectionMode ? undefined : setNodeRef}
       className={cn(
-        'min-h-[120px] p-2 border-r border-b border-stone/5 relative group',
+        'min-h-[180px] p-2 border-r border-b border-stone/5 relative group',
         !isCurrentMonth && 'bg-stone/5',
         isToday(day) && 'bg-teal/5',
         !selectionMode && isOver && 'bg-teal/10 ring-2 ring-inset ring-teal/30'
       )}
     >
-      <div className="flex items-center justify-between mb-1.5">
+      <div className="flex items-center justify-between mb-2">
         <p
           className={cn(
             'text-sm font-medium',
@@ -181,15 +270,15 @@ function DroppableDay({
         {!selectionMode && onAddPost && (
           <button
             onClick={() => onAddPost(day)}
-            className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-teal/10 transition-all"
+            className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-teal/10 transition-all"
           >
-            <PlusIcon className="w-3.5 h-3.5 text-teal" />
+            <PlusIcon className="w-4 h-4 text-teal" />
           </button>
         )}
       </div>
 
-      <div className="space-y-1">
-        {dayItems.slice(0, 3).map(item => (
+      <div className="space-y-2">
+        {dayItems.slice(0, 4).map(item => (
           selectionMode && selectedIds && onToggleSelection ? (
             <SelectablePost
               key={item.id}
@@ -201,9 +290,9 @@ function DroppableDay({
             <DraggablePost key={item.id} item={item} onItemClick={onItemClick} />
           )
         ))}
-        {dayItems.length > 3 && (
-          <p className="text-xs text-stone px-2">
-            +{dayItems.length - 3} more
+        {dayItems.length > 4 && (
+          <p className="text-xs text-stone/60 px-2 py-1 text-center">
+            +{dayItems.length - 4} more
           </p>
         )}
       </div>

@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import { VariableTextarea, VariableInput } from '@/components/content/variable-field';
 import { useBrandVariables } from '@/hooks/useBrandVariables';
 import { PLATFORM_CHARACTER_LIMITS } from '@/config/creative-specs';
+import { HashtagPickerModal } from '@/components/social/hashtag-picker-modal';
+import { BookmarkIcon } from '@heroicons/react/24/outline';
 
 interface PlatformOverrideTabsProps {
   platforms: string[];
@@ -26,9 +28,29 @@ export function PlatformOverrideTabs({
   organizationId,
 }: PlatformOverrideTabsProps) {
   const [activeTab, setActiveTab] = useState('universal');
+  const [showHashtagPicker, setShowHashtagPicker] = useState(false);
   const { categories: brandCategories, flatVariables: brandFlatVariables } = useBrandVariables(organizationId || null);
 
   const tabs = ['universal', ...platforms];
+
+  const handleHashtagSelect = (hashtags: string[]) => {
+    if (activeTab === 'universal') {
+      // Merge with existing hashtags, avoiding duplicates
+      const existingHashtags = universalHashtags;
+      const newHashtags = [...new Set([...existingHashtags, ...hashtags])];
+      onUniversalChange(universalCaption, newHashtags);
+    } else {
+      // Platform-specific hashtags
+      const existingHashtags = platformSpecs[activeTab]?.hashtags ?? universalHashtags;
+      const newHashtags = [...new Set([...existingHashtags, ...hashtags])];
+      onPlatformChange(
+        activeTab,
+        platformSpecs[activeTab]?.caption ?? universalCaption,
+        newHashtags
+      );
+    }
+    setShowHashtagPicker(false);
+  };
 
   return (
     <div className="space-y-3">
@@ -60,14 +82,28 @@ export function PlatformOverrideTabs({
             brandFlatVariables={brandFlatVariables}
             brandCategories={brandCategories}
           />
-          <VariableInput
-            label="Hashtags"
-            value={universalHashtags.join(' ')}
-            onValueChange={v => onUniversalChange(universalCaption, v.split(/\s+/).filter(Boolean))}
-            placeholder="#hashtag1 #hashtag2 (~ for brand variables)"
-            brandFlatVariables={brandFlatVariables}
-            brandCategories={brandCategories}
-          />
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-sm font-medium text-charcoal">Hashtags</label>
+              {organizationId && (
+                <button
+                  onClick={() => setShowHashtagPicker(true)}
+                  type="button"
+                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-teal hover:text-teal-dark border border-teal/20 hover:border-teal rounded-lg transition-colors"
+                >
+                  <BookmarkIcon className="w-3.5 h-3.5" />
+                  Insert from Vault
+                </button>
+              )}
+            </div>
+            <VariableInput
+              value={universalHashtags.join(' ')}
+              onValueChange={v => onUniversalChange(universalCaption, v.split(/\s+/).filter(Boolean))}
+              placeholder="#hashtag1 #hashtag2 (~ for brand variables)"
+              brandFlatVariables={brandFlatVariables}
+              brandCategories={brandCategories}
+            />
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
@@ -81,8 +117,20 @@ export function PlatformOverrideTabs({
             brandCategories={brandCategories}
           />
           <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-sm font-medium text-charcoal">Hashtags</label>
+              {organizationId && (
+                <button
+                  onClick={() => setShowHashtagPicker(true)}
+                  type="button"
+                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-teal hover:text-teal-dark border border-teal/20 hover:border-teal rounded-lg transition-colors"
+                >
+                  <BookmarkIcon className="w-3.5 h-3.5" />
+                  Insert from Vault
+                </button>
+              )}
+            </div>
             <VariableInput
-              label="Hashtags"
               value={(platformSpecs[activeTab]?.hashtags ?? universalHashtags).join(' ')}
               onValueChange={v => onPlatformChange(activeTab, platformSpecs[activeTab]?.caption ?? universalCaption, v.split(/\s+/).filter(Boolean))}
               placeholder="#hashtag1 #hashtag2 (~ for brand variables)"
@@ -95,6 +143,16 @@ export function PlatformOverrideTabs({
             <p className="text-xs text-teal">Custom content for this platform</p>
           )}
         </div>
+      )}
+
+      {/* Hashtag Picker Modal */}
+      {showHashtagPicker && organizationId && (
+        <HashtagPickerModal
+          onSelect={handleHashtagSelect}
+          onClose={() => setShowHashtagPicker(false)}
+          organizationId={organizationId}
+          selectedPlatforms={activeTab === 'universal' ? platforms : [activeTab]}
+        />
       )}
     </div>
   );
