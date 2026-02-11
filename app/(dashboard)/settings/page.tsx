@@ -11,7 +11,6 @@ import { SocialConnectionCard } from '@/components/integrations/social-connectio
 import type { SocialConnectionRow } from '@/components/integrations/social-connection-card';
 import { PageSelectionModal } from '@/components/integrations/page-selection-modal';
 import { GoogleDriveConnectionCard } from '@/components/integrations/google-drive-connection-card';
-import { AIProviderConnections } from '@/components/admin/ai-provider-connections';
 import type { SocialPlatform, Json } from '@/types/database';
 
 interface Organization {
@@ -615,11 +614,6 @@ export default function SettingsPage() {
             onDisconnect={handleDisconnectDrive}
           />
         </Card>
-      )}
-
-      {/* AI Provider Connections (super admin only) */}
-      {userRole === 'super_admin' && (
-        <AIProviderConnections />
       )}
 
       {/* Google Calendar Integration (admin only) */}

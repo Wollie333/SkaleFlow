@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/ui';
 import { CurrencyDollarIcon } from '@heroicons/react/24/outline';
+import { AIProviderConnections } from '@/components/admin/ai-provider-connections';
 
 interface AdminModel {
   id: string;
@@ -292,6 +293,11 @@ export default function AdminCostsPage() {
           </div>
         </div>
       )}
+
+      {/* AI Provider Connections */}
+      <div className="mb-8">
+        <AIProviderConnections />
+      </div>
 
       {/* Model Controls — toggle on/off */}
       {adminModels.length > 0 && (
