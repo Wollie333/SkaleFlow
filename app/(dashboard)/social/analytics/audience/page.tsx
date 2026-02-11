@@ -17,14 +17,14 @@ export default async function AudienceInsightsPage() {
     redirect('/login');
   }
 
-  const { data: userData } = await supabase
-    .from('users')
-    .select('organization_id')
-    .eq('id', user.id)
+  const { data: membership } = await supabase
+    .from('org_members')
+    .select('organization_id').eq('user_id', user.id)
+    
     .single();
 
-  if (!userData?.organization_id) {
-    redirect('/onboarding');
+  if (!membership?.organization_id) {
+    redirect('/dashboard');
   }
 
   return (
