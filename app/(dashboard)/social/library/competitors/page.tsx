@@ -19,21 +19,23 @@ export default async function CompetitorManagementPage() {
   }
 
   // Get user's organization
-  const { data: userData } = await supabase
-    .from('users')
+  const { data: membership } = await supabase
+    .from('org_members')
     .select('organization_id')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
-  if (!userData?.organization_id) {
-    redirect('/onboarding');
+  if (!membership?.organization_id) {
+    redirect('/dashboard');
   }
+
+  const organizationId = membership.organization_id;
 
   // Fetch competitors
   const { data: competitors, error: competitorsError } = await supabase
     .from('competitors')
     .select('*')
-    .eq('organization_id', userData.organization_id)
+    .eq('organization_id', organizationId)
     .order('created_at', { ascending: false });
 
   // Fetch recent metrics for each competitor
@@ -64,7 +66,7 @@ export default async function CompetitorManagementPage() {
   return (
     <CompetitorManagementClient
       initialCompetitors={competitorsWithMetrics}
-      organizationId={userData.organization_id}
+      organizationId={organizationId}
     />
   );
 }

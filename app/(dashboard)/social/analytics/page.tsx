@@ -19,15 +19,17 @@ export default async function AnalyticsOverviewPage() {
   }
 
   // Get user's organization
-  const { data: userData } = await supabase
-    .from('users')
+  const { data: membership } = await supabase
+    .from('org_members')
     .select('organization_id')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
-  if (!userData?.organization_id) {
-    redirect('/onboarding');
+  if (!membership?.organization_id) {
+    redirect('/dashboard');
   }
+
+  const organizationId = membership.organization_id;
 
   // Date ranges for comparison
   const now = new Date();
@@ -52,7 +54,7 @@ export default async function AnalyticsOverviewPage() {
         engagement_rate
       )
     `)
-    .eq('organization_id', userData.organization_id)
+    .eq('organization_id', organizationId)
     .eq('publish_status', 'published')
     .gte('published_at', thirtyDaysAgo.toISOString())
     .order('published_at', { ascending: false });
@@ -68,7 +70,7 @@ export default async function AnalyticsOverviewPage() {
         engagement_rate
       )
     `)
-    .eq('organization_id', userData.organization_id)
+    .eq('organization_id', organizationId)
     .eq('publish_status', 'published')
     .gte('published_at', sixtyDaysAgo.toISOString())
     .lt('published_at', thirtyDaysAgo.toISOString());
@@ -147,7 +149,7 @@ export default async function AnalyticsOverviewPage() {
         impressions
       )
     `)
-    .eq('organization_id', userData.organization_id)
+    .eq('organization_id', organizationId)
     .eq('publish_status', 'published')
     .gte('published_at', thirtyDaysAgo.toISOString())
     .not('post_analytics', 'is', null)
@@ -194,7 +196,7 @@ export default async function AnalyticsOverviewPage() {
       growth={growth}
       topPosts={topPosts || []}
       platformMetrics={platformMetrics}
-      organizationId={userData.organization_id}
+      organizationId={organizationId}
     />
   );
 }

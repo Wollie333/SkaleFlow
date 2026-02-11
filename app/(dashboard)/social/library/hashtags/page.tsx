@@ -19,21 +19,23 @@ export default async function HashtagVaultPage() {
   }
 
   // Get user's organization
-  const { data: userData } = await supabase
-    .from('users')
+  const { data: membership } = await supabase
+    .from('org_members')
     .select('organization_id')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
-  if (!userData?.organization_id) {
-    redirect('/onboarding');
+  if (!membership?.organization_id) {
+    redirect('/dashboard');
   }
+
+  const organizationId = membership.organization_id;
 
   // Fetch hashtag sets
   const { data: hashtagSets, error: setsError } = await supabase
     .from('hashtag_sets')
     .select('*')
-    .eq('organization_id', userData.organization_id)
+    .eq('organization_id', organizationId)
     .order('last_used_at', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
@@ -41,7 +43,7 @@ export default async function HashtagVaultPage() {
   const { data: hashtagAnalytics } = await supabase
     .from('hashtag_analytics')
     .select('*')
-    .eq('organization_id', userData.organization_id);
+    .eq('organization_id', organizationId);
 
   // Calculate performance metrics for each set
   const setsWithMetrics = (hashtagSets || []).map((set) => {
@@ -69,7 +71,7 @@ export default async function HashtagVaultPage() {
   return (
     <HashtagVaultClient
       initialHashtagSets={setsWithMetrics}
-      organizationId={userData.organization_id}
+      organizationId={organizationId}
     />
   );
 }

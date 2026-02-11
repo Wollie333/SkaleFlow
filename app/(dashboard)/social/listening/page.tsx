@@ -19,21 +19,23 @@ export default async function SocialListeningPage() {
   }
 
   // Get user's organization
-  const { data: userData } = await supabase
-    .from('users')
+  const { data: membership } = await supabase
+    .from('org_members')
     .select('organization_id')
-    .eq('id', user.id)
+    .eq('user_id', user.id)
     .single();
 
-  if (!userData?.organization_id) {
-    redirect('/onboarding');
+  if (!membership?.organization_id) {
+    redirect('/dashboard');
   }
+
+  const organizationId = membership.organization_id;
 
   // Fetch keywords being tracked
   const { data: keywords } = await supabase
     .from('social_listening_keywords')
     .select('*')
-    .eq('organization_id', userData.organization_id)
+    .eq('organization_id', organizationId)
     .eq('is_active', true)
     .order('created_at', { ascending: false });
 
@@ -44,7 +46,7 @@ export default async function SocialListeningPage() {
   const { data: mentions } = await supabase
     .from('social_listening_mentions')
     .select('*')
-    .eq('organization_id', userData.organization_id)
+    .eq('organization_id', organizationId)
     .gte('discovered_at', sevenDaysAgo.toISOString())
     .order('published_at', { ascending: false })
     .limit(50);
@@ -69,7 +71,7 @@ export default async function SocialListeningPage() {
   const { data: trends } = await supabase
     .from('social_listening_trends')
     .select('*')
-    .eq('organization_id', userData.organization_id)
+    .eq('organization_id', organizationId)
     .eq('time_period', '24h')
     .gte('analyzed_at', oneDayAgo.toISOString())
     .order('mention_count', { ascending: false })
@@ -79,7 +81,7 @@ export default async function SocialListeningPage() {
   const { data: competitors } = await supabase
     .from('competitors')
     .select('id, name')
-    .eq('organization_id', userData.organization_id)
+    .eq('organization_id', organizationId)
     .eq('is_active', true)
     .eq('track_mentions', true);
 
@@ -90,7 +92,7 @@ export default async function SocialListeningPage() {
       sentimentCounts={sentimentCounts}
       trends={trends || []}
       competitors={competitors || []}
-      organizationId={userData.organization_id}
+      organizationId={organizationId}
     />
   );
 }

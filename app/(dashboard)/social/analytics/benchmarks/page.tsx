@@ -19,25 +19,29 @@ export default async function BenchmarksPage() {
   }
 
   // Get user's organization
-  const { data: userData } = await supabase
-    .from('users')
-    .select('organization_id, organizations(industry)')
-    .eq('id', user.id)
+  const { data: membership } = await supabase
+    .from('org_members')
+    .select('organization_id')
+    .eq('user_id', user.id)
     .single();
 
-  if (!userData?.organization_id) {
-    redirect('/onboarding');
+  if (!membership?.organization_id) {
+    redirect('/dashboard');
   }
 
-  const organization = Array.isArray(userData.organizations)
-    ? userData.organizations[0]
-    : userData.organizations;
+  const organizationId = membership.organization_id;
+
+  const { data: organizationData } = await supabase
+    .from('organizations')
+    .select('industry')
+    .eq('id', organizationId)
+    .single();
 
   // Fetch industry benchmarks
   const { data: benchmarks } = await supabase
     .from('industry_benchmarks')
     .select('*')
-    .eq('industry', organization?.industry || 'general')
+    .eq('industry', organizationData?.industry || 'general')
     .order('metric_name');
 
   // Calculate organization's metrics (last 30 days)
@@ -54,7 +58,7 @@ export default async function BenchmarksPage() {
         reach
       )
     `)
-    .eq('organization_id', userData.organization_id)
+    .eq('organization_id', organizationId)
     .eq('publish_status', 'published')
     .gte('published_at', thirtyDaysAgo.toISOString());
 
@@ -98,7 +102,7 @@ export default async function BenchmarksPage() {
     <BenchmarksClient
       benchmarks={benchmarks || []}
       orgMetrics={orgMetrics}
-      industry={organization?.industry || 'general'}
+      industry={organizationData?.industry || 'general'}
     />
   );
 }
