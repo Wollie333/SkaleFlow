@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/ui';
 import {
   VideoCameraIcon,
@@ -58,10 +59,15 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 };
 
 export default function MeetingsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const filterParam = searchParams.get('filter') as FilterTab | null;
+  const viewParam = searchParams.get('view') as ViewMode | null;
+
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<FilterTab>('upcoming');
-  const [viewMode, setViewMode] = useState<ViewMode>('calendar');
+  const [filter, setFilter] = useState<FilterTab>(filterParam || 'upcoming');
+  const [viewMode, setViewMode] = useState<ViewMode>(viewParam || 'calendar');
   const [actionLoading, setActionLoading] = useState('');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
@@ -69,6 +75,43 @@ export default function MeetingsPage() {
   useEffect(() => {
     fetchMeetings();
   }, []);
+
+  // Sync filters with URL parameters
+  useEffect(() => {
+    if (filterParam && ['upcoming', 'past', 'all'].includes(filterParam)) {
+      setFilter(filterParam);
+    }
+  }, [filterParam]);
+
+  useEffect(() => {
+    if (viewParam && ['list', 'calendar'].includes(viewParam)) {
+      setViewMode(viewParam);
+    }
+  }, [viewParam]);
+
+  const handleFilterChange = (newFilter: FilterTab) => {
+    setFilter(newFilter);
+    const params = new URLSearchParams(searchParams.toString());
+    if (newFilter === 'upcoming') {
+      params.delete('filter');
+    } else {
+      params.set('filter', newFilter);
+    }
+    const queryString = params.toString();
+    router.push(queryString ? `/admin/meetings?${queryString}` : '/admin/meetings', { scroll: false });
+  };
+
+  const handleViewModeChange = (newView: ViewMode) => {
+    setViewMode(newView);
+    const params = new URLSearchParams(searchParams.toString());
+    if (newView === 'calendar') {
+      params.delete('view');
+    } else {
+      params.set('view', newView);
+    }
+    const queryString = params.toString();
+    router.push(queryString ? `/admin/meetings?${queryString}` : '/admin/meetings', { scroll: false });
+  };
 
   const fetchMeetings = async () => {
     try {
@@ -175,7 +218,7 @@ export default function MeetingsPage() {
         action={
           <div className="flex gap-1 bg-cream-warm rounded-lg p-1 w-fit">
             <button
-              onClick={() => setViewMode('calendar')}
+              onClick={() => handleViewModeChange('calendar')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 viewMode === 'calendar'
                   ? 'bg-white text-charcoal shadow-sm'
@@ -186,7 +229,7 @@ export default function MeetingsPage() {
               Calendar
             </button>
             <button
-              onClick={() => setViewMode('list')}
+              onClick={() => handleViewModeChange('list')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 viewMode === 'list'
                   ? 'bg-white text-charcoal shadow-sm'
@@ -401,7 +444,7 @@ export default function MeetingsPage() {
             {(['upcoming', 'past', 'all'] as FilterTab[]).map((tab) => (
               <button
                 key={tab}
-                onClick={() => setFilter(tab)}
+                onClick={() => handleFilterChange(tab)}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors capitalize ${
                   filter === tab
                     ? 'bg-white text-charcoal shadow-sm'

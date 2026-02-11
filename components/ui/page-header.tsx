@@ -26,7 +26,7 @@ export function PageHeader({ title, icon, breadcrumbs, subtitle, action, classNa
     if (isValidElement(icon)) return icon;
     // Component reference (function or forwardRef) — render it
     const Icon = icon as React.ComponentType<{ className?: string }>;
-    return <Icon className="w-6 h-6 text-teal" />;
+    return <Icon className="w-5 h-5 md:w-6 md:h-6 text-teal" />;
   };
 
   return (
@@ -50,21 +50,21 @@ export function PageHeader({ title, icon, breadcrumbs, subtitle, action, classNa
       )}
 
       {/* Title Row */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-2 md:gap-3">
           {icon && (
-            <div className="p-2 bg-teal/10 rounded-lg">
+            <div className="p-1.5 md:p-2 bg-teal/10 rounded-lg flex-shrink-0">
               {renderIcon()}
             </div>
           )}
           <div>
-            <h1 className="text-display-md text-charcoal">{title}</h1>
+            <h1 className="text-xl md:text-2xl lg:text-display-md text-charcoal">{title}</h1>
             {subtitle && (
-              <p className="text-sm text-stone mt-0.5">{subtitle}</p>
+              <p className="text-xs md:text-sm text-stone mt-0.5">{subtitle}</p>
             )}
           </div>
         </div>
-        {action && <div className="flex items-center gap-2">{action}</div>}
+        {action && <div className="flex items-center gap-2 flex-wrap">{action}</div>}
       </div>
     </div>
   );

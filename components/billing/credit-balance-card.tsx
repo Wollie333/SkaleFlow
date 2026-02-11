@@ -2,6 +2,7 @@
 
 import { Card } from '@/components/ui';
 import Link from 'next/link';
+import { apiCostToSalesRevenue } from '@/lib/ai/utils';
 
 interface CreditBalanceCardProps {
   monthlyRemaining: number;
@@ -51,23 +52,70 @@ export function CreditBalanceCard({
 
   return (
     <Card className="p-6">
-      {/* Super Admin: API Cost Overview */}
+      {/* Super Admin: API Cost & Revenue Overview */}
       {isSuperAdmin && (apiCostUSD30d !== undefined || apiCostUSDAllTime !== undefined) && (
-        <div className="mb-5 p-4 rounded-xl bg-charcoal/5 border border-charcoal/10">
-          <h4 className="text-xs font-semibold text-stone uppercase tracking-wider mb-3">API Cost (Real Spend)</h4>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-stone">Last 30 Days</p>
-              <p className="text-xl font-bold text-charcoal">${(apiCostUSD30d || 0).toFixed(4)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-stone">All Time</p>
-              <p className="text-xl font-bold text-charcoal">${(apiCostUSDAllTime || 0).toFixed(4)}</p>
+        <div className="mb-5 space-y-4">
+          {/* Real API Cost */}
+          <div className="p-4 rounded-xl bg-red-50 border border-red-200">
+            <h4 className="text-xs font-semibold text-red-900 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <span>💸</span>
+              <span>Real API Cost (What You Pay)</span>
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-red-700">Last 30 Days</p>
+                <p className="text-xl font-bold text-red-900">${(apiCostUSD30d || 0).toFixed(4)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-red-700">All Time</p>
+                <p className="text-xl font-bold text-red-900">${(apiCostUSDAllTime || 0).toFixed(4)}</p>
+              </div>
             </div>
           </div>
-          {isSuperAdmin && (
-            <p className="text-xs text-teal mt-2 font-medium">Admin bypass active — credits not deducted</p>
-          )}
+
+          {/* Sales Revenue Potential */}
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+            <h4 className="text-xs font-semibold text-emerald-900 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <span>💰</span>
+              <span>Sales Revenue (100% Markup)</span>
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-emerald-700">Last 30 Days</p>
+                <p className="text-xl font-bold text-emerald-900">${apiCostToSalesRevenue(apiCostUSD30d || 0).toFixed(2)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-emerald-700">All Time</p>
+                <p className="text-xl font-bold text-emerald-900">${apiCostToSalesRevenue(apiCostUSDAllTime || 0).toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Profit Margin */}
+          <div className="p-4 rounded-xl bg-teal/10 border border-teal/30">
+            <h4 className="text-xs font-semibold text-teal uppercase tracking-wider mb-3 flex items-center gap-2">
+              <span>📈</span>
+              <span>Profit Margin (Revenue - Cost)</span>
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-teal/70">Last 30 Days</p>
+                <p className="text-xl font-bold text-teal">
+                  ${(apiCostToSalesRevenue(apiCostUSD30d || 0) - (apiCostUSD30d || 0)).toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-teal/70">All Time</p>
+                <p className="text-xl font-bold text-teal">
+                  ${(apiCostToSalesRevenue(apiCostUSDAllTime || 0) - (apiCostUSDAllTime || 0)).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-xs text-stone text-center font-medium bg-amber-50 border border-amber-200 rounded-lg p-2">
+            ⚠️ Admin bypass active — credits not deducted from your usage
+          </p>
         </div>
       )}
 

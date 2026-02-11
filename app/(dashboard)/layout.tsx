@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
-import { Header } from '@/components/layout/header';
-import { Sidebar } from '@/components/layout/sidebar';
+import { DashboardLayoutClient } from './layout-client';
 import type { FeaturePermissions } from '@/lib/permissions';
 
 export default async function DashboardLayout({
@@ -173,25 +172,27 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-cream">
-      <Header user={{ email: user.email!, full_name: userData?.full_name }} initialUnreadCount={notificationCount || 0} organizationId={membership?.organization_id} draftCount={draftCount} />
-      <Sidebar
-        brandProgress={brandProgress}
-        contentStats={contentStats}
-        userRole={userData?.role}
-        orgRole={orgRole}
-        tierName={tierName}
-        pipelineCount={pipelineCount}
-        contentEngineEnabled={contentEngineEnabled}
-        notificationCount={notificationCount || 0}
-        pendingReviewCount={pendingReviewCount}
-        teamPermissions={teamPermissions}
-      />
-      <main className="ml-60 pt-16 min-h-screen overflow-x-hidden">
-        <div className="p-6 lg:p-8 max-w-[calc(100vw-15rem)]">
-          {children}
-        </div>
-      </main>
-    </div>
+    <DashboardLayoutClient
+      headerProps={{
+        user: { email: user.email!, full_name: userData?.full_name },
+        initialUnreadCount: notificationCount || 0,
+        organizationId: membership?.organization_id,
+        draftCount: draftCount,
+      }}
+      sidebarProps={{
+        brandProgress,
+        contentStats,
+        userRole: userData?.role,
+        orgRole,
+        tierName,
+        pipelineCount,
+        contentEngineEnabled,
+        notificationCount: notificationCount || 0,
+        pendingReviewCount,
+        teamPermissions,
+      }}
+    >
+      {children}
+    </DashboardLayoutClient>
   );
 }

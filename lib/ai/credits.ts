@@ -2,6 +2,12 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { getModelConfig } from './providers/registry';
 
 /**
+ * Re-export client-safe utility functions.
+ * These are defined in utils.ts to avoid server-only imports in client components.
+ */
+export { creditsToUSD, formatCreditsToUSD } from './utils';
+
+/**
  * Check if a user has the super_admin role.
  * Super admins bypass all credit constraints.
  */

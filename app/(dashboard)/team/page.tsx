@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button, PageHeader } from '@/components/ui';
 import { UserGroupIcon } from '@heroicons/react/24/outline';
 import { MemberCard } from '@/components/team/member-card';
@@ -69,13 +70,17 @@ const roleBadgeColors: Record<OrgMemberRole, string> = {
 };
 
 export default function MyTeamPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab') as TabId | null;
+
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
   const [userRole, setUserRole] = useState<OrgMemberRole | null>(null);
   const [organizationName, setOrganizationName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<TabId>('members');
+  const [activeTab, setActiveTab] = useState<TabId>(tabParam || 'members');
 
   // Invite form state
   const [inviteEmail, setInviteEmail] = useState('');
@@ -145,10 +150,29 @@ export default function MyTeamPage() {
     fetchTeam();
   }, [fetchTeam]);
 
+  // Sync activeTab with URL parameter
+  useEffect(() => {
+    if (tabParam && ['members', 'permissions', 'credits'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
   useEffect(() => {
     if (isAdmin && activeTab === 'permissions') fetchPermissions();
     if (isAdmin && activeTab === 'credits') fetchCredits();
   }, [isAdmin, activeTab, fetchPermissions, fetchCredits]);
+
+  const handleTabChange = (tabId: TabId) => {
+    setActiveTab(tabId);
+    const params = new URLSearchParams(searchParams.toString());
+    if (tabId === 'members') {
+      params.delete('tab');
+    } else {
+      params.set('tab', tabId);
+    }
+    const queryString = params.toString();
+    router.push(queryString ? `/team?${queryString}` : '/team', { scroll: false });
+  };
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -318,7 +342,7 @@ export default function MyTeamPage() {
             .map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={cn(
                   'pb-3 text-sm font-medium transition-colors border-b-2',
                   activeTab === tab.id

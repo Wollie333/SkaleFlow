@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
-import { getModelConfig, checkCredits, isSuperAdmin, requireCredits } from '@/lib/ai';
+import { getModelConfig, checkCredits, isSuperAdmin, requireCredits } from '@/lib/ai/server';
 import type { Json } from '@/types/database';
 
 export async function POST(request: NextRequest) {

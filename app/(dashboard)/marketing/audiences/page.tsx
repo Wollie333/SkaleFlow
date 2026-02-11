@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { Card, Badge, Button, Input, PageHeader } from '@/components/ui';
@@ -78,13 +79,16 @@ const AUDIENCE_TYPE_STYLES: Record<string, { label: string; variant: 'primary' |
 type TabKey = 'audiences' | 'pipeline_audiences';
 
 export default function AudiencesPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab') as TabKey | null;
   const supabase = createClient();
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [audiences, setAudiences] = useState<Audience[]>([]);
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [platformFilter, setPlatformFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [activeTab, setActiveTab] = useState<TabKey>('audiences');
+  const [activeTab, setActiveTab] = useState<TabKey>(tabParam || 'audiences');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -113,6 +117,25 @@ export default function AudiencesPage() {
     }
     loadOrg();
   }, [supabase]);
+
+  // Sync activeTab with URL parameter
+  useEffect(() => {
+    if (tabParam && ['audiences', 'pipeline_audiences'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (tab: TabKey) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === 'audiences') {
+      params.delete('tab');
+    } else {
+      params.set('tab', tab);
+    }
+    const queryString = params.toString();
+    router.push(queryString ? `/marketing/audiences?${queryString}` : '/marketing/audiences', { scroll: false });
+  };
 
   const loadAudiences = useCallback(async () => {
     if (!organizationId) return;
@@ -230,7 +253,7 @@ export default function AudiencesPage() {
       {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-stone/10">
         <button
-          onClick={() => setActiveTab('audiences')}
+          onClick={() => handleTabChange('audiences')}
           className={cn(
             'flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors',
             activeTab === 'audiences'
@@ -250,7 +273,7 @@ export default function AudiencesPage() {
           )}
         </button>
         <button
-          onClick={() => setActiveTab('pipeline_audiences')}
+          onClick={() => handleTabChange('pipeline_audiences')}
           className={cn(
             'flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors',
             activeTab === 'pipeline_audiences'

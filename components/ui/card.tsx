@@ -18,7 +18,7 @@ export function Card({ children, className, variant = 'default', hover = false, 
   return (
     <div
       className={cn(
-        'rounded-xl p-6 transition-all duration-300',
+        'rounded-xl p-4 md:p-6 transition-all duration-300',
         variants[variant],
         hover && 'hover:-translate-y-1 hover:shadow-lg hover:shadow-dark/5',
         onClick && 'cursor-pointer',

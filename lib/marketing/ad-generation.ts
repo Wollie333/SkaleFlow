@@ -26,7 +26,7 @@ import {
   checkCredits,
   getProviderAdapter,
   isSuperAdmin,
-} from '@/lib/ai';
+} from '@/lib/ai/server';
 import type { AIFeature } from '@/lib/ai';
 import { buildBrandContextMap } from '@/lib/content-engine/generate-content';
 import { buildMetaAdSystemPrompt } from './ad-prompts/meta-ad-prompts';

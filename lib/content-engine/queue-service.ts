@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import type { Database, Json } from '@/types/database';
-import { getModelConfig, isSuperAdmin } from '@/lib/ai';
+import { getModelConfig, isSuperAdmin } from '@/lib/ai/server';
 import { generateSingleItem } from './generate-content';
 import { buildFeedbackPromptSection } from './feedback-service';
 import {

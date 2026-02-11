@@ -6,7 +6,7 @@ import {
 } from '@/config/script-frameworks';
 import { PLATFORM_CHARACTER_LIMITS } from '@/config/creative-specs';
 import type { Database, FunnelStage, StoryBrandStage, Json } from '@/types/database';
-import { resolveModel, calculateCreditCost, deductCredits, getProviderAdapter, checkCredits } from '@/lib/ai';
+import { resolveModel, calculateCreditCost, deductCredits, getProviderAdapter, checkCredits } from '@/lib/ai/server';
 import type { AIFeature } from '@/lib/ai';
 import { MAX_VALIDATION_RETRIES } from './queue-config';
 import { getScriptFrameworkFromDB } from './template-service';
@@ -394,14 +394,102 @@ You MUST write about a COMPLETELY DIFFERENT subject. Do NOT reuse any topic, hoo
   // Build platform-specific description guidelines
   const platformGuide = item.platforms.map(p => {
     const guides: Record<string, string> = {
-      linkedin: `LinkedIn: Professional thought-leadership (150-600 chars). Bold insight in first 2 lines. Line breaks between ideas. End with professional CTA. 3-5 industry hashtags.`,
-      facebook: `Facebook: Conversational & relatable (150-500 chars). Storytelling or question to drive comments. Short paragraphs. End with question or CTA. 3-5 hashtags.`,
-      instagram: `Instagram: Visual storytelling (200-600 chars). Strong first line. Authentic & value-packed. Hashtags at end separated by line breaks. 10-20 mixed hashtags.`,
-      twitter: `Twitter/X: Punchy & sharp (under 250 chars). Provocative or insightful. 1-2 inline hashtags only.`,
-      tiktok: `TikTok: Casual & hook-driven (100-300 chars). Trending language, authentic. 3-8 relevant hashtags.`,
+      linkedin: `📱 LINKEDIN (Professional, Scannable):
+150-600 characters with proper structure
+
+FORMAT REQUIREMENTS:
+- Hook: Bold insight in first 1-2 sentences, then blank line (\\n\\n)
+- Body: 2-3 short paragraphs with blank lines between (\\n\\n)
+- Each paragraph: 2-3 sentences max
+- Each sentence: 10-20 words, punchy and clear
+- End with professional CTA
+- 3-5 industry hashtags
+
+STRUCTURE:
+[Hook sentence 1-2]
+
+[Paragraph 1: main point]
+
+[Paragraph 2: supporting idea or example]
+
+[CTA]`,
+
+      facebook: `📘 FACEBOOK (Conversational, Story-driven):
+150-500 characters with storytelling flow
+
+FORMAT REQUIREMENTS:
+- Hook: Relatable opening sentence or question
+- Blank line after hook (\\n\\n)
+- Body: 2-3 short paragraphs telling a story or sharing value
+- Blank lines between all paragraphs (\\n\\n)
+- Tone: Conversational, like talking to a friend
+- End with question or CTA to drive comments
+- 3-5 hashtags
+
+STRUCTURE:
+[Relatable hook or question]
+
+[Story paragraph 1]
+
+[Story paragraph 2]
+
+[Question or CTA]`,
+
+      instagram: `📸 INSTAGRAM (Visual, Value-packed):
+200-600 characters, authentic and engaging
+
+FORMAT REQUIREMENTS:
+- Hook: Strong first sentence (people read before scrolling)
+- Blank line after hook (\\n\\n)
+- Body: 2-4 short paragraphs with value or story
+- Blank lines between all paragraphs (\\n\\n)
+- Tone: Authentic, personal, value-driven
+- End with CTA or question
+- 10-20 mixed hashtags at end
+
+STRUCTURE:
+[Strong hook sentence]
+
+[Value paragraph 1]
+
+[Value paragraph 2]
+
+[Optional paragraph 3]
+
+[CTA or question]`,
+
+      twitter: `🐦 TWITTER/X (Punchy, Sharp):
+Under 250 characters total
+
+FORMAT REQUIREMENTS:
+- Single paragraph (NO line breaks)
+- Punchy and provocative or insightful
+- Get to the point immediately
+- 1-2 inline hashtags only
+- No fluff or filler
+- Every word must count`,
+
+      tiktok: `🎵 TIKTOK (Casual, Hook-driven):
+100-300 characters, casual and authentic
+
+FORMAT REQUIREMENTS:
+- Hook: Attention-grabbing first line
+- Blank line after hook (\\n\\n)
+- Body: 1-2 short paragraphs
+- Blank line between paragraphs (\\n\\n)
+- Tone: Casual, trending language, Gen Z friendly
+- Keep it brief and scrollable
+- 3-8 relevant hashtags
+
+STRUCTURE:
+[Hook sentence]
+
+[Brief value paragraph]
+
+[Optional second paragraph]`,
     };
     return guides[p] || '';
-  }).filter(Boolean).join('\n');
+  }).filter(Boolean).join('\n\n');
 
   return `Create a ${framework.formatCategory}-form content piece for ${orgName}.
 ${uniquenessSection}${topicDirective}${positionSeed}
@@ -424,6 +512,10 @@ Write a UNIQUE post description for EACH platform in "platform_captions". Each m
 - In the brand's voice — use actual brand terms and offer names
 - Substantive and longer-form (not 2-line filler) unless platform needs brevity (Twitter)
 - Include a value hook in the first line and end with a platform-appropriate CTA
+- **CRITICAL FORMATTING: Use \\n\\n (double newline) between paragraphs for ALL platforms EXCEPT Twitter**
+- Match the platform's tone: Professional (LinkedIn), Conversational (Facebook), Authentic (Instagram), Casual (TikTok)
+- Follow the formatting structure below for each platform
+
 ${platformGuide}
 
 HASHTAGS: Store WITHOUT # prefix. Each platform gets its own in "platform_hashtags".

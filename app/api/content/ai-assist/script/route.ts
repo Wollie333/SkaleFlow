@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { requireCredits } from '@/lib/ai';
+import { requireCredits } from '@/lib/ai/server';
 import { generateScriptFromPost } from '@/lib/content-engine/generate-script';
 
 export async function POST(request: Request) {

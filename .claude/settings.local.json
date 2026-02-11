@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git clone:*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(vercel --version:*)",
+      "WebFetch(domain:vercel.com)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(npm run build:*)",
+      "Bash(find:*)",
+      "Bash(for file in app/api/billing/credits/route.ts app/api/billing/model-preferences/route.ts app/api/brand/chat/route.ts app/api/brand/generate-logo/route.ts app/api/brand/import/route.ts app/api/content/ai-assist/post/route.ts app/api/content/ai-assist/script/route.ts app/api/content/generate/queue/route.ts app/api/marketing/generate/batch/route.ts app/api/marketing/generate/batch/status/route.ts app/api/models/available/route.ts lib/content-engine/generate-content.ts lib/content-engine/generate-post-content.ts lib/content-engine/generate-script.ts lib/content-engine/queue-service.ts lib/marketing/ad-generation.ts lib/marketing/compliance/image-analyzer.ts)",
+      "Bash(do sed -i \"s|from ''@/lib/ai''|from ''@/lib/ai/server''|g\" \"$file\")",
+      "Bash(done)",
+      "Bash(git add:*)",
+      "Bash($amount\" format \\(remove \"spent\" word\\)\n- Create helper functions: creditsToUSD, creditsToRealCost, calculateProfitFromCredits\n\nPLATFORM MANAGEMENT:\n- Add admin-only \"Platform Management\" tab to billing page\n- Show real API costs vs sales revenue with 100% markup\n- Display profit margin calculations \\(revenue - cost\\)\n- Add platform configuration display \\(markup, exchange rate, formulas\\)\n- Provide visual breakdown: Red \\(costs\\), Green \\(revenue\\), Gold \\(profit\\)\n- Include quick reference guide and markup strategy explanation\n\nTECHNICAL IMPROVEMENTS:\n- Refactor AI module exports to separate client-safe and server-only code\n- Create lib/ai/utils.ts for client-safe credit utilities\n- Create lib/ai/server.ts for server-only AI functions\n- Update all API routes to use new import structure\n- Add mobile-first design principles to README\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+    ]
+  }
+}

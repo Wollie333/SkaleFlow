@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getAvailableModels } from '@/lib/ai';
-import type { AIFeature } from '@/lib/ai';
+import { getAvailableModels } from '@/lib/ai/server';
+import type { AIFeature } from '@/lib/ai/server';
 
 export async function GET(request: NextRequest) {
   try {

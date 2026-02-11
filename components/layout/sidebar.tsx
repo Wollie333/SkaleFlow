@@ -93,6 +93,7 @@ interface SidebarProps {
   notificationCount?: number;
   pendingReviewCount?: number;
   teamPermissions?: Record<string, FeaturePermissions>;
+  className?: string;
 }
 
 export function Sidebar({
@@ -106,6 +107,7 @@ export function Sidebar({
   notificationCount,
   pendingReviewCount,
   teamPermissions = {},
+  className,
 }: SidebarProps) {
   const pathname = usePathname();
 
@@ -136,7 +138,7 @@ export function Sidebar({
   const totalPendingReviews = (pendingReviewCount || 0);
 
   return (
-    <aside className="fixed left-0 top-16 bottom-0 w-60 bg-white border-r border-stone/10 flex flex-col">
+    <aside className={cn("fixed left-0 top-16 bottom-0 w-60 bg-white border-r border-stone/10 flex flex-col", className)}>
       <nav className="flex-1 p-4 overflow-y-auto sidebar-scroll">
         {/* User Role / Tier Badge */}
         {userRole && (

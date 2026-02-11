@@ -12,6 +12,25 @@ AI-powered brand strategy and content engine for businesses. Build your brand fr
 - **Email**: Resend
 - **Deployment**: Vercel
 
+## Design Principles
+
+### Mobile-First Development
+
+SkaleFlow follows a mobile-first responsive design approach. All UI components and pages are designed to work seamlessly from 375px mobile screens to large desktop displays.
+
+**Breakpoints:**
+- `sm`: 640px - Large phones landscape, small tablets
+- `md`: 768px - Tablets
+- `lg`: 1024px - Small laptops, tablets landscape
+- `xl`: 1280px - Desktops and larger
+
+**Key Patterns:**
+- Grid layouts: `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4`
+- Flexbox stacking: `flex flex-col md:flex-row gap-4`
+- Responsive padding: `p-4 md:p-6 lg:p-8`
+- Tables: Wrap with `overflow-x-auto` for horizontal scroll
+- Touch targets: Minimum 44x44px for all interactive elements
+
 ## Features
 
 ### Brand Engine

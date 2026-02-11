@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
-import { resolveModel, getModelConfig, deductCredits, calculateCreditCost } from '@/lib/ai';
-import { getProviderAdapter } from '@/lib/ai';
+import { resolveModel, getModelConfig, deductCredits, calculateCreditCost } from '@/lib/ai/server';
+import { getProviderAdapter } from '@/lib/ai/server';
 import {
   getHookFormulasPrompt,
   getCtaExamplesPrompt,

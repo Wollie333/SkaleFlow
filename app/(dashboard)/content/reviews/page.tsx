@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, PageHeader } from '@/components/ui';
 import {
   CheckIcon,
@@ -79,10 +79,12 @@ interface Notification {
 
 export default function ContentReviewsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab') as FilterTab | null;
   const supabase = createClient();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [activeTab, setActiveTab] = useState<FilterTab>('all');
+  const [activeTab, setActiveTab] = useState<FilterTab>(tabParam || 'all');
   const [isLoading, setIsLoading] = useState(true);
   const [contentEngineEnabled, setContentEngineEnabled] = useState(true);
 
@@ -101,9 +103,29 @@ export default function ContentReviewsPage() {
     }
     checkAccess();
   }, [supabase]);
+
+  // Sync activeTab with URL parameter
+  useEffect(() => {
+    if (tabParam && ['all', 'unread', 'approvals', 'my_content'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const LIMIT = 20;
+
+  const handleTabChange = (tab: FilterTab) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === 'all') {
+      params.delete('tab');
+    } else {
+      params.set('tab', tab);
+    }
+    const queryString = params.toString();
+    router.push(queryString ? `/content/reviews?${queryString}` : '/content/reviews', { scroll: false });
+  };
 
   const fetchNotifications = useCallback(async (reset = false) => {
     try {
@@ -276,7 +298,7 @@ export default function ContentReviewsPage() {
         {tabs.map(tab => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => handleTabChange(tab.key)}
             className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               activeTab === tab.key
                 ? 'bg-white text-charcoal shadow-sm'

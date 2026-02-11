@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { checkCredits, deductCredits } from '@/lib/ai';
+import { checkCredits, deductCredits } from '@/lib/ai/server';
 
 // Fixed credit cost for DALL-E 3 logo generation (~$0.08 per image)
 const LOGO_CREDITS = 288;

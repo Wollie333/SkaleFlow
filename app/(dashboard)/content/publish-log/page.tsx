@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/ui';
 import {
   ArrowPathIcon,
@@ -83,10 +84,15 @@ function formatDateTime(dateStr: string | null): string {
 }
 
 export default function PublishLogPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const statusParam = searchParams.get('status') as StatusTab | null;
+  const platformParam = searchParams.get('platform');
+
   const [records, setRecords] = useState<PublishRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<StatusTab>('all');
-  const [platformFilter, setPlatformFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<StatusTab>(statusParam || 'all');
+  const [platformFilter, setPlatformFilter] = useState(platformParam || 'all');
   const [isRetrying, setIsRetrying] = useState<string | null>(null);
 
   const loadRecords = useCallback(async () => {
@@ -106,6 +112,43 @@ export default function PublishLogPage() {
   useEffect(() => {
     loadRecords();
   }, [loadRecords]);
+
+  // Sync filters with URL parameters
+  useEffect(() => {
+    if (statusParam && ['all', 'queued', 'publishing', 'published', 'failed'].includes(statusParam)) {
+      setStatusFilter(statusParam);
+    }
+  }, [statusParam]);
+
+  useEffect(() => {
+    if (platformParam) {
+      setPlatformFilter(platformParam);
+    }
+  }, [platformParam]);
+
+  const handleStatusFilterChange = (status: StatusTab) => {
+    setStatusFilter(status);
+    const params = new URLSearchParams(searchParams.toString());
+    if (status === 'all') {
+      params.delete('status');
+    } else {
+      params.set('status', status);
+    }
+    const queryString = params.toString();
+    router.push(queryString ? `/content/publish-log?${queryString}` : '/content/publish-log', { scroll: false });
+  };
+
+  const handlePlatformFilterChange = (platform: string) => {
+    setPlatformFilter(platform);
+    const params = new URLSearchParams(searchParams.toString());
+    if (platform === 'all') {
+      params.delete('platform');
+    } else {
+      params.set('platform', platform);
+    }
+    const queryString = params.toString();
+    router.push(queryString ? `/content/publish-log?${queryString}` : '/content/publish-log', { scroll: false });
+  };
 
   const handleRetry = async (record: PublishRecord) => {
     setIsRetrying(record.id);
@@ -177,7 +220,7 @@ export default function PublishLogPage() {
           return (
             <button
               key={tab.value}
-              onClick={() => setStatusFilter(tab.value)}
+              onClick={() => handleStatusFilterChange(tab.value)}
               className={cn(
                 'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-[1px]',
                 statusFilter === tab.value
@@ -198,7 +241,7 @@ export default function PublishLogPage() {
         <div className="ml-auto flex items-center gap-3">
           <select
             value={platformFilter}
-            onChange={e => setPlatformFilter(e.target.value)}
+            onChange={e => handlePlatformFilterChange(e.target.value)}
             className="px-3 py-1.5 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
           >
             {PLATFORM_OPTIONS.map(o => (

@@ -1,4 +1,4 @@
-import { resolveModel, getProviderAdapter } from '@/lib/ai';
+import { resolveModel, getProviderAdapter } from '@/lib/ai/server';
 import type { AICompletionRequest } from '@/lib/ai/providers/types';
 
 /**

@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { buildBrandContextPrompt, getFormatCategory, type ContentFormat } from '@/config/script-frameworks';
 import { buildBrandContextMap } from '@/lib/content-engine/generate-content';
-import { resolveModel, getProviderAdapter, deductCredits, calculateCreditCost } from '@/lib/ai';
+import { resolveModel, getProviderAdapter, deductCredits, calculateCreditCost } from '@/lib/ai/server';
 import type { AIFeature } from '@/lib/ai';
 
 export interface GenerateScriptResult {

@@ -2,6 +2,7 @@
 
 import { SparklesIcon, BoltIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
+import { formatCreditsToUSD } from '@/lib/ai';
 import type { ClientModelOption } from '@/lib/ai/client-models';
 
 interface AIModelPickerProps {
@@ -41,14 +42,23 @@ export function AIModelPicker({ models, selectedModelId, onSelect, costLabelFn }
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className={cn(
-                'text-xs font-medium px-2 py-0.5 rounded-full',
+              <div className={cn(
+                'text-xs font-medium px-2 py-1 rounded-full flex flex-col items-end',
                 model.isFree ? 'bg-teal/10 text-teal' : 'bg-gold/10 text-gold'
               )}>
-                {costLabelFn
-                  ? costLabelFn(model)
-                  : model.isFree ? 'Free' : `~${model.estimatedCreditsPerMessage} cr`}
-              </span>
+                {costLabelFn ? (
+                  <span>{costLabelFn(model)}</span>
+                ) : model.isFree ? (
+                  <span>Free</span>
+                ) : (
+                  <>
+                    <span>~{model.estimatedCreditsPerMessage} cr</span>
+                    <span className="text-[10px] opacity-70">
+                      {formatCreditsToUSD(model.estimatedCreditsPerMessage)}
+                    </span>
+                  </>
+                )}
+              </div>
               {selectedModelId === model.id && (
                 <CheckCircleIcon className="w-5 h-5 text-teal shrink-0" />
               )}

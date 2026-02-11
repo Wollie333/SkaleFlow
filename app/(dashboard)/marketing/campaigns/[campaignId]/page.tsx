@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { Card, Badge, Button, PageHeader } from '@/components/ui';
@@ -121,11 +121,13 @@ function summarizeTargeting(config: Json): string {
 export default function CampaignDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const campaignId = params.campaignId as string;
+  const tabParam = searchParams.get('tab') as TabKey | null;
   const supabase = createClient();
 
   const [campaign, setCampaign] = useState<CampaignDetail | null>(null);
-  const [activeTab, setActiveTab] = useState<TabKey>('ad_sets');
+  const [activeTab, setActiveTab] = useState<TabKey>(tabParam || 'ad_sets');
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -148,6 +150,25 @@ export default function CampaignDetailPage() {
   useEffect(() => {
     loadCampaign();
   }, [loadCampaign]);
+
+  // Sync activeTab with URL parameter
+  useEffect(() => {
+    if (tabParam && ['ad_sets', 'creatives', 'analytics'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (tab: TabKey) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === 'ad_sets') {
+      params.delete('tab');
+    } else {
+      params.set('tab', tab);
+    }
+    const queryString = params.toString();
+    router.push(queryString ? `/marketing/campaigns/${campaignId}?${queryString}` : `/marketing/campaigns/${campaignId}`, { scroll: false });
+  };
 
   async function handleToggleStatus() {
     if (!campaign) return;
@@ -348,7 +369,7 @@ export default function CampaignDetailPage() {
         {TABS.map(tab => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => handleTabChange(tab.key)}
             className={cn(
               'flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors',
               activeTab === tab.key

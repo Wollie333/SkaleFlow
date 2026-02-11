@@ -13,7 +13,7 @@ import {
   ALLOWED_EXTENSIONS,
 } from '@/lib/brand-import';
 import type { Json } from '@/types/database';
-import { checkCredits, calculateCreditCost, deductCredits } from '@/lib/ai';
+import { checkCredits, calculateCreditCost, deductCredits } from '@/lib/ai/server';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,

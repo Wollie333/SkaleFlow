@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getModelConfig } from '@/lib/ai';
+import { getModelConfig } from '@/lib/ai/server';
 
 export async function GET(request: Request) {
   try {

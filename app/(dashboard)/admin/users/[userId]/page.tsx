@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { PageHeader, Button } from '@/components/ui';
 import { UserCircleIcon, ArrowLeftIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { UserProfileCard } from '@/components/admin/user-detail/user-profile-card';
@@ -121,11 +121,13 @@ interface SubscriptionTier {
 export default function AdminUserDetailPage() {
   const { userId } = useParams<{ userId: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab') as Tab | null;
   const [data, setData] = useState<UserDetail | null>(null);
   const [tiers, setTiers] = useState<SubscriptionTier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [activeTab, setActiveTab] = useState<Tab>(tabParam || 'overview');
   const [actionLoading, setActionLoading] = useState(false);
   const [tierLoading, setTierLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -165,6 +167,25 @@ export default function AdminUserDetailPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Sync activeTab with URL parameter
+  useEffect(() => {
+    if (tabParam && ['overview', 'team', 'billing', 'activity', 'credits'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === 'overview') {
+      params.delete('tab');
+    } else {
+      params.set('tab', tab);
+    }
+    const queryString = params.toString();
+    router.push(queryString ? `/admin/users/${userId}?${queryString}` : `/admin/users/${userId}`, { scroll: false });
+  };
 
   const handleAction = async (body: Record<string, unknown>) => {
     setActionLoading(true);
@@ -433,7 +454,7 @@ export default function AdminUserDetailPage() {
             {tabs.map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => handleTabChange(tab.key)}
                 className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
                   activeTab === tab.key
                     ? 'border-teal text-teal'

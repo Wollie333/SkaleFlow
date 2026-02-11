@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { BellIcon, UserCircleIcon, CheckIcon, InboxIcon, BoltIcon } from '@heroicons/react/24/outline';
+import { BellIcon, UserCircleIcon, CheckIcon, InboxIcon, BoltIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import {
   DocumentTextIcon,
   CheckCircleIcon,
@@ -15,6 +15,7 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/solid';
 import { useCreditBalance } from '@/hooks/useCreditBalance';
+import { formatCreditsToUSD } from '@/lib/ai';
 import type { NotificationType } from '@/types/database';
 
 function formatTimeAgo(dateStr: string): string {
@@ -77,9 +78,10 @@ interface HeaderProps {
   initialUnreadCount?: number;
   organizationId?: string;
   draftCount?: number;
+  onMenuClick?: () => void;
 }
 
-export function Header({ user, initialUnreadCount = 0, organizationId, draftCount = 0 }: HeaderProps) {
+export function Header({ user, initialUnreadCount = 0, organizationId, draftCount = 0, onMenuClick }: HeaderProps) {
   const router = useRouter();
   const supabase = createClient();
   const [isOpen, setIsOpen] = useState(false);
@@ -151,14 +153,25 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-dark/95 backdrop-blur-md border-b border-teal/12">
-      <div className="h-full px-6 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <span className="font-serif font-bold text-xl text-cream tracking-wide">
-            SkaleFlow
-          </span>
-          <span className="text-xs text-stone font-normal">by Mana</span>
-        </Link>
+      <div className="h-full px-4 md:px-6 flex items-center justify-between">
+        {/* Logo & Hamburger */}
+        <div className="flex items-center gap-2">
+          {/* Hamburger Menu Button - Mobile Only */}
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden p-2 rounded-lg text-cream hover:bg-teal/10 transition-colors"
+            aria-label="Open menu"
+          >
+            <Bars3Icon className="w-6 h-6" />
+          </button>
+
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <span className="font-serif font-bold text-xl text-cream tracking-wide">
+              SkaleFlow
+            </span>
+            <span className="text-xs text-stone font-normal hidden md:inline">by Mana</span>
+          </Link>
+        </div>
 
         {/* Right side */}
         <div className="flex items-center gap-3">
@@ -182,9 +195,15 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
             >
               <BoltIcon className="w-3.5 h-3.5" />
               {creditBalance.isSuperAdmin ? (
-                <span>${(creditBalance.apiCostUSDAllTime || 0).toFixed(2)} spent</span>
+                <>
+                  <span className="hidden sm:inline">${(creditBalance.apiCostUSDAllTime || 0).toFixed(2)}</span>
+                  <span className="sm:hidden">${(creditBalance.apiCostUSDAllTime || 0).toFixed(0)}</span>
+                </>
               ) : (
-                <span>{creditBalance.totalRemaining.toLocaleString()}</span>
+                <>
+                  <span className="hidden sm:inline">{creditBalance.totalRemaining.toLocaleString()} | {formatCreditsToUSD(creditBalance.totalRemaining)}</span>
+                  <span className="sm:hidden">{Math.floor(creditBalance.totalRemaining / 1000)}k</span>
+                </>
               )}
             </Link>
           )}
@@ -218,7 +237,7 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
             </button>
 
             {isOpen && (
-              <div className="absolute right-0 top-full mt-2 w-96 bg-white border border-stone/15 rounded-xl shadow-2xl overflow-hidden z-[60]">
+              <div className="absolute right-0 top-full mt-2 w-screen max-w-sm sm:w-96 bg-white border border-stone/15 rounded-xl shadow-2xl overflow-hidden z-[60]">
                 {/* Header */}
                 <div className="px-4 py-3 border-b border-stone/10 flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-charcoal">Notifications</h3>

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button, Card, PageHeader, ActionModal } from '@/components/ui';
-import { BrandVariablesPanel, CreativeAssetSpecs, MediaUpload, UTMBuilderModal, PostActionPopup, AIModelPicker, type UploadedFile, type PublishResult } from '@/components/content';
+import { BrandVariablesPanel, CreativeAssetSpecs, MediaUpload, UTMBuilderModal, PostActionPopup, AIModelPicker, type UploadedFile, type PublishResult, IconPicker } from '@/components/content';
 import { DriveFilePicker } from '@/components/content/drive-file-picker';
 import { PreviewPanel } from '@/components/content/preview-panel';
 import { InstanceEditForm, type InstanceSpec } from '@/components/content/instance-edit-form';
@@ -710,6 +710,13 @@ export default function ContentCreatePage() {
     setEditFields(prev => ({ ...prev, [key]: value }));
   };
 
+  // Icon picker handler
+  const handleIconSelect = (icon: string) => {
+    // Insert icon at end of caption
+    const currentCaption = editFields.caption || '';
+    updateField('caption', currentCaption + icon);
+  };
+
   // Drive import handler
   const handleDriveImport = (files: Array<{ url: string; fileName: string; fileType: string; fileSize: number }>) => {
     setUploadedFiles(prev => [...prev, ...files]);
@@ -1089,6 +1096,11 @@ export default function ContentCreatePage() {
                     brandFlatVariables={brandFlatVariables}
                     brandCategories={brandCategories}
                   />
+
+                  {/* Icon Picker */}
+                  <div className="mt-2">
+                    <IconPicker onIconSelect={handleIconSelect} />
+                  </div>
                 </div>
 
                 {/* Hashtags */}

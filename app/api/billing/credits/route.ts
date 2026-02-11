@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { checkCredits, isSuperAdmin } from '@/lib/ai';
+import { checkCredits, isSuperAdmin } from '@/lib/ai/server';
 import { MODEL_CATALOG } from '@/lib/ai/providers/registry';
 
 function computeApiCostUSD(model: string, inputTokens: number, outputTokens: number): number {
