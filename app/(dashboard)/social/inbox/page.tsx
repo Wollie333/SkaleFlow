@@ -31,86 +31,85 @@ export default async function SocialInboxPage({
     .single();
 
   if (!userData?.organization_id) {
-    redirect('/dashboard');
+    redirect('/onboarding');
   }
 
-  // Fetch interactions with filters
-  const type = searchParams.type || 'all';
-  const platform = searchParams.platform || 'all';
-  const sentiment = searchParams.sentiment || 'all';
-  const status = searchParams.status === 'unread' ? false : searchParams.status === 'read' ? true : undefined;
+  // Initialize data with defaults
+  let interactions: any[] = [];
+  let unreadCount = 0;
+  let teamMembers: any[] = [];
+  let savedReplies: any[] = [];
 
-  let query = supabase
-    .from('social_interactions')
-    .select(`
-      *,
-      connection:social_media_connections!inner(
-        platform,
-        platform_username
-      ),
-      assigned_user:users!social_interactions_assigned_to_fkey(
-        id,
-        email,
-        full_name
-      ),
-      published_post:published_posts(
-        id,
-        post_url,
-        content_item:content_items(
-          id,
-          topic,
-          caption
-        )
-      )
-    `)
-    .eq('organization_id', userData.organization_id)
-    .order('interaction_timestamp', { ascending: false })
-    .limit(50);
+  try {
+    // Fetch interactions with filters
+    const type = searchParams.type || 'all';
+    const platform = searchParams.platform || 'all';
+    const sentiment = searchParams.sentiment || 'all';
+    const status = searchParams.status === 'unread' ? false : searchParams.status === 'read' ? true : undefined;
 
-  // Apply filters
-  if (type !== 'all') {
-    query = query.eq('interaction_type', type);
+    // Simplified query without complex joins for now
+    let query = supabase
+      .from('social_interactions')
+      .select('*')
+      .eq('organization_id', userData.organization_id)
+      .order('interaction_timestamp', { ascending: false })
+      .limit(50);
+
+    // Apply filters
+    if (type !== 'all') {
+      query = query.eq('interaction_type', type);
+    }
+
+    if (platform !== 'all') {
+      query = query.eq('platform', platform);
+    }
+
+    if (sentiment !== 'all') {
+      query = query.eq('sentiment', sentiment);
+    }
+
+    if (status !== undefined) {
+      query = query.eq('is_read', status);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching interactions:', error);
+    } else {
+      interactions = data || [];
+    }
+
+    // Get unread count
+    const { count } = await supabase
+      .from('social_interactions')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', userData.organization_id)
+      .eq('is_read', false);
+
+    unreadCount = count || 0;
+
+    // Get team members for assignment
+    const { data: members } = await supabase
+      .from('users')
+      .select('id, email, full_name')
+      .eq('organization_id', userData.organization_id)
+      .order('full_name');
+
+    teamMembers = members || [];
+
+    // Get saved replies
+    const { data: replies } = await supabase
+      .from('saved_replies')
+      .select('*')
+      .eq('organization_id', userData.organization_id)
+      .order('use_count', { ascending: false });
+
+    savedReplies = replies || [];
+  } catch (error) {
+    console.error('Error loading inbox data:', error);
+    // Continue with empty data - UI will show empty states
   }
-
-  if (platform !== 'all') {
-    query = query.eq('platform', platform);
-  }
-
-  if (sentiment !== 'all') {
-    query = query.eq('sentiment', sentiment);
-  }
-
-  if (status !== undefined) {
-    query = query.eq('is_read', status);
-  }
-
-  const { data: interactions, error } = await query;
-
-  // If there's an error (e.g., table doesn't exist), show empty state
-  if (error) {
-    console.error('Error fetching interactions:', error);
-  }
-
-  // Get unread count
-  const { count: unreadCount } = await supabase
-    .from('social_interactions')
-    .select('*', { count: 'exact', head: true })
-    .eq('organization_id', userData.organization_id)
-    .eq('is_read', false);
-
-  // Get team members for assignment
-  const { data: teamMembers } = await supabase
-    .from('users')
-    .select('id, email, full_name')
-    .eq('organization_id', userData.organization_id)
-    .order('full_name');
-
-  // Get saved replies
-  const { data: savedReplies } = await supabase
-    .from('saved_replies')
-    .select('*')
-    .eq('organization_id', userData.organization_id)
-    .order('use_count', { ascending: false });
 
   return (
     <InboxClient

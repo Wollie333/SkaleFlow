@@ -208,20 +208,6 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
             </Link>
           )}
 
-          {/* Drafts */}
-          <Link
-            href="/content/drafts"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-dark-light/80 text-stone hover:text-cream hover:bg-teal/15 transition-colors"
-          >
-            <DocumentTextIcon className="w-3.5 h-3.5" />
-            <span>Drafts</span>
-            {draftCount > 0 && (
-              <span className="min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-gold text-dark text-[10px] font-bold px-1">
-                {draftCount > 99 ? '99+' : draftCount}
-              </span>
-            )}
-          </Link>
-
           {/* Notifications */}
           <div ref={dropdownRef} className="relative">
             <button
