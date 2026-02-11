@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
 import { MobileSidebar } from '@/components/layout/mobile-sidebar';
+import { CreditsWarningBanner } from '@/components/layout';
 import type { FeaturePermissions } from '@/lib/permissions';
 
 interface DashboardLayoutClientProps {
@@ -32,12 +33,17 @@ interface DashboardLayoutClientProps {
     pendingReviewCount?: number;
     teamPermissions?: Record<string, FeaturePermissions>;
   };
+  creditBalance?: {
+    totalRemaining: number;
+    isSuperAdmin: boolean;
+  };
 }
 
 export function DashboardLayoutClient({
   children,
   headerProps,
   sidebarProps,
+  creditBalance,
 }: DashboardLayoutClientProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -58,6 +64,14 @@ export function DashboardLayoutClient({
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
       />
+
+      {/* Credits Warning Banner - only for super admins with low/negative balance */}
+      {creditBalance && (
+        <CreditsWarningBanner
+          totalRemaining={creditBalance.totalRemaining}
+          isSuperAdmin={creditBalance.isSuperAdmin}
+        />
+      )}
 
       {/* Main Content - responsive margin */}
       <main className="ml-0 lg:ml-60 pt-16 min-h-screen overflow-x-hidden">

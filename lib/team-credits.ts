@@ -70,9 +70,8 @@ export async function deductTeamCredits(
   aiUsageId: string | null = null
 ): Promise<void> {
   if (amount <= 0) return;
-  if (await isSuperAdmin(userId)) return;
 
-  // Owner/admin use org pool
+  // Owner/admin (including super admins) use org pool
   if (await isOrgOwnerOrAdmin(orgId, userId)) {
     await deductCredits(orgId, userId, amount, aiUsageId, description);
     return;

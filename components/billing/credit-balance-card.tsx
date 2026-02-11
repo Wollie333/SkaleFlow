@@ -1,6 +1,6 @@
 'use client';
 
-import { Card } from '@/components/ui';
+import { Card, Badge } from '@/components/ui';
 import Link from 'next/link';
 import { apiCostToSalesRevenue } from '@/lib/ai/utils';
 
@@ -113,16 +113,35 @@ export function CreditBalanceCard({
             </div>
           </div>
 
-          <p className="text-xs text-stone text-center font-medium bg-amber-50 border border-amber-200 rounded-lg p-2">
-            ⚠️ Admin bypass active — credits not deducted from your usage
+          <p className="text-xs text-stone text-center font-medium bg-teal/10 border border-teal/30 rounded-lg p-2">
+            ✅ Credits are tracked normally — you can use the app even with negative balance
           </p>
         </div>
       )}
 
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-charcoal">Credit Balance</h3>
-        <span className="text-2xl font-bold text-teal">{totalRemaining.toLocaleString()}</span>
+        <div className="flex items-center gap-2">
+          <span className={`text-2xl font-bold ${totalRemaining < 0 ? 'text-red-600' : 'text-teal'}`}>
+            {totalRemaining.toLocaleString()}
+          </span>
+          {totalRemaining < 0 && isSuperAdmin && (
+            <Badge variant="outline" className="bg-red-100 text-red-700 text-xs">
+              Negative
+            </Badge>
+          )}
+        </div>
       </div>
+
+      {/* Negative Balance Explanation for Super Admins */}
+      {totalRemaining < 0 && isSuperAdmin && (
+        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200">
+          <p className="text-xs text-red-900">
+            <strong>Note:</strong> As a super admin, you can use the app with a negative balance.
+            Credits are deducted normally to track actual usage. Purchase credits to bring balance positive.
+          </p>
+        </div>
+      )}
 
       {/* Monthly Credits Progress */}
       <div className="mb-4">

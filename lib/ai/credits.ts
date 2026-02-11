@@ -161,12 +161,6 @@ export async function deductCredits(
 ): Promise<void> {
   if (credits <= 0) return;
 
-  // Super admins bypass credit deduction
-  if (userId) {
-    const isAdmin = await isSuperAdmin(userId);
-    if (isAdmin) return;
-  }
-
   const supabase = createServiceClient();
 
   const { data: balance } = await supabase
@@ -182,11 +176,7 @@ export async function deductCredits(
   let monthlyDeduction = Math.min(credits, balance.monthly_credits_remaining);
   let topupDeduction = credits - monthlyDeduction;
 
-  // Safety: don't deduct more than available
-  if (topupDeduction > balance.topup_credits_remaining) {
-    topupDeduction = balance.topup_credits_remaining;
-  }
-
+  // Allow negative balances for super admins
   const newMonthly = balance.monthly_credits_remaining - monthlyDeduction;
   const newTopup = balance.topup_credits_remaining - topupDeduction;
   const totalAfter = newMonthly + newTopup;

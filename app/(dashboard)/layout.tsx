@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { DashboardLayoutClient } from './layout-client';
+import { checkCredits } from '@/lib/ai/server';
 import type { FeaturePermissions } from '@/lib/permissions';
 
 export default async function DashboardLayout({
@@ -171,6 +172,24 @@ export default async function DashboardLayout({
     notificationCount = notifResult.count || 0;
   }
 
+  // Fetch credit balance for super admin warning banner
+  let creditBalance = null;
+  if (membership?.organization_id) {
+    try {
+      const balance = await checkCredits(
+        membership.organization_id,
+        0,
+        user.id
+      );
+      creditBalance = {
+        totalRemaining: balance.totalRemaining,
+        isSuperAdmin: balance.isSuperAdmin || false,
+      };
+    } catch {
+      // Silently fail - warning banner is optional
+    }
+  }
+
   return (
     <DashboardLayoutClient
       headerProps={{
@@ -191,6 +210,7 @@ export default async function DashboardLayout({
         pendingReviewCount,
         teamPermissions,
       }}
+      creditBalance={creditBalance}
     >
       {children}
     </DashboardLayoutClient>
