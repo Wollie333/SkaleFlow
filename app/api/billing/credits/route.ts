@@ -40,37 +40,34 @@ export async function GET(request: Request) {
 
     const balance = await checkCredits(organizationId, 0, user.id);
 
-    // For super admin, also compute actual API cost from ai_usage
-    let apiCostUSD = 0;
+    // For super admin, compute SYSTEM-WIDE totals (all orgs)
     if (balance.isSuperAdmin) {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      // Get all credit balances across all orgs
+      const { data: allBalances } = await supabase
+        .from('credit_balances')
+        .select('monthly_credits_remaining, topup_credits_remaining');
 
-      const { data: usageRows } = await supabase
-        .from('ai_usage')
-        .select('model, input_tokens, output_tokens')
-        .eq('organization_id', organizationId)
-        .gte('created_at', thirtyDaysAgo.toISOString());
-
-      for (const row of usageRows || []) {
-        apiCostUSD += computeApiCostUSD(row.model, row.input_tokens || 0, row.output_tokens || 0);
+      let totalSystemCredits = 0;
+      for (const bal of allBalances || []) {
+        totalSystemCredits += (bal.monthly_credits_remaining || 0) + (bal.topup_credits_remaining || 0);
       }
 
-      // Also get all-time cost
+      // Get all-time API usage across all orgs
       const { data: allUsage } = await supabase
         .from('ai_usage')
-        .select('model, input_tokens, output_tokens')
-        .eq('organization_id', organizationId);
+        .select('model, input_tokens, output_tokens');
 
-      let allTimeCostUSD = 0;
+      let totalApiCostUSD = 0;
       for (const row of allUsage || []) {
-        allTimeCostUSD += computeApiCostUSD(row.model, row.input_tokens || 0, row.output_tokens || 0);
+        totalApiCostUSD += computeApiCostUSD(row.model, row.input_tokens || 0, row.output_tokens || 0);
       }
 
       return NextResponse.json({
         ...balance,
-        apiCostUSD30d: Math.round(apiCostUSD * 10000) / 10000,
-        apiCostUSDAllTime: Math.round(allTimeCostUSD * 10000) / 10000,
+        systemTotalCredits: totalSystemCredits,
+        systemTotalCostUSD: Math.round(totalApiCostUSD * 10000) / 10000,
+        apiCostUSD30d: 0, // Deprecated for system view
+        apiCostUSDAllTime: Math.round(totalApiCostUSD * 10000) / 10000,
       });
     }
 

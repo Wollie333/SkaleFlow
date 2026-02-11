@@ -189,20 +189,20 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
                       : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'
               }`}
               title={creditBalance.isSuperAdmin
-                ? `API Spend: $${(creditBalance.apiCostUSDAllTime || 0).toFixed(2)} all time | $${(creditBalance.apiCostUSD30d || 0).toFixed(2)} (30d) | Credits bypass active`
+                ? `System Total: ${(creditBalance.systemTotalCredits || 0).toLocaleString()} credits | API Cost: $${(creditBalance.systemTotalCostUSD || 0).toFixed(2)} | Credits tracked, never blocked`
                 : `Monthly: ${creditBalance.monthlyRemaining.toLocaleString()} / ${creditBalance.monthlyTotal.toLocaleString()} | Top-up: ${creditBalance.topupRemaining.toLocaleString()}`
               }
             >
               <BoltIcon className="w-3.5 h-3.5" />
               {creditBalance.isSuperAdmin ? (
                 <>
-                  <span className="hidden sm:inline">${(creditBalance.apiCostUSDAllTime || 0).toFixed(2)}</span>
-                  <span className="sm:hidden">${(creditBalance.apiCostUSDAllTime || 0).toFixed(0)}</span>
+                  <span className="hidden sm:inline">{(creditBalance.systemTotalCredits || 0).toLocaleString()} cr | ${(creditBalance.systemTotalCostUSD || 0).toFixed(2)}</span>
+                  <span className="sm:hidden">{Math.floor((creditBalance.systemTotalCredits || 0) / 1000)}k cr</span>
                 </>
               ) : (
                 <>
-                  <span className="hidden sm:inline">{creditBalance.totalRemaining.toLocaleString()} | {formatCreditsToUSD(creditBalance.totalRemaining)}</span>
-                  <span className="sm:hidden">{Math.floor(creditBalance.totalRemaining / 1000)}k</span>
+                  <span className="hidden sm:inline">{creditBalance.totalRemaining.toLocaleString()} cr | {formatCreditsToUSD(creditBalance.totalRemaining)}</span>
+                  <span className="sm:hidden">{Math.floor(creditBalance.totalRemaining / 1000)}k cr</span>
                 </>
               )}
             </Link>

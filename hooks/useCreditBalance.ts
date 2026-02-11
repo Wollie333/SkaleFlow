@@ -13,6 +13,8 @@ interface CreditBalance {
   isSuperAdmin?: boolean;
   apiCostUSD30d?: number;
   apiCostUSDAllTime?: number;
+  systemTotalCredits?: number;
+  systemTotalCostUSD?: number;
 }
 
 export function useCreditBalance(organizationId: string | null) {
