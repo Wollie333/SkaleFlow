@@ -5,10 +5,20 @@ import Anthropic from '@anthropic-ai/sdk';
 interface ProviderBalance {
   provider: string;
   status: 'active' | 'offline' | 'error';
-  balance?: number; // USD
+  rateLimit?: {
+    requestsPerMinute: number;
+    tokensPerMinute: number;
+    description: string;
+  };
   usage?: {
     requests_30d: number;
     cost_30d: number;
+  };
+  pricing?: {
+    model: string;
+    inputCostPer1M: number;
+    outputCostPer1M: number;
+    simpleExplanation: string;
   };
   error?: string;
 }
@@ -22,12 +32,20 @@ async function getAnthropicBalance(): Promise<ProviderBalance> {
   }
 
   try {
-    // Anthropic doesn't have a balance API, so we'll return active status
-    // Balance information would need to be checked on Anthropic Console
     return {
       provider: 'anthropic',
       status: 'active',
-      balance: undefined, // Not available via API
+      rateLimit: {
+        requestsPerMinute: 50,
+        tokensPerMinute: 40000,
+        description: "You can make 50 requests per minute. Think of it like a slide - you can only go down 50 times in one minute!",
+      },
+      pricing: {
+        model: 'Claude Sonnet 3.5',
+        inputCostPer1M: 3.00,
+        outputCostPer1M: 15.00,
+        simpleExplanation: "Every 1 million words you send costs $3. Every 1 million words Claude writes back costs $15. It's like paying per page - reading costs less than writing!",
+      },
     };
   } catch (error) {
     return {
@@ -47,12 +65,20 @@ async function getGoogleAIBalance(): Promise<ProviderBalance> {
   }
 
   try {
-    // Google AI doesn't have a direct balance API endpoint
-    // You'd need to check usage through Google Cloud Console
     return {
       provider: 'google',
       status: 'active',
-      balance: undefined, // Not available via API
+      rateLimit: {
+        requestsPerMinute: 60,
+        tokensPerMinute: 32000,
+        description: "You can ask Google AI 60 questions per minute. Like raising your hand in class - but you can only do it 60 times each minute!",
+      },
+      pricing: {
+        model: 'Gemini 1.5 Flash',
+        inputCostPer1M: 0.075,
+        outputCostPer1M: 0.30,
+        simpleExplanation: "Super cheap! Every 1 million words you send costs only 7 cents. Every 1 million words Gemini writes back costs 30 cents. It's like buying candy - very affordable!",
+      },
     };
   } catch (error) {
     return {
@@ -72,11 +98,20 @@ async function getGroqBalance(): Promise<ProviderBalance> {
   }
 
   try {
-    // Groq has free tier, no balance API available
     return {
       provider: 'groq',
       status: 'active',
-      balance: undefined, // Free tier
+      rateLimit: {
+        requestsPerMinute: 30,
+        tokensPerMinute: 14400,
+        description: "You can make 30 requests per minute. It's like a speed limit on a road - you can't go too fast!",
+      },
+      pricing: {
+        model: 'Llama 3.1 70B',
+        inputCostPer1M: 0.59,
+        outputCostPer1M: 0.79,
+        simpleExplanation: "Groq is SUPER FAST but costs a bit more. Every 1 million words you send costs 59 cents. Every 1 million words it writes back costs 79 cents. Think of it like express shipping - faster but costs more!",
+      },
     };
   } catch (error) {
     return {

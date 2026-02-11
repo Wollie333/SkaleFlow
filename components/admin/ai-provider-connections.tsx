@@ -7,10 +7,20 @@ import { BoltIcon, CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon, ArrowP
 interface ProviderBalance {
   provider: string;
   status: 'active' | 'offline' | 'error';
-  balance?: number;
+  rateLimit?: {
+    requestsPerMinute: number;
+    tokensPerMinute: number;
+    description: string;
+  };
   usage?: {
     requests_30d: number;
     cost_30d: number;
+  };
+  pricing?: {
+    model: string;
+    inputCostPer1M: number;
+    outputCostPer1M: number;
+    simpleExplanation: string;
   };
   error?: string;
 }
@@ -147,21 +157,76 @@ export function AIProviderConnections() {
                 )}
               </div>
 
-              {balance.status === 'active' && balance.usage && (
-                <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-stone/10">
-                  <div>
-                    <p className="text-xs text-stone mb-1">Last 30 Days</p>
-                    <p className="text-lg font-bold text-charcoal">
-                      {balance.usage.requests_30d.toLocaleString()} requests
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-stone mb-1">API Cost (30d)</p>
-                    <p className="text-lg font-bold text-teal">
-                      ${balance.usage.cost_30d.toFixed(4)}
-                    </p>
-                  </div>
-                </div>
+              {balance.status === 'active' && (
+                <>
+                  {/* Rate Limits */}
+                  {balance.rateLimit && (
+                    <div className="mt-4 pt-4 border-t border-stone/10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-semibold text-charcoal uppercase tracking-wider">⏱️ Speed Limits</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="p-3 rounded-lg bg-cream-warm/50">
+                          <p className="text-xs text-stone mb-1">Requests/Minute</p>
+                          <p className="text-xl font-bold text-charcoal">
+                            {balance.rateLimit.requestsPerMinute}
+                          </p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-cream-warm/50">
+                          <p className="text-xs text-stone mb-1">Tokens/Minute</p>
+                          <p className="text-xl font-bold text-charcoal">
+                            {balance.rateLimit.tokensPerMinute.toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-stone italic leading-relaxed">
+                        💡 {balance.rateLimit.description}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Pricing */}
+                  {balance.pricing && (
+                    <div className="mt-4 pt-4 border-t border-stone/10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-semibold text-charcoal uppercase tracking-wider">💰 How Pricing Works</span>
+                      </div>
+                      <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 mb-2">
+                        <p className="text-xs font-semibold text-blue-900 mb-1">{balance.pricing.model}</p>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <span className="text-blue-700">Reading (Input):</span>
+                            <span className="font-bold text-blue-900 ml-1">${balance.pricing.inputCostPer1M}/1M</span>
+                          </div>
+                          <div>
+                            <span className="text-blue-700">Writing (Output):</span>
+                            <span className="font-bold text-blue-900 ml-1">${balance.pricing.outputCostPer1M}/1M</span>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-blue-800 italic leading-relaxed">
+                        📚 {balance.pricing.simpleExplanation}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Usage Stats */}
+                  {balance.usage && (
+                    <div className="mt-4 pt-4 border-t border-stone/10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-semibold text-charcoal uppercase tracking-wider">📊 Your Usage (Last 30 Days)</span>
+                      </div>
+                      <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-emerald-900">Total Requests:</span>
+                          <span className="text-lg font-bold text-emerald-900">
+                            {balance.usage.requests_30d.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {balance.status === 'offline' && (
@@ -184,16 +249,19 @@ export function AIProviderConnections() {
         })}
       </div>
 
-      <div className="mt-6 p-4 rounded-lg bg-blue-50 border border-blue-200">
+      <div className="mt-6 p-4 rounded-lg bg-purple-50 border border-purple-200">
         <div className="flex items-start gap-3">
-          <span className="text-xl">ℹ️</span>
+          <span className="text-2xl">🎓</span>
           <div className="flex-1">
-            <h5 className="text-sm font-semibold text-blue-900 mb-1">About Provider Balances</h5>
-            <div className="text-xs text-blue-800 space-y-1">
-              <p>• <strong>Connection Status:</strong> Shows if API keys are configured and working</p>
-              <p>• <strong>Usage Stats:</strong> Tracked from your SkaleFlow database (last 30 days)</p>
-              <p>• <strong>Real-Time Updates:</strong> Refreshes every 30 seconds automatically</p>
-              <p>• <strong>API Costs:</strong> Actual costs paid to providers (not the sales price users pay)</p>
+            <h5 className="text-sm font-semibold text-purple-900 mb-2">Easy Explanation</h5>
+            <div className="text-xs text-purple-800 space-y-2 leading-relaxed">
+              <p><strong>⏱️ Speed Limits (Rate Limits):</strong> Just like you can only ride a roller coaster a certain number of times per hour, these AI services only let you make a certain number of requests per minute. It keeps everything fair for everyone!</p>
+
+              <p><strong>💰 Pricing:</strong> You pay for two things - (1) the words you send TO the AI (like asking a question), and (2) the words the AI sends BACK to you (like the answer). It's measured per million words, but don't worry - most conversations use way less than that!</p>
+
+              <p><strong>🔢 Example:</strong> If you write 1,000 words and the AI writes 2,000 words back, that's only 0.003 million words total - so it costs just a few cents!</p>
+
+              <p><strong>📊 Your Usage:</strong> We track how many times you've used each AI in the last 30 days so you can see which one you use the most.</p>
             </div>
           </div>
         </div>
