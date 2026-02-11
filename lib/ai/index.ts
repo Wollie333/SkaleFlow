@@ -9,8 +9,8 @@
 // Client-safe utility functions (no server dependencies)
 export { creditsToUSD, formatCreditsToUSD } from './utils';
 
-// Client-safe provider registry (pure functions, no server dependencies)
-export { getModelConfig, getModelsForFeature, getProviderAdapter, getDefaultModelForFeature, MODEL_CATALOG } from './providers/registry';
+// Client-safe model catalog (NO API adapters imported)
+export { getModelConfig, getModelsForFeature, getDefaultModelForFeature, MODEL_CATALOG } from './providers/catalog';
 
 // Type definitions (always safe to import)
 export type { AIFeature, AIProvider, AIModelConfig, AICompletionRequest, AICompletionResponse, AIProviderAdapter } from './providers/types';
