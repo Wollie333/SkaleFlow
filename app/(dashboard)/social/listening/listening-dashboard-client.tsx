@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PageHeader } from '@/components/layout/page-header';
+import { PageHeader } from '@/components/ui/page-header';
 import { MentionCard } from '@/components/social/mention-card';
 import { SentimentChart } from '@/components/social/sentiment-chart';
 import { KeywordManager } from '@/components/social/keyword-manager';

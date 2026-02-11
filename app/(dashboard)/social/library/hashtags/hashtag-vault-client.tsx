@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PageHeader } from '@/components/layout/page-header';
+import { PageHeader } from '@/components/ui/page-header';
 import { HashtagSetCard } from '@/components/social/hashtag-set-card';
 import { HashtagSetForm } from '@/components/social/hashtag-set-form';
 import { TrendingHashtagsWidget } from '@/components/social/trending-hashtags-widget';

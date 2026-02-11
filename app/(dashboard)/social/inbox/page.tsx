@@ -86,6 +86,11 @@ export default async function SocialInboxPage({
 
   const { data: interactions, error } = await query;
 
+  // If there's an error (e.g., table doesn't exist), show empty state
+  if (error) {
+    console.error('Error fetching interactions:', error);
+  }
+
   // Get unread count
   const { count: unreadCount } = await supabase
     .from('social_interactions')

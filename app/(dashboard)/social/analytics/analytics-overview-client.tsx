@@ -1,6 +1,6 @@
 'use client';
 
-import { PageHeader } from '@/components/layout/page-header';
+import { PageHeader } from '@/components/ui/page-header';
 import { AnalyticsMetricCard } from '@/components/social/analytics-metric-card';
 import { AnalyticsChart } from '@/components/social/analytics-chart';
 import {

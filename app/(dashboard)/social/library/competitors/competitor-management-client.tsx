@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PageHeader } from '@/components/layout/page-header';
+import { PageHeader } from '@/components/ui/page-header';
 import { CompetitorCard } from '@/components/social/competitor-card';
 import { CompetitorForm } from '@/components/social/competitor-form';
 import {
