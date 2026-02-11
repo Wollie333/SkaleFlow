@@ -83,6 +83,7 @@ const contentNavigation: NavItem[] = [
 const socialPublishingNav: NavItem[] = [
   { name: 'Calendar', href: '/calendar', icon: CalendarDaysIcon },
   { name: 'Create Post', href: '/content/create', icon: PencilSquareIcon },
+  { name: 'Drafts', href: '/content/drafts', icon: DocumentTextIcon },
   { name: 'Publish Log', href: '/content/publish-log', icon: ClipboardDocumentCheckIcon },
 ];
 
