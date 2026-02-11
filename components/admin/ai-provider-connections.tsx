@@ -53,6 +53,42 @@ const PROVIDER_CONFIG: Record<string, ProviderConfig> = {
   },
 };
 
+const PROVIDER_DESCRIPTIONS: Record<string, { title: string; description: string; bestFor: string[] }> = {
+  anthropic: {
+    title: 'Best for Smart & Deep Thinking',
+    description: 'Claude is like having a really smart friend who thinks carefully before answering. It understands complex questions and gives thoughtful, detailed responses.',
+    bestFor: [
+      '📝 Writing long, detailed content (blog posts, articles)',
+      '🧠 Complex reasoning and problem-solving',
+      '💬 Having long conversations that make sense',
+      '🎯 Understanding context and nuance',
+      '📚 Analyzing documents and data',
+    ],
+  },
+  google: {
+    title: 'Best for Fast & Cheap Tasks',
+    description: 'Gemini is super affordable and handles images! Like a quick helper that can do lots of simple tasks without costing much.',
+    bestFor: [
+      '⚡ Quick, simple content generation',
+      '🖼️ Understanding and working with images',
+      '💰 High-volume tasks on a budget',
+      '📱 Social media captions and short posts',
+      '🔄 Simple rewrites and translations',
+    ],
+  },
+  groq: {
+    title: 'Best for Lightning-Fast Speed',
+    description: 'Groq is the speed champion! It responds almost instantly, like having someone who answers before you finish asking. Perfect when time matters more than cost.',
+    bestFor: [
+      '⚡ Real-time chat responses',
+      '🏃 When you need answers RIGHT NOW',
+      '💨 Live demos and presentations',
+      '🎮 Interactive features',
+      '⏱️ Time-sensitive content',
+    ],
+  },
+};
+
 export function AIProviderConnections() {
   const [balances, setBalances] = useState<ProviderBalance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -119,6 +155,7 @@ export function AIProviderConnections() {
       <div className="space-y-4">
         {balances.map((balance) => {
           const config = PROVIDER_CONFIG[balance.provider];
+          const providerDesc = PROVIDER_DESCRIPTIONS[balance.provider];
           if (!config) return null;
 
           return (
@@ -156,6 +193,26 @@ export function AIProviderConnections() {
                   </Badge>
                 )}
               </div>
+
+              {/* What This AI Is Good For */}
+              {providerDesc && (
+                <div className="mt-4 p-4 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">✨</span>
+                    <h5 className="text-sm font-bold text-purple-900">{providerDesc.title}</h5>
+                  </div>
+                  <p className="text-xs text-purple-800 leading-relaxed mb-3">
+                    {providerDesc.description}
+                  </p>
+                  <div className="space-y-1.5">
+                    {providerDesc.bestFor.map((item, idx) => (
+                      <p key={idx} className="text-xs text-purple-900 leading-relaxed">
+                        {item}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {balance.status === 'active' && (
                 <>
