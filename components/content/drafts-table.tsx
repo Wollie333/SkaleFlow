@@ -78,78 +78,80 @@ export function DraftsTable({ items: initialItems }: DraftsTableProps) {
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-stone/10 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-stone/10 bg-cream-warm/30">
-              <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Title</th>
-              <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Platforms</th>
-              <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Format</th>
-              <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">AI Model</th>
-              <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Created</th>
-              <th className="text-right px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-stone/5">
-            {items.map(item => {
-              const platforms = (item.platforms || []) as string[];
-              const formatLabel = FORMAT_LABELS[item.format as keyof typeof FORMAT_LABELS] || item.format;
+      <div className="bg-white rounded-xl border border-stone/10 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-stone/10 bg-stone/5">
+                <th className="text-left px-6 py-3.5 text-xs font-semibold text-stone uppercase tracking-wider">Title</th>
+                <th className="text-left px-6 py-3.5 text-xs font-semibold text-stone uppercase tracking-wider">Platforms</th>
+                <th className="text-left px-6 py-3.5 text-xs font-semibold text-stone uppercase tracking-wider">Format</th>
+                <th className="text-left px-6 py-3.5 text-xs font-semibold text-stone uppercase tracking-wider">AI Model</th>
+                <th className="text-left px-6 py-3.5 text-xs font-semibold text-stone uppercase tracking-wider">Created</th>
+                <th className="text-right px-6 py-3.5 text-xs font-semibold text-stone uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-stone/10">
+              {items.map(item => {
+                const platforms = (item.platforms || []) as string[];
+                const formatLabel = FORMAT_LABELS[item.format as keyof typeof FORMAT_LABELS] || item.format;
 
-              return (
-                <tr key={item.id} className="hover:bg-cream-warm/20 transition-colors">
-                  <td className="px-5 py-3.5">
-                    <Link href={`/content/${item.id}`} className="group">
-                      <p className="text-sm font-medium text-charcoal group-hover:text-teal transition-colors line-clamp-1 max-w-[300px]">
-                        {item.topic || 'Untitled'}
-                      </p>
-                      {item.caption && (
-                        <p className="text-xs text-stone mt-0.5 line-clamp-1 max-w-[300px]">{item.caption}</p>
-                      )}
-                    </Link>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex flex-wrap gap-1">
-                      {platforms.map(p => (
-                        <span
-                          key={p}
-                          className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${PLATFORM_COLORS[p] || 'bg-stone-100 text-stone-600'}`}
-                        >
-                          {PLATFORM_LABELS[p] || p}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span className="text-xs text-stone">{formatLabel}</span>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span className="text-xs text-stone font-mono">{item.ai_model || '—'}</span>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span className="text-xs text-stone">{formatTimeAgo(item.created_at)}</span>
-                  </td>
-                  <td className="px-5 py-3.5 text-right">
-                    <div className="inline-flex items-center gap-1">
-                      <Link
-                        href={`/content/${item.id}`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-teal hover:bg-teal/10 transition-colors"
-                      >
-                        <PencilSquareIcon className="w-3.5 h-3.5" />
-                        Edit
+                return (
+                  <tr key={item.id} className="hover:bg-stone/5 transition-colors">
+                    <td className="px-6 py-4">
+                      <Link href={`/content/${item.id}`} className="group">
+                        <p className="text-sm font-semibold text-charcoal group-hover:text-teal transition-colors line-clamp-2 max-w-[300px]">
+                          {item.topic || 'Untitled'}
+                        </p>
+                        {item.caption && (
+                          <p className="text-xs text-stone mt-1 line-clamp-2 max-w-[300px]">{item.caption}</p>
+                        )}
                       </Link>
-                      <button
-                        onClick={() => setDeleteTarget(item)}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-red-500 hover:bg-red-50 transition-colors"
-                      >
-                        <TrashIcon className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1.5">
+                        {platforms.map(p => (
+                          <span
+                            key={p}
+                            className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${PLATFORM_COLORS[p] || 'bg-stone-100 text-stone-600'}`}
+                          >
+                            {PLATFORM_LABELS[p] || p}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-stone font-medium">{formatLabel}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-xs text-stone font-mono bg-stone/10 px-2 py-1 rounded">{item.ai_model || '—'}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-stone">{formatTimeAgo(item.created_at)}</span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="inline-flex items-center gap-2">
+                        <Link
+                          href={`/content/${item.id}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-teal hover:bg-teal-dark transition-colors"
+                        >
+                          <PencilSquareIcon className="w-4 h-4" />
+                          Edit
+                        </Link>
+                        <button
+                          onClick={() => setDeleteTarget(item)}
+                          className="inline-flex items-center justify-center p-1.5 rounded-lg text-red-500 hover:bg-red-50 border border-red-200 hover:border-red-300 transition-colors"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <ActionModal

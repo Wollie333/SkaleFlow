@@ -33,29 +33,25 @@ export default async function DraftsPage() {
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 md:p-8 space-y-6">
       <PageHeader
         title="Drafts"
-        subtitle={`${items.length} draft${items.length !== 1 ? 's' : ''} ready for review`}
-        breadcrumbs={[
-          { label: 'Content Machine', href: '/content/machine' },
-          { label: 'Drafts' },
-        ]}
+        description={`${items.length} draft${items.length !== 1 ? 's' : ''} ready for review and scheduling`}
       />
 
       {items.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-stone/10 p-16 text-center">
+        <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
           <div className="w-16 h-16 rounded-full bg-teal/10 flex items-center justify-center mx-auto mb-4">
             <SparklesIcon className="w-8 h-8 text-teal" />
           </div>
           <h3 className="text-lg font-semibold text-charcoal mb-2">No drafts yet</h3>
-          <p className="text-sm text-stone mb-6">Generate some content from Social Posts and it will appear here.</p>
+          <p className="text-sm text-stone mb-6">Generate some content from the Content Machine and it will appear here.</p>
           <Link
             href="/content/machine/social"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-teal text-white text-sm font-medium rounded-lg hover:bg-teal/90 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-teal text-white text-sm font-medium rounded-lg hover:bg-teal-dark transition-colors"
           >
             <SparklesIcon className="w-4 h-4" />
-            Go to Social Posts
+            Go to Content Machine
           </Link>
         </div>
       ) : (

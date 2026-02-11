@@ -30,7 +30,8 @@
       "Bash($150.00\"\n- Shows total credits in ENTIRE SYSTEM \\(all orgs\\)\n- Shows actual API cost \\(not sales value\\) for all orgs\n- Tooltip: \"System Total: X credits)",
       "Bash(API Cost: $Y)",
       "Bash(Credits tracked, never blocked\"\n\nChanges:\n- Update API endpoint to aggregate system-wide credits and costs for super admins\n- Add systemTotalCredits and systemTotalCostUSD fields to CreditBalance interface\n- Update header display to show \"X cr)",
-      "Bash($Y\" format for both user types\n- Mobile view shows abbreviated \"Xk cr\" format\n\nTechnical Details:\n- API queries all credit_balances and ai_usage tables for super admin\n- Regular users see their org''s balance with sales pricing\n- Super admins see global totals with actual API costs\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash($Y\" format for both user types\n- Mobile view shows abbreviated \"Xk cr\" format\n\nTechnical Details:\n- API queries all credit_balances and ai_usage tables for super admin\n- Regular users see their org''s balance with sales pricing\n- Super admins see global totals with actual API costs\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(xargs:*)"
     ]
   }
 }
