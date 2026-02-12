@@ -198,17 +198,22 @@ export async function GET(request: NextRequest) {
 
   console.log(`Returning ${pages.length} pages to client, error: ${fetchError || 'none'}`);
 
-  // If there's an error but no pages, return it
-  if (fetchError && pages.length === 0) {
+  // If no pages found (with or without error), provide helpful hint
+  if (pages.length === 0) {
+    const errorMsg = fetchError || 'No pages found for this account';
+    const hint = platformTyped === 'facebook'
+      ? 'You need to create a Facebook Page first. Personal profiles cannot be used for posting via API. Visit facebook.com/pages/create to create a Page, then reconnect your account.'
+      : platformTyped === 'instagram'
+        ? 'You need a Facebook Page connected to an Instagram Business Account.'
+        : platformTyped === 'linkedin'
+          ? 'LinkedIn connection should show your profile. Please try reconnecting.'
+          : 'No pages available for this account.';
+
     return NextResponse.json({
       connectionId: profileConn.id,
       pages: [],
-      error: fetchError,
-      hint: platformTyped === 'facebook'
-        ? 'Make sure you have created at least one Facebook Page and you are an admin. Personal profiles cannot be used for posting via API.'
-        : platformTyped === 'instagram'
-          ? 'Make sure you have a Facebook Page connected to an Instagram Business Account.'
-          : 'No pages available for this account.',
+      error: errorMsg,
+      hint,
     });
   }
 

@@ -42,7 +42,7 @@ export async function fetchLinkedInPosts(
   }
 
   // Fetch posts
-  const postsUrl = `${LINKEDIN_API_BASE}/ugcPosts?q=authors&authors=List(urn:li:person:${personUrn})&count=${limit}`;
+  const postsUrl = `${LINKEDIN_API_BASE}/ugcPosts?q=authors&authors=urn:li:person:${personUrn}&count=${limit}`;
 
   const postsResponse = await fetch(postsUrl, {
     headers: {
@@ -50,6 +50,11 @@ export async function fetchLinkedInPosts(
       'X-Restli-Protocol-Version': '2.0.0',
     },
   });
+
+  if (!postsResponse.ok) {
+    const errorData = await postsResponse.json();
+    throw new Error(errorData.message || `LinkedIn API error: ${postsResponse.status}`);
+  }
 
   const postsData = await postsResponse.json();
 

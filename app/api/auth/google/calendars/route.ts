@@ -29,7 +29,7 @@ export async function GET() {
       .from('google_integrations')
       .select('calendar_id')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     return NextResponse.json({
       calendars,

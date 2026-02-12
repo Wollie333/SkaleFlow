@@ -128,17 +128,17 @@ export default function SettingsPage() {
           .single();
         if (memberRole) setOrgRole(memberRole.role);
 
-        // Get subscription
-        const { data: sub } = await supabase
+        // Get subscription (may not exist)
+        const { data: sub, error: subError } = await supabase
           .from('subscriptions')
           .select(`
             *,
-            tier:subscription_tiers(name, price_monthly, features)
+            tier:subscription_tiers!tier_id(name, price_monthly, features)
           `)
           .eq('organization_id', org.id)
-          .single();
+          .maybeSingle();
 
-        if (sub) {
+        if (sub && !subError) {
           setSubscription(sub as unknown as Subscription);
         }
 
@@ -170,13 +170,13 @@ export default function SettingsPage() {
             .select('id, drive_email, is_active, connected_at, token_expires_at')
             .eq('organization_id', org.id)
             .eq('is_active', true)
-            .single();
+            .maybeSingle();
 
           if (driveConn) {
             setDriveConnection(driveConn);
           }
         } catch {
-          // Table doesn't exist yet â€” skip silently
+          // Table doesn't exist yet â€" skip silently
         }
       }
 
