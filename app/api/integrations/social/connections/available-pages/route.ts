@@ -15,23 +15,36 @@ const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
 async function fetchFacebookPages(accessToken: string): Promise<PageInfo[]> {
   try {
-    const pagesRes = await fetch(`${GRAPH_API_BASE}/me/accounts?access_token=${accessToken}`);
+    console.log('Fetching Facebook pages from API...');
+    const url = `${GRAPH_API_BASE}/me/accounts?access_token=${accessToken}`;
+    const pagesRes = await fetch(url);
     const pagesData = await pagesRes.json();
+
+    console.log('Facebook API response:', {
+      status: pagesRes.status,
+      hasError: !!pagesData.error,
+      error: pagesData.error,
+      dataCount: pagesData.data?.length || 0,
+      data: pagesData.data,
+    });
 
     if (pagesData.error) {
       console.error('Facebook API error:', pagesData.error);
-      return [];
+      throw new Error(`Facebook API error: ${pagesData.error.message || JSON.stringify(pagesData.error)}`);
     }
 
-    return (pagesData.data || []).map((p: { id: string; name: string; access_token: string; category?: string }) => ({
+    const pages = (pagesData.data || []).map((p: { id: string; name: string; access_token: string; category?: string }) => ({
       id: p.id,
       name: p.name,
       access_token: p.access_token,
       category: p.category || null,
     }));
+
+    console.log(`Found ${pages.length} Facebook pages`);
+    return pages;
   } catch (error) {
     console.error('Failed to fetch Facebook pages:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -99,37 +112,70 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'No organization found' }, { status: 404 });
   }
 
-  // Fetch the profile connection for this platform
-  const { data: profileConn } = await supabase
+  // Fetch ANY connection for this platform (try profile first, then any)
+  let { data: profileConn } = await supabase
     .from('social_media_connections')
-    .select('id, access_token, metadata')
+    .select('id, access_token, metadata, account_type, platform_username, platform_page_name')
     .eq('organization_id', membership.organization_id)
     .eq('platform', platformTyped)
-    .eq('account_type', 'profile')
+    .eq('is_active', true)
+    .order('account_type', { ascending: true }) // 'page' comes before 'profile'
+    .limit(1)
     .single();
 
   if (!profileConn) {
-    return NextResponse.json({ error: 'No profile connection found for this platform' }, { status: 404 });
+    console.error(`No connection found for ${platformTyped}`);
+    return NextResponse.json({ error: 'No connection found for this platform' }, { status: 404 });
   }
+
+  console.log(`Found ${platformTyped} connection:`, {
+    id: profileConn.id,
+    accountType: profileConn.account_type,
+    username: profileConn.platform_username,
+    pageName: profileConn.platform_page_name,
+    hasToken: !!profileConn.access_token,
+    tokenPrefix: profileConn.access_token?.substring(0, 10) + '...',
+    hasMetadata: !!profileConn.metadata,
+  });
 
   const metadata = (profileConn.metadata || {}) as Record<string, unknown>;
   let availablePages = (metadata.pages || []) as PageInfo[];
+  let fetchError: string | null = null;
+
+  console.log(`Metadata pages: ${availablePages.length}`);
 
   // If no pages in metadata or empty, fetch them from the API
   if (availablePages.length === 0 && profileConn.access_token) {
-    if (platformTyped === 'facebook') {
-      availablePages = await fetchFacebookPages(profileConn.access_token);
-    } else if (platformTyped === 'instagram') {
-      availablePages = await fetchInstagramAccounts(profileConn.access_token);
-    }
+    try {
+      console.log(`Fetching pages from ${platformTyped} API...`);
+      if (platformTyped === 'facebook') {
+        availablePages = await fetchFacebookPages(profileConn.access_token);
+      } else if (platformTyped === 'instagram') {
+        availablePages = await fetchInstagramAccounts(profileConn.access_token);
+      } else if (platformTyped === 'linkedin') {
+        // LinkedIn doesn't have "pages" - use the connection itself
+        availablePages = [{
+          id: profileConn.id,
+          name: profileConn.platform_username || profileConn.platform_page_name || 'LinkedIn Profile',
+          access_token: profileConn.access_token,
+          category: 'LinkedIn Profile',
+        }];
+      }
 
-    // Update metadata with fetched pages
-    if (availablePages.length > 0) {
-      const updatedMetadata = { ...metadata, pages: availablePages } as unknown as Record<string, Json>;
-      await supabase
-        .from('social_media_connections')
-        .update({ metadata: updatedMetadata })
-        .eq('id', profileConn.id);
+      console.log(`Fetched ${availablePages.length} pages from ${platformTyped}`);
+
+      // Update metadata with fetched pages
+      if (availablePages.length > 0) {
+        const updatedMetadata = { ...metadata, pages: availablePages } as unknown as Record<string, Json>;
+        await supabase
+          .from('social_media_connections')
+          .update({ metadata: updatedMetadata })
+          .eq('id', profileConn.id);
+        console.log('Updated metadata with fetched pages');
+      }
+    } catch (error) {
+      fetchError = error instanceof Error ? error.message : 'Unknown error fetching pages';
+      console.error('Error fetching pages:', fetchError);
     }
   }
 
@@ -150,8 +196,25 @@ export async function GET(request: NextRequest) {
     isConnected: connectedPageIds.has(p.id),
   }));
 
+  console.log(`Returning ${pages.length} pages to client, error: ${fetchError || 'none'}`);
+
+  // If there's an error but no pages, return it
+  if (fetchError && pages.length === 0) {
+    return NextResponse.json({
+      connectionId: profileConn.id,
+      pages: [],
+      error: fetchError,
+      hint: platformTyped === 'facebook'
+        ? 'Make sure you have created at least one Facebook Page and you are an admin. Personal profiles cannot be used for posting via API.'
+        : platformTyped === 'instagram'
+          ? 'Make sure you have a Facebook Page connected to an Instagram Business Account.'
+          : 'No pages available for this account.',
+    });
+  }
+
   return NextResponse.json({
     connectionId: profileConn.id,
     pages,
+    error: fetchError, // Include error even if we have pages (partial success)
   });
 }

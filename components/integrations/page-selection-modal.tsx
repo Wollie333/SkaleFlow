@@ -38,29 +38,53 @@ export function PageSelectionModal({ platform, isOpen, onClose, onPagesAdded }: 
       setError(null);
       try {
         const res = await fetch(`/api/integrations/social/connections/available-pages?platform=${platform}`);
+        const data = await res.json();
+
+        console.log('Page selection modal data:', data);
+
         if (!res.ok) {
-          const data = await res.json();
-          setError(data.error || 'Failed to load pages');
+          const errorMsg = data.hint ? `${data.error}\n\n${data.hint}` : (data.error || 'Failed to load pages');
+          setError(errorMsg);
           return;
         }
-        const data = await res.json();
+
         setConnectionId(data.connectionId);
         setPages(data.pages || []);
+
+        // Show error if API returned one (even with pages)
+        if (data.error) {
+          const errorMsg = data.hint ? `${data.error}\n\n${data.hint}` : data.error;
+          setError(errorMsg);
+        }
+
+        // If no pages and no error was set
+        if ((!data.pages || data.pages.length === 0) && !data.error) {
+          const hint = data.hint || `No ${config.name} pages found. ${
+            platform === 'facebook'
+              ? 'You need to create a Facebook Page first - personal profiles cannot post via API.'
+              : platform === 'instagram'
+                ? 'You need a Facebook Page connected to an Instagram Business Account.'
+                : 'Make sure you have appropriate permissions.'
+          }`;
+          setError(hint);
+        }
+
         // Pre-select already-connected pages
         const connected = new Set<string>();
         for (const p of data.pages || []) {
           if (p.isConnected) connected.add(p.id);
         }
         setSelectedPageIds(connected);
-      } catch {
-        setError('Failed to load pages');
+      } catch (err) {
+        console.error('Failed to fetch pages:', err);
+        setError('Failed to load pages. Check the browser console for details.');
       } finally {
         setIsLoading(false);
       }
     }
 
     fetchPages();
-  }, [isOpen, platform]);
+  }, [isOpen, platform, config.name]);
 
   const togglePage = (pageId: string) => {
     setSelectedPageIds(prev => {
@@ -137,15 +161,31 @@ export function PageSelectionModal({ platform, isOpen, onClose, onPagesAdded }: 
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-teal" />
+              <p className="ml-3 text-sm text-stone">Loading {config.name} pages...</p>
             </div>
           ) : error ? (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-              {error}
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm font-semibold text-amber-800 mb-2">Unable to Load Pages</p>
+              <p className="text-sm text-amber-700 whitespace-pre-line">{error}</p>
+              {platform === 'facebook' && (
+                <div className="mt-4 p-3 bg-white rounded border border-amber-200">
+                  <p className="text-xs font-semibold text-charcoal mb-2">How to create a Facebook Page:</p>
+                  <ol className="text-xs text-stone space-y-1 ml-4 list-decimal">
+                    <li>Go to <a href="https://www.facebook.com/pages/create" target="_blank" rel="noopener noreferrer" className="text-teal hover:underline">facebook.com/pages/create</a></li>
+                    <li>Choose a Page type (Business, Community, etc.)</li>
+                    <li>Fill in your Page details and create it</li>
+                    <li>Come back here and reconnect your Facebook account</li>
+                  </ol>
+                </div>
+              )}
             </div>
           ) : pages.length === 0 ? (
-            <p className="text-center text-stone py-8">
-              No pages found for this account. Make sure you have admin access to pages on {config.name}.
-            </p>
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm font-semibold text-amber-800 mb-2">No Pages Found</p>
+              <p className="text-sm text-amber-700">
+                No pages found for this account. Make sure you have admin access to pages on {config.name}.
+              </p>
+            </div>
           ) : (
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {pages.map(page => (
