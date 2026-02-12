@@ -1,59 +1,60 @@
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { redirect, notFound } from 'next/navigation';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { PlaybookClient } from './playbook-client';
 import type { BrandOutput } from '@/lib/playbook/parse-brand-outputs';
 
 interface PageProps {
-  searchParams: { organizationId?: string };
+  searchParams: Promise<{ organizationId?: string }>;
 }
 
 export default async function PlaybookPage({ searchParams }: PageProps) {
-  const organizationId = searchParams.organizationId;
+  const params = await searchParams;
+  const organizationId = params.organizationId;
 
   if (!organizationId) {
     redirect('/brand');
   }
 
+  // Try to get authenticated user
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  // Verify auth
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    redirect('/login');
+  // Check if user is a member of the org
+  let isMember = false;
+  if (user) {
+    const { data: membership } = await supabase
+      .from('org_members')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('organization_id', organizationId)
+      .single();
+
+    isMember = !!membership;
   }
 
-  // Verify org membership
-  const { data: membership } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('user_id', user.id)
-    .eq('organization_id', organizationId)
-    .single();
-
-  if (!membership) {
-    redirect('/brand');
-  }
+  // Use service client for public access
+  const serviceSupabase = createServiceClient();
 
   // Fetch organization details including share token
-  const { data: organization } = await supabase
+  const { data: organization } = await serviceSupabase
     .from('organizations')
     .select('id, name, logo_url, playbook_share_token')
     .eq('id', organizationId)
     .single();
 
   if (!organization) {
-    redirect('/brand');
+    notFound();
   }
 
-  // Fetch all locked brand outputs
-  const { data: rawOutputs } = await supabase
+  // Fetch all locked brand outputs (only locked outputs are public)
+  const { data: rawOutputs } = await serviceSupabase
     .from('brand_outputs')
     .select('id, output_key, output_value, is_locked, phase_id')
     .eq('organization_id', organizationId)
     .eq('is_locked', true);
 
   // Fetch all brand phases for ordering
-  const { data: phases } = await supabase
+  const { data: phases } = await serviceSupabase
     .from('brand_phases')
     .select('id, phase_number, phase_name, status')
     .eq('organization_id', organizationId)
@@ -73,7 +74,7 @@ export default async function PlaybookPage({ searchParams }: PageProps) {
         id: organization.id,
         name: organization.name,
         logoUrl: organization.logo_url,
-        playbookShareToken: organization.playbook_share_token,
+        playbookShareToken: isMember ? organization.playbook_share_token : undefined,
       }}
       outputs={outputs}
       phases={(phases || []).map(p => ({
@@ -81,6 +82,7 @@ export default async function PlaybookPage({ searchParams }: PageProps) {
         phase_number: p.phase_number,
         phase_name: p.phase_name,
       }))}
+      isPublicView={!isMember}
     />
   );
 }

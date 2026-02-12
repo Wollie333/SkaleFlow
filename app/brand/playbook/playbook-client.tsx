@@ -110,7 +110,7 @@ export function PlaybookClient({ organization, outputs, isPublicView }: Playbook
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSection, setActiveSection] = useState('01');
   const sectionRefs = useRef<Record<string, IntersectionObserverEntry>>({});
-  const showSidebar = !isPublicView;
+  const showSidebar = true; // Always show sidebar, even for public users
 
   // Compute share URL client-side
   const shareUrl = useMemo(() => {
