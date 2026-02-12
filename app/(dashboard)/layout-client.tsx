@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
 import { MobileSidebar } from '@/components/layout/mobile-sidebar';
@@ -47,15 +47,22 @@ export function DashboardLayoutClient({
 }: DashboardLayoutClientProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const handleMenuOpen = useCallback(() => {
+    console.log('Menu clicked, setting mobileMenuOpen to true');
+    setMobileMenuOpen(true);
+  }, []);
+
+  const handleMenuClose = useCallback(() => {
+    console.log('Menu closing, setting mobileMenuOpen to false');
+    setMobileMenuOpen(false);
+  }, []);
+
   return (
     <div className="min-h-screen bg-cream overflow-x-hidden">
       {/* Header with hamburger menu callback */}
       <Header
         {...headerProps}
-        onMenuClick={() => {
-          console.log('Menu clicked, setting mobileMenuOpen to true');
-          setMobileMenuOpen(true);
-        }}
+        onMenuClick={handleMenuOpen}
       />
 
       {/* Desktop Sidebar - hidden below lg */}
@@ -65,7 +72,7 @@ export function DashboardLayoutClient({
       <MobileSidebar
         {...sidebarProps}
         isOpen={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
+        onClose={handleMenuClose}
       />
 
       {/* Credits Warning Banner - only for super admins with low/negative balance */}
