@@ -58,6 +58,8 @@ async function fetchFacebookPages(accessToken: string): Promise<PageInfo[]> {
         category: p.category || null,
       }));
 
+      console.log(`Page batch ${pageCount} details:`, pagesBatch.map(p => ({ id: p.id, name: p.name })));
+
       allPages = [...allPages, ...pagesBatch];
 
       // Check if there's a next page
