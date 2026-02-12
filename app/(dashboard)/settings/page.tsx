@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Card, Button, Input, Badge, PageHeader } from '@/components/ui';
+import { ConfirmDialog, AlertDialog } from '@/components/ui/dialog';
 import { CheckCircleIcon, SparklesIcon, LinkIcon, XMarkIcon, ChevronUpDownIcon, ShieldCheckIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { getApprovalSettings, DEFAULT_APPROVAL_SETTINGS, type ApprovalSettings } from '@/config/approval-settings';
 import { useSearchParams } from 'next/navigation';
@@ -73,6 +74,16 @@ export default function SettingsPage() {
   }>({
     isOpen: false,
     type: 'social',
+  });
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [alertDialog, setAlertDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
   });
 
   const loadData = async () => {
@@ -260,10 +271,19 @@ export default function SettingsPage() {
       if (data.authorization_url) {
         window.location.href = data.authorization_url;
       } else {
-        alert('Failed to initialize checkout');
+        setAlertDialog({
+          isOpen: true,
+          title: 'Checkout Error',
+          message: 'Failed to initialize checkout. Please try again or contact support.',
+        });
       }
     } catch (error) {
       console.error('Checkout error:', error);
+      setAlertDialog({
+        isOpen: true,
+        title: 'Checkout Error',
+        message: 'An unexpected error occurred. Please try again or contact support.',
+      });
     }
   };
 
@@ -298,49 +318,77 @@ export default function SettingsPage() {
 
   const confirmDisconnect = async () => {
     const { type, connectionId } = disconnectModal;
+    setIsDisconnecting(true);
 
-    if (type === 'google') {
-      if (!user) return;
-      const { error } = await supabase
-        .from('google_integrations')
-        .delete()
-        .eq('user_id', user.id);
+    try {
+      if (type === 'google') {
+        if (!user) return;
+        const { error } = await supabase
+          .from('google_integrations')
+          .delete()
+          .eq('user_id', user.id);
 
-      if (!error) {
-        setGoogleConnected(false);
-        setGoogleStatus(null);
-        setDisconnectModal({ isOpen: false, type: 'social' });
-        await loadData();
-      }
-    } else if (type === 'social' && connectionId) {
-      const conn = socialConnections.find(c => c.id === connectionId);
-      const res = await fetch(`/api/integrations/social/connections/${connectionId}`, {
-        method: 'DELETE',
-      });
-      if (res.ok) {
-        setSocialConnections(prev => {
-          let updated = prev.filter(c => c.id !== connectionId);
-          // If disconnecting a profile, also remove its page connections
-          if (conn?.account_type === 'profile') {
-            updated = updated.filter(c => !(c.platform === conn.platform && c.account_type === 'page'));
-          }
-          return updated;
+        if (error) {
+          setAlertDialog({
+            isOpen: true,
+            title: 'Error',
+            message: 'Failed to disconnect Google Calendar. Please try again.',
+          });
+        } else {
+          setGoogleConnected(false);
+          setGoogleStatus(null);
+          await loadData();
+        }
+      } else if (type === 'social' && connectionId) {
+        const conn = socialConnections.find(c => c.id === connectionId);
+        const res = await fetch(`/api/integrations/social/connections/${connectionId}`, {
+          method: 'DELETE',
         });
-        setDisconnectModal({ isOpen: false, type: 'social' });
-        await loadData();
-      }
-    } else if (type === 'drive' && connectionId) {
-      const { error } = await supabase
-        .from('google_drive_connections')
-        .update({ is_active: false })
-        .eq('id', connectionId);
 
-      if (!error) {
-        setDriveConnection(null);
-        setDriveStatus(null);
-        setDisconnectModal({ isOpen: false, type: 'social' });
-        await loadData();
+        if (!res.ok) {
+          setAlertDialog({
+            isOpen: true,
+            title: 'Error',
+            message: 'Failed to disconnect account. Please try again.',
+          });
+        } else {
+          setSocialConnections(prev => {
+            let updated = prev.filter(c => c.id !== connectionId);
+            // If disconnecting a profile, also remove its page connections
+            if (conn?.account_type === 'profile') {
+              updated = updated.filter(c => !(c.platform === conn.platform && c.account_type === 'page'));
+            }
+            return updated;
+          });
+          await loadData();
+        }
+      } else if (type === 'drive' && connectionId) {
+        const { error } = await supabase
+          .from('google_drive_connections')
+          .update({ is_active: false })
+          .eq('id', connectionId);
+
+        if (error) {
+          setAlertDialog({
+            isOpen: true,
+            title: 'Error',
+            message: 'Failed to disconnect Google Drive. Please try again.',
+          });
+        } else {
+          setDriveConnection(null);
+          setDriveStatus(null);
+          await loadData();
+        }
       }
+    } catch (error) {
+      setAlertDialog({
+        isOpen: true,
+        title: 'Error',
+        message: 'An unexpected error occurred. Please try again.',
+      });
+    } finally {
+      setIsDisconnecting(false);
+      setDisconnectModal({ isOpen: false, type: 'social' });
     }
   };
 
@@ -630,50 +678,30 @@ export default function SettingsPage() {
           )}
 
           {/* Disconnect Confirmation Modal */}
-          {disconnectModal.isOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center">
-              {/* Backdrop */}
-              <div className="absolute inset-0 bg-dark/60 backdrop-blur-sm" onClick={() => setDisconnectModal({ isOpen: false, type: 'social' })} />
+          <ConfirmDialog
+            isOpen={disconnectModal.isOpen}
+            onClose={() => setDisconnectModal({ isOpen: false, type: 'social' })}
+            onConfirm={confirmDisconnect}
+            title="Confirm Disconnect"
+            message={`Are you sure you want to disconnect ${disconnectModal.platformName}?\n\n${
+              disconnectModal.type === 'google'
+                ? 'New meeting bookings will not have availability data.'
+                : disconnectModal.type === 'social'
+                  ? 'You will no longer be able to publish content or view analytics for this account.'
+                  : 'You will no longer be able to import assets from this Google Drive account.'
+            }`}
+            confirmText={isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+            variant="danger"
+          />
 
-              {/* Modal */}
-              <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
-                {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-stone/10">
-                  <h2 className="text-heading-md text-charcoal">
-                    Confirm Disconnect
-                  </h2>
-                  <button
-                    onClick={() => setDisconnectModal({ isOpen: false, type: 'social' })}
-                    className="p-1 rounded-lg hover:bg-cream-warm transition-colors"
-                  >
-                    <XMarkIcon className="w-5 h-5 text-stone" />
-                  </button>
-                </div>
-
-                {/* Body */}
-                <div className="p-6">
-                  <p className="text-sm text-charcoal mb-4">
-                    Are you sure you want to disconnect <span className="font-semibold">{disconnectModal.platformName}</span>?
-                  </p>
-                  <p className="text-sm text-stone">
-                    {disconnectModal.type === 'google' && 'New meeting bookings will not have availability data.'}
-                    {disconnectModal.type === 'social' && 'You will no longer be able to publish content or view analytics for this account.'}
-                    {disconnectModal.type === 'drive' && 'You will no longer be able to import assets from this Google Drive account.'}
-                  </p>
-                </div>
-
-                {/* Footer */}
-                <div className="flex items-center justify-end gap-3 p-6 border-t border-stone/10">
-                  <Button variant="ghost" onClick={() => setDisconnectModal({ isOpen: false, type: 'social' })}>
-                    Cancel
-                  </Button>
-                  <Button variant="danger" onClick={confirmDisconnect}>
-                    Disconnect
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Alert Dialog */}
+          <AlertDialog
+            isOpen={alertDialog.isOpen}
+            onClose={() => setAlertDialog({ isOpen: false, title: '', message: '' })}
+            title={alertDialog.title}
+            message={alertDialog.message}
+            variant="danger"
+          />
         </Card>
       )}
 
