@@ -304,8 +304,9 @@ export function PostsPerformanceClient({ organizationId, connections }: PostsPer
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
-          {error}
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <p className="text-sm font-semibold text-amber-800 mb-2">Analytics Issue</p>
+          <p className="text-sm text-amber-700 whitespace-pre-line">{error}</p>
         </div>
       )}
 
