@@ -215,7 +215,7 @@ export function MobileSidebar({
       {/* Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-dark/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-dark/50 z-[60] lg:hidden"
           onClick={onClose}
         />
       )}
@@ -223,7 +223,7 @@ export function MobileSidebar({
       {/* Drawer */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-60 bg-white border-r border-stone/10 flex flex-col transform transition-transform duration-300 ease-in-out lg:hidden",
+          "fixed inset-y-0 left-0 z-[70] w-60 bg-white border-r border-stone/10 flex flex-col transform transition-transform duration-300 ease-in-out lg:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
