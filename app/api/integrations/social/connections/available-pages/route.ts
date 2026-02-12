@@ -28,32 +28,44 @@ async function fetchFacebookPages(accessToken: string): Promise<PageInfo[]> {
       hasPagesManage: grantedPermissions.includes('pages_manage_posts'),
     });
 
-    const url = `${GRAPH_API_BASE}/me/accounts?access_token=${accessToken}`;
-    const pagesRes = await fetch(url);
-    const pagesData = await pagesRes.json();
+    // Fetch ALL pages (handle pagination)
+    let allPages: PageInfo[] = [];
+    let nextUrl = `${GRAPH_API_BASE}/me/accounts?access_token=${accessToken}`;
+    let pageCount = 0;
 
-    console.log('Facebook API response:', {
-      status: pagesRes.status,
-      hasError: !!pagesData.error,
-      error: pagesData.error,
-      dataCount: pagesData.data?.length || 0,
-      data: pagesData.data,
-    });
+    while (nextUrl && pageCount < 10) { // Safety limit of 10 pages
+      pageCount++;
+      const pagesRes = await fetch(nextUrl);
+      const pagesData = await pagesRes.json();
 
-    if (pagesData.error) {
-      console.error('Facebook API error:', pagesData.error);
-      throw new Error(`Facebook API error: ${pagesData.error.message || JSON.stringify(pagesData.error)}`);
+      console.log(`Facebook API response (page ${pageCount}):`, {
+        status: pagesRes.status,
+        hasError: !!pagesData.error,
+        error: pagesData.error,
+        dataCount: pagesData.data?.length || 0,
+        hasNext: !!pagesData.paging?.next,
+      });
+
+      if (pagesData.error) {
+        console.error('Facebook API error:', pagesData.error);
+        throw new Error(`Facebook API error: ${pagesData.error.message || JSON.stringify(pagesData.error)}`);
+      }
+
+      const pagesBatch = (pagesData.data || []).map((p: { id: string; name: string; access_token: string; category?: string }) => ({
+        id: p.id,
+        name: p.name,
+        access_token: p.access_token,
+        category: p.category || null,
+      }));
+
+      allPages = [...allPages, ...pagesBatch];
+
+      // Check if there's a next page
+      nextUrl = pagesData.paging?.next || null;
     }
 
-    const pages = (pagesData.data || []).map((p: { id: string; name: string; access_token: string; category?: string }) => ({
-      id: p.id,
-      name: p.name,
-      access_token: p.access_token,
-      category: p.category || null,
-    }));
-
-    console.log(`Found ${pages.length} Facebook pages`);
-    return pages;
+    console.log(`Found ${allPages.length} total Facebook pages across ${pageCount} API call(s)`);
+    return allPages;
   } catch (error) {
     console.error('Failed to fetch Facebook pages:', error);
     throw error;

@@ -65,29 +65,45 @@ export const facebookAdapter: PlatformAdapter = {
     const grantedPermissions = permissionsData.data?.filter((p: { status: string }) => p.status === 'granted').map((p: { permission: string }) => p.permission) || [];
     console.log('Facebook permissions granted to token:', grantedPermissions);
 
-    const pagesRes = await fetch(`${GRAPH_API_BASE}/me/accounts?access_token=${longLivedData.access_token}`);
-    const pagesData = await pagesRes.json();
+    // Fetch ALL pages (handle pagination)
+    let allPages: { id: string; name: string; access_token: string; category?: string }[] = [];
+    let nextUrl = `${GRAPH_API_BASE}/me/accounts?access_token=${longLivedData.access_token}`;
+    let pageCount = 0;
 
-    console.log('Facebook /me/accounts response:', {
-      status: pagesRes.status,
-      hasError: !!pagesData.error,
-      error: pagesData.error,
-      dataCount: pagesData.data?.length || 0,
-      paging: pagesData.paging,
-    });
+    while (nextUrl && pageCount < 10) { // Safety limit of 10 pages
+      pageCount++;
+      const pagesRes = await fetch(nextUrl);
+      const pagesData = await pagesRes.json();
 
-    if (pagesData.error) {
-      console.error('Facebook API error when fetching pages:', pagesData.error);
+      console.log(`Facebook /me/accounts response (page ${pageCount}):`, {
+        status: pagesRes.status,
+        hasError: !!pagesData.error,
+        error: pagesData.error,
+        dataCount: pagesData.data?.length || 0,
+        hasNext: !!pagesData.paging?.next,
+      });
+
+      if (pagesData.error) {
+        console.error('Facebook API error when fetching pages:', pagesData.error);
+        break;
+      }
+
+      const pagesBatch = (pagesData.data || []).map((p: { id: string; name: string; access_token: string; category?: string }) => ({
+        id: p.id,
+        name: p.name,
+        access_token: p.access_token,
+        category: p.category || null,
+      }));
+
+      allPages = [...allPages, ...pagesBatch];
+
+      // Check if there's a next page
+      nextUrl = pagesData.paging?.next || null;
     }
 
-    const pages = (pagesData.data || []).map((p: { id: string; name: string; access_token: string; category?: string }) => ({
-      id: p.id,
-      name: p.name,
-      access_token: p.access_token,
-      category: p.category || null,
-    }));
+    console.log(`Found ${allPages.length} total Facebook pages across ${pageCount} API call(s):`, allPages.map(p => ({ id: p.id, name: p.name, category: p.category })));
 
-    console.log(`Found ${pages.length} Facebook pages:`, pages.map(p => ({ id: p.id, name: p.name, category: p.category })));
+    const pages = allPages;
 
     // Return user's long-lived token as the profile connection.
     // Don't auto-select a page — user picks pages via the page selector.
