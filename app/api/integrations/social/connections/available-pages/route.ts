@@ -87,6 +87,62 @@ async function fetchInstagramAccounts(accessToken: string): Promise<PageInfo[]> 
   }
 }
 
+async function fetchLinkedInOrganizations(accessToken: string): Promise<PageInfo[]> {
+  try {
+    console.log('Fetching LinkedIn organizations from API...');
+    const LINKEDIN_API_BASE = 'https://api.linkedin.com';
+
+    const orgsRes = await fetch(
+      `${LINKEDIN_API_BASE}/rest/organizationAcls?q=roleAssignee&role=ADMINISTRATOR&projection=(elements*(organization~(id,localizedName)))`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'LinkedIn-Version': '202601',
+          'X-Restli-Protocol-Version': '2.0.0',
+        },
+      }
+    );
+
+    console.log('LinkedIn API response:', {
+      status: orgsRes.status,
+      ok: orgsRes.ok,
+    });
+
+    if (!orgsRes.ok) {
+      const errorText = await orgsRes.text();
+      console.error('LinkedIn API error:', errorText);
+      return [];
+    }
+
+    const orgsData = await orgsRes.json();
+    console.log('LinkedIn organizations data:', {
+      hasElements: !!orgsData.elements,
+      elementCount: orgsData.elements?.length || 0,
+    });
+
+    const elements = orgsData.elements || [];
+    const organizations: PageInfo[] = [];
+
+    for (const el of elements) {
+      const org = el['organization~'];
+      if (org) {
+        organizations.push({
+          id: String(org.id),
+          name: org.localizedName || 'Organization',
+          access_token: accessToken,
+          category: 'Company Page',
+        });
+      }
+    }
+
+    console.log(`Found ${organizations.length} LinkedIn organizations`);
+    return organizations;
+  } catch (error) {
+    console.error('Failed to fetch LinkedIn organizations:', error);
+    return [];
+  }
+}
+
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
 
@@ -153,13 +209,8 @@ export async function GET(request: NextRequest) {
       } else if (platformTyped === 'instagram') {
         availablePages = await fetchInstagramAccounts(profileConn.access_token);
       } else if (platformTyped === 'linkedin') {
-        // LinkedIn doesn't have "pages" - use the connection itself
-        availablePages = [{
-          id: profileConn.id,
-          name: profileConn.platform_username || profileConn.platform_page_name || 'LinkedIn Profile',
-          access_token: profileConn.access_token,
-          category: 'LinkedIn Profile',
-        }];
+        // Fetch LinkedIn organizations (company pages)
+        availablePages = await fetchLinkedInOrganizations(profileConn.access_token);
       }
 
       console.log(`Fetched ${availablePages.length} pages from ${platformTyped}`);
@@ -206,7 +257,7 @@ export async function GET(request: NextRequest) {
       : platformTyped === 'instagram'
         ? 'You need a Facebook Page connected to an Instagram Business Account.'
         : platformTyped === 'linkedin'
-          ? 'LinkedIn connection should show your profile. Please try reconnecting.'
+          ? 'No LinkedIn Company Pages found. You must be an Administrator of a LinkedIn Company Page to post on its behalf. Make sure you have admin access to a Company Page and reconnect your account with organization permissions enabled.'
           : 'No pages available for this account.';
 
     return NextResponse.json({

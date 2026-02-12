@@ -65,9 +65,17 @@ export default function SettingsPage() {
     fullName: '',
     orgName: '',
   });
+  const [disconnectModal, setDisconnectModal] = useState<{
+    isOpen: boolean;
+    type: 'social' | 'google' | 'drive';
+    connectionId?: string;
+    platformName?: string;
+  }>({
+    isOpen: false,
+    type: 'social',
+  });
 
-  useEffect(() => {
-    async function loadData() {
+  const loadData = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;
 
@@ -181,8 +189,9 @@ export default function SettingsPage() {
       }
 
       setIsLoading(false);
-    }
+  };
 
+  useEffect(() => {
     loadData();
 
     // Check for Google OAuth callback status
@@ -258,48 +267,80 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDisconnectGoogle = async () => {
-    if (!user) return;
-    if (!confirm('Disconnect Google Calendar? New meeting bookings will not have availability data.')) return;
-
-    const { error } = await supabase
-      .from('google_integrations')
-      .delete()
-      .eq('user_id', user.id);
-
-    if (!error) {
-      setGoogleConnected(false);
-      setGoogleStatus(null);
-    }
-  };
-
-  const handleDisconnectSocial = async (connectionId: string) => {
-    // Find the connection being disconnected
-    const conn = socialConnections.find(c => c.id === connectionId);
-    const res = await fetch(`/api/integrations/social/connections/${connectionId}`, {
-      method: 'DELETE',
+  const handleDisconnectGoogle = () => {
+    setDisconnectModal({
+      isOpen: true,
+      type: 'google',
+      platformName: 'Google Calendar',
     });
-    if (res.ok) {
-      setSocialConnections(prev => {
-        let updated = prev.filter(c => c.id !== connectionId);
-        // If disconnecting a profile, also remove its page connections
-        if (conn?.account_type === 'profile') {
-          updated = updated.filter(c => !(c.platform === conn.platform && c.account_type === 'page'));
-        }
-        return updated;
-      });
-    }
   };
 
-  const handleDisconnectDrive = async (connectionId: string) => {
-    const { error } = await supabase
-      .from('google_drive_connections')
-      .update({ is_active: false })
-      .eq('id', connectionId);
+  const handleDisconnectSocial = (connectionId: string) => {
+    const conn = socialConnections.find(c => c.id === connectionId);
+    const platformName = conn?.platform_page_name || conn?.platform_username || conn?.platform || 'this account';
+    setDisconnectModal({
+      isOpen: true,
+      type: 'social',
+      connectionId,
+      platformName: `${conn?.platform ? conn.platform.charAt(0).toUpperCase() + conn.platform.slice(1) : ''} (${platformName})`,
+    });
+  };
 
-    if (!error) {
-      setDriveConnection(null);
-      setDriveStatus(null);
+  const handleDisconnectDrive = (connectionId: string) => {
+    const driveName = driveConnection?.drive_email || 'Google Drive';
+    setDisconnectModal({
+      isOpen: true,
+      type: 'drive',
+      connectionId,
+      platformName: driveName,
+    });
+  };
+
+  const confirmDisconnect = async () => {
+    const { type, connectionId } = disconnectModal;
+
+    if (type === 'google') {
+      if (!user) return;
+      const { error } = await supabase
+        .from('google_integrations')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (!error) {
+        setGoogleConnected(false);
+        setGoogleStatus(null);
+        setDisconnectModal({ isOpen: false, type: 'social' });
+        await loadData();
+      }
+    } else if (type === 'social' && connectionId) {
+      const conn = socialConnections.find(c => c.id === connectionId);
+      const res = await fetch(`/api/integrations/social/connections/${connectionId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setSocialConnections(prev => {
+          let updated = prev.filter(c => c.id !== connectionId);
+          // If disconnecting a profile, also remove its page connections
+          if (conn?.account_type === 'profile') {
+            updated = updated.filter(c => !(c.platform === conn.platform && c.account_type === 'page'));
+          }
+          return updated;
+        });
+        setDisconnectModal({ isOpen: false, type: 'social' });
+        await loadData();
+      }
+    } else if (type === 'drive' && connectionId) {
+      const { error } = await supabase
+        .from('google_drive_connections')
+        .update({ is_active: false })
+        .eq('id', connectionId);
+
+      if (!error) {
+        setDriveConnection(null);
+        setDriveStatus(null);
+        setDisconnectModal({ isOpen: false, type: 'social' });
+        await loadData();
+      }
     }
   };
 
@@ -586,6 +627,52 @@ export default function SettingsPage() {
                 }
               }}
             />
+          )}
+
+          {/* Disconnect Confirmation Modal */}
+          {disconnectModal.isOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              {/* Backdrop */}
+              <div className="absolute inset-0 bg-dark/60 backdrop-blur-sm" onClick={() => setDisconnectModal({ isOpen: false, type: 'social' })} />
+
+              {/* Modal */}
+              <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b border-stone/10">
+                  <h2 className="text-heading-md text-charcoal">
+                    Confirm Disconnect
+                  </h2>
+                  <button
+                    onClick={() => setDisconnectModal({ isOpen: false, type: 'social' })}
+                    className="p-1 rounded-lg hover:bg-cream-warm transition-colors"
+                  >
+                    <XMarkIcon className="w-5 h-5 text-stone" />
+                  </button>
+                </div>
+
+                {/* Body */}
+                <div className="p-6">
+                  <p className="text-sm text-charcoal mb-4">
+                    Are you sure you want to disconnect <span className="font-semibold">{disconnectModal.platformName}</span>?
+                  </p>
+                  <p className="text-sm text-stone">
+                    {disconnectModal.type === 'google' && 'New meeting bookings will not have availability data.'}
+                    {disconnectModal.type === 'social' && 'You will no longer be able to publish content or view analytics for this account.'}
+                    {disconnectModal.type === 'drive' && 'You will no longer be able to import assets from this Google Drive account.'}
+                  </p>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-end gap-3 p-6 border-t border-stone/10">
+                  <Button variant="ghost" onClick={() => setDisconnectModal({ isOpen: false, type: 'social' })}>
+                    Cancel
+                  </Button>
+                  <Button variant="danger" onClick={confirmDisconnect}>
+                    Disconnect
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
         </Card>
       )}
