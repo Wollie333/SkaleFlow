@@ -196,10 +196,12 @@ export function MobileSidebar({
   // Total pending reviews
   const totalPendingReviews = (pendingReviewCount || 0);
 
-  // Close on route change
+  // Close on route change (but not on initial mount)
   useEffect(() => {
-    onClose();
-  }, [pathname, onClose]);
+    if (isOpen) {
+      onClose();
+    }
+  }, [pathname]); // Only depend on pathname, not onClose
 
   // Prevent body scroll when open
   useEffect(() => {
