@@ -23,7 +23,7 @@ export default async function DashboardLayout({
   const [{ data: userData }, { data: membership }] = await Promise.all([
     supabase
       .from('users')
-      .select('full_name, email, role')
+      .select('full_name, email, role, avatar_url')
       .eq('id', user.id)
       .single(),
     supabase
@@ -193,7 +193,7 @@ export default async function DashboardLayout({
   return (
     <DashboardLayoutClient
       headerProps={{
-        user: { email: user.email!, full_name: userData?.full_name },
+        user: { email: user.email!, full_name: userData?.full_name, avatar_url: userData?.avatar_url },
         initialUnreadCount: notificationCount || 0,
         organizationId: membership?.organization_id,
         draftCount: draftCount,

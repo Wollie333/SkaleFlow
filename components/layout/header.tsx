@@ -74,6 +74,7 @@ interface HeaderProps {
   user?: {
     email: string;
     full_name?: string;
+    avatar_url?: string | null;
   };
   initialUnreadCount?: number;
   organizationId?: string;
@@ -306,7 +307,15 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
           {/* User menu */}
           <div className="relative group">
             <button className="flex items-center gap-3 p-2 rounded-lg hover:bg-teal/10 transition-colors">
-              <UserCircleIcon className="w-8 h-8 text-stone" />
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt="Profile"
+                  className="w-8 h-8 rounded-full object-cover border-2 border-stone/20"
+                />
+              ) : (
+                <UserCircleIcon className="w-8 h-8 text-stone" />
+              )}
               <div className="text-left hidden sm:block">
                 <p className="text-sm font-medium text-cream">
                   {user?.full_name || user?.email?.split('@')[0]}
