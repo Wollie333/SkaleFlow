@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   PaperAirplaneIcon,
   CalendarDaysIcon,
@@ -50,16 +50,10 @@ export function PostActionPopup({
   bulkCount = 1,
 }: PostActionPopupProps) {
   const [selectedAction, setSelectedAction] = useState<'publish' | 'schedule' | 'draft' | null>(null);
-  const [publishPlatforms, setPublishPlatforms] = useState<string[]>(platforms);
   const [scheduleDate, setScheduleDate] = useState(defaultScheduleDate);
   const [scheduleTime, setScheduleTime] = useState(defaultScheduleTime);
   const [publishResults, setPublishResults] = useState<PublishResult[] | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-
-  // Sync publishPlatforms with platforms prop when it changes
-  useEffect(() => {
-    setPublishPlatforms(platforms);
-  }, [platforms]);
 
   const handlePublishNow = async () => {
     if (platforms.length === 0) return;
@@ -176,67 +170,22 @@ export function PostActionPopup({
           <div className="p-5 space-y-3">
             {/* Publish Now Card */}
             <button
-              onClick={() => setSelectedAction(selectedAction === 'publish' ? null : 'publish')}
-              className={cn(
-                'w-full text-left p-4 rounded-xl border-2 transition-all',
-                selectedAction === 'publish'
-                  ? 'border-teal bg-teal/5'
-                  : 'border-stone/10 hover:border-stone/20'
-              )}
+              onClick={handlePublishNow}
+              disabled={actionLoading || isLoading || platforms.length === 0}
+              className="w-full text-left p-4 rounded-xl border-2 border-stone/10 hover:border-teal/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="flex items-center gap-3">
-                <div className={cn(
-                  'shrink-0 p-2 rounded-lg',
-                  selectedAction === 'publish' ? 'bg-teal/10' : 'bg-stone/5'
-                )}>
-                  <PaperAirplaneIcon className={cn('w-5 h-5', selectedAction === 'publish' ? 'text-teal' : 'text-stone')} />
+                <div className="shrink-0 p-2 rounded-lg bg-stone/5">
+                  <PaperAirplaneIcon className="w-5 h-5 text-stone" />
                 </div>
-                <div>
-                  <p className={cn('text-sm font-semibold', selectedAction === 'publish' ? 'text-teal' : 'text-charcoal')}>
-                    Publish Now
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-charcoal">Publish Now</p>
+                  <p className="text-xs text-stone">
+                    Publish immediately to {platforms.length} platform{platforms.length !== 1 ? 's' : ''}: {platforms.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(', ')}
                   </p>
-                  <p className="text-xs text-stone">Publish immediately to your connected platforms</p>
                 </div>
               </div>
             </button>
-
-            {selectedAction === 'publish' && (
-              <div className="ml-4 pl-4 border-l-2 border-teal/20 space-y-3">
-                <p className="text-xs font-medium text-stone">Select platforms to publish:</p>
-                <div className="flex flex-wrap gap-2">
-                  {platforms.map(p => {
-                    const isConnected = connectedPlatforms.length === 0 || connectedPlatforms.includes(p);
-                    return (
-                      <button
-                        key={p}
-                        onClick={() => isConnected && togglePublishPlatform(p)}
-                        disabled={!isConnected}
-                        className={cn(
-                          'px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors',
-                          publishPlatforms.includes(p) && isConnected
-                            ? 'bg-teal text-white'
-                            : isConnected
-                            ? 'bg-stone/5 text-stone hover:bg-stone/10'
-                            : 'bg-stone/5 text-stone/40 cursor-not-allowed'
-                        )}
-                      >
-                        {p}
-                        {!isConnected && ' (not connected)'}
-                      </button>
-                    );
-                  })}
-                </div>
-                <Button
-                  onClick={handlePublishNow}
-                  isLoading={actionLoading}
-                  disabled={publishPlatforms.length === 0 || isLoading}
-                  className="w-full"
-                >
-                  <PaperAirplaneIcon className="w-4 h-4 mr-1" />
-                  Publish to {publishPlatforms.length} Platform{publishPlatforms.length !== 1 ? 's' : ''}
-                </Button>
-              </div>
-            )}
 
             {/* Schedule Card */}
             <button
