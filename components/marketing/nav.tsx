@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { UserAvatar } from '@/components/ui';
 
 const links = [
   { href: '/about', label: 'About' },
@@ -25,13 +26,13 @@ export function MarketingNav() {
 
       const { data: profile } = await supabase
         .from('users')
-        .select('full_name')
+        .select('full_name, avatar_url')
         .eq('id', authUser.id)
         .single();
 
       setUser({
         name: profile?.full_name || authUser.email?.split('@')[0] || 'User',
-        avatar: authUser.user_metadata?.avatar_url || null,
+        avatar: profile?.avatar_url || null,
       });
     }
 
@@ -60,17 +61,13 @@ export function MarketingNav() {
         <div className="flex items-center gap-3">
           {user ? (
             <Link href="/dashboard" className="flex items-center gap-2.5 group">
-              {user.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="w-8 h-8 rounded-full object-cover ring-2 ring-teal/30 group-hover:ring-teal/60 transition-all"
+              <div className="ring-2 ring-teal/30 group-hover:ring-teal/60 transition-all rounded-full">
+                <UserAvatar
+                  avatarUrl={user.avatar}
+                  userName={user.name}
+                  size="md"
                 />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-teal/20 ring-2 ring-teal/30 group-hover:ring-teal/60 transition-all flex items-center justify-center text-xs font-semibold text-teal uppercase">
-                  {user.name.charAt(0)}
-                </div>
-              )}
+              </div>
               <span className="text-sm text-cream/80 group-hover:text-cream transition-colors hidden sm:block">
                 {user.name}
               </span>
