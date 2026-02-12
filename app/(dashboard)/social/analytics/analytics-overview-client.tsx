@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { PageHeader } from '@/components/ui/page-header';
+import { Button } from '@/components/ui';
 import { AnalyticsMetricCard } from '@/components/social/analytics-metric-card';
 import { AnalyticsChart } from '@/components/social/analytics-chart';
 import {
@@ -11,6 +13,7 @@ import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
   ClipboardDocumentCheckIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
@@ -32,6 +35,9 @@ export function AnalyticsOverviewClient({
   platformMetrics,
   organizationId,
 }: AnalyticsOverviewClientProps) {
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
@@ -43,12 +49,57 @@ export function AnalyticsOverviewClient({
     return `${sign}${value.toFixed(1)}%`;
   };
 
+  const handleSyncAnalytics = async () => {
+    setIsSyncing(true);
+    setSyncMessage(null);
+
+    try {
+      const response = await fetch('/api/social/analytics/sync', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSyncMessage(`Successfully synced ${data.synced} posts! ${data.failed > 0 ? `(${data.failed} failed)` : ''}`);
+        // Reload the page to show updated data
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        setSyncMessage(`Sync failed: ${data.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      setSyncMessage('Failed to sync analytics. Please try again.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
     <div className="p-6 md:p-8 space-y-6">
-      <PageHeader
-        title="Analytics Overview"
-        description="Comprehensive performance insights for the last 30 days"
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <PageHeader
+          title="Analytics Overview"
+          description="Comprehensive performance insights for the last 30 days"
+        />
+        <div className="flex flex-col gap-2">
+          <Button
+            onClick={handleSyncAnalytics}
+            disabled={isSyncing}
+            variant="secondary"
+            className="whitespace-nowrap"
+          >
+            <ArrowPathIcon className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Syncing...' : 'Sync Analytics'}
+          </Button>
+          {syncMessage && (
+            <p className={`text-xs ${syncMessage.includes('failed') || syncMessage.includes('Failed') ? 'text-red-500' : 'text-teal'}`}>
+              {syncMessage}
+            </p>
+          )}
+        </div>
+      </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

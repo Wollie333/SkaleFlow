@@ -1,30 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { fetchPostAnalytics } from '@/lib/social/analytics';
 import type { ConnectionWithTokens } from '@/lib/social/token-manager';
 import type { Json } from '@/types/database';
 
 export async function POST(request: NextRequest) {
-  // Verify cron secret
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const supabase = await createClient();
+
+  // Authenticate user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const supabase = createServiceClient();
+  // Get user's organization
+  const { data: membership } = await supabase
+    .from('org_members')
+    .select('organization_id')
+    .eq('user_id', user.id)
+    .single();
 
-  // Get published posts from last 30 days that have platform_post_ids
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  if (!membership?.organization_id) {
+    return NextResponse.json({ error: 'No organization found' }, { status: 404 });
+  }
+
+  const organizationId = membership.organization_id;
+
+  // Get published posts from last 90 days for this organization
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
 
   const { data: publishedPosts, error } = await supabase
     .from('published_posts')
-    .select('id, platform, platform_post_id, connection_id, organization_id')
+    .select('id, platform, platform_post_id, connection_id')
+    .eq('organization_id', organizationId)
     .eq('publish_status', 'published')
     .not('platform_post_id', 'is', null)
-    .gte('published_at', thirtyDaysAgo);
+    .gte('published_at', ninetyDaysAgo);
 
   if (error || !publishedPosts) {
     return NextResponse.json({ error: 'Failed to fetch published posts', details: error?.message }, { status: 500 });
+  }
+
+  if (publishedPosts.length === 0) {
+    return NextResponse.json({ message: 'No published posts found to sync', synced: 0, failed: 0 });
   }
 
   let synced = 0;
@@ -80,7 +101,8 @@ export async function POST(request: NextRequest) {
         } else {
           failed++;
         }
-      } catch {
+      } catch (err) {
+        console.error(`Failed to fetch analytics for post ${post.id}:`, err);
         failed++;
       }
     }
