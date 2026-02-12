@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { BellIcon, UserCircleIcon, CheckIcon, InboxIcon, BoltIcon, Bars3Icon } from '@heroicons/react/24/outline';
+import { BellIcon, CheckIcon, InboxIcon, BoltIcon, Bars3Icon } from '@heroicons/react/24/outline';
 import {
   DocumentTextIcon,
   CheckCircleIcon,
@@ -16,6 +16,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { useCreditBalance } from '@/hooks/useCreditBalance';
 import { formatCreditsToUSD } from '@/lib/ai';
+import { UserAvatar } from '@/components/ui';
 import type { NotificationType } from '@/types/database';
 
 function formatTimeAgo(dateStr: string): string {
@@ -307,15 +308,11 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
           {/* User menu */}
           <div className="relative group">
             <button className="flex items-center gap-3 p-2 rounded-lg hover:bg-teal/10 transition-colors">
-              {user?.avatar_url ? (
-                <img
-                  src={user.avatar_url}
-                  alt="Profile"
-                  className="w-8 h-8 rounded-full object-cover border-2 border-stone/20"
-                />
-              ) : (
-                <UserCircleIcon className="w-8 h-8 text-stone" />
-              )}
+              <UserAvatar
+                avatarUrl={user?.avatar_url}
+                userName={user?.full_name || user?.email?.split('@')[0]}
+                size="md"
+              />
               <div className="text-left hidden sm:block">
                 <p className="text-sm font-medium text-cream">
                   {user?.full_name || user?.email?.split('@')[0]}

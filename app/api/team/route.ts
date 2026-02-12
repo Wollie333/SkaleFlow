@@ -48,7 +48,8 @@ export async function GET() {
           id,
           email,
           full_name,
-          last_login_at
+          last_login_at,
+          avatar_url
         )
       `)
       .eq('organization_id', org.id)

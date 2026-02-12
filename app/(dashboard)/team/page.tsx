@@ -23,6 +23,7 @@ interface TeamMember {
     email: string;
     full_name: string;
     last_login_at: string | null;
+    avatar_url?: string | null;
   } | null;
 }
 

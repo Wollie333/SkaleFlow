@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui';
+import { Button, UserAvatar } from '@/components/ui';
 import {
   ChevronDownIcon,
   TrashIcon,
@@ -17,6 +17,7 @@ interface MemberUser {
   email: string;
   full_name: string | null;
   last_login_at: string | null;
+  avatar_url?: string | null;
 }
 
 interface Member {
@@ -105,8 +106,12 @@ export function MemberCard({
     <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5 transition-all duration-200 hover:shadow-[0_4px_16px_rgba(15,31,29,0.06)]">
       <div className="flex items-start gap-4">
         {/* Avatar */}
-        <div className="flex-shrink-0 w-11 h-11 rounded-full bg-teal/10 flex items-center justify-center">
-          <span className="text-base font-semibold text-teal">{getInitial(member)}</span>
+        <div className="flex-shrink-0">
+          <UserAvatar
+            avatarUrl={member.users?.avatar_url}
+            userName={displayName}
+            size="lg"
+          />
         </div>
 
         {/* Info */}

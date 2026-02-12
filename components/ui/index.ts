@@ -6,3 +6,4 @@ export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, 
 export { StatusBadge, type StatusBadgeProps } from './status-badge';
 export { PageHeader, type PageHeaderProps, type BreadcrumbItem } from './page-header';
 export { ActionModal, type ActionModalProps, type ActionModalAction } from './action-modal';
+export { UserAvatar } from './user-avatar';
