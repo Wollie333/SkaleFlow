@@ -399,8 +399,8 @@ export function ExpertChatPanel({
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="flex items-end gap-2 w-full">
-              <div className="flex-1 flex items-end gap-2 bg-cream-warm rounded-2xl px-3 py-2 border border-stone/10">
+            <form onSubmit={handleSubmit} className="flex items-center gap-2 w-full">
+              <div className="flex-1 flex items-center gap-2 bg-cream-warm rounded-2xl px-3 py-2.5 border border-stone/10 min-h-[48px]">
                 <Button
                   type="button"
                   variant="ghost"
@@ -453,19 +453,19 @@ export function ExpertChatPanel({
                 <Button
                   type="button"
                   onClick={onStopGeneration}
-                  className="p-3 h-auto rounded-full bg-red-500 hover:bg-red-600 text-white shrink-0"
+                  className="p-3.5 h-[48px] w-[48px] rounded-xl bg-red-500 hover:bg-red-600 text-white shrink-0 flex items-center justify-center"
                   title="Stop generating"
                 >
-                  <StopIcon className="w-5 h-5" />
+                  <StopIcon className="w-6 h-6" />
                 </Button>
               ) : (
                 <Button
                   type="submit"
                   disabled={(!input.trim() && attachments.length === 0) || isLoading || isListening}
-                  className="p-3 sm:p-3.5 h-auto rounded-full bg-teal hover:bg-teal/90 disabled:bg-stone/20 disabled:opacity-50 shrink-0 text-white shadow-md"
+                  className="p-3.5 h-[48px] w-[48px] rounded-xl bg-[#1E6B63] hover:bg-[#267D74] disabled:bg-stone/30 disabled:opacity-50 shrink-0 flex items-center justify-center shadow-lg"
                   title="Send message"
                 >
-                  <PaperAirplaneIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <PaperAirplaneIcon className="w-6 h-6 text-white" />
                 </Button>
               )}
             </form>
