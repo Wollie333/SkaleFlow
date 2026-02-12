@@ -48,8 +48,23 @@ export const facebookAdapter: PlatformAdapter = {
     const userRes = await fetch(`${GRAPH_API_BASE}/me?fields=id,name&access_token=${longLivedData.access_token}`);
     const userData = await userRes.json();
 
+    // Check what scopes were granted
+    console.log('Facebook OAuth scopes granted:', tokenData.scope);
+
     // Get pages the user manages
     console.log('Fetching Facebook pages from /me/accounts...');
+
+    // First check /me to see user info
+    const meRes = await fetch(`${GRAPH_API_BASE}/me?fields=id,name&access_token=${longLivedData.access_token}`);
+    const meData = await meRes.json();
+    console.log('Facebook /me response:', meData);
+
+    // Check permissions
+    const permissionsRes = await fetch(`${GRAPH_API_BASE}/me/permissions?access_token=${longLivedData.access_token}`);
+    const permissionsData = await permissionsRes.json();
+    const grantedPermissions = permissionsData.data?.filter((p: { status: string }) => p.status === 'granted').map((p: { permission: string }) => p.permission) || [];
+    console.log('Facebook permissions granted to token:', grantedPermissions);
+
     const pagesRes = await fetch(`${GRAPH_API_BASE}/me/accounts?access_token=${longLivedData.access_token}`);
     const pagesData = await pagesRes.json();
 

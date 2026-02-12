@@ -16,6 +16,18 @@ const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 async function fetchFacebookPages(accessToken: string): Promise<PageInfo[]> {
   try {
     console.log('Fetching Facebook pages from API...');
+
+    // First, check what permissions this token has
+    const permissionsRes = await fetch(`${GRAPH_API_BASE}/me/permissions?access_token=${accessToken}`);
+    const permissionsData = await permissionsRes.json();
+    const grantedPermissions = permissionsData.data?.filter((p: { status: string }) => p.status === 'granted').map((p: { permission: string }) => p.permission) || [];
+
+    console.log('Facebook token permissions:', {
+      granted: grantedPermissions,
+      hasPagesList: grantedPermissions.includes('pages_show_list'),
+      hasPagesManage: grantedPermissions.includes('pages_manage_posts'),
+    });
+
     const url = `${GRAPH_API_BASE}/me/accounts?access_token=${accessToken}`;
     const pagesRes = await fetch(url);
     const pagesData = await pagesRes.json();
