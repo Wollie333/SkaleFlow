@@ -858,16 +858,6 @@ export default function BrandPhaseDetailPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {currentPhase.status === 'locked' && (
-            <Button
-              onClick={() => handleUnlockPhase(currentPhase.id)}
-              variant="secondary"
-              disabled={isUnlocking}
-            >
-              <PencilSquareIcon className="w-4 h-4 mr-2" />
-              {isUnlocking ? 'Unlocking...' : 'Edit Phase'}
-            </Button>
-          )}
           {currentPhase.status !== 'locked' && (
             <Button
               onClick={() => setPhaseImportTarget({ id: currentPhase.id, name: currentPhase.phase_name })}
@@ -875,12 +865,6 @@ export default function BrandPhaseDetailPage() {
             >
               <ArrowUpTrayIcon className="w-4 h-4 mr-2" />
               Import
-            </Button>
-          )}
-          {allPhasesComplete && (
-            <Button onClick={handleExportPlaybook} variant="secondary">
-              <DocumentArrowDownIcon className="w-4 h-4 mr-2" />
-              Playbook
             </Button>
           )}
         </div>
