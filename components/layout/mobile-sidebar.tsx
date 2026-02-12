@@ -160,6 +160,9 @@ export function MobileSidebar({
 }: MobileSidebarProps) {
   const pathname = usePathname();
 
+  // Debug logging
+  console.log('MobileSidebar rendered, isOpen:', isOpen);
+
   // Collapsible section state
   const [publishingExpanded, setPublishingExpanded] = useState(true);
   const [inboxExpanded, setInboxExpanded] = useState(false);

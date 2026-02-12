@@ -520,6 +520,64 @@ export default function ContentCreatePage() {
     case_study: scriptData.case_study || editFields.case_study || null,
   });
 
+  // Silent save (for publish flow - doesn't show modal)
+  const handleSilentSave = async (): Promise<string | null> => {
+    const itemId = generated?.id;
+    const activePlatforms = getEnabledPlatforms(platformPlacements) as string[];
+
+    try {
+      const updateBody: Record<string, unknown> = {
+        topic: editFields.topic || null,
+        caption: editFields.caption || null,
+        hashtags: editFields.hashtags ? editFields.hashtags.split(',').map(h => h.trim()).filter(Boolean) : null,
+        media_urls: uploadedFiles.length > 0 ? uploadedFiles.map(f => f.url) : null,
+        platform_specs: Object.keys(platformSpecs).length > 0 ? platformSpecs : null,
+        ...buildScriptFields(),
+      };
+
+      // If no item exists yet (manual mode, first save), create one
+      if (!itemId) {
+        const createRes = await fetch('/api/content/items', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            organizationId,
+            format: selectedFormat,
+            funnel_stage: funnelStage,
+            storybrand_stage: storybrandStage,
+            platforms: activePlatforms,
+            scheduled_date: scheduleDate || format(new Date(), 'yyyy-MM-dd'),
+            scheduled_time: scheduleTime || null,
+            ai_generated: false,
+            status: 'scripted',
+            ...updateBody,
+          }),
+        });
+
+        const createData = await createRes.json();
+        if (createData.error) throw new Error(createData.error);
+
+        const newId = createData.item?.id || null;
+        setManualItemId(newId);
+        return newId;
+      }
+
+      const res = await fetch(`/api/content/items/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateBody),
+      });
+
+      if (res.ok) {
+        return itemId;
+      }
+      throw new Error('Save failed');
+    } catch (error) {
+      console.error('Save failed:', error);
+      return null;
+    }
+  };
+
   // Save edits (works for both single/AI and manual modes)
   const handleSave = async (pushToSchedule: boolean) => {
     const itemId = generated?.id;

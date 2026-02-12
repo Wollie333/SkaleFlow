@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   PaperAirplaneIcon,
   CalendarDaysIcon,
@@ -55,6 +55,11 @@ export function PostActionPopup({
   const [scheduleTime, setScheduleTime] = useState(defaultScheduleTime);
   const [publishResults, setPublishResults] = useState<PublishResult[] | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Sync publishPlatforms with platforms prop when it changes
+  useEffect(() => {
+    setPublishPlatforms(platforms);
+  }, [platforms]);
 
   const togglePublishPlatform = (p: string) => {
     setPublishPlatforms(prev =>

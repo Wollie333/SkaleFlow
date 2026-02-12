@@ -48,11 +48,14 @@ export function DashboardLayoutClient({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-cream overflow-x-hidden">
       {/* Header with hamburger menu callback */}
       <Header
         {...headerProps}
-        onMenuClick={() => setMobileMenuOpen(true)}
+        onMenuClick={() => {
+          console.log('Menu clicked, setting mobileMenuOpen to true');
+          setMobileMenuOpen(true);
+        }}
       />
 
       {/* Desktop Sidebar - hidden below lg */}

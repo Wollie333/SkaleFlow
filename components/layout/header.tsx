@@ -158,7 +158,12 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
         <div className="flex items-center gap-2">
           {/* Hamburger Menu Button - Mobile Only */}
           <button
-            onClick={onMenuClick}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onMenuClick?.();
+            }}
             className="lg:hidden p-2 rounded-lg text-cream hover:bg-teal/10 transition-colors"
             aria-label="Open menu"
           >
