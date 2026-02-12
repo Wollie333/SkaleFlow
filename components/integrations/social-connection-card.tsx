@@ -131,14 +131,14 @@ export function SocialConnectionCard({ platform, connections, onDisconnect, onMa
             ) : (
               <Badge variant="awareness">Connected</Badge>
             )}
-            {hasAvailablePages && profileConn && onManagePages && (
+            {profileConn && onManagePages && ['facebook', 'instagram', 'linkedin'].includes(platform) && (
               <Button
                 variant="secondary"
-                className="text-sm"
+                className="text-sm p-2"
                 onClick={() => onManagePages(platform)}
+                title="Select pages to post to"
               >
-                <Cog6ToothIcon className="w-4 h-4 mr-1" />
-                Manage Pages
+                <Cog6ToothIcon className="w-5 h-5" />
               </Button>
             )}
             {profileConn && (

@@ -83,6 +83,7 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<SocialPlatform[]>([]);
+  const [selectedConnectionIds, setSelectedConnectionIds] = useState<string[]>([]);
   const [publishResults, setPublishResults] = useState<Array<{ platform: string; success: boolean; postUrl?: string; error?: string }>>([]);
   const [publishedPosts] = useState<PublishedPost[]>([]);
   const [reviewComment, setReviewComment] = useState('');
@@ -151,7 +152,7 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
   };
 
   const handlePublish = async () => {
-    if (selectedPlatforms.length === 0) return;
+    if (selectedConnectionIds.length === 0 && selectedPlatforms.length === 0) return;
     setIsPublishing(true);
     setPublishResults([]);
     try {
@@ -160,7 +161,10 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contentItemId: item.id,
-          platforms: selectedPlatforms,
+          // Prefer connectionIds for granular control, fallback to platforms for backward compatibility
+          ...(selectedConnectionIds.length > 0
+            ? { connectionIds: selectedConnectionIds }
+            : { platforms: selectedPlatforms }),
         }),
       });
       const data = await res.json();
@@ -799,6 +803,8 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
             <PlatformSelector
               selectedPlatforms={selectedPlatforms}
               onSelectionChange={setSelectedPlatforms}
+              selectedConnectionIds={selectedConnectionIds}
+              onConnectionIdsChange={setSelectedConnectionIds}
               contentItem={{ media_urls: item.media_urls || null }}
             />
 
