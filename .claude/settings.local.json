@@ -33,7 +33,17 @@
       "Bash($Y\" format for both user types\n- Mobile view shows abbreviated \"Xk cr\" format\n\nTechnical Details:\n- API queries all credit_balances and ai_usage tables for super admin\n- Regular users see their org''s balance with sales pricing\n- Super admins see global totals with actual API costs\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(xargs:*)",
       "Bash(npx vercel:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(where:*)",
+      "Bash(curl:*)",
+      "Bash(./mkcert.exe -install:*)",
+      "Bash(./mkcert.exe:*)",
+      "Bash(npm run dev)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(psql:*)",
+      "Bash(npx supabase db push:*)"
     ]
   }
 }

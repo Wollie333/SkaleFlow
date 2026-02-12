@@ -12,6 +12,7 @@ import { SocialConnectionCard } from '@/components/integrations/social-connectio
 import type { SocialConnectionRow } from '@/components/integrations/social-connection-card';
 import { PageSelectionModal } from '@/components/integrations/page-selection-modal';
 import { GoogleDriveConnectionCard } from '@/components/integrations/google-drive-connection-card';
+import { AvatarUpload } from '@/components/profile/avatar-upload';
 import type { SocialPlatform, Json } from '@/types/database';
 
 interface Organization {
@@ -37,6 +38,7 @@ interface User {
   id: string;
   email: string;
   full_name: string | null;
+  avatar_url: string | null;
 }
 
 export default function SettingsPage() {
@@ -93,7 +95,7 @@ export default function SettingsPage() {
       // Get user profile
       const { data: userData } = await supabase
         .from('users')
-        .select('*')
+        .select('id, email, full_name, role, avatar_url')
         .eq('id', authUser.id)
         .single();
 
@@ -476,7 +478,16 @@ export default function SettingsPage() {
       <Card>
         <h2 className="text-heading-md text-charcoal mb-6">Profile</h2>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* Avatar Upload */}
+          {user && (
+            <AvatarUpload
+              userId={user.id}
+              currentAvatarUrl={user.avatar_url}
+              onUploadComplete={(url) => setUser(prev => prev ? { ...prev, avatar_url: url } : null)}
+            />
+          )}
+
           <div>
             <label className="block text-sm font-medium text-charcoal mb-2">
               Email
