@@ -450,23 +450,23 @@ export function ExpertChatPanel({
                 )}
               </div>
               {isLoading && onStopGeneration ? (
-                <Button
+                <button
                   type="button"
                   onClick={onStopGeneration}
-                  className="p-3.5 h-[48px] w-[48px] rounded-xl bg-red-500 hover:bg-red-600 text-white shrink-0 flex items-center justify-center"
+                  className="p-3.5 h-[48px] w-[48px] rounded-xl bg-red-500 hover:bg-red-600 text-white shrink-0 flex items-center justify-center transition-colors"
                   title="Stop generating"
                 >
                   <StopIcon className="w-6 h-6" />
-                </Button>
+                </button>
               ) : (
-                <Button
+                <button
                   type="submit"
                   disabled={(!input.trim() && attachments.length === 0) || isLoading || isListening}
-                  className="p-3.5 h-[48px] w-[48px] rounded-xl bg-[#1E6B63] hover:bg-[#267D74] disabled:bg-stone/30 disabled:opacity-50 shrink-0 flex items-center justify-center shadow-lg"
+                  className="p-3.5 h-[48px] w-[48px] rounded-xl bg-[#1E6B63] hover:bg-[#267D74] disabled:bg-stone/30 disabled:opacity-50 shrink-0 flex items-center justify-center shadow-lg transition-colors"
                   title="Send message"
                 >
                   <PaperAirplaneIcon className="w-6 h-6 text-white" />
-                </Button>
+                </button>
               )}
             </form>
           </>
