@@ -462,9 +462,10 @@ export function ExpertChatPanel({
                 <Button
                   type="submit"
                   disabled={(!input.trim() && attachments.length === 0) || isLoading || isListening}
-                  className="p-3 h-auto rounded-full bg-teal hover:bg-teal/90 disabled:bg-stone/20 shrink-0"
+                  className="p-3 sm:p-3.5 h-auto rounded-full bg-teal hover:bg-teal/90 disabled:bg-stone/20 disabled:opacity-50 shrink-0 text-white shadow-md"
+                  title="Send message"
                 >
-                  <PaperAirplaneIcon className="w-5 h-5" />
+                  <PaperAirplaneIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                 </Button>
               )}
             </form>
