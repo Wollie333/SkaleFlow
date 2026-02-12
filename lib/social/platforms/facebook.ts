@@ -1,6 +1,6 @@
 import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData } from '../types';
 
-const GRAPH_API_VERSION = 'v19.0';
+const GRAPH_API_VERSION = 'v21.0';
 const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
 export const facebookAdapter: PlatformAdapter = {
@@ -83,46 +83,72 @@ export const facebookAdapter: PlatformAdapter = {
   },
 
   async publishPost(tokens: TokenData, post: PostPayload): Promise<PublishResult> {
-    // Post to page if platformPageId is set, otherwise post to personal profile
-    const targetId = tokens.platformPageId || tokens.platformUserId;
-    if (!targetId) {
-      return { success: false, error: 'No Facebook account ID found. Please reconnect.' };
+    // Facebook only allows posting to Pages via API, not personal profiles
+    const pageId = tokens.platformPageId;
+    if (!pageId) {
+      return {
+        success: false,
+        error: 'Facebook posting is only available for Pages. Please select a Facebook Page in your connection settings.'
+      };
     }
 
     try {
-      const body: Record<string, string> = {
-        message: buildFacebookMessage(post),
+      const message = buildFacebookMessage(post);
+
+      // If media URLs exist, post as photo using Page Photo API
+      if (post.mediaUrls && post.mediaUrls.length > 0) {
+        const photoBody = new URLSearchParams({
+          url: post.mediaUrls[0],
+          caption: message,
+          access_token: tokens.accessToken,
+        });
+
+        const res = await fetch(`${GRAPH_API_BASE}/${pageId}/photos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: photoBody.toString(),
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          return { success: false, error: `Facebook API Error: ${data.error.message}` };
+        }
+
+        return {
+          success: true,
+          platformPostId: data.id || data.post_id,
+          postUrl: `https://www.facebook.com/${pageId}/posts/${data.post_id || data.id}`,
+          metadata: data,
+        };
+      }
+
+      // For text posts with optional link, use Page Feed API
+      const feedBody = new URLSearchParams({
+        message: message,
         access_token: tokens.accessToken,
-      };
+      });
 
       if (post.link) {
-        body.link = post.link;
+        feedBody.append('link', post.link);
       }
 
-      let endpoint = `${GRAPH_API_BASE}/${targetId}/feed`;
-
-      // If media URLs exist, post as photo
-      if (post.mediaUrls && post.mediaUrls.length > 0) {
-        endpoint = `${GRAPH_API_BASE}/${targetId}/photos`;
-        body.url = post.mediaUrls[0];
-      }
-
-      const res = await fetch(endpoint, {
+      const res = await fetch(`${GRAPH_API_BASE}/${pageId}/feed`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: feedBody.toString(),
       });
 
       const data = await res.json();
 
       if (data.error) {
-        return { success: false, error: data.error.message };
+        return { success: false, error: `Facebook API Error: ${data.error.message}` };
       }
 
       return {
         success: true,
-        platformPostId: data.id || data.post_id,
-        postUrl: `https://www.facebook.com/${data.id?.replace('_', '/posts/')}`,
+        platformPostId: data.id,
+        postUrl: `https://www.facebook.com/${pageId}/posts/${data.id?.split('_')[1] || data.id}`,
         metadata: data,
       };
     } catch (error) {
