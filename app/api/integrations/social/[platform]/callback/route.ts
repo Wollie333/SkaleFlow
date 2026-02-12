@@ -65,6 +65,16 @@ export async function GET(
     const redirectUri = getRedirectUri(platform);
     const tokenData = await exchangeCode(platform, code, redirectUri, codeVerifier);
 
+    console.log(`OAuth callback for ${platform}:`, {
+      hasAccessToken: !!tokenData.accessToken,
+      platformUserId: tokenData.platformUserId,
+      platformUsername: tokenData.platformUsername,
+      accountType: tokenData.accountType,
+      hasMetadata: !!tokenData.metadata,
+      metadataKeys: tokenData.metadata ? Object.keys(tokenData.metadata) : [],
+      pagesCount: (tokenData.metadata?.pages as unknown[])?.length || 0,
+    });
+
     // Delete existing profile connection for this org+platform (replace with fresh one)
     await supabase
       .from('social_media_connections')
@@ -99,12 +109,16 @@ export async function GET(
       return NextResponse.redirect(`${baseUrl}/settings?social=error&message=Failed+to+save+connection`);
     }
 
+    console.log(`${platform} connection saved successfully. Metadata pages: ${(tokenData.metadata?.pages as unknown[])?.length || 0}`);
+
     // If pages are available, redirect to page selector
     const pages = (tokenData.metadata?.pages as unknown[]) || [];
     if (pages.length > 0) {
+      console.log(`Redirecting to page selector with ${pages.length} pages`);
       return NextResponse.redirect(`${baseUrl}/settings?social=select&platform=${platform}`);
     }
 
+    console.log(`No pages found, redirecting to connected status`);
     return NextResponse.redirect(`${baseUrl}/settings?social=connected&platform=${platform}`);
   } catch (err) {
     console.error(`OAuth callback error for ${platform}:`, err);

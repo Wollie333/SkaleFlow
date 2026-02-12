@@ -19,6 +19,8 @@ export const instagramAdapter: PlatformAdapter = {
   },
 
   async exchangeCode(code: string, redirectUri: string): Promise<TokenData> {
+    console.log('Instagram OAuth: Starting token exchange...');
+
     // Same Meta OAuth exchange
     const tokenParams = new URLSearchParams({
       client_id: process.env.META_APP_ID!,
@@ -31,6 +33,7 @@ export const instagramAdapter: PlatformAdapter = {
     const tokenData = await tokenRes.json();
 
     if (tokenData.error) {
+      console.error('Instagram OAuth token error:', tokenData.error);
       throw new Error(tokenData.error.message || 'Failed to exchange code');
     }
 
@@ -45,19 +48,37 @@ export const instagramAdapter: PlatformAdapter = {
     const longLivedRes = await fetch(`${GRAPH_API_BASE}/oauth/access_token?${longLivedParams}`);
     const longLivedData = await longLivedRes.json();
 
+    console.log('Instagram OAuth: Fetching pages with Instagram Business accounts...');
+
     // Get pages and find Instagram business account
     const pagesRes = await fetch(
       `${GRAPH_API_BASE}/me/accounts?fields=id,name,instagram_business_account{id,username}&access_token=${longLivedData.access_token}`
     );
     const pagesData = await pagesRes.json();
 
+    console.log('Instagram OAuth pages response:', {
+      status: pagesRes.status,
+      hasError: !!pagesData.error,
+      error: pagesData.error,
+      pagesCount: pagesData.data?.length || 0,
+      pagesWithIG: pagesData.data?.filter((p: { instagram_business_account?: unknown }) => p.instagram_business_account).length || 0,
+    });
+
     const pageWithIG = pagesData.data?.find(
       (p: { instagram_business_account?: { id: string } }) => p.instagram_business_account
     );
 
     if (!pageWithIG?.instagram_business_account) {
+      console.error('No Instagram Business account found in pages:', pagesData.data);
       throw new Error('No Instagram Business account found. Please connect a Facebook Page with an Instagram Business account.');
     }
+
+    console.log('Found Instagram Business account:', {
+      igId: pageWithIG.instagram_business_account.id,
+      igUsername: pageWithIG.instagram_business_account.username,
+      fbPageId: pageWithIG.id,
+      fbPageName: pageWithIG.name,
+    });
 
     return {
       accessToken: pageWithIG.access_token || longLivedData.access_token,
@@ -69,6 +90,7 @@ export const instagramAdapter: PlatformAdapter = {
       platformUsername: pageWithIG.instagram_business_account.username,
       platformPageId: pageWithIG.id,
       platformPageName: pageWithIG.name,
+      accountType: 'page',
       scopes: tokenData.scope?.split(',') || [],
       metadata: { pages: pagesData.data || [] },
     };

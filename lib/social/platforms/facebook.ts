@@ -49,14 +49,30 @@ export const facebookAdapter: PlatformAdapter = {
     const userData = await userRes.json();
 
     // Get pages the user manages
+    console.log('Fetching Facebook pages from /me/accounts...');
     const pagesRes = await fetch(`${GRAPH_API_BASE}/me/accounts?access_token=${longLivedData.access_token}`);
     const pagesData = await pagesRes.json();
+
+    console.log('Facebook /me/accounts response:', {
+      status: pagesRes.status,
+      hasError: !!pagesData.error,
+      error: pagesData.error,
+      dataCount: pagesData.data?.length || 0,
+      paging: pagesData.paging,
+    });
+
+    if (pagesData.error) {
+      console.error('Facebook API error when fetching pages:', pagesData.error);
+    }
+
     const pages = (pagesData.data || []).map((p: { id: string; name: string; access_token: string; category?: string }) => ({
       id: p.id,
       name: p.name,
       access_token: p.access_token,
       category: p.category || null,
     }));
+
+    console.log(`Found ${pages.length} Facebook pages:`, pages.map(p => ({ id: p.id, name: p.name, category: p.category })));
 
     // Return user's long-lived token as the profile connection.
     // Don't auto-select a page — user picks pages via the page selector.
