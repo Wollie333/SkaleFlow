@@ -1,0 +1,96 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { fetchPagePosts as fetchFacebookPosts } from '@/lib/social/platforms/history/facebook';
+import { fetchInstagramPosts } from '@/lib/social/platforms/history/instagram';
+import { fetchLinkedInPosts } from '@/lib/social/platforms/history/linkedin';
+import type { ConnectionWithTokens } from '@/lib/social/token-manager';
+import { ensureValidToken } from '@/lib/social/token-manager';
+
+export async function POST(request: NextRequest) {
+  const supabase = await createClient();
+
+  // Authenticate user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Get user's organization
+  const { data: membership } = await supabase
+    .from('org_members')
+    .select('organization_id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (!membership?.organization_id) {
+    return NextResponse.json({ error: 'No organization found' }, { status: 404 });
+  }
+
+  const organizationId = membership.organization_id;
+
+  // Get all active connections for this organization
+  const { data: connections } = await supabase
+    .from('social_media_connections')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .eq('is_active', true);
+
+  if (!connections || connections.length === 0) {
+    return NextResponse.json({ message: 'No active social media connections found', posts: [] });
+  }
+
+  const allPosts: any[] = [];
+  let fetchedCount = 0;
+  let failedCount = 0;
+
+  // Fetch posts from each connected platform
+  for (const connection of connections) {
+    try {
+      const tokens = await ensureValidToken(connection as unknown as ConnectionWithTokens);
+      let platformPosts: any[] = [];
+
+      switch (connection.platform) {
+        case 'facebook':
+          platformPosts = await fetchFacebookPosts(tokens, 50);
+          break;
+        case 'instagram':
+          platformPosts = await fetchInstagramPosts(tokens, 50);
+          break;
+        case 'linkedin':
+          platformPosts = await fetchLinkedInPosts(tokens, 50);
+          break;
+        default:
+          continue;
+      }
+
+      // Add platform and connection info to each post
+      const postsWithMeta = platformPosts.map((post) => ({
+        ...post,
+        platform: connection.platform,
+        connectionId: connection.id,
+        accountName: connection.platform_username || connection.platform_page_name || 'Unknown',
+      }));
+
+      allPosts.push(...postsWithMeta);
+      fetchedCount += platformPosts.length;
+    } catch (error) {
+      console.error(`Failed to fetch ${connection.platform} posts:`, error);
+      failedCount++;
+    }
+  }
+
+  // Sort posts by date (newest first)
+  allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  return NextResponse.json({
+    message: 'Platform posts fetched successfully',
+    posts: allPosts,
+    totalPosts: allPosts.length,
+    connectionsProcessed: connections.length,
+    fetchedCount,
+    failedCount,
+  });
+}

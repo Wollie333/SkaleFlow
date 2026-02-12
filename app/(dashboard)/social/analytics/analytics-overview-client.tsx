@@ -1,42 +1,137 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui';
 import { AnalyticsMetricCard } from '@/components/social/analytics-metric-card';
-import { AnalyticsChart } from '@/components/social/analytics-chart';
 import {
   ChartBarIcon,
   EyeIcon,
   HeartIcon,
   UserGroupIcon,
-  ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
   ClipboardDocumentCheckIcon,
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 
+interface Connection {
+  id: string;
+  platform: string;
+  platform_username?: string;
+  platform_page_name?: string;
+  is_active: boolean;
+}
+
 interface AnalyticsOverviewClientProps {
-  currentMetrics: any;
-  previousMetrics: any;
-  growth: any;
-  topPosts: any[];
-  platformMetrics: any;
   organizationId: string;
+  connections: Connection[];
+}
+
+interface PlatformPost {
+  postId: string;
+  createdAt: string;
+  message: string;
+  permalink: string;
+  imageUrl?: string;
+  likes: number;
+  comments: number;
+  shares: number;
+  impressions: number;
+  reach: number;
+  engagement: number;
+  engagementRate: number;
+  platform: string;
+  accountName: string;
 }
 
 export function AnalyticsOverviewClient({
-  currentMetrics,
-  previousMetrics,
-  growth,
-  topPosts,
-  platformMetrics,
   organizationId,
+  connections,
 }: AnalyticsOverviewClientProps) {
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [posts, setPosts] = useState<PlatformPost[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchPlatformPosts = async () => {
+    setIsFetching(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/social/analytics/fetch-platform-posts', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setPosts(data.posts || []);
+      } else {
+        setError(data.error || 'Failed to fetch posts');
+      }
+    } catch (err) {
+      setError('Failed to fetch platform posts. Please try again.');
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  useEffect(() => {
+    if (connections.length > 0) {
+      fetchPlatformPosts();
+    } else {
+      setIsFetching(false);
+    }
+  }, [connections.length]);
+
+  // Calculate metrics from posts
+  const last30Days = posts.filter((post) => {
+    const postDate = new Date(post.createdAt);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return postDate >= thirtyDaysAgo;
+  });
+
+  const previous30Days = posts.filter((post) => {
+    const postDate = new Date(post.createdAt);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    return postDate < thirtyDaysAgo && postDate >= sixtyDaysAgo;
+  });
+
+  const currentMetrics = {
+    totalPosts: last30Days.length,
+    totalImpressions: last30Days.reduce((sum, p) => sum + p.impressions, 0),
+    totalReach: last30Days.reduce((sum, p) => sum + p.reach, 0),
+    totalEngagement: last30Days.reduce((sum, p) => sum + p.engagement, 0),
+    avgEngagementRate: last30Days.length > 0
+      ? last30Days.reduce((sum, p) => sum + p.engagementRate, 0) / last30Days.length
+      : 0,
+  };
+
+  const previousMetrics = {
+    totalPosts: previous30Days.length,
+    totalImpressions: previous30Days.reduce((sum, p) => sum + p.impressions, 0),
+    totalReach: previous30Days.reduce((sum, p) => sum + p.reach, 0),
+    avgEngagementRate: previous30Days.length > 0
+      ? previous30Days.reduce((sum, p) => sum + p.engagementRate, 0) / previous30Days.length
+      : 0,
+  };
+
+  const calculateGrowth = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  };
+
+  const growth = {
+    posts: calculateGrowth(currentMetrics.totalPosts, previousMetrics.totalPosts),
+    impressions: calculateGrowth(currentMetrics.totalImpressions, previousMetrics.totalImpressions),
+    reach: calculateGrowth(currentMetrics.totalReach, previousMetrics.totalReach),
+    engagement: calculateGrowth(currentMetrics.avgEngagementRate, previousMetrics.avgEngagementRate),
+  };
 
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -44,62 +139,74 @@ export function AnalyticsOverviewClient({
     return num.toString();
   };
 
-  const formatGrowth = (value: number) => {
-    const sign = value >= 0 ? '+' : '';
-    return `${sign}${value.toFixed(1)}%`;
-  };
+  const topPosts = [...last30Days]
+    .sort((a, b) => b.engagementRate - a.engagementRate)
+    .slice(0, 5);
 
-  const handleSyncAnalytics = async () => {
-    setIsSyncing(true);
-    setSyncMessage(null);
-
-    try {
-      const response = await fetch('/api/social/analytics/sync', {
-        method: 'POST',
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setSyncMessage(`Successfully synced ${data.synced} posts! ${data.failed > 0 ? `(${data.failed} failed)` : ''}`);
-        // Reload the page to show updated data
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
-      } else {
-        setSyncMessage(`Sync failed: ${data.error || 'Unknown error'}`);
-      }
-    } catch (error) {
-      setSyncMessage('Failed to sync analytics. Please try again.');
-    } finally {
-      setIsSyncing(false);
+  // Platform breakdown
+  const platformMetrics = last30Days.reduce((acc: any, post) => {
+    if (!acc[post.platform]) {
+      acc[post.platform] = {
+        posts: 0,
+        impressions: 0,
+        engagement: 0,
+        engagementRate: 0,
+      };
     }
-  };
+    acc[post.platform].posts++;
+    acc[post.platform].impressions += post.impressions;
+    acc[post.platform].engagement += post.engagement;
+    acc[post.platform].engagementRate += post.engagementRate;
+    return acc;
+  }, {});
+
+  // Average engagement rate per platform
+  Object.keys(platformMetrics).forEach((platform) => {
+    if (platformMetrics[platform].posts > 0) {
+      platformMetrics[platform].engagementRate /= platformMetrics[platform].posts;
+    }
+  });
+
+  if (connections.length === 0) {
+    return (
+      <div className="p-6 md:p-8 space-y-6">
+        <PageHeader
+          title="Analytics Overview"
+          description="Comprehensive performance insights from your connected social accounts"
+        />
+        <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
+          <p className="text-stone mb-4">No social media accounts connected yet.</p>
+          <Link href="/social/connections">
+            <Button>Connect Your Accounts</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <PageHeader
           title="Analytics Overview"
-          description="Comprehensive performance insights for the last 30 days"
+          description="Performance insights from your connected social accounts (last 30 days)"
         />
-        <div className="flex flex-col gap-2">
-          <Button
-            onClick={handleSyncAnalytics}
-            disabled={isSyncing}
-            variant="secondary"
-            className="whitespace-nowrap"
-          >
-            <ArrowPathIcon className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-            {isSyncing ? 'Syncing...' : 'Sync Analytics'}
-          </Button>
-          {syncMessage && (
-            <p className={`text-xs ${syncMessage.includes('failed') || syncMessage.includes('Failed') ? 'text-red-500' : 'text-teal'}`}>
-              {syncMessage}
-            </p>
-          )}
-        </div>
+        <Button
+          onClick={fetchPlatformPosts}
+          disabled={isFetching}
+          variant="secondary"
+          className="whitespace-nowrap"
+        >
+          <ArrowPathIcon className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+          {isFetching ? 'Loading...' : 'Refresh Data'}
+        </Button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -133,204 +240,95 @@ export function AnalyticsOverviewClient({
         />
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Platform Performance */}
-        <div className="bg-white rounded-xl border border-stone/10 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-semibold text-charcoal flex items-center gap-2">
-              <ChartBarIcon className="w-5 h-5 text-teal" />
-              Platform Performance
-            </h3>
-            <Link
-              href="/social/analytics/posts"
-              className="text-xs text-teal hover:text-teal-dark font-medium"
-            >
-              View Details →
-            </Link>
-          </div>
-
+      {/* Platform Performance */}
+      <div className="bg-white rounded-xl border border-stone/10 p-6">
+        <h3 className="font-semibold text-charcoal flex items-center gap-2 mb-4">
+          <ChartBarIcon className="w-5 h-5 text-teal" />
+          Platform Performance
+        </h3>
+        <div className="space-y-3">
           {Object.keys(platformMetrics).length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-sm text-stone">No platform data available</p>
-            </div>
+            <p className="text-sm text-stone text-center py-8">No posts in the last 30 days</p>
           ) : (
-            <div className="space-y-4">
-              {Object.entries(platformMetrics)
-                .sort((a: any, b: any) => b[1].engagementRate - a[1].engagementRate)
-                .map(([platform, metrics]: [string, any]) => (
-                  <div key={platform} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium text-charcoal capitalize">{platform}</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-stone">{metrics.posts} posts</span>
-                        <span className="font-semibold text-teal">
-                          {metrics.engagementRate.toFixed(2)}%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="h-2 bg-stone/10 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-teal to-teal-dark"
-                        style={{ width: `${Math.min(metrics.engagementRate * 10, 100)}%` }}
-                      />
-                    </div>
+            Object.entries(platformMetrics).map(([platform, metrics]: [string, any]) => (
+              <div key={platform} className="flex items-center justify-between p-3 bg-cream/30 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-teal/10 flex items-center justify-center">
+                    <span className="text-xs font-bold text-teal uppercase">{platform.slice(0, 2)}</span>
                   </div>
-                ))}
-            </div>
-          )}
-        </div>
-
-        {/* Engagement Breakdown */}
-        <div className="bg-white rounded-xl border border-stone/10 p-6">
-          <h3 className="font-semibold text-charcoal mb-6">Engagement Breakdown</h3>
-
-          <div className="space-y-4">
-            {Object.entries(platformMetrics)
-              .sort((a: any, b: any) => b[1].engagement - a[1].engagement)
-              .slice(0, 5)
-              .map(([platform, metrics]: [string, any]) => (
-                <div key={platform} className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-charcoal capitalize">{platform}</span>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-xs text-stone">Total Engagement</p>
-                      <p className="text-sm font-semibold text-charcoal">
-                        {formatNumber(metrics.engagement)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-stone">Impressions</p>
-                      <p className="text-sm font-semibold text-charcoal">
-                        {formatNumber(metrics.impressions)}
-                      </p>
-                    </div>
+                  <div>
+                    <p className="font-medium text-charcoal capitalize">{platform}</p>
+                    <p className="text-xs text-stone">{metrics.posts} posts</p>
                   </div>
                 </div>
-              ))}
-          </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-charcoal">{formatNumber(metrics.impressions)}</p>
+                  <p className="text-xs text-stone">{metrics.engagementRate.toFixed(2)}% engagement</p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
       {/* Top Performing Posts */}
-      <div className="bg-white rounded-xl border border-stone/10">
-        <div className="px-6 py-4 border-b border-stone/10">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-charcoal flex items-center gap-2">
-              <ArrowTrendingUpIcon className="w-5 h-5 text-teal" />
-              Top Performing Posts
-            </h3>
-            <Link
-              href="/social/analytics/posts"
-              className="text-xs text-teal hover:text-teal-dark font-medium"
-            >
-              View All Posts →
-            </Link>
+      <div className="bg-white rounded-xl border border-stone/10 p-6">
+        <h3 className="font-semibold text-charcoal mb-4">Top Performing Posts</h3>
+        {topPosts.length === 0 ? (
+          <div className="p-12 text-center">
+            <p className="text-sm text-stone">No posts with analytics yet</p>
           </div>
-        </div>
-
-        <div className="divide-y divide-stone/10">
-          {topPosts.length === 0 ? (
-            <div className="p-12 text-center">
-              <p className="text-sm text-stone">No posts with analytics yet</p>
-            </div>
-          ) : (
-            topPosts.map((post) => {
-              const analytics = Array.isArray(post.post_analytics)
-                ? post.post_analytics[0]
-                : post.post_analytics;
-
-              const contentItem = Array.isArray(post.content_items)
-                ? post.content_items[0]
-                : post.content_items;
-
-              return (
-                <div key={post.id} className="p-6 hover:bg-cream/30 transition-colors">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="px-2 py-0.5 bg-teal/10 text-teal text-xs font-medium rounded-lg capitalize">
-                          {post.platform}
-                        </span>
-                        <span className="text-xs text-stone">
-                          {formatDistanceToNow(new Date(post.published_at), { addSuffix: true })}
-                        </span>
-                      </div>
-                      {contentItem?.caption && (
-                        <p className="text-sm text-charcoal line-clamp-2 mb-3">
-                          {contentItem.caption}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-4 text-xs text-stone">
-                        <span>{formatNumber(analytics?.impressions || 0)} impressions</span>
-                        <span>•</span>
-                        <span>
-                          {((analytics?.likes || 0) + (analytics?.comments || 0) + (analytics?.shares || 0))} engagements
-                        </span>
-                      </div>
+        ) : (
+          <div className="space-y-3">
+            {topPosts.map((post) => (
+              <div key={post.postId} className="p-4 border border-stone/10 rounded-lg hover:bg-cream/30 transition-colors">
+                <div className="flex items-start gap-3">
+                  {post.imageUrl && (
+                    <img src={post.imageUrl} alt="" className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-charcoal line-clamp-2 mb-2">{post.message || 'No caption'}</p>
+                    <div className="flex items-center gap-4 text-xs text-stone">
+                      <span className="capitalize">{post.platform}</span>
+                      <span>•</span>
+                      <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
+                      <span>•</span>
+                      <span className="font-semibold text-teal">{post.engagementRate.toFixed(2)}% engagement</span>
                     </div>
-
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-xs text-stone mb-1">Engagement Rate</p>
-                      <p className="text-2xl font-bold text-teal">
-                        {(analytics?.engagement_rate || 0).toFixed(2)}%
-                      </p>
-                      {post.post_url && (
-                        <a
-                          href={post.post_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-teal hover:text-teal-dark mt-2 inline-block"
-                        >
-                          View Post →
-                        </a>
-                      )}
+                    <div className="flex items-center gap-4 mt-2 text-xs">
+                      <span>❤️ {formatNumber(post.likes)}</span>
+                      <span>💬 {formatNumber(post.comments)}</span>
+                      <span>👁️ {formatNumber(post.impressions)}</span>
                     </div>
                   </div>
+                  {post.permalink && (
+                    <a
+                      href={post.permalink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-teal hover:text-teal-dark font-medium whitespace-nowrap"
+                    >
+                      View Post →
+                    </a>
+                  )}
                 </div>
-              );
-            })
-          )}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Quick Links */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Link
-          href="/social/analytics/posts"
-          className="bg-gradient-to-br from-teal-50 to-blue-50 rounded-xl border border-teal/20 p-6 hover:shadow-lg transition-all group"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <ClipboardDocumentCheckIcon className="w-8 h-8 text-teal" />
-            <ArrowTrendingUpIcon className="w-5 h-5 text-teal opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-          <h3 className="font-semibold text-charcoal mb-1">Post Performance</h3>
-          <p className="text-sm text-stone">Detailed analytics for each post</p>
-        </Link>
-
-        <Link
-          href="/social/analytics/audience"
-          className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple/20 p-6 hover:shadow-lg transition-all group"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <UserGroupIcon className="w-8 h-8 text-purple-600" />
-            <ArrowTrendingUpIcon className="w-5 h-5 text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-          <h3 className="font-semibold text-charcoal mb-1">Audience Insights</h3>
-          <p className="text-sm text-stone">Understand your audience better</p>
-        </Link>
-
-        <Link
-          href="/social/analytics/benchmarks"
-          className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl border border-orange/20 p-6 hover:shadow-lg transition-all group"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <ChartBarIcon className="w-8 h-8 text-orange-600" />
-            <ArrowTrendingUpIcon className="w-5 h-5 text-orange-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-          <h3 className="font-semibold text-charcoal mb-1">Benchmarks</h3>
-          <p className="text-sm text-stone">Compare against industry standards</p>
-        </Link>
+      {/* Connected Accounts */}
+      <div className="bg-white rounded-xl border border-stone/10 p-6">
+        <h3 className="font-semibold text-charcoal mb-4">Connected Accounts</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {connections.map((conn) => (
+            <div key={conn.id} className="p-3 border border-stone/10 rounded-lg">
+              <p className="font-medium text-charcoal capitalize">{conn.platform}</p>
+              <p className="text-xs text-stone">{conn.platform_page_name || conn.platform_username || 'Unknown'}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
