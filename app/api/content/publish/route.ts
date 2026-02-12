@@ -60,9 +60,25 @@ export async function POST(request: NextRequest) {
     connectionsQuery = connectionsQuery.in('platform', platforms as SocialPlatform[]);
   }
 
-  const { data: connections } = await connectionsQuery;
+  const { data: allConnections } = await connectionsQuery;
+
+  // Filter out profile connections for Facebook (only use page connections)
+  const connections = (allConnections || []).filter(conn => {
+    // For Facebook, only use page connections (those with platform_page_id set)
+    if (conn.platform === 'facebook') {
+      return conn.platform_page_id !== null;
+    }
+    // For other platforms, include all connections
+    return true;
+  });
 
   if (!connections || connections.length === 0) {
+    // Provide helpful error message if Facebook was requested but no pages are connected
+    if (platforms && platforms.includes('facebook') && allConnections && allConnections.some(c => c.platform === 'facebook')) {
+      return NextResponse.json({
+        error: 'No Facebook Pages connected. Please add a Facebook Page in your social media connections.'
+      }, { status: 400 });
+    }
     return NextResponse.json({ error: 'No active connections found for selected platforms' }, { status: 400 });
   }
 
