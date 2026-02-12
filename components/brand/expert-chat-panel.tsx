@@ -462,7 +462,10 @@ export function ExpertChatPanel({
                 <button
                   type="submit"
                   disabled={(!input.trim() && attachments.length === 0) || isLoading || isListening}
-                  className="p-3.5 h-[48px] w-[48px] rounded-xl bg-[#1E6B63] hover:bg-[#267D74] disabled:bg-stone/30 disabled:opacity-50 shrink-0 flex items-center justify-center shadow-lg transition-colors"
+                  className={cn(
+                    "p-3.5 h-[48px] w-[48px] rounded-xl bg-[#1E6B63] hover:bg-[#267D74] shrink-0 flex items-center justify-center shadow-lg transition-all duration-300",
+                    (!input.trim() && attachments.length === 0) ? "opacity-40 cursor-not-allowed" : "opacity-100"
+                  )}
                   title="Send message"
                 >
                   <PaperAirplaneIcon className="w-6 h-6 text-white" />
