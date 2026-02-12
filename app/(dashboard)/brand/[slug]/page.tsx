@@ -3,8 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { QuestionPanel, ExpertChatPanel, MobileTabToggle, ImportPlaybookModal } from '@/components/brand';
-import type { MobileTab } from '@/components/brand';
+import { QuestionPanel, ExpertChatPanel, ImportPlaybookModal } from '@/components/brand';
 import { Button } from '@/components/ui';
 import {
   ArrowLeftIcon,
@@ -87,7 +86,6 @@ export default function BrandPhaseDetailPage() {
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [lockingKey, setLockingKey] = useState<string | null>(null);
   const [acceptedExtractions, setAcceptedExtractions] = useState<Set<string>>(new Set());
-  const [mobileTab, setMobileTab] = useState<MobileTab>('chat');
   const abortControllerRef = useRef<AbortController | null>(null);
   const messageOperationRef = useRef(false); // Guard: true when handleSendMessage is in-flight
 
@@ -917,19 +915,11 @@ export default function BrandPhaseDetailPage() {
         />
       )}
 
-      {/* Mobile tab toggle */}
-      <div className="px-1 mb-3 flex-shrink-0">
-        <MobileTabToggle
-          activeTab={mobileTab}
-          onTabChange={setMobileTab}
-          hasNewOutputs={outputs.some(o => !o.is_locked && currentOutputKeys.includes(o.output_key))}
-        />
-      </div>
 
       {/* Two-panel layout */}
-      <div className="flex-1 flex gap-4 overflow-hidden min-h-0 px-1 pb-1">
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 overflow-y-auto lg:overflow-hidden min-h-0 px-1 pb-1">
         {/* Left panel Ã¢â‚¬â€ Question & Context (42%) */}
-        <div className={`lg:w-[42%] lg:flex-shrink-0 lg:block ${mobileTab === 'question' ? 'block w-full' : 'hidden'} bg-white rounded-xl border border-stone/10 overflow-hidden`}>
+        <div className="lg:w-[42%] lg:flex-shrink-0 w-full bg-white rounded-xl border border-stone/10 lg:overflow-hidden flex-shrink-0">
           <QuestionPanel
             phases={phases}
             currentPhase={currentPhase}
@@ -961,7 +951,6 @@ export default function BrandPhaseDetailPage() {
             lockingKey={lockingKey}
             onQuickAnswer={(answer) => {
               handleSendMessage(answer);
-              setMobileTab('chat');
             }}
             isSending={isSending}
             organizationId={organizationId || undefined}
@@ -977,18 +966,16 @@ export default function BrandPhaseDetailPage() {
                 const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
                 setOutputs(freshOutputs);
                 handleSendMessage("I've uploaded my logo. Please take a look at it and share your thoughts on its style, colors, and how it fits our brand direction.");
-                setMobileTab('chat');
               }
             }}
             phaseComplete={phaseComplete}
             nextPhase={nextPhase}
             onGoToNextPhase={nextPhase ? handleGoToNextPhase : undefined}
-            onViewPlaybook={!nextPhase ? handleExportPlaybook : undefined}
           />
         </div>
 
         {/* Right panel Ã¢â‚¬â€ Expert Chat (58%) */}
-        <div className={`lg:flex-1 lg:block ${mobileTab === 'chat' ? 'block w-full' : 'hidden'}`}>
+        <div className="lg:flex-1 w-full flex-shrink-0 lg:overflow-hidden">
           <ExpertChatPanel
             messages={messages}
             isLoading={isSending}
@@ -1005,7 +992,6 @@ export default function BrandPhaseDetailPage() {
             phaseComplete={phaseComplete}
             nextPhaseName={nextPhase ? `Phase ${nextPhase.phase_number}: ${nextPhase.phase_name}` : undefined}
             onGoToNextPhase={nextPhase ? handleGoToNextPhase : undefined}
-            onViewPlaybook={!nextPhase ? handleExportPlaybook : undefined}
             selectedModelId={selectedModel}
             onModelChange={updatePreference}
             models={availableModels}

@@ -74,7 +74,6 @@ interface QuestionPanelProps {
   phaseComplete: boolean;
   nextPhase?: { phase_number: string; phase_name: string } | null;
   onGoToNextPhase?: () => void;
-  onViewPlaybook?: () => void;
 }
 
 export function QuestionPanel({
@@ -108,7 +107,6 @@ export function QuestionPanel({
   phaseComplete,
   nextPhase,
   onGoToNextPhase,
-  onViewPlaybook,
 }: QuestionPanelProps) {
   const [quickAnswer, setQuickAnswer] = useState('');
   const [isQuickAnswerOpen, setIsQuickAnswerOpen] = useState(false);
@@ -180,14 +178,6 @@ export function QuestionPanel({
                 className="w-full bg-teal hover:bg-teal/90 text-cream font-medium"
               >
                 Continue to Phase {nextPhase.phase_number}
-                <ArrowRightIcon className="w-4 h-4 ml-2" />
-              </Button>
-            ) : onViewPlaybook ? (
-              <Button
-                onClick={onViewPlaybook}
-                className="w-full bg-teal hover:bg-teal/90 text-cream font-medium"
-              >
-                View Brand Playbook
                 <ArrowRightIcon className="w-4 h-4 ml-2" />
               </Button>
             ) : null}

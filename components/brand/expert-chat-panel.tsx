@@ -54,7 +54,6 @@ interface ExpertChatPanelProps {
   phaseComplete: boolean;
   nextPhaseName?: string;
   onGoToNextPhase?: () => void;
-  onViewPlaybook?: () => void;
   // Model selector
   selectedModelId?: string | null;
   onModelChange?: (modelId: string) => void;
@@ -76,7 +75,6 @@ export function ExpertChatPanel({
   phaseComplete,
   nextPhaseName,
   onGoToNextPhase,
-  onViewPlaybook,
   selectedModelId,
   onModelChange,
   models,
@@ -354,7 +352,7 @@ export function ExpertChatPanel({
               <LockClosedIcon className="w-4 h-4" />
               <span className="text-sm font-medium">Phase complete</span>
             </div>
-            {nextPhaseName && onGoToNextPhase ? (
+            {nextPhaseName && onGoToNextPhase && (
               <Button
                 onClick={onGoToNextPhase}
                 className="w-full bg-teal hover:bg-teal/90 text-cream font-medium"
@@ -362,15 +360,7 @@ export function ExpertChatPanel({
                 Continue to {nextPhaseName}
                 <ArrowRightIcon className="w-4 h-4 ml-2" />
               </Button>
-            ) : onViewPlaybook ? (
-              <Button
-                onClick={onViewPlaybook}
-                className="w-full bg-teal hover:bg-teal/90 text-cream font-medium"
-              >
-                View Brand Playbook
-                <ArrowRightIcon className="w-4 h-4 ml-2" />
-              </Button>
-            ) : null}
+            )}
           </div>
         ) : (
           <>
@@ -409,67 +399,72 @@ export function ExpertChatPanel({
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="flex items-center gap-2">
-              <Textarea
-                ref={textareaRef}
-                value={isListening ? (input + (input && !input.endsWith(' ') ? ' ' : '') + transcript) : input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Type your response..."
-                rows={1}
-                className="flex-1 resize-none !py-2.5 !rounded-lg !min-h-0"
-                disabled={isLoading}
-                readOnly={isListening}
-              />
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
-                multiple
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isLoading}
-                title="Attach images or PDFs"
-              >
-                <PaperClipIcon className="w-4 h-4" />
-              </Button>
-              {isSupported && (
+            <form onSubmit={handleSubmit} className="flex items-end gap-2 w-full">
+              <div className="flex-1 flex items-end gap-2 bg-cream-warm rounded-2xl px-3 py-2 border border-stone/10">
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={handleMicClick}
+                  onClick={() => fileInputRef.current?.click()}
                   disabled={isLoading}
-                  className={cn(
-                    isListening && 'bg-teal/10 text-teal animate-pulse'
-                  )}
+                  title="Attach images or PDFs"
+                  className="p-2 h-auto hover:bg-teal/10 shrink-0"
                 >
-                  {isListening ? (
-                    <StopIcon className="w-4 h-4" />
-                  ) : (
-                    <MicrophoneIcon className="w-4 h-4" />
-                  )}
+                  <PaperClipIcon className="w-5 h-5 text-stone hover:text-teal" />
                 </Button>
-              )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <Textarea
+                  ref={textareaRef}
+                  value={isListening ? (input + (input && !input.endsWith(' ') ? ' ' : '') + transcript) : input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type your message..."
+                  rows={1}
+                  className="flex-1 resize-none !py-2 !px-0 !bg-transparent !border-0 !ring-0 !outline-none !shadow-none !min-h-0 text-sm placeholder:text-stone/50"
+                  disabled={isLoading}
+                  readOnly={isListening}
+                />
+                {isSupported && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={handleMicClick}
+                    disabled={isLoading}
+                    className={cn(
+                      'p-2 h-auto shrink-0',
+                      isListening ? 'bg-teal/10 text-teal animate-pulse' : 'hover:bg-teal/10'
+                    )}
+                  >
+                    {isListening ? (
+                      <StopIcon className="w-5 h-5 text-teal" />
+                    ) : (
+                      <MicrophoneIcon className="w-5 h-5 text-stone hover:text-teal" />
+                    )}
+                  </Button>
+                )}
+              </div>
               {isLoading && onStopGeneration ? (
                 <Button
                   type="button"
                   onClick={onStopGeneration}
-                  className="bg-red-500 hover:bg-red-600 text-white"
+                  className="p-3 h-auto rounded-full bg-red-500 hover:bg-red-600 text-white shrink-0"
                   title="Stop generating"
                 >
-                  <StopIcon className="w-4 h-4" />
+                  <StopIcon className="w-5 h-5" />
                 </Button>
               ) : (
                 <Button
                   type="submit"
                   disabled={(!input.trim() && attachments.length === 0) || isLoading || isListening}
+                  className="p-3 h-auto rounded-full bg-teal hover:bg-teal/90 disabled:bg-stone/20 shrink-0"
                 >
-                  <PaperAirplaneIcon className="w-4 h-4" />
+                  <PaperAirplaneIcon className="w-5 h-5" />
                 </Button>
               )}
             </form>
