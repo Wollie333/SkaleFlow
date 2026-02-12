@@ -48,12 +48,10 @@ export function DashboardLayoutClient({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleMenuOpen = useCallback(() => {
-    console.log('Menu clicked, setting mobileMenuOpen to true');
     setMobileMenuOpen(true);
   }, []);
 
   const handleMenuClose = useCallback(() => {
-    console.log('Menu closing, setting mobileMenuOpen to false');
     setMobileMenuOpen(false);
   }, []);
 

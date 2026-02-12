@@ -160,9 +160,6 @@ export function MobileSidebar({
 }: MobileSidebarProps) {
   const pathname = usePathname();
 
-  // Debug logging
-  console.log('MobileSidebar rendered, isOpen:', isOpen);
-
   // Collapsible section state
   const [publishingExpanded, setPublishingExpanded] = useState(true);
   const [inboxExpanded, setInboxExpanded] = useState(false);
@@ -217,13 +214,6 @@ export function MobileSidebar({
 
   return (
     <>
-      {/* Debug indicator - remove after testing */}
-      {isOpen && (
-        <div className="fixed top-20 right-4 z-[200] bg-red-500 text-white px-4 py-2 rounded text-xs">
-          Menu is OPEN
-        </div>
-      )}
-
       {/* Backdrop */}
       <div
         className={cn(

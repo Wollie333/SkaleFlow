@@ -163,7 +163,6 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Hamburger button clicked!');
                 onMenuClick();
               }}
               className="lg:hidden p-2 rounded-lg text-cream hover:bg-teal/10 transition-colors relative z-[100]"

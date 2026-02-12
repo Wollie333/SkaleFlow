@@ -61,18 +61,12 @@ export function PostActionPopup({
     setPublishPlatforms(platforms);
   }, [platforms]);
 
-  const togglePublishPlatform = (p: string) => {
-    setPublishPlatforms(prev =>
-      prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]
-    );
-  };
-
   const handlePublishNow = async () => {
-    if (publishPlatforms.length === 0) return;
+    if (platforms.length === 0) return;
     setActionLoading(true);
     setPublishResults(null);
     try {
-      const results = await onPublishNow(publishPlatforms);
+      const results = await onPublishNow(platforms);
       setPublishResults(results);
     } catch (err) {
       setPublishResults([{ platform: 'all', success: false, error: 'Publish failed. Please try again.' }]);
