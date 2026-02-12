@@ -76,8 +76,6 @@ export function SocialConnectionCard({ platform, connections, onDisconnect, onMa
   };
 
   const handleDisconnect = async (connectionId: string, label: string) => {
-    if (!confirm(`Disconnect ${label}? You will need to reconnect to publish.`)) return;
-
     setDisconnectingId(connectionId);
     try {
       await onDisconnect(connectionId);

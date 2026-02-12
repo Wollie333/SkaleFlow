@@ -30,7 +30,6 @@ export function GoogleDriveConnectionCard({ connection, onDisconnect }: GoogleDr
 
   const handleDisconnect = async () => {
     if (!connection) return;
-    if (!confirm('Disconnect Google Drive? You will no longer be able to import files from Drive.')) return;
     setIsDisconnecting(true);
     try {
       await onDisconnect(connection.id);
