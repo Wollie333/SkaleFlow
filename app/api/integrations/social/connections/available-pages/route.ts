@@ -198,7 +198,11 @@ export async function GET(request: NextRequest) {
   let availablePages = (metadata.pages || []) as PageInfo[];
   let fetchError: string | null = null;
 
-  console.log(`Metadata pages: ${availablePages.length}`);
+  console.log(`Metadata pages for ${platformTyped}:`, {
+    count: availablePages.length,
+    pages: availablePages.map(p => ({ id: p.id, name: p.name, category: p.category })),
+    rawMetadata: metadata,
+  });
 
   // If no pages in metadata or empty, fetch them from the API
   if (availablePages.length === 0 && profileConn.access_token) {
