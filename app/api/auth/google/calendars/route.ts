@@ -21,9 +21,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const calendars = await listCalendars(user.id);
-
-    // Also fetch the currently saved calendar_id
+    // Check if Google Calendar is connected first
     const serviceClient = createServiceClient();
     const { data: integration } = await serviceClient
       .from('google_integrations')
@@ -31,13 +29,31 @@ export async function GET() {
       .eq('user_id', user.id)
       .maybeSingle();
 
+    if (!integration) {
+      // Not connected - return empty calendars list
+      return NextResponse.json({
+        calendars: [],
+        selectedCalendarId: 'primary',
+      });
+    }
+
+    const calendars = await listCalendars(user.id);
+
     return NextResponse.json({
       calendars,
       selectedCalendarId: integration?.calendar_id || 'primary',
     });
   } catch (error) {
     console.error('List calendars error:', error);
-    return NextResponse.json({ error: 'Failed to list calendars' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Failed to list calendars';
+    // If it's a "not connected" error, return empty list instead of 500
+    if (errorMessage.includes('not connected')) {
+      return NextResponse.json({
+        calendars: [],
+        selectedCalendarId: 'primary',
+      });
+    }
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
