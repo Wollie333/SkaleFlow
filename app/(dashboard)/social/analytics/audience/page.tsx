@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { AudienceInsightsClient } from './audience-insights-client';
 
 export const metadata = {
   title: 'Audience Insights | SkaleFlow',
@@ -19,20 +20,27 @@ export default async function AudienceInsightsPage() {
 
   const { data: membership } = await supabase
     .from('org_members')
-    .select('organization_id').eq('user_id', user.id)
-    
+    .select('organization_id')
+    .eq('user_id', user.id)
     .single();
 
   if (!membership?.organization_id) {
     redirect('/dashboard');
   }
 
+  const organizationId = membership.organization_id;
+
+  // Get active connections
+  const { data: connections } = await supabase
+    .from('social_media_connections')
+    .select('id, platform, platform_username, platform_page_name, is_active')
+    .eq('organization_id', organizationId)
+    .eq('is_active', true);
+
   return (
-    <div className="p-6 md:p-8 space-y-6">
-      <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
-        <h2 className="text-2xl font-bold text-charcoal mb-2">Audience Insights</h2>
-        <p className="text-stone mb-4">Coming soon - Deep audience analytics and demographics</p>
-      </div>
-    </div>
+    <AudienceInsightsClient
+      organizationId={organizationId}
+      connections={connections || []}
+    />
   );
 }

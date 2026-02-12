@@ -11,9 +11,10 @@ import {
   UserGroupIcon,
   ClipboardDocumentCheckIcon,
   ArrowPathIcon,
+  CalendarIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format, subDays, startOfDay, endOfDay } from 'date-fns';
 
 interface Connection {
   id: string;
@@ -45,6 +46,8 @@ interface PlatformPost {
   accountName: string;
 }
 
+type DateRangePreset = '7days' | '30days' | '90days' | 'custom';
+
 export function AnalyticsOverviewClient({
   organizationId,
   connections,
@@ -53,6 +56,10 @@ export function AnalyticsOverviewClient({
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dateRangePreset, setDateRangePreset] = useState<DateRangePreset>('30days');
+  const [customStartDate, setCustomStartDate] = useState<string>(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
+  const [customEndDate, setCustomEndDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const fetchPlatformPosts = async () => {
     setIsFetching(true);
@@ -85,39 +92,57 @@ export function AnalyticsOverviewClient({
     }
   }, [connections.length]);
 
-  // Calculate metrics from posts
-  const last30Days = posts.filter((post) => {
+  // Get date range based on preset or custom selection
+  const getDateRange = () => {
+    const now = new Date();
+    let startDate: Date;
+    let endDate = endOfDay(now);
+
+    if (dateRangePreset === 'custom') {
+      startDate = startOfDay(new Date(customStartDate));
+      endDate = endOfDay(new Date(customEndDate));
+    } else {
+      const days = dateRangePreset === '7days' ? 7 : dateRangePreset === '30days' ? 30 : 90;
+      startDate = startOfDay(subDays(now, days));
+    }
+
+    return { startDate, endDate };
+  };
+
+  const { startDate, endDate } = getDateRange();
+  const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+  // Calculate metrics from posts within selected date range
+  const currentPeriodPosts = posts.filter((post) => {
     const postDate = new Date(post.createdAt);
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    return postDate >= thirtyDaysAgo;
+    return postDate >= startDate && postDate <= endDate;
   });
 
-  const previous30Days = posts.filter((post) => {
+  // Calculate previous period for comparison (same duration before start date)
+  const previousStartDate = startOfDay(subDays(startDate, daysDiff));
+  const previousEndDate = endOfDay(subDays(startDate, 1));
+
+  const previousPeriodPosts = posts.filter((post) => {
     const postDate = new Date(post.createdAt);
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const sixtyDaysAgo = new Date();
-    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-    return postDate < thirtyDaysAgo && postDate >= sixtyDaysAgo;
+    return postDate >= previousStartDate && postDate <= previousEndDate;
   });
 
   const currentMetrics = {
-    totalPosts: last30Days.length,
-    totalImpressions: last30Days.reduce((sum, p) => sum + p.impressions, 0),
-    totalReach: last30Days.reduce((sum, p) => sum + p.reach, 0),
-    totalEngagement: last30Days.reduce((sum, p) => sum + p.engagement, 0),
-    avgEngagementRate: last30Days.length > 0
-      ? last30Days.reduce((sum, p) => sum + p.engagementRate, 0) / last30Days.length
+    totalPosts: currentPeriodPosts.length,
+    totalImpressions: currentPeriodPosts.reduce((sum, p) => sum + p.impressions, 0),
+    totalReach: currentPeriodPosts.reduce((sum, p) => sum + p.reach, 0),
+    totalEngagement: currentPeriodPosts.reduce((sum, p) => sum + p.engagement, 0),
+    avgEngagementRate: currentPeriodPosts.length > 0
+      ? currentPeriodPosts.reduce((sum, p) => sum + p.engagementRate, 0) / currentPeriodPosts.length
       : 0,
   };
 
   const previousMetrics = {
-    totalPosts: previous30Days.length,
-    totalImpressions: previous30Days.reduce((sum, p) => sum + p.impressions, 0),
-    totalReach: previous30Days.reduce((sum, p) => sum + p.reach, 0),
-    avgEngagementRate: previous30Days.length > 0
-      ? previous30Days.reduce((sum, p) => sum + p.engagementRate, 0) / previous30Days.length
+    totalPosts: previousPeriodPosts.length,
+    totalImpressions: previousPeriodPosts.reduce((sum, p) => sum + p.impressions, 0),
+    totalReach: previousPeriodPosts.reduce((sum, p) => sum + p.reach, 0),
+    avgEngagementRate: previousPeriodPosts.length > 0
+      ? previousPeriodPosts.reduce((sum, p) => sum + p.engagementRate, 0) / previousPeriodPosts.length
       : 0,
   };
 
@@ -139,12 +164,12 @@ export function AnalyticsOverviewClient({
     return num.toString();
   };
 
-  const topPosts = [...last30Days]
+  const topPosts = [...currentPeriodPosts]
     .sort((a, b) => b.engagementRate - a.engagementRate)
     .slice(0, 5);
 
   // Platform breakdown
-  const platformMetrics = last30Days.reduce((acc: any, post) => {
+  const platformMetrics = currentPeriodPosts.reduce((acc: any, post) => {
     if (!acc[post.platform]) {
       acc[post.platform] = {
         posts: 0,
@@ -184,22 +209,109 @@ export function AnalyticsOverviewClient({
     );
   }
 
+  const getDateRangeLabel = () => {
+    if (dateRangePreset === 'custom') {
+      return `${format(startDate, 'MMM d')} - ${format(endDate, 'MMM d, yyyy')}`;
+    }
+    const days = dateRangePreset === '7days' ? 7 : dateRangePreset === '30days' ? 30 : 90;
+    return `Last ${days} days`;
+  };
+
   return (
     <div className="p-6 md:p-8 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <PageHeader
-          title="Analytics Overview"
-          description="Performance insights from your connected social accounts (last 30 days)"
-        />
-        <Button
-          onClick={fetchPlatformPosts}
-          disabled={isFetching}
-          variant="secondary"
-          className="whitespace-nowrap"
-        >
-          <ArrowPathIcon className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-          {isFetching ? 'Loading...' : 'Refresh Data'}
-        </Button>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <PageHeader
+            title="Analytics Overview"
+            description={`Performance insights from your connected social accounts (${getDateRangeLabel()})`}
+          />
+          <Button
+            onClick={fetchPlatformPosts}
+            disabled={isFetching}
+            variant="secondary"
+            className="whitespace-nowrap"
+          >
+            <ArrowPathIcon className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+            {isFetching ? 'Loading...' : 'Refresh Data'}
+          </Button>
+        </div>
+
+        {/* Date Range Selector */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 bg-white rounded-lg border border-stone/10 p-1">
+            <button
+              onClick={() => setDateRangePreset('7days')}
+              className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                dateRangePreset === '7days'
+                  ? 'bg-teal text-white'
+                  : 'text-stone hover:bg-cream-warm'
+              }`}
+            >
+              Last 7 days
+            </button>
+            <button
+              onClick={() => setDateRangePreset('30days')}
+              className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                dateRangePreset === '30days'
+                  ? 'bg-teal text-white'
+                  : 'text-stone hover:bg-cream-warm'
+              }`}
+            >
+              Last 30 days
+            </button>
+            <button
+              onClick={() => setDateRangePreset('90days')}
+              className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                dateRangePreset === '90days'
+                  ? 'bg-teal text-white'
+                  : 'text-stone hover:bg-cream-warm'
+              }`}
+            >
+              Last 90 days
+            </button>
+            <button
+              onClick={() => {
+                setDateRangePreset('custom');
+                setShowDatePicker(!showDatePicker);
+              }}
+              className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                dateRangePreset === 'custom'
+                  ? 'bg-teal text-white'
+                  : 'text-stone hover:bg-cream-warm'
+              }`}
+            >
+              <CalendarIcon className="w-4 h-4" />
+              Custom
+            </button>
+          </div>
+
+          {/* Custom Date Picker */}
+          {dateRangePreset === 'custom' && showDatePicker && (
+            <div className="flex items-center gap-2 bg-white rounded-lg border border-stone/10 p-3">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-stone font-medium">From:</label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  max={customEndDate}
+                  className="px-2 py-1 border border-stone/20 rounded text-sm"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-stone font-medium">To:</label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  min={customStartDate}
+                  max={format(new Date(), 'yyyy-MM-dd')}
+                  className="px-2 py-1 border border-stone/20 rounded text-sm"
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {error && (
