@@ -978,10 +978,9 @@ export default function ContentCreatePage() {
   };
 
   const handlePopupPublishNow = async (publishPlatforms: string[]): Promise<PublishResult[]> => {
-    // Save first
-    await handleSave(false);
-    const itemId = generated?.id || manualItemId;
-    if (!itemId) return [{ platform: 'all', success: false, error: 'No item to publish' }];
+    // Save silently first (no modal)
+    const itemId = await handleSilentSave();
+    if (!itemId) return [{ platform: 'all', success: false, error: 'Failed to save post before publishing' }];
 
     try {
       const res = await fetch('/api/content/publish', {

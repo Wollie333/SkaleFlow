@@ -215,18 +215,26 @@ export function MobileSidebar({
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Debug indicator - remove after testing */}
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-dark/50 z-[60] lg:hidden"
-          onClick={onClose}
-        />
+        <div className="fixed top-20 right-4 z-[200] bg-red-500 text-white px-4 py-2 rounded text-xs">
+          Menu is OPEN
+        </div>
       )}
+
+      {/* Backdrop */}
+      <div
+        className={cn(
+          "fixed inset-0 bg-dark/50 z-[60] transition-opacity duration-300 lg:hidden",
+          isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        )}
+        onClick={onClose}
+      />
 
       {/* Drawer */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-[70] w-60 bg-white border-r border-stone/10 flex flex-col transform transition-transform duration-300 ease-in-out lg:hidden",
+          "fixed inset-y-0 left-0 z-[70] w-60 bg-white border-r border-stone/10 flex flex-col transition-transform duration-300 ease-in-out lg:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

@@ -321,6 +321,31 @@ export default function PostEditPage() {
   }, [editFields, platformPlacements, platformSpecs, selectedFormat, funnelStage, storybrandStage, targetUrl, utmParams, scheduledDate, scheduledTime, uploadedFiles, scriptData]);
 
   // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Save handler Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  // Silent save handler (for publish flow - doesn't show modal)
+  const handleSilentSave = useCallback(async (): Promise<string | null> => {
+    if (!item) return null;
+
+    try {
+      const body = buildSaveBody();
+
+      const res = await fetch(`/api/content/items/${item.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setItem(data.item);
+        return item.id;
+      }
+      return null;
+    } catch (err) {
+      console.error('Save failed:', err);
+      return null;
+    }
+  }, [item, buildSaveBody]);
+
   const handleSave = useCallback(async (newStatus?: ContentStatus) => {
     if (!item) return;
     setIsSaving(true);
@@ -467,14 +492,15 @@ export default function PostEditPage() {
   };
 
   const handlePopupPublishNow = async (publishPlatforms: string[]): Promise<PublishResult[]> => {
-    await handleSave();
-    if (!item) return [{ platform: 'all', success: false, error: 'No item to publish' }];
+    // Save silently first (no modal)
+    const itemId = await handleSilentSave();
+    if (!itemId) return [{ platform: 'all', success: false, error: 'Failed to save post before publishing' }];
 
     try {
       const res = await fetch('/api/content/publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contentItemId: item.id, platforms: publishPlatforms }),
+        body: JSON.stringify({ contentItemId: itemId, platforms: publishPlatforms }),
       });
       const data = await res.json();
       if (!res.ok) return [{ platform: 'all', success: false, error: data.error || 'Publish failed' }];

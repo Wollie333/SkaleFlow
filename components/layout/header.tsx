@@ -157,18 +157,21 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
         {/* Logo & Hamburger */}
         <div className="flex items-center gap-2">
           {/* Hamburger Menu Button - Mobile Only */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onMenuClick?.();
-            }}
-            className="lg:hidden p-2 rounded-lg text-cream hover:bg-teal/10 transition-colors"
-            aria-label="Open menu"
-          >
-            <Bars3Icon className="w-6 h-6" />
-          </button>
+          {onMenuClick && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Hamburger button clicked!');
+                onMenuClick();
+              }}
+              className="lg:hidden p-2 rounded-lg text-cream hover:bg-teal/10 transition-colors relative z-[100]"
+              aria-label="Open menu"
+            >
+              <Bars3Icon className="w-6 h-6" />
+            </button>
+          )}
 
           <Link href="/dashboard" className="flex items-center gap-2">
             <span className="font-serif font-bold text-xl text-cream tracking-wide">
