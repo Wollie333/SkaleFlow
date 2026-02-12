@@ -69,12 +69,23 @@ export function PostsPerformanceClient({ organizationId, connections }: PostsPer
 
       const data = await response.json();
 
+      console.log('Analytics API Response:', data);
+
       if (response.ok) {
         setPosts(data.posts || []);
+
+        // Show errors if any platforms failed
+        if (data.errors && data.errors.length > 0) {
+          const errorMessage = `Some platforms failed to fetch:\n${data.errors.map((e: any) => `${e.platform}: ${e.error}`).join('\n')}`;
+          setError(errorMessage);
+        } else if (data.posts.length === 0) {
+          setError('No posts found. Make sure your connected accounts have published posts and Pages are selected in Settings.');
+        }
       } else {
         setError(data.error || 'Failed to fetch posts');
       }
     } catch (err) {
+      console.error('Fetch error:', err);
       setError('Failed to fetch platform posts. Please try again.');
     } finally {
       setIsFetching(false);

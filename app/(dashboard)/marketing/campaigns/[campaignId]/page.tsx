@@ -365,13 +365,13 @@ export default function CampaignDetailPage() {
       </Card>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-stone/10">
+      <div className="flex items-center gap-1 border-b border-stone/10 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
         {TABS.map(tab => (
           <button
             key={tab.key}
             onClick={() => handleTabChange(tab.key)}
             className={cn(
-              'flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors',
+              'flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
               activeTab === tab.key
                 ? 'border-teal text-teal'
                 : 'border-transparent text-stone hover:text-charcoal'

@@ -214,7 +214,7 @@ export default function PublishLogPage() {
       )}
 
       {/* Status Tabs */}
-      <div className="flex items-center gap-2 border-b border-stone/10 pb-0">
+      <div className="flex items-center gap-2 border-b border-stone/10 pb-0 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
         {STATUS_TABS.map(tab => {
           const count = tab.value === 'all' ? records.length : (statusCounts[tab.value] || 0);
           return (
@@ -222,7 +222,7 @@ export default function PublishLogPage() {
               key={tab.value}
               onClick={() => handleStatusFilterChange(tab.value)}
               className={cn(
-                'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-[1px]',
+                'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-[1px] whitespace-nowrap flex-shrink-0',
                 statusFilter === tab.value
                   ? 'border-teal text-teal'
                   : 'border-transparent text-stone hover:text-charcoal'

@@ -317,10 +317,10 @@ export default function BillingPage() {
       </div>
 
       {/* Tabs: Usage / Transactions / Invoices / Admin */}
-      <div className="mb-4 flex gap-4 border-b border-stone/10">
+      <div className="mb-4 flex gap-4 border-b border-stone/10 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
         <button
           onClick={() => handleTabChange('usage')}
-          className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
+          className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
             activeTab === 'usage'
               ? 'border-teal text-teal'
               : 'border-transparent text-stone hover:text-charcoal'
@@ -330,7 +330,7 @@ export default function BillingPage() {
         </button>
         <button
           onClick={() => handleTabChange('transactions')}
-          className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
+          className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
             activeTab === 'transactions'
               ? 'border-teal text-teal'
               : 'border-transparent text-stone hover:text-charcoal'
@@ -340,7 +340,7 @@ export default function BillingPage() {
         </button>
         <button
           onClick={() => handleTabChange('invoices')}
-          className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
+          className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
             activeTab === 'invoices'
               ? 'border-teal text-teal'
               : 'border-transparent text-stone hover:text-charcoal'
@@ -351,7 +351,7 @@ export default function BillingPage() {
         {balance?.isSuperAdmin && (
           <button
             onClick={() => handleTabChange('admin')}
-            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
+            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
               activeTab === 'admin'
                 ? 'border-gold text-gold'
                 : 'border-transparent text-stone hover:text-charcoal'

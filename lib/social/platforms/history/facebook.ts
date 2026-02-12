@@ -42,7 +42,7 @@ export async function fetchPagePosts(
 ): Promise<PostAnalytics[]> {
   const pageId = tokens.platformPageId;
   if (!pageId) {
-    throw new Error('No Facebook Page ID found');
+    throw new Error('No Facebook Page selected. Please go to Settings → Social Media Accounts, click the gear icon on Facebook, and select a Page to fetch analytics from.');
   }
 
   const fields = [

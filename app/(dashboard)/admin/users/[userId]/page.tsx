@@ -450,12 +450,12 @@ export default function AdminUserDetailPage() {
         {/* Left: Tabbed content */}
         <div className="flex-1 min-w-0">
           {/* Tab bar */}
-          <div className="flex items-center gap-1 border-b border-cream mb-6">
+          <div className="flex items-center gap-1 border-b border-cream mb-6 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => handleTabChange(tab.key)}
-                className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.key
                     ? 'border-teal text-teal'
                     : 'border-transparent text-stone hover:text-charcoal hover:border-stone/20'

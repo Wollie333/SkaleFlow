@@ -72,12 +72,23 @@ export function AnalyticsOverviewClient({
 
       const data = await response.json();
 
+      console.log('Analytics API Response:', data);
+
       if (response.ok) {
         setPosts(data.posts || []);
+
+        // Show errors if any platforms failed
+        if (data.errors && data.errors.length > 0) {
+          const errorMessage = `Some platforms failed to fetch:\n${data.errors.map((e: any) => `${e.platform}: ${e.error}`).join('\n')}`;
+          setError(errorMessage);
+        } else if (data.posts.length === 0) {
+          setError('No posts found. Make sure your connected accounts have published posts.');
+        }
       } else {
         setError(data.error || 'Failed to fetch posts');
       }
     } catch (err) {
+      console.error('Fetch error:', err);
       setError('Failed to fetch platform posts. Please try again.');
     } finally {
       setIsFetching(false);
@@ -315,8 +326,9 @@ export function AnalyticsOverviewClient({
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
-          {error}
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <p className="text-sm font-semibold text-amber-800 mb-2">Analytics Issue</p>
+          <p className="text-sm text-amber-700 whitespace-pre-line">{error}</p>
         </div>
       )}
 

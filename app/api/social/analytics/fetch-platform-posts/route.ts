@@ -45,10 +45,19 @@ export async function POST(request: NextRequest) {
   const allPosts: any[] = [];
   let fetchedCount = 0;
   let failedCount = 0;
+  const errors: Array<{ platform: string; error: string }> = [];
 
   // Fetch posts from each connected platform
   for (const connection of connections) {
     try {
+      console.log(`Fetching posts for ${connection.platform}:`, {
+        platform: connection.platform,
+        accountType: connection.account_type,
+        pageId: connection.platform_page_id,
+        username: connection.platform_username,
+        pageName: connection.platform_page_name,
+      });
+
       const tokens = await ensureValidToken(connection as unknown as ConnectionWithTokens);
       let platformPosts: any[] = [];
 
@@ -63,8 +72,11 @@ export async function POST(request: NextRequest) {
           platformPosts = await fetchLinkedInPosts(tokens, 50);
           break;
         default:
+          console.log(`Skipping unsupported platform: ${connection.platform}`);
           continue;
       }
+
+      console.log(`Fetched ${platformPosts.length} posts from ${connection.platform}`);
 
       // Add platform and connection info to each post
       const postsWithMeta = platformPosts.map((post) => ({
@@ -77,7 +89,9 @@ export async function POST(request: NextRequest) {
       allPosts.push(...postsWithMeta);
       fetchedCount += platformPosts.length;
     } catch (error) {
-      console.error(`Failed to fetch ${connection.platform} posts:`, error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Failed to fetch ${connection.platform} posts:`, errorMessage, error);
+      errors.push({ platform: connection.platform, error: errorMessage });
       failedCount++;
     }
   }
@@ -85,12 +99,19 @@ export async function POST(request: NextRequest) {
   // Sort posts by date (newest first)
   allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
+  console.log(`Total posts fetched: ${allPosts.length}, Errors: ${errors.length}`);
+
   return NextResponse.json({
-    message: 'Platform posts fetched successfully',
+    message: allPosts.length > 0
+      ? 'Platform posts fetched successfully'
+      : errors.length > 0
+        ? 'Failed to fetch posts from all platforms'
+        : 'No posts found',
     posts: allPosts,
     totalPosts: allPosts.length,
     connectionsProcessed: connections.length,
     fetchedCount,
     failedCount,
+    errors: errors.length > 0 ? errors : undefined,
   });
 }

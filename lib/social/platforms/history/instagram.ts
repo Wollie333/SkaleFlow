@@ -42,7 +42,7 @@ export async function fetchInstagramPosts(
 ): Promise<PostAnalytics[]> {
   const accountId = tokens.platformPageId;
   if (!accountId) {
-    throw new Error('No Instagram Business Account ID found');
+    throw new Error('No Instagram Business Account selected. Please go to Settings → Social Media Accounts, click the gear icon on Instagram, and select an account to fetch analytics from.');
   }
 
   const fields = [

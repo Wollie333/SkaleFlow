@@ -251,11 +251,11 @@ export default function AudiencesPage() {
       />
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-stone/10">
+      <div className="flex items-center gap-1 border-b border-stone/10 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
         <button
           onClick={() => handleTabChange('audiences')}
           className={cn(
-            'flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors',
+            'flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
             activeTab === 'audiences'
               ? 'border-teal text-teal'
               : 'border-transparent text-stone hover:text-charcoal'
@@ -275,7 +275,7 @@ export default function AudiencesPage() {
         <button
           onClick={() => handleTabChange('pipeline_audiences')}
           className={cn(
-            'flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors',
+            'flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
             activeTab === 'pipeline_audiences'
               ? 'border-teal text-teal'
               : 'border-transparent text-stone hover:text-charcoal'
