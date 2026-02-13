@@ -48,23 +48,6 @@ export const facebookAdapter: PlatformAdapter = {
     const userRes = await fetch(`${GRAPH_API_BASE}/me?fields=id,name&access_token=${longLivedData.access_token}`);
     const userData = await userRes.json();
 
-    // Check what scopes were granted
-    console.log('Facebook OAuth scopes granted:', tokenData.scope);
-
-    // Get pages the user manages
-    console.log('Fetching Facebook pages from /me/accounts...');
-
-    // First check /me to see user info
-    const meRes = await fetch(`${GRAPH_API_BASE}/me?fields=id,name&access_token=${longLivedData.access_token}`);
-    const meData = await meRes.json();
-    console.log('Facebook /me response:', meData);
-
-    // Check permissions
-    const permissionsRes = await fetch(`${GRAPH_API_BASE}/me/permissions?access_token=${longLivedData.access_token}`);
-    const permissionsData = await permissionsRes.json();
-    const grantedPermissions = permissionsData.data?.filter((p: { status: string }) => p.status === 'granted').map((p: { permission: string }) => p.permission) || [];
-    console.log('Facebook permissions granted to token:', grantedPermissions);
-
     // Fetch ALL pages (handle pagination)
     let allPages: { id: string; name: string; access_token: string; category?: string }[] = [];
     let nextUrl = `${GRAPH_API_BASE}/me/accounts?access_token=${longLivedData.access_token}`;
@@ -74,14 +57,6 @@ export const facebookAdapter: PlatformAdapter = {
       pageCount++;
       const pagesRes = await fetch(nextUrl);
       const pagesData = await pagesRes.json();
-
-      console.log(`Facebook /me/accounts response (page ${pageCount}):`, {
-        status: pagesRes.status,
-        hasError: !!pagesData.error,
-        error: pagesData.error,
-        dataCount: pagesData.data?.length || 0,
-        hasNext: !!pagesData.paging?.next,
-      });
 
       if (pagesData.error) {
         console.error('Facebook API error when fetching pages:', pagesData.error);
@@ -95,15 +70,11 @@ export const facebookAdapter: PlatformAdapter = {
         category: p.category || null,
       }));
 
-      console.log(`Page batch ${pageCount} details:`, pagesBatch.map(p => ({ id: p.id, name: p.name })));
-
       allPages = [...allPages, ...pagesBatch];
 
       // Check if there's a next page
       nextUrl = pagesData.paging?.next || null;
     }
-
-    console.log(`Found ${allPages.length} total Facebook pages across ${pageCount} API call(s):`, allPages.map(p => ({ id: p.id, name: p.name, category: p.category })));
 
     const pages = allPages;
 

@@ -15,19 +15,6 @@ const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
 async function fetchFacebookPages(accessToken: string): Promise<PageInfo[]> {
   try {
-    console.log('Fetching Facebook pages from API...');
-
-    // First, check what permissions this token has
-    const permissionsRes = await fetch(`${GRAPH_API_BASE}/me/permissions?access_token=${accessToken}`);
-    const permissionsData = await permissionsRes.json();
-    const grantedPermissions = permissionsData.data?.filter((p: { status: string }) => p.status === 'granted').map((p: { permission: string }) => p.permission) || [];
-
-    console.log('Facebook token permissions:', {
-      granted: grantedPermissions,
-      hasPagesList: grantedPermissions.includes('pages_show_list'),
-      hasPagesManage: grantedPermissions.includes('pages_manage_posts'),
-    });
-
     // Fetch ALL pages (handle pagination)
     let allPages: PageInfo[] = [];
     let nextUrl = `${GRAPH_API_BASE}/me/accounts?access_token=${accessToken}`;
@@ -37,14 +24,6 @@ async function fetchFacebookPages(accessToken: string): Promise<PageInfo[]> {
       pageCount++;
       const pagesRes = await fetch(nextUrl);
       const pagesData = await pagesRes.json();
-
-      console.log(`Facebook API response (page ${pageCount}):`, {
-        status: pagesRes.status,
-        hasError: !!pagesData.error,
-        error: pagesData.error,
-        dataCount: pagesData.data?.length || 0,
-        hasNext: !!pagesData.paging?.next,
-      });
 
       if (pagesData.error) {
         console.error('Facebook API error:', pagesData.error);
@@ -58,15 +37,12 @@ async function fetchFacebookPages(accessToken: string): Promise<PageInfo[]> {
         category: p.category || null,
       }));
 
-      console.log(`Page batch ${pageCount} details:`, pagesBatch.map(p => ({ id: p.id, name: p.name })));
-
       allPages = [...allPages, ...pagesBatch];
 
       // Check if there's a next page
       nextUrl = pagesData.paging?.next || null;
     }
 
-    console.log(`Found ${allPages.length} total Facebook pages across ${pageCount} API call(s)`);
     return allPages;
   } catch (error) {
     console.error('Failed to fetch Facebook pages:', error);
@@ -194,41 +170,42 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'No organization found' }, { status: 404 });
   }
 
-  // Fetch ANY connection for this platform (try profile first, then any)
+  // Try to find the profile connection first (has user-scoped token for page discovery)
   let { data: profileConn } = await supabase
     .from('social_media_connections')
     .select('id, access_token, metadata, account_type, platform_username, platform_page_name')
     .eq('organization_id', membership.organization_id)
     .eq('platform', platformTyped)
     .eq('is_active', true)
-    .order('account_type', { ascending: true }) // 'page' comes before 'profile'
+    .eq('account_type', 'profile')
     .limit(1)
     .single();
+
+  // Fallback: if no profile connection, try any active connection
+  if (!profileConn) {
+    const { data: anyConn } = await supabase
+      .from('social_media_connections')
+      .select('id, access_token, metadata, account_type, platform_username, platform_page_name')
+      .eq('organization_id', membership.organization_id)
+      .eq('platform', platformTyped)
+      .eq('is_active', true)
+      .limit(1)
+      .single();
+    profileConn = anyConn;
+  }
 
   if (!profileConn) {
     console.error(`No connection found for ${platformTyped}`);
     return NextResponse.json({ error: 'No connection found for this platform' }, { status: 404 });
   }
 
-  console.log(`Found ${platformTyped} connection:`, {
-    id: profileConn.id,
-    accountType: profileConn.account_type,
-    username: profileConn.platform_username,
-    pageName: profileConn.platform_page_name,
-    hasToken: !!profileConn.access_token,
-    tokenPrefix: profileConn.access_token?.substring(0, 10) + '...',
-    hasMetadata: !!profileConn.metadata,
-  });
+  console.log(`Found ${platformTyped} connection: type=${profileConn.account_type}, user=${profileConn.platform_username}`);
 
   const metadata = (profileConn.metadata || {}) as Record<string, unknown>;
   let availablePages = (metadata.pages || []) as PageInfo[];
   let fetchError: string | null = null;
 
-  console.log(`Metadata pages for ${platformTyped}:`, {
-    count: availablePages.length,
-    pages: availablePages.map(p => ({ id: p.id, name: p.name, category: p.category })),
-    rawMetadata: metadata,
-  });
+  console.log(`Metadata pages for ${platformTyped}: count=${availablePages.length}`);
 
   // If no pages in metadata or empty, fetch them from the API
   if (availablePages.length === 0 && profileConn.access_token) {

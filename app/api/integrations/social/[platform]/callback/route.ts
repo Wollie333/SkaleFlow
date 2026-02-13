@@ -75,13 +75,12 @@ export async function GET(
       pagesCount: (tokenData.metadata?.pages as unknown[])?.length || 0,
     });
 
-    // Delete existing profile connection for this org+platform (replace with fresh one)
+    // Delete ALL existing connections for this org+platform (clean slate on reconnect)
     await supabase
       .from('social_media_connections')
       .delete()
       .eq('organization_id', orgId)
-      .eq('platform', platform)
-      .is('platform_page_id', null);
+      .eq('platform', platform);
 
     // Insert fresh profile connection
     const { error: insertError } = await supabase
