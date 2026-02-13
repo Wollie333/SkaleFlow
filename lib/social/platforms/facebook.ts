@@ -13,6 +13,7 @@ export const facebookAdapter: PlatformAdapter = {
       state,
       scope: 'pages_manage_posts,pages_read_engagement,pages_show_list,pages_read_user_content',
       response_type: 'code',
+      auth_type: 'rerequest',
     });
     return `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?${params}`;
   },
