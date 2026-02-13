@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isToday, startOfWeek, endOfWeek, isSameMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckCircleIcon, EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckCircleIcon, EyeIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import {
   DndContext,
   DragOverlay,
@@ -15,7 +15,9 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import type { FunnelStage, StoryBrandStage, TimeSlot, ContentStatus } from '@/types/database';
+import type { FunnelStage, StoryBrandStage, TimeSlot, ContentStatus, SocialPlatform } from '@/types/database';
+import { SocialPreviewTabs } from './social-preview';
+import { DeleteConfirmationModal } from './delete-confirmation-modal';
 
 interface BaseContentItem {
   id: string;
@@ -33,6 +35,7 @@ interface BaseContentItem {
   platforms: string[];
   status: ContentStatus;
   media_urls?: string[] | null;
+  target_url?: string | null;
   [key: string]: unknown;
 }
 
@@ -42,6 +45,7 @@ interface CalendarViewProps {
   onMonthChange?: (date: Date) => void;
   onMovePost?: (itemId: string, newDate: string) => void;
   onAddPost?: (date: Date) => void;
+  onDeletePost?: (itemId: string) => void;
   selectionMode?: boolean;
   selectedIds?: Set<string>;
   onSelectionChange?: (ids: Set<string>) => void;
@@ -100,7 +104,17 @@ function SelectablePost({
   );
 }
 
-function DraggablePost({ item, onItemClick }: { item: BaseContentItem; onItemClick: (item: BaseContentItem) => void }) {
+function DraggablePost({
+  item,
+  onItemClick,
+  onPreview,
+  onDelete,
+}: {
+  item: BaseContentItem;
+  onItemClick: (item: BaseContentItem) => void;
+  onPreview?: (item: BaseContentItem) => void;
+  onDelete?: (item: BaseContentItem) => void;
+}) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: item.id,
     data: { item },
@@ -193,10 +207,11 @@ function DraggablePost({ item, onItemClick }: { item: BaseContentItem; onItemCli
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onItemClick(item);
+            onPreview?.(item);
           }}
+          onPointerDown={(e) => e.stopPropagation()}
           className="p-2 bg-white/10 rounded hover:bg-white/20 transition-colors"
-          title="View"
+          title="Preview"
         >
           <EyeIcon className="w-4 h-4 text-white" />
         </button>
@@ -205,6 +220,7 @@ function DraggablePost({ item, onItemClick }: { item: BaseContentItem; onItemCli
             e.stopPropagation();
             onItemClick(item);
           }}
+          onPointerDown={(e) => e.stopPropagation()}
           className="p-2 bg-white/10 rounded hover:bg-white/20 transition-colors"
           title="Edit"
         >
@@ -213,9 +229,10 @@ function DraggablePost({ item, onItemClick }: { item: BaseContentItem; onItemCli
         <button
           onClick={(e) => {
             e.stopPropagation();
-            // Handle delete
+            onDelete?.(item);
           }}
-          className="p-2 bg-white/10 rounded hover:bg-white/20 transition-colors"
+          onPointerDown={(e) => e.stopPropagation()}
+          className="p-2 bg-white/10 rounded hover:bg-red-500/30 transition-colors"
           title="Delete"
         >
           <TrashIcon className="w-4 h-4 text-white" />
@@ -231,6 +248,8 @@ function DroppableDay({
   dayItems,
   onItemClick,
   onAddPost,
+  onPreview,
+  onDelete,
   selectionMode,
   selectedIds,
   onToggleSelection,
@@ -240,6 +259,8 @@ function DroppableDay({
   dayItems: BaseContentItem[];
   onItemClick: (item: BaseContentItem) => void;
   onAddPost?: (date: Date) => void;
+  onPreview?: (item: BaseContentItem) => void;
+  onDelete?: (item: BaseContentItem) => void;
   selectionMode?: boolean;
   selectedIds?: Set<string>;
   onToggleSelection?: (id: string) => void;
@@ -287,7 +308,7 @@ function DroppableDay({
               onToggle={onToggleSelection}
             />
           ) : (
-            <DraggablePost key={item.id} item={item} onItemClick={onItemClick} />
+            <DraggablePost key={item.id} item={item} onItemClick={onItemClick} onPreview={onPreview} onDelete={onDelete} />
           )
         ))}
         {dayItems.length > 4 && (
@@ -300,9 +321,12 @@ function DroppableDay({
   );
 }
 
-export function CalendarView({ items, onItemClick, onMonthChange, onMovePost, onAddPost, selectionMode, selectedIds, onSelectionChange }: CalendarViewProps) {
+export function CalendarView({ items, onItemClick, onMonthChange, onMovePost, onAddPost, onDeletePost, selectionMode, selectedIds, onSelectionChange }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [activeItem, setActiveItem] = useState<BaseContentItem | null>(null);
+  const [previewItem, setPreviewItem] = useState<BaseContentItem | null>(null);
+  const [deleteItem, setDeleteItem] = useState<BaseContentItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const defaultSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -431,6 +455,8 @@ export function CalendarView({ items, onItemClick, onMonthChange, onMovePost, on
                 dayItems={dayItems}
                 onItemClick={onItemClick}
                 onAddPost={onAddPost}
+                onPreview={setPreviewItem}
+                onDelete={setDeleteItem}
                 selectionMode={selectionMode}
                 selectedIds={selectedIds}
                 onToggleSelection={handleToggleSelection}
@@ -479,6 +505,87 @@ export function CalendarView({ items, onItemClick, onMonthChange, onMovePost, on
           </div>
         )}
       </DragOverlay>
+
+      {/* Preview modal */}
+      {previewItem && (
+        <div className="fixed inset-0 bg-dark/50 flex items-center justify-center z-50" onClick={() => setPreviewItem(null)}>
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div className="sticky top-0 bg-white border-b border-stone/10 px-5 py-4 flex items-center justify-between rounded-t-2xl z-10">
+              <div className="min-w-0">
+                <h3 className="text-heading-md text-charcoal truncate">
+                  {previewItem.topic || previewItem.format.replace(/_/g, ' ')}
+                </h3>
+                <p className="text-xs text-stone mt-0.5">
+                  {format(new Date(previewItem.scheduled_date + 'T00:00:00'), 'EEE, MMM d yyyy')} &middot; {previewItem.time_slot} &middot; {previewItem.funnel_stage}
+                </p>
+              </div>
+              <button
+                onClick={() => setPreviewItem(null)}
+                className="p-1.5 rounded-lg hover:bg-stone/10 transition-colors shrink-0"
+              >
+                <XMarkIcon className="w-5 h-5 text-stone" />
+              </button>
+            </div>
+
+            {/* Preview body */}
+            <div className="p-5">
+              {previewItem.platforms.length > 0 ? (
+                <SocialPreviewTabs
+                  platforms={previewItem.platforms as SocialPlatform[]}
+                  caption={previewItem.caption || ''}
+                  hashtags={previewItem.hashtags || []}
+                  mediaUrls={(previewItem.media_urls as string[]) || []}
+                  targetUrl={previewItem.target_url || undefined}
+                />
+              ) : (
+                <div className="text-center py-10 text-stone">
+                  <EyeIcon className="w-10 h-10 mx-auto mb-3 text-stone/30" />
+                  <p className="text-sm">No platforms selected for this post.</p>
+                  <p className="text-xs mt-1">Add platforms to see a preview.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal footer */}
+            <div className="border-t border-stone/10 px-5 py-3 flex justify-end gap-2">
+              <button
+                onClick={() => { setPreviewItem(null); onItemClick(previewItem); }}
+                className="px-4 py-2 text-sm font-medium text-teal hover:bg-teal/10 rounded-lg transition-colors"
+              >
+                Edit Post
+              </button>
+              <button
+                onClick={() => setPreviewItem(null)}
+                className="px-4 py-2 text-sm font-medium text-stone hover:bg-stone/10 rounded-lg transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteItem && (
+        <DeleteConfirmationModal
+          title="Delete Post"
+          message={`Delete "${deleteItem.topic || deleteItem.format.replace(/_/g, ' ')}" scheduled for ${format(new Date(deleteItem.scheduled_date + 'T00:00:00'), 'MMM d, yyyy')}?`}
+          itemCount={1}
+          onConfirm={async () => {
+            if (!onDeletePost) return;
+            setIsDeleting(true);
+            await onDeletePost(deleteItem.id);
+            setIsDeleting(false);
+            setDeleteItem(null);
+          }}
+          onCancel={() => setDeleteItem(null)}
+          isDeleting={isDeleting}
+        />
+      )}
     </DndContext>
   );
 }

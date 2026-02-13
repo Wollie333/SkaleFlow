@@ -459,6 +459,15 @@ export default function CalendarPage() {
     setQuickCreateDate(date);
   };
 
+  const handleDeletePost = async (itemId: string) => {
+    const res = await fetch(`/api/content/items/${itemId}`, {
+      method: 'DELETE',
+    });
+    if (res.ok) {
+      setItems(prev => prev.filter(i => i.id !== itemId));
+    }
+  };
+
   const handleQuickCreate = async (data: {
     scheduled_date: string;
     format: string;
@@ -822,6 +831,7 @@ export default function CalendarPage() {
           onItemClick={handleItemClick}
           onMovePost={handleMovePost}
           onAddPost={handleAddPost}
+          onDeletePost={handleDeletePost}
           selectionMode={calendarSelectionMode}
           selectedIds={calendarSelectedIds}
           onSelectionChange={setCalendarSelectedIds}
