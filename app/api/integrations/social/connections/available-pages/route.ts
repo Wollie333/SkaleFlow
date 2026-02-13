@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import type { SocialPlatform, Json } from '@/types/database';
 
 interface PageInfo {
@@ -10,39 +10,90 @@ interface PageInfo {
 }
 
 const VALID_PLATFORMS = ['linkedin', 'facebook', 'instagram', 'twitter', 'tiktok', 'youtube'];
-const GRAPH_API_VERSION = 'v21.0';
+const GRAPH_API_VERSION = 'v22.0';
 const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
 async function fetchFacebookPages(accessToken: string): Promise<PageInfo[]> {
   try {
-    // Fetch ALL pages (handle pagination)
+    // Fetch ALL pages from /me/accounts (handle pagination)
     let allPages: PageInfo[] = [];
-    let nextUrl = `${GRAPH_API_BASE}/me/accounts?access_token=${accessToken}`;
-    let pageCount = 0;
+    let nextUrl: string | null = `${GRAPH_API_BASE}/me/accounts?fields=id,name,access_token,category&limit=100&access_token=${accessToken}`;
+    let batchCount = 0;
 
-    while (nextUrl && pageCount < 10) { // Safety limit of 10 pages
-      pageCount++;
-      const pagesRes = await fetch(nextUrl);
-      const pagesData = await pagesRes.json();
+    while (nextUrl && batchCount < 10) {
+      batchCount++;
+      const pagesRes: Response = await fetch(nextUrl);
+      const pagesData: Record<string, unknown> = await pagesRes.json();
 
       if (pagesData.error) {
-        console.error('Facebook API error:', pagesData.error);
-        throw new Error(`Facebook API error: ${pagesData.error.message || JSON.stringify(pagesData.error)}`);
+        console.error('[fetchFacebookPages] API error:', pagesData.error);
+        throw new Error(`Facebook API error: ${(pagesData.error as Record<string, string>).message || JSON.stringify(pagesData.error)}`);
       }
 
-      const pagesBatch = (pagesData.data || []).map((p: { id: string; name: string; access_token: string; category?: string }) => ({
+      const pagesBatch = ((pagesData.data || []) as Array<{ id: string; name: string; access_token: string; category?: string }>).map(p => ({
         id: p.id,
         name: p.name,
         access_token: p.access_token,
         category: p.category || null,
       }));
 
+      console.log(`[fetchFacebookPages] Batch ${batchCount}: ${pagesBatch.length} pages — ${pagesBatch.map(p => p.name).join(', ')}`);
       allPages = [...allPages, ...pagesBatch];
-
-      // Check if there's a next page
-      nextUrl = pagesData.paging?.next || null;
+      nextUrl = (pagesData.paging as Record<string, string> | undefined)?.next || null;
     }
 
+    console.log(`[fetchFacebookPages] /me/accounts total: ${allPages.length} pages`);
+
+    // Also fetch pages via Business Manager
+    const knownPageIds = new Set(allPages.map(p => p.id));
+    try {
+      const bizRes = await fetch(`${GRAPH_API_BASE}/me/businesses?access_token=${accessToken}`);
+      const bizData = await bizRes.json();
+      const businesses = bizData.data || [];
+      console.log(`[fetchFacebookPages] Found ${businesses.length} businesses`);
+
+      for (const biz of businesses) {
+        try {
+          // Fetch owned pages
+          let bizPagesUrl: string | null = `${GRAPH_API_BASE}/${biz.id}/owned_pages?fields=id,name,access_token,category&limit=100&access_token=${accessToken}`;
+          while (bizPagesUrl) {
+            const bpRes: Response = await fetch(bizPagesUrl);
+            const bpData: Record<string, unknown> = await bpRes.json();
+            if (bpData.error) break;
+            for (const p of (bpData.data || []) as Array<{ id: string; name: string; access_token: string; category?: string }>) {
+              if (!knownPageIds.has(p.id) && p.access_token) {
+                allPages.push({ id: p.id, name: p.name, access_token: p.access_token, category: p.category || null });
+                knownPageIds.add(p.id);
+                console.log(`[fetchFacebookPages] + Business owned page: ${p.name} (${p.id})`);
+              }
+            }
+            bizPagesUrl = (bpData.paging as Record<string, string> | undefined)?.next || null;
+          }
+
+          // Fetch client pages
+          let clientPagesUrl: string | null = `${GRAPH_API_BASE}/${biz.id}/client_pages?fields=id,name,access_token,category&limit=100&access_token=${accessToken}`;
+          while (clientPagesUrl) {
+            const cpRes: Response = await fetch(clientPagesUrl);
+            const cpData: Record<string, unknown> = await cpRes.json();
+            if (cpData.error) break;
+            for (const p of (cpData.data || []) as Array<{ id: string; name: string; access_token: string; category?: string }>) {
+              if (!knownPageIds.has(p.id) && p.access_token) {
+                allPages.push({ id: p.id, name: p.name, access_token: p.access_token, category: p.category || null });
+                knownPageIds.add(p.id);
+                console.log(`[fetchFacebookPages] + Business client page: ${p.name} (${p.id})`);
+              }
+            }
+            clientPagesUrl = (cpData.paging as Record<string, string> | undefined)?.next || null;
+          }
+        } catch (bizErr) {
+          console.error(`[fetchFacebookPages] Error processing business ${biz.id}:`, bizErr);
+        }
+      }
+    } catch (err) {
+      console.error('[fetchFacebookPages] Error fetching businesses:', err);
+    }
+
+    console.log(`[fetchFacebookPages] Total pages (accounts + businesses): ${allPages.length}`);
     return allPages;
   } catch (error) {
     console.error('Failed to fetch Facebook pages:', error);
@@ -90,59 +141,84 @@ async function fetchInstagramAccounts(accessToken: string): Promise<PageInfo[]> 
 }
 
 async function fetchLinkedInOrganizations(accessToken: string): Promise<PageInfo[]> {
-  try {
-    console.log('Fetching LinkedIn organizations from API...');
-    const LINKEDIN_API_BASE = 'https://api.linkedin.com';
+  const LINKEDIN_API_BASE = 'https://api.linkedin.com';
+  const organizations: PageInfo[] = [];
+  const knownOrgIds = new Set<string>();
 
+  const headers = {
+    Authorization: `Bearer ${accessToken}`,
+    'LinkedIn-Version': '202401',
+    'X-Restli-Protocol-Version': '2.0.0',
+  };
+
+  // Approach 1: ADMINISTRATOR role
+  try {
+    console.log('[fetchLinkedInOrgs] Trying ADMINISTRATOR role...');
     const orgsRes = await fetch(
       `${LINKEDIN_API_BASE}/rest/organizationAcls?q=roleAssignee&role=ADMINISTRATOR&projection=(elements*(organization~(id,localizedName)))`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'LinkedIn-Version': '202601',
-          'X-Restli-Protocol-Version': '2.0.0',
-        },
-      }
+      { headers }
     );
-
-    console.log('LinkedIn API response:', {
-      status: orgsRes.status,
-      ok: orgsRes.ok,
-    });
-
-    if (!orgsRes.ok) {
-      const errorText = await orgsRes.text();
-      console.error('LinkedIn API error:', errorText);
-      return [];
-    }
-
-    const orgsData = await orgsRes.json();
-    console.log('LinkedIn organizations data:', {
-      hasElements: !!orgsData.elements,
-      elementCount: orgsData.elements?.length || 0,
-    });
-
-    const elements = orgsData.elements || [];
-    const organizations: PageInfo[] = [];
-
-    for (const el of elements) {
-      const org = el['organization~'];
-      if (org) {
-        organizations.push({
-          id: String(org.id),
-          name: org.localizedName || 'Organization',
-          access_token: accessToken,
-          category: 'Company Page',
-        });
+    console.log('[fetchLinkedInOrgs] ADMINISTRATOR status:', orgsRes.status);
+    if (orgsRes.ok) {
+      const orgsData = await orgsRes.json();
+      for (const el of orgsData.elements || []) {
+        const org = el['organization~'];
+        if (org && !knownOrgIds.has(String(org.id))) {
+          organizations.push({ id: String(org.id), name: org.localizedName || 'Organization', access_token: accessToken, category: 'Company Page' });
+          knownOrgIds.add(String(org.id));
+        }
       }
     }
-
-    console.log(`Found ${organizations.length} LinkedIn organizations`);
-    return organizations;
-  } catch (error) {
-    console.error('Failed to fetch LinkedIn organizations:', error);
-    return [];
+  } catch (err) {
+    console.error('[fetchLinkedInOrgs] ADMINISTRATOR error:', err);
   }
+
+  // Approach 2: DIRECT_SPONSORED_CONTENT_POSTER role
+  try {
+    const orgsRes = await fetch(
+      `${LINKEDIN_API_BASE}/rest/organizationAcls?q=roleAssignee&role=DIRECT_SPONSORED_CONTENT_POSTER&projection=(elements*(organization~(id,localizedName)))`,
+      { headers }
+    );
+    if (orgsRes.ok) {
+      const orgsData = await orgsRes.json();
+      for (const el of orgsData.elements || []) {
+        const org = el['organization~'];
+        if (org && !knownOrgIds.has(String(org.id))) {
+          organizations.push({ id: String(org.id), name: org.localizedName || 'Organization', access_token: accessToken, category: 'Company Page' });
+          knownOrgIds.add(String(org.id));
+        }
+      }
+    }
+  } catch { /* skip */ }
+
+  // Approach 3: No role filter (get all associations)
+  if (organizations.length === 0) {
+    try {
+      console.log('[fetchLinkedInOrgs] Trying without role filter...');
+      const orgsRes = await fetch(
+        `${LINKEDIN_API_BASE}/rest/organizationAcls?q=roleAssignee&projection=(elements*(organization~(id,localizedName),role))`,
+        { headers }
+      );
+      console.log('[fetchLinkedInOrgs] No-role-filter status:', orgsRes.status);
+      if (orgsRes.ok) {
+        const orgsData = await orgsRes.json();
+        for (const el of orgsData.elements || []) {
+          const org = el['organization~'];
+          if (org && !knownOrgIds.has(String(org.id))) {
+            organizations.push({ id: String(org.id), name: org.localizedName || 'Organization', access_token: accessToken, category: 'Company Page' });
+            knownOrgIds.add(String(org.id));
+          }
+        }
+      } else {
+        console.log('[fetchLinkedInOrgs] No-role-filter error:', await orgsRes.text());
+      }
+    } catch (err) {
+      console.error('[fetchLinkedInOrgs] No-role-filter exception:', err);
+    }
+  }
+
+  console.log(`[fetchLinkedInOrgs] Found ${organizations.length} LinkedIn organizations`);
+  return organizations;
 }
 
 export async function GET(request: NextRequest) {
@@ -170,10 +246,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'No organization found' }, { status: 404 });
   }
 
+  // Use service client to bypass RLS — profile connection may have been inserted by service role
+  const serviceClient = createServiceClient();
+
   // Try to find the profile connection first (has user-scoped token for page discovery)
-  let { data: profileConn } = await supabase
+  let { data: profileConn } = await serviceClient
     .from('social_media_connections')
-    .select('id, access_token, metadata, account_type, platform_username, platform_page_name')
+    .select('id, access_token, metadata, account_type, platform_username, platform_page_name, platform_user_id')
     .eq('organization_id', membership.organization_id)
     .eq('platform', platformTyped)
     .eq('is_active', true)
@@ -183,9 +262,9 @@ export async function GET(request: NextRequest) {
 
   // Fallback: if no profile connection, try any active connection
   if (!profileConn) {
-    const { data: anyConn } = await supabase
+    const { data: anyConn } = await serviceClient
       .from('social_media_connections')
-      .select('id, access_token, metadata, account_type, platform_username, platform_page_name')
+      .select('id, access_token, metadata, account_type, platform_username, platform_page_name, platform_user_id')
       .eq('organization_id', membership.organization_id)
       .eq('platform', platformTyped)
       .eq('is_active', true)
@@ -212,39 +291,50 @@ export async function GET(request: NextRequest) {
   //   "(#100) Tried accessing nonexisting field (accounts) on node type (Page)"
   const canFetchFromApi = profileConn.account_type === 'profile' && !!profileConn.access_token;
 
-  // If no pages in metadata, fetch them from the platform API
-  if (availablePages.length === 0 && canFetchFromApi) {
+  // ALWAYS try to fetch fresh pages from the platform API (metadata may be stale)
+  if (canFetchFromApi) {
     try {
-      console.log(`[available-pages] Fetching pages from ${platformTyped} API (profile token)...`);
+      console.log(`[available-pages] Fetching FRESH pages from ${platformTyped} API (profile token)...`);
+      let freshPages: PageInfo[] = [];
       if (platformTyped === 'facebook') {
-        availablePages = await fetchFacebookPages(profileConn.access_token);
+        freshPages = await fetchFacebookPages(profileConn.access_token);
       } else if (platformTyped === 'instagram') {
-        availablePages = await fetchInstagramAccounts(profileConn.access_token);
+        freshPages = await fetchInstagramAccounts(profileConn.access_token);
       } else if (platformTyped === 'linkedin') {
-        availablePages = await fetchLinkedInOrganizations(profileConn.access_token);
+        freshPages = await fetchLinkedInOrganizations(profileConn.access_token);
       }
 
-      console.log(`[available-pages] Fetched ${availablePages.length} pages from ${platformTyped} API`);
+      console.log(`[available-pages] Fetched ${freshPages.length} fresh pages from ${platformTyped} API`);
 
-      // Cache fetched pages in profile metadata for next time
-      if (availablePages.length > 0) {
+      if (freshPages.length > 0) {
+        // Merge: fresh API pages + any metadata-only pages not in API results
+        const freshIds = new Set(freshPages.map(p => p.id));
+        const metadataOnlyPages = availablePages.filter(p => !freshIds.has(p.id));
+        availablePages = [...freshPages, ...metadataOnlyPages];
+
+        // Update metadata cache
         const updatedMetadata = { ...metadata, pages: availablePages } as unknown as Record<string, Json>;
-        await supabase
+        await serviceClient
           .from('social_media_connections')
           .update({ metadata: updatedMetadata })
           .eq('id', profileConn.id);
+      } else if (availablePages.length === 0) {
+        // API returned nothing AND metadata is empty
+        console.log(`[available-pages] API returned 0 pages and metadata is empty`);
       }
+      // If API returned nothing but metadata has pages, keep using metadata (don't clear cache)
     } catch (error) {
       fetchError = error instanceof Error ? error.message : 'Unknown error fetching pages';
       console.error('[available-pages] Error fetching pages from API:', fetchError);
+      // Fall back to metadata pages on API error
     }
-  } else if (availablePages.length === 0 && profileConn.account_type === 'page') {
+  } else if (profileConn.account_type === 'page') {
     console.log(`[available-pages] Skipping API fetch — connection is page type, cannot discover pages`);
     fetchError = 'Profile connection not found. Your connected pages are shown below.';
   }
 
   // Fetch existing page connections — these are pages the user already connected
-  const { data: existingPageConns } = await supabase
+  const { data: existingPageConns } = await serviceClient
     .from('social_media_connections')
     .select('platform_page_id, platform_page_name, metadata')
     .eq('organization_id', membership.organization_id)
@@ -261,6 +351,19 @@ export async function GET(request: NextRequest) {
     category: p.category || null,
     isConnected: connectedPageIds.has(p.id),
   }));
+
+  // For LinkedIn: add personal profile as an option (industry standard — post as person or org)
+  if (platformTyped === 'linkedin' && profileConn.platform_user_id && profileConn.platform_username) {
+    const personalId = profileConn.platform_user_id;
+    if (!pages.find(p => p.id === personalId)) {
+      pages.unshift({
+        id: personalId,
+        name: profileConn.platform_username,
+        category: 'Personal Profile',
+        isConnected: connectedPageIds.has(personalId),
+      });
+    }
+  }
 
   // Merge in any connected pages NOT already in the metadata/API list.
   // This ensures already-connected pages always show even if metadata is empty.

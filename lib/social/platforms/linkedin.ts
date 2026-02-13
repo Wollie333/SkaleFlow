@@ -6,7 +6,7 @@ export const linkedinAdapter: PlatformAdapter = {
   platform: 'linkedin',
 
   getAuthUrl(state: string, redirectUri: string): string {
-    const scope = 'openid profile w_member_social r_organization_social w_organization_social';
+    const scope = 'openid profile w_member_social r_organization_social w_organization_social r_organization_admin';
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: process.env.LINKEDIN_CLIENT_ID!,
@@ -44,13 +44,55 @@ export const linkedinAdapter: PlatformAdapter = {
 
     // Try to fetch managed organizations (requires org scopes)
     const pages: Array<{ id: string; name: string; access_token: string; category: string | null }> = [];
+    const knownOrgIds = new Set<string>();
+
+    // Approach 1: organizationAcls with ADMINISTRATOR role
     try {
+      console.log('[linkedin] Fetching orgs via organizationAcls (ADMINISTRATOR)...');
       const orgsRes = await fetch(
         `${LINKEDIN_API_BASE}/rest/organizationAcls?q=roleAssignee&role=ADMINISTRATOR&projection=(elements*(organization~(id,localizedName)))`,
         {
           headers: {
             Authorization: `Bearer ${tokenData.access_token}`,
-            'LinkedIn-Version': '202601',
+            'LinkedIn-Version': '202401',
+            'X-Restli-Protocol-Version': '2.0.0',
+          },
+        }
+      );
+      console.log('[linkedin] organizationAcls (ADMIN) status:', orgsRes.status);
+      if (orgsRes.ok) {
+        const orgsData = await orgsRes.json();
+        const elements = orgsData.elements || [];
+        console.log('[linkedin] organizationAcls (ADMIN) elements:', elements.length);
+        for (const el of elements) {
+          const org = el['organization~'];
+          if (org && !knownOrgIds.has(String(org.id))) {
+            pages.push({
+              id: String(org.id),
+              name: org.localizedName || 'Organization',
+              access_token: tokenData.access_token,
+              category: 'Company Page',
+            });
+            knownOrgIds.add(String(org.id));
+          }
+        }
+      } else {
+        const errText = await orgsRes.text();
+        console.log('[linkedin] organizationAcls (ADMIN) error:', errText);
+      }
+    } catch (err) {
+      console.error('[linkedin] organizationAcls (ADMIN) exception:', err);
+    }
+
+    // Approach 2: organizationAcls with DIRECT_SPONSORED_CONTENT_POSTER role
+    try {
+      console.log('[linkedin] Fetching orgs via organizationAcls (CONTENT_POSTER)...');
+      const orgsRes = await fetch(
+        `${LINKEDIN_API_BASE}/rest/organizationAcls?q=roleAssignee&role=DIRECT_SPONSORED_CONTENT_POSTER&projection=(elements*(organization~(id,localizedName)))`,
+        {
+          headers: {
+            Authorization: `Bearer ${tokenData.access_token}`,
+            'LinkedIn-Version': '202401',
             'X-Restli-Protocol-Version': '2.0.0',
           },
         }
@@ -58,21 +100,67 @@ export const linkedinAdapter: PlatformAdapter = {
       if (orgsRes.ok) {
         const orgsData = await orgsRes.json();
         const elements = orgsData.elements || [];
+        console.log('[linkedin] organizationAcls (CONTENT_POSTER) elements:', elements.length);
         for (const el of elements) {
           const org = el['organization~'];
-          if (org) {
+          if (org && !knownOrgIds.has(String(org.id))) {
             pages.push({
               id: String(org.id),
               name: org.localizedName || 'Organization',
-              access_token: tokenData.access_token, // same token used for org posting
+              access_token: tokenData.access_token,
               category: 'Company Page',
             });
+            knownOrgIds.add(String(org.id));
           }
         }
       }
     } catch {
-      // Org scope not granted — personal profile still works
+      // Role not available
     }
+
+    // Approach 3: Try without role filter (get all org associations)
+    if (pages.length === 0) {
+      try {
+        console.log('[linkedin] Fetching orgs via organizationAcls (no role filter)...');
+        const orgsRes = await fetch(
+          `${LINKEDIN_API_BASE}/rest/organizationAcls?q=roleAssignee&projection=(elements*(organization~(id,localizedName),role))`,
+          {
+            headers: {
+              Authorization: `Bearer ${tokenData.access_token}`,
+              'LinkedIn-Version': '202401',
+              'X-Restli-Protocol-Version': '2.0.0',
+            },
+          }
+        );
+        console.log('[linkedin] organizationAcls (all roles) status:', orgsRes.status);
+        if (orgsRes.ok) {
+          const orgsData = await orgsRes.json();
+          const elements = orgsData.elements || [];
+          console.log('[linkedin] organizationAcls (all roles) elements:', elements.length);
+          for (const el of elements) {
+            const org = el['organization~'];
+            const role = el.role || 'unknown';
+            console.log(`[linkedin] Org: ${org?.localizedName} (${org?.id}), role: ${role}`);
+            if (org && !knownOrgIds.has(String(org.id))) {
+              pages.push({
+                id: String(org.id),
+                name: org.localizedName || 'Organization',
+                access_token: tokenData.access_token,
+                category: `Company Page (${role})`,
+              });
+              knownOrgIds.add(String(org.id));
+            }
+          }
+        } else {
+          const errText = await orgsRes.text();
+          console.log('[linkedin] organizationAcls (all roles) error:', errText);
+        }
+      } catch (err) {
+        console.error('[linkedin] organizationAcls (all roles) exception:', err);
+      }
+    }
+
+    console.log(`[linkedin] Total org pages found: ${pages.length}`);
 
     return {
       accessToken: tokenData.access_token,

@@ -75,9 +75,11 @@ export async function GET(
       pagesCount: (tokenData.metadata?.pages as unknown[])?.length || 0,
     });
 
-    // Delete ALL existing connections for this org+platform (clean slate on reconnect)
-    // Use service client to bypass RLS — ensures ALL rows are removed regardless of user_id
+    // Use service client for ALL DB operations to bypass RLS
+    // (the auth user cookie may not survive the OAuth redirect round-trip)
     const serviceClient = createServiceClient();
+
+    // Delete ALL existing connections for this org+platform (clean slate on reconnect)
     const { error: deleteError } = await serviceClient
       .from('social_media_connections')
       .delete()
@@ -88,8 +90,8 @@ export async function GET(
       console.error('Failed to delete old connections:', deleteError);
     }
 
-    // Insert fresh profile connection
-    const { error: insertError } = await supabase
+    // Insert fresh profile connection via service client (bypasses RLS)
+    const { error: insertError } = await serviceClient
       .from('social_media_connections')
       .insert({
         organization_id: orgId,

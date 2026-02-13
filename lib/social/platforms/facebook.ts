@@ -1,6 +1,6 @@
 import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData } from '../types';
 
-const GRAPH_API_VERSION = 'v21.0';
+const GRAPH_API_VERSION = 'v22.0';
 const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
 export const facebookAdapter: PlatformAdapter = {
@@ -11,8 +11,9 @@ export const facebookAdapter: PlatformAdapter = {
       client_id: process.env.META_APP_ID!,
       redirect_uri: redirectUri,
       state,
-      scope: 'pages_manage_posts,pages_read_engagement,pages_show_list,pages_read_user_content',
+      scope: 'pages_manage_posts,pages_read_engagement,pages_show_list,pages_read_user_content,pages_manage_metadata,business_management',
       response_type: 'code',
+      auth_type: 'rerequest',
     });
     return `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?${params}`;
   },
@@ -48,33 +49,95 @@ export const facebookAdapter: PlatformAdapter = {
     const userRes = await fetch(`${GRAPH_API_BASE}/me?fields=id,name&access_token=${longLivedData.access_token}`);
     const userData = await userRes.json();
 
-    // Fetch ALL pages (handle pagination)
-    let allPages: { id: string; name: string; access_token: string; category?: string }[] = [];
-    let nextUrl = `${GRAPH_API_BASE}/me/accounts?access_token=${longLivedData.access_token}`;
+    // Fetch ALL pages (handle pagination, request 100 per batch)
+    let allPages: { id: string; name: string; access_token: string; category?: string | null }[] = [];
+    let nextUrl: string | null = `${GRAPH_API_BASE}/me/accounts?fields=id,name,access_token,category&limit=100&access_token=${longLivedData.access_token}`;
     let pageCount = 0;
 
-    while (nextUrl && pageCount < 10) { // Safety limit of 10 pages
+    console.log(`[facebook] Fetching pages for user ${userData.name} (${userData.id})...`);
+
+    while (nextUrl && pageCount < 10) {
       pageCount++;
-      const pagesRes = await fetch(nextUrl);
-      const pagesData = await pagesRes.json();
+      const pagesRes: Response = await fetch(nextUrl);
+      const pagesData: Record<string, unknown> = await pagesRes.json();
 
       if (pagesData.error) {
-        console.error('Facebook API error when fetching pages:', pagesData.error);
+        console.error('[facebook] API error fetching pages:', pagesData.error);
         break;
       }
 
-      const pagesBatch = (pagesData.data || []).map((p: { id: string; name: string; access_token: string; category?: string }) => ({
+      const pagesBatch = ((pagesData.data || []) as Array<{ id: string; name: string; access_token: string; category?: string }>).map(p => ({
         id: p.id,
         name: p.name,
         access_token: p.access_token,
         category: p.category || null,
       }));
 
+      console.log(`[facebook] Batch ${pageCount}: got ${pagesBatch.length} pages — ${pagesBatch.map(p => p.name).join(', ')}`);
+
       allPages = [...allPages, ...pagesBatch];
 
-      // Check if there's a next page
-      nextUrl = pagesData.paging?.next || null;
+      nextUrl = (pagesData.paging as Record<string, string> | undefined)?.next || null;
+      if (nextUrl) {
+        console.log(`[facebook] Has next page cursor, fetching more...`);
+      }
     }
+
+    console.log(`[facebook] Pages from /me/accounts: ${allPages.length}`);
+
+    // Also fetch pages via Business Manager (gets pages not selected in granular OAuth)
+    const knownPageIds = new Set(allPages.map(p => p.id));
+    try {
+      const bizRes = await fetch(`${GRAPH_API_BASE}/me/businesses?access_token=${longLivedData.access_token}`);
+      const bizData = await bizRes.json();
+      const businesses = bizData.data || [];
+      console.log(`[facebook] Found ${businesses.length} businesses`);
+
+      for (const biz of businesses) {
+        try {
+          // Fetch pages owned by this business
+          let bizPagesUrl: string | null = `${GRAPH_API_BASE}/${biz.id}/owned_pages?fields=id,name,access_token,category&limit=100&access_token=${longLivedData.access_token}`;
+          while (bizPagesUrl) {
+            const bpRes: Response = await fetch(bizPagesUrl);
+            const bpData: Record<string, unknown> = await bpRes.json();
+            if (bpData.error) {
+              console.error(`[facebook] Error fetching pages for business ${biz.id}:`, (bpData.error as Record<string, string>).message);
+              break;
+            }
+            for (const p of (bpData.data || []) as Array<{ id: string; name: string; access_token: string; category?: string }>) {
+              if (!knownPageIds.has(p.id)) {
+                allPages.push({ id: p.id, name: p.name, access_token: p.access_token, category: p.category || null });
+                knownPageIds.add(p.id);
+                console.log(`[facebook] + Business page: ${p.name} (${p.id})`);
+              }
+            }
+            bizPagesUrl = (bpData.paging as Record<string, string> | undefined)?.next || null;
+          }
+
+          // Also fetch client pages (pages managed for clients)
+          let clientPagesUrl: string | null = `${GRAPH_API_BASE}/${biz.id}/client_pages?fields=id,name,access_token,category&limit=100&access_token=${longLivedData.access_token}`;
+          while (clientPagesUrl) {
+            const cpRes: Response = await fetch(clientPagesUrl);
+            const cpData: Record<string, unknown> = await cpRes.json();
+            if (cpData.error) break;
+            for (const p of (cpData.data || []) as Array<{ id: string; name: string; access_token: string; category?: string }>) {
+              if (!knownPageIds.has(p.id) && p.access_token) {
+                allPages.push({ id: p.id, name: p.name, access_token: p.access_token, category: p.category || null });
+                knownPageIds.add(p.id);
+                console.log(`[facebook] + Client page: ${p.name} (${p.id})`);
+              }
+            }
+            clientPagesUrl = (cpData.paging as Record<string, string> | undefined)?.next || null;
+          }
+        } catch (bizErr) {
+          console.error(`[facebook] Error processing business ${biz.id}:`, bizErr);
+        }
+      }
+    } catch (err) {
+      console.error('[facebook] Error fetching businesses (may not have business_management scope):', err);
+    }
+
+    console.log(`[facebook] Total pages found (accounts + businesses): ${allPages.length}`);
 
     const pages = allPages;
 

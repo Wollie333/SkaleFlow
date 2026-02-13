@@ -9,7 +9,10 @@ export async function GET(
 ) {
   const { platform } = await params;
 
+  console.log(`[social-auth] ▶ Starting OAuth for platform: ${platform}`);
+
   if (!isValidPlatform(platform)) {
+    console.log(`[social-auth] ✗ Invalid platform: ${platform}`);
     return NextResponse.json({ error: 'Invalid platform' }, { status: 400 });
   }
 
@@ -18,8 +21,10 @@ export async function GET(
   // Check auth
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
+    console.log(`[social-auth] ✗ No authenticated user`);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  console.log(`[social-auth] ✓ User: ${user.id} (${user.email})`);
 
   // Check org membership (must be owner or admin)
   const { data: membership } = await supabase
@@ -29,8 +34,10 @@ export async function GET(
     .single();
 
   if (!membership || !['owner', 'admin'].includes(membership.role)) {
+    console.log(`[social-auth] ✗ User role: ${membership?.role || 'none'} — not owner/admin`);
     return NextResponse.json({ error: 'Only org owners and admins can connect social accounts' }, { status: 403 });
   }
+  console.log(`[social-auth] ✓ Org: ${membership.organization_id}, role: ${membership.role}`);
 
   // Generate state for CSRF protection
   const state = crypto.randomUUID();

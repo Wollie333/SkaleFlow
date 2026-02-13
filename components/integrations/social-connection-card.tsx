@@ -129,7 +129,7 @@ export function SocialConnectionCard({ platform, connections, onDisconnect, onMa
             ) : (
               <Badge variant="awareness">Connected</Badge>
             )}
-            {profileConn && onManagePages && ['facebook', 'instagram', 'linkedin'].includes(platform) && (
+            {onManagePages && ['facebook', 'instagram', 'linkedin'].includes(platform) && (
               <Button
                 variant="secondary"
                 className="text-sm p-2"

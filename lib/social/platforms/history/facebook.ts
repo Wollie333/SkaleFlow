@@ -1,25 +1,7 @@
 import type { TokenData } from '../../types';
 
-const GRAPH_API_VERSION = 'v21.0';
+const GRAPH_API_VERSION = 'v22.0';
 const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
-
-export interface FacebookPost {
-  id: string;
-  message?: string;
-  story?: string;
-  created_time: string;
-  permalink_url?: string;
-  full_picture?: string;
-  likes?: { summary: { total_count: number } };
-  comments?: { summary: { total_count: number } };
-  shares?: { count: number };
-  insights?: {
-    data: Array<{
-      name: string;
-      values: Array<{ value: number }>;
-    }>;
-  };
-}
 
 export interface PostAnalytics {
   postId: string;
@@ -45,7 +27,8 @@ export async function fetchPagePosts(
     throw new Error('No Facebook Page selected. Please go to Settings → Social Media Accounts, click the gear icon on Facebook, and select a Page to fetch analytics from.');
   }
 
-  const fields = [
+  // Fetch posts first WITHOUT insights (insights can fail on certain post types)
+  const postFields = [
     'id',
     'message',
     'story',
@@ -55,10 +38,9 @@ export async function fetchPagePosts(
     'likes.summary(true)',
     'comments.summary(true)',
     'shares',
-    'insights.metric(post_impressions,post_impressions_unique,post_engaged_users)',
   ].join(',');
 
-  const url = `${GRAPH_API_BASE}/${pageId}/posts?fields=${fields}&limit=${limit}&access_token=${tokens.accessToken}`;
+  const url = `${GRAPH_API_BASE}/${pageId}/posts?fields=${postFields}&limit=${limit}&access_token=${tokens.accessToken}`;
 
   const response = await fetch(url);
   const data = await response.json();
@@ -67,21 +49,52 @@ export async function fetchPagePosts(
     throw new Error(data.error.message || 'Failed to fetch Facebook posts');
   }
 
-  const posts: FacebookPost[] = data.data || [];
+  const posts: Array<{
+    id: string;
+    message?: string;
+    story?: string;
+    created_time: string;
+    permalink_url?: string;
+    full_picture?: string;
+    likes?: { summary: { total_count: number } };
+    comments?: { summary: { total_count: number } };
+    shares?: { count: number };
+  }> = data.data || [];
 
-  return posts.map((post) => {
+  // Fetch insights for each post individually (gracefully handle failures)
+  const results: PostAnalytics[] = [];
+
+  for (const post of posts) {
     const likes = post.likes?.summary?.total_count || 0;
     const comments = post.comments?.summary?.total_count || 0;
     const shares = post.shares?.count || 0;
 
-    const impressions = getInsightValue(post.insights, 'post_impressions');
-    const reach = getInsightValue(post.insights, 'post_impressions_unique');
-    const engagedUsers = getInsightValue(post.insights, 'post_engaged_users');
+    let impressions = 0;
+    let reach = 0;
+
+    // Try to get post insights (may fail for shared/boosted posts)
+    try {
+      const insightsUrl = `${GRAPH_API_BASE}/${post.id}/insights?metric=post_impressions,post_impressions_unique&access_token=${tokens.accessToken}`;
+      const insightsRes: Response = await fetch(insightsUrl);
+      const insightsData = await insightsRes.json();
+
+      if (insightsData.data && !insightsData.error) {
+        for (const metric of insightsData.data) {
+          if (metric.name === 'post_impressions') {
+            impressions = metric.values?.[0]?.value || 0;
+          } else if (metric.name === 'post_impressions_unique') {
+            reach = metric.values?.[0]?.value || 0;
+          }
+        }
+      }
+    } catch {
+      // Insights not available for this post — that's fine
+    }
 
     const totalEngagement = likes + comments + shares;
     const engagementRate = impressions > 0 ? (totalEngagement / impressions) * 100 : 0;
 
-    return {
+    results.push({
       postId: post.id,
       createdAt: post.created_time,
       message: post.message || post.story || '',
@@ -94,15 +107,8 @@ export async function fetchPagePosts(
       reach,
       engagement: totalEngagement,
       engagementRate: Math.round(engagementRate * 100) / 100,
-    };
-  });
-}
+    });
+  }
 
-function getInsightValue(
-  insights: { data?: Array<{ name: string; values?: Array<{ value: number }> }> } | undefined,
-  metric: string
-): number {
-  if (!insights?.data) return 0;
-  const insight = insights.data.find((d) => d.name === metric);
-  return insight?.values?.[0]?.value || 0;
+  return results;
 }

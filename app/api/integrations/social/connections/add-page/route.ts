@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import type { Json } from '@/types/database';
 
 interface PageInfo {
@@ -47,6 +47,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
+  // Use service client to bypass RLS for writes
+  const serviceClient = createServiceClient();
+
   // Read pages from metadata
   const metadata = (profileConn.metadata || {}) as Record<string, unknown>;
   const availablePages = (metadata.pages || []) as PageInfo[];
@@ -61,71 +64,60 @@ export async function POST(request: NextRequest) {
       continue;
     }
 
-    // Upsert a page connection (unique on org+platform+page_id)
-    const { error: upsertError } = await supabase
+    const pageData = {
+      organization_id: profileConn.organization_id,
+      user_id: user.id,
+      platform: profileConn.platform,
+      access_token: page.access_token,
+      refresh_token: null as string | null,
+      token_expires_at: profileConn.token_expires_at,
+      platform_user_id: profileConn.platform_user_id,
+      platform_username: profileConn.platform_username,
+      platform_page_id: page.id,
+      platform_page_name: page.name,
+      account_type: 'page',
+      scopes: profileConn.scopes,
+      is_active: true,
+      connected_at: new Date().toISOString(),
+      metadata: { category: page.category || null } as unknown as Json,
+    };
+
+    // Check if a page connection already exists for this org+platform+page_id
+    const { data: existing } = await serviceClient
       .from('social_media_connections')
-      .upsert(
-        {
-          organization_id: profileConn.organization_id,
-          user_id: user.id,
-          platform: profileConn.platform,
-          access_token: page.access_token,
-          refresh_token: null,
-          token_expires_at: profileConn.token_expires_at,
-          platform_user_id: profileConn.platform_user_id,
-          platform_username: profileConn.platform_username,
-          platform_page_id: page.id,
-          platform_page_name: page.name,
-          account_type: 'page',
-          scopes: profileConn.scopes,
-          is_active: true,
-          connected_at: new Date().toISOString(),
-          metadata: { category: page.category || null } as unknown as Json,
-        },
-        { onConflict: 'idx_social_connections_org_platform_page' }
-      );
+      .select('id')
+      .eq('organization_id', profileConn.organization_id)
+      .eq('platform', profileConn.platform)
+      .eq('platform_page_id', page.id)
+      .maybeSingle();
 
-    if (upsertError) {
-      // If onConflict name doesn't work, try insert and handle duplicate
-      const { error: insertError } = await supabase
+    let writeError: { message: string } | null = null;
+
+    if (existing) {
+      // Update existing page connection
+      const { error } = await serviceClient
         .from('social_media_connections')
-        .insert({
-          organization_id: profileConn.organization_id,
-          user_id: user.id,
-          platform: profileConn.platform,
+        .update({
           access_token: page.access_token,
-          refresh_token: null,
-          token_expires_at: profileConn.token_expires_at,
-          platform_user_id: profileConn.platform_user_id,
-          platform_username: profileConn.platform_username,
-          platform_page_id: page.id,
           platform_page_name: page.name,
-          account_type: 'page',
-          scopes: profileConn.scopes,
           is_active: true,
           connected_at: new Date().toISOString(),
           metadata: { category: page.category || null } as unknown as Json,
-        });
+        })
+        .eq('id', existing.id);
+      writeError = error;
+    } else {
+      // Insert new page connection
+      const { error } = await serviceClient
+        .from('social_media_connections')
+        .insert(pageData);
+      writeError = error;
+    }
 
-      if (insertError) {
-        // Likely duplicate — update instead
-        const { error: updateError } = await supabase
-          .from('social_media_connections')
-          .update({
-            access_token: page.access_token,
-            platform_page_name: page.name,
-            is_active: true,
-            connected_at: new Date().toISOString(),
-          })
-          .eq('organization_id', profileConn.organization_id)
-          .eq('platform', profileConn.platform)
-          .eq('platform_page_id', page.id);
-
-        if (updateError) {
-          errors.push({ pageId, error: updateError.message });
-          continue;
-        }
-      }
+    if (writeError) {
+      console.error(`Failed to save page ${page.id} (${page.name}):`, writeError);
+      errors.push({ pageId, error: writeError.message });
+      continue;
     }
 
     added.push(pageId);

@@ -526,10 +526,10 @@ export default function SettingsPage() {
       </div>
 
       {/* Tab Content */}
-      <div className="max-w-3xl mx-auto">
+      <div>
         {/* ── Profile Tab ── */}
         {activeTab === 'profile' && (
-          <div className="space-y-6">
+          <div className="space-y-6 max-w-3xl">
             <Card>
               <h2 className="text-heading-md text-charcoal mb-6">Profile</h2>
 
@@ -593,7 +593,7 @@ export default function SettingsPage() {
 
         {/* ── Plan Tab ── */}
         {activeTab === 'plan' && (
-          <div className="space-y-6">
+          <div className="space-y-6 max-w-3xl">
             {/* Subscription Section */}
             <Card>
               <div className="flex items-start justify-between mb-6">
@@ -863,7 +863,7 @@ export default function SettingsPage() {
 
         {/* ── Workflow Tab ── */}
         {activeTab === 'workflow' && (
-          <div className="space-y-6">
+          <div className="space-y-6 max-w-3xl">
             <Card>
               <div className="flex items-center gap-3 mb-6">
                 <ShieldCheckIcon className="w-6 h-6 text-teal" />

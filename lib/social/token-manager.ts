@@ -28,6 +28,7 @@ export function connectionToTokenData(conn: ConnectionWithTokens): TokenData {
     platformUsername: conn.platform_username || undefined,
     platformPageId: conn.platform_page_id || undefined,
     platformPageName: conn.platform_page_name || undefined,
+    accountType: (conn.account_type as 'profile' | 'page') || undefined,
   };
 }
 

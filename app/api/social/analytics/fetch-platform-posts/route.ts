@@ -47,8 +47,28 @@ export async function POST(request: NextRequest) {
   let failedCount = 0;
   const errors: Array<{ platform: string; error: string }> = [];
 
-  // Fetch posts from each connected platform
-  for (const connection of connections) {
+  // For Facebook/Instagram/LinkedIn, only use PAGE-type connections (not profile).
+  // Profile connections don't have page IDs and can't fetch page analytics.
+  const pageConnections = connections.filter(c => {
+    if (['facebook', 'instagram', 'linkedin'].includes(c.platform)) {
+      return c.account_type === 'page';
+    }
+    return true; // Other platforms use profile connections
+  });
+
+  if (pageConnections.length === 0) {
+    return NextResponse.json({
+      message: 'No page connections found. Go to Settings → Social Media Accounts and select pages to connect.',
+      posts: [],
+      totalPosts: 0,
+      connectionsProcessed: 0,
+      fetchedCount: 0,
+      failedCount: 0,
+    });
+  }
+
+  // Fetch posts from each connected platform page
+  for (const connection of pageConnections) {
     try {
       console.log(`Fetching posts for ${connection.platform}:`, {
         platform: connection.platform,
