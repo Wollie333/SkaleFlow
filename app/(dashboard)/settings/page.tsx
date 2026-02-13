@@ -41,10 +41,13 @@ interface User {
   avatar_url: string | null;
 }
 
+type SettingsTab = 'profile' | 'plan' | 'integrations' | 'workflow';
+
 export default function SettingsPage() {
   const supabase = createClient();
   const searchParams = useSearchParams();
 
+  const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [user, setUser] = useState<User | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -207,6 +210,12 @@ export default function SettingsPage() {
   useEffect(() => {
     loadData();
 
+    // Sync tab from URL
+    const tabParam = searchParams.get('tab') as SettingsTab | null;
+    if (tabParam && ['profile', 'plan', 'integrations', 'workflow'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+
     // Check for Google OAuth callback status
     const googleParam = searchParams.get('google');
     if (googleParam) {
@@ -218,7 +227,8 @@ export default function SettingsPage() {
     const socialParam = searchParams.get('social');
     if (socialParam) {
       setSocialStatus(socialParam);
-      // Auto-open page selector if redirected after OAuth with pages available
+      // Auto-switch to integrations tab and open page selector
+      setActiveTab('integrations');
       if (socialParam === 'select') {
         const platformParam = searchParams.get('platform') as SocialPlatform | null;
         if (platformParam) {
@@ -231,6 +241,11 @@ export default function SettingsPage() {
     const gdriveParam = searchParams.get('gdrive');
     if (gdriveParam) {
       setDriveStatus(gdriveParam);
+      setActiveTab('integrations');
+    }
+
+    if (googleParam) {
+      setActiveTab('integrations');
     }
 
     // Strip OAuth callback params from URL to prevent modal re-opening on refresh
@@ -471,506 +486,548 @@ export default function SettingsPage() {
     );
   }
 
+  // Build visible tabs based on user role
+  const isOwnerOrAdmin = ['owner', 'admin'].includes(orgRole);
+  const showIntegrations = isOwnerOrAdmin || userRole === 'super_admin';
+  const showWorkflow = isOwnerOrAdmin && !!organization?.content_engine_enabled;
+
+  const visibleTabs: { key: SettingsTab; label: string }[] = [
+    { key: 'profile', label: 'Profile' },
+    { key: 'plan', label: 'Plan' },
+    ...(showIntegrations ? [{ key: 'integrations' as SettingsTab, label: 'Integrations' }] : []),
+    ...(showWorkflow ? [{ key: 'workflow' as SettingsTab, label: 'Workflow' }] : []),
+  ];
+
   return (
-    <div className="space-y-6 max-w-3xl">
-      <PageHeader
-        icon={Cog6ToothIcon}
-        title="Settings"
-        subtitle="Manage your account and preferences"
-      />
+    <div className="space-y-6">
+      <div className="max-w-3xl">
+        <PageHeader
+          icon={Cog6ToothIcon}
+          title="Settings"
+          subtitle="Manage your account and preferences"
+        />
+      </div>
 
-      {/* Profile Section */}
-      <Card>
-        <h2 className="text-heading-md text-charcoal mb-6">Profile</h2>
-
-        <div className="space-y-6">
-          {/* Avatar Upload */}
-          {user && (
-            <AvatarUpload
-              userId={user.id}
-              currentAvatarUrl={user.avatar_url}
-              onUploadComplete={(url) => setUser(prev => prev ? { ...prev, avatar_url: url } : null)}
-            />
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-charcoal mb-2">
-              Email
-            </label>
-            <Input
-              value={user?.email || ''}
-              disabled
-              className="bg-cream-warm"
-            />
-            <p className="text-xs text-stone mt-1">Email cannot be changed</p>
-          </div>
-
-          <Input
-            label="Full Name"
-            value={formData.fullName}
-            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-            placeholder="Your full name"
-          />
-
-          <Input
-            label="Organization Name"
-            value={formData.orgName}
-            onChange={(e) => setFormData({ ...formData, orgName: e.target.value })}
-            placeholder="Your company name"
-          />
-
-          <Button onClick={handleSaveProfile} isLoading={isSaving}>
-            Save Changes
-          </Button>
-        </div>
-      </Card>
-
-      {/* Subscription Section */}
-      <Card>
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h2 className="text-heading-md text-charcoal">Subscription</h2>
-            <p className="text-stone text-sm mt-1">
-              Manage your billing and plan
-            </p>
-          </div>
-          {subscription && (
-            <Badge variant={subscription.status === 'active' ? 'awareness' : 'conversion'}>
-              {subscription.status}
-            </Badge>
-          )}
-        </div>
-
-        {subscription ? (
-          <div className="space-y-4">
-            <div className="p-4 bg-cream-warm rounded-xl">
-              <div className="flex items-center gap-3 mb-2">
-                <SparklesIcon className="w-5 h-5 text-teal" />
-                <span className="font-semibold text-charcoal">
-                  {subscription.tier.name}
-                </span>
-              </div>
-              <p className="text-2xl font-bold text-charcoal">
-                R{subscription.tier.price_monthly.toLocaleString()}
-                <span className="text-sm font-normal text-stone">/month</span>
-              </p>
-              {subscription.current_period_end && (
-                <p className="text-sm text-stone mt-2">
-                  Next billing date: {format(new Date(subscription.current_period_end), 'MMMM d, yyyy')}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-medium text-charcoal">Plan Features</h3>
-              <ul className="space-y-2">
-                {[
-                  'Brand Engine (all 12+ phases)',
-                  'Content Engine with AI generation',
-                  'Monthly content calendars',
-                  'CSV export',
-                  'Email support',
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-center gap-2 text-stone">
-                    <CheckCircleIcon className="w-4 h-4 text-teal" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <SparklesIcon className="w-12 h-12 mx-auto text-stone/30 mb-4" />
-            <h3 className="text-heading-md text-charcoal mb-2">No Active Subscription</h3>
-            <p className="text-stone mb-6">
-              Subscribe to unlock the full Brand Engine and Content Engine.
-            </p>
-            <Button onClick={handleUpgrade}>
-              <SparklesIcon className="w-4 h-4 mr-2" />
-              Subscribe Now
-            </Button>
-          </div>
-        )}
-      </Card>
-
-      {/* Features Status */}
-      <Card>
-        <h2 className="text-heading-md text-charcoal mb-6">Feature Access</h2>
-
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
-            <div>
-              <h3 className="font-medium text-charcoal">Brand Engine</h3>
-              <p className="text-sm text-stone">AI-guided brand strategy system</p>
-            </div>
-            <Badge variant={organization?.brand_engine_enabled ? 'awareness' : 'conversion'}>
-              {organization?.brand_engine_enabled ? 'Enabled' : 'Locked'}
-            </Badge>
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
-            <div>
-              <h3 className="font-medium text-charcoal">Content Engine</h3>
-              <p className="text-sm text-stone">AI content generation & calendar</p>
-            </div>
-            <Badge variant={organization?.content_engine_enabled ? 'awareness' : 'conversion'}>
-              {organization?.content_engine_enabled ? 'Enabled' : 'Locked'}
-            </Badge>
-          </div>
-        </div>
-
-        {!organization?.content_engine_enabled && (
-          <p className="text-sm text-stone mt-4">
-            Complete all Brand Engine phases to unlock the Content Engine.
-          </p>
-        )}
-      </Card>
-
-      {/* Social Media Accounts (org owners/admins) */}
-      {['owner', 'admin'].includes(orgRole) && (
-        <Card>
-          <h2 className="text-heading-md text-charcoal mb-2">Social Media Accounts</h2>
-          <p className="text-stone text-sm mb-6">
-            Connect your social accounts to publish content directly from SkaleFlow.
-          </p>
-
-          {socialStatus === 'connected' && (
-            <div className="mb-4 p-3 bg-teal/10 border border-teal/20 rounded-lg text-sm text-teal font-medium">
-              Social account connected successfully!
-            </div>
-          )}
-          {socialStatus === 'select' && (
-            <div className="mb-4 p-3 bg-teal/10 border border-teal/20 rounded-lg text-sm text-teal font-medium">
-              Account connected! Select which pages to connect below.
-            </div>
-          )}
-          {socialStatus === 'error' && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-              Failed to connect social account. {searchParams.get('message') || 'Please try again.'}
-            </div>
-          )}
-
-          <div className="space-y-3">
-            {(['linkedin', 'facebook', 'instagram', 'twitter', 'tiktok', 'youtube'] as SocialPlatform[]).map(platform => (
-              <SocialConnectionCard
-                key={platform}
-                platform={platform}
-                connections={socialConnections.filter(c => c.platform === platform)}
-                onDisconnect={handleDisconnectSocial}
-                onManagePages={(p) => setPageSelectPlatform(p)}
-              />
-            ))}
-          </div>
-
-          {pageSelectPlatform && (
-            <PageSelectionModal
-              platform={pageSelectPlatform}
-              isOpen={!!pageSelectPlatform}
-              onClose={() => setPageSelectPlatform(null)}
-              onPagesAdded={async () => {
-                // Reload connections
-                if (organization) {
-                  const { data: freshConns } = await supabase
-                    .from('social_media_connections')
-                    .select('id, platform, platform_username, platform_page_name, platform_page_id, account_type, is_active, connected_at, token_expires_at, metadata')
-                    .eq('organization_id', organization.id);
-                  if (freshConns) {
-                    const safeConns = freshConns.map(c => {
-                      const meta = c.metadata as Record<string, unknown> | null;
-                      const pages = (meta?.pages as Array<Record<string, unknown>>) || [];
-                      return {
-                        ...c,
-                        metadata: pages.length > 0
-                          ? { pages: pages.map(p => ({ id: p.id, name: p.name, category: p.category })) }
-                          : null,
-                      };
-                    });
-                    setSocialConnections(safeConns as SocialConnectionRow[]);
-                  }
-                }
-              }}
-            />
-          )}
-
-          {/* Disconnect Confirmation Modal */}
-          <ConfirmDialog
-            isOpen={disconnectModal.isOpen}
-            onClose={() => setDisconnectModal({ isOpen: false, type: 'social' })}
-            onConfirm={confirmDisconnect}
-            title="Confirm Disconnect"
-            message={`Are you sure you want to disconnect ${disconnectModal.platformName}?\n\n${
-              disconnectModal.type === 'google'
-                ? 'New meeting bookings will not have availability data.'
-                : disconnectModal.type === 'social'
-                  ? 'You will no longer be able to publish content or view analytics for this account.'
-                  : 'You will no longer be able to import assets from this Google Drive account.'
+      {/* Tab Bar */}
+      <div className="mb-4 flex gap-4 border-b border-stone/10 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+        {visibleTabs.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
+              activeTab === tab.key
+                ? 'border-teal text-teal'
+                : 'border-transparent text-stone hover:text-charcoal'
             }`}
-            confirmText={isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
-            variant="danger"
-          />
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-          {/* Alert Dialog */}
-          <AlertDialog
-            isOpen={alertDialog.isOpen}
-            onClose={() => setAlertDialog({ isOpen: false, title: '', message: '' })}
-            title={alertDialog.title}
-            message={alertDialog.message}
-            variant="danger"
-          />
-        </Card>
-      )}
+      {/* Tab Content */}
+      <div className="max-w-3xl mx-auto">
+        {/* ── Profile Tab ── */}
+        {activeTab === 'profile' && (
+          <div className="space-y-6">
+            <Card>
+              <h2 className="text-heading-md text-charcoal mb-6">Profile</h2>
 
-      {/* Google Drive Integration (org owners/admins) */}
-      {['owner', 'admin'].includes(orgRole) && (
-        <Card>
-          <h2 className="text-heading-md text-charcoal mb-2">Google Drive</h2>
-          <p className="text-stone text-sm mb-6">
-            Connect Google Drive to import creative assets directly into your content.
-          </p>
+              <div className="space-y-6">
+                {user && (
+                  <AvatarUpload
+                    userId={user.id}
+                    currentAvatarUrl={user.avatar_url}
+                    onUploadComplete={(url) => setUser(prev => prev ? { ...prev, avatar_url: url } : null)}
+                  />
+                )}
 
-          {driveStatus === 'connected' && (
-            <div className="mb-4 p-3 bg-teal/10 border border-teal/20 rounded-lg text-sm text-teal font-medium">
-              Google Drive connected successfully!
-            </div>
-          )}
-          {driveStatus === 'error' && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-              Failed to connect Google Drive. Please try again.
-            </div>
-          )}
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-2">
+                    Email
+                  </label>
+                  <Input
+                    value={user?.email || ''}
+                    disabled
+                    className="bg-cream-warm"
+                  />
+                  <p className="text-xs text-stone mt-1">Email cannot be changed</p>
+                </div>
 
-          <GoogleDriveConnectionCard
-            connection={driveConnection}
-            onDisconnect={handleDisconnectDrive}
-          />
-        </Card>
-      )}
+                <Input
+                  label="Full Name"
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  placeholder="Your full name"
+                />
 
-      {/* Google Calendar Integration (admin only) */}
-      {userRole === 'super_admin' && (
-        <Card>
-          <h2 className="text-heading-md text-charcoal mb-6">Google Calendar</h2>
+                <Input
+                  label="Organization Name"
+                  value={formData.orgName}
+                  onChange={(e) => setFormData({ ...formData, orgName: e.target.value })}
+                  placeholder="Your company name"
+                />
 
-          {googleStatus === 'connected' && (
-            <div className="mb-4 p-3 bg-teal/10 border border-teal/20 rounded-lg text-sm text-teal font-medium">
-              Google Calendar connected successfully!
-            </div>
-          )}
-          {googleStatus === 'error' && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-              Failed to connect Google Calendar. Please try again.
-            </div>
-          )}
-
-          <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-stone/10">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                  <path d="M18.316 5.684H24v12.632h-5.684V5.684z" fill="#1967D2"/>
-                  <path d="M5.684 18.316V5.684h12.632v12.632H5.684z" fill="#fff"/>
-                  <path d="M5.684 5.684H0v12.632h5.684V5.684z" fill="#4285F4"/>
-                  <path d="M18.316 18.316H5.684V24h12.632v-5.684z" fill="#34A853"/>
-                  <path d="M18.316 0H5.684v5.684h12.632V0z" fill="#EA4335"/>
-                  <path d="M18.316 5.684H24V0h-5.684v5.684z" fill="#188038"/>
-                  <path d="M18.316 18.316H24V24h-5.684v-5.684z" fill="#1967D2"/>
-                  <path d="M0 18.316h5.684V24H0v-5.684z" fill="#1967D2"/>
-                  <path d="M0 0h5.684v5.684H0V0z" fill="#FBBC04"/>
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-medium text-charcoal">Google Calendar</h3>
-                <p className="text-sm text-stone">Required for meeting booking with applicants</p>
-              </div>
-            </div>
-            {googleConnected ? (
-              <div className="flex items-center gap-3">
-                <Badge variant="awareness">Connected</Badge>
-                <Button
-                  variant="ghost"
-                  className="text-red-600 hover:bg-red-50 text-sm"
-                  onClick={handleDisconnectGoogle}
-                >
-                  <XMarkIcon className="w-4 h-4 mr-1" />
-                  Disconnect
+                <Button onClick={handleSaveProfile} isLoading={isSaving}>
+                  Save Changes
                 </Button>
               </div>
-            ) : (
-              <Button
-                onClick={() => window.location.href = '/api/auth/google'}
-              >
-                <LinkIcon className="w-4 h-4 mr-2" />
-                Connect
-              </Button>
-            )}
-          </div>
+            </Card>
 
-          {/* Calendar selector â€” shown when connected */}
-          {googleConnected && (
-            <div className="mt-4 p-4 bg-cream-warm rounded-xl">
-              <label className="block text-sm font-medium text-charcoal mb-2">
-                Booking Calendar
-              </label>
-              <p className="text-xs text-stone mb-3">
-                New meeting bookings will be created on this calendar.
+            {/* Danger Zone */}
+            <Card className="border-red-200">
+              <h2 className="text-heading-md text-red-600 mb-4">Danger Zone</h2>
+              <p className="text-stone mb-4">
+                Contact support to cancel your subscription or delete your account.
               </p>
-              {isLoadingCalendars ? (
-                <div className="flex items-center gap-2 text-sm text-stone">
-                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-teal" />
-                  Loading calendarsâ€¦
+              <Button
+                variant="ghost"
+                className="text-red-600 hover:bg-red-50"
+                onClick={() => window.location.href = 'mailto:support@manamarketing.co.za'}
+              >
+                Contact Support
+              </Button>
+            </Card>
+          </div>
+        )}
+
+        {/* ── Plan Tab ── */}
+        {activeTab === 'plan' && (
+          <div className="space-y-6">
+            {/* Subscription Section */}
+            <Card>
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h2 className="text-heading-md text-charcoal">Subscription</h2>
+                  <p className="text-stone text-sm mt-1">
+                    Manage your billing and plan
+                  </p>
                 </div>
-              ) : googleCalendars.length > 0 ? (
-                <div className="relative">
-                  <select
-                    value={selectedCalendarId}
-                    onChange={(e) => handleCalendarChange(e.target.value)}
-                    className="w-full appearance-none rounded-lg border border-stone/20 bg-white px-3 py-2 pr-10 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal"
-                  >
-                    {googleCalendars.map((cal) => (
-                      <option key={cal.id} value={cal.id}>
-                        {cal.summary}{cal.primary ? ' (Primary)' : ''}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronUpDownIcon className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone" />
+                {subscription && (
+                  <Badge variant={subscription.status === 'active' ? 'awareness' : 'conversion'}>
+                    {subscription.status}
+                  </Badge>
+                )}
+              </div>
+
+              {subscription ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-cream-warm rounded-xl">
+                    <div className="flex items-center gap-3 mb-2">
+                      <SparklesIcon className="w-5 h-5 text-teal" />
+                      <span className="font-semibold text-charcoal">
+                        {subscription.tier.name}
+                      </span>
+                    </div>
+                    <p className="text-2xl font-bold text-charcoal">
+                      R{subscription.tier.price_monthly.toLocaleString()}
+                      <span className="text-sm font-normal text-stone">/month</span>
+                    </p>
+                    {subscription.current_period_end && (
+                      <p className="text-sm text-stone mt-2">
+                        Next billing date: {format(new Date(subscription.current_period_end), 'MMMM d, yyyy')}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="font-medium text-charcoal">Plan Features</h3>
+                    <ul className="space-y-2">
+                      {[
+                        'Brand Engine (all 12+ phases)',
+                        'Content Engine with AI generation',
+                        'Monthly content calendars',
+                        'CSV export',
+                        'Email support',
+                      ].map((feature, i) => (
+                        <li key={i} className="flex items-center gap-2 text-stone">
+                          <CheckCircleIcon className="w-4 h-4 text-teal" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               ) : (
-                <p className="text-sm text-stone">No calendars found.</p>
+                <div className="text-center py-8">
+                  <SparklesIcon className="w-12 h-12 mx-auto text-stone/30 mb-4" />
+                  <h3 className="text-heading-md text-charcoal mb-2">No Active Subscription</h3>
+                  <p className="text-stone mb-6">
+                    Subscribe to unlock the full Brand Engine and Content Engine.
+                  </p>
+                  <Button onClick={handleUpgrade}>
+                    <SparklesIcon className="w-4 h-4 mr-2" />
+                    Subscribe Now
+                  </Button>
+                </div>
               )}
-            </div>
-          )}
-        </Card>
-      )}
+            </Card>
 
-      {/* Content Workflow - Approval Settings (org owners/admins) */}
-      {['owner', 'admin'].includes(orgRole) && organization?.content_engine_enabled && (
-        <Card>
-          <div className="flex items-center gap-3 mb-6">
-            <ShieldCheckIcon className="w-6 h-6 text-teal" />
-            <div>
-              <h2 className="text-heading-md text-charcoal">Content Workflow</h2>
-              <p className="text-stone text-sm">Configure content approval requirements for your team.</p>
-            </div>
-          </div>
+            {/* Feature Access */}
+            <Card>
+              <h2 className="text-heading-md text-charcoal mb-6">Feature Access</h2>
 
-          {/* Approval toggle */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
-              <div>
-                <h3 className="font-medium text-charcoal">Require Content Approval</h3>
-                <p className="text-sm text-stone">
-                  When enabled, content must be approved before it can be scheduled or published.
-                </p>
-              </div>
-              <button
-                onClick={() => handleSaveApproval({ ...approvalSettings, approval_required: !approvalSettings.approval_required })}
-                disabled={isSavingApproval}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  approvalSettings.approval_required ? 'bg-teal' : 'bg-stone/20'
-                }`}
-              >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                  approvalSettings.approval_required ? 'translate-x-6' : ''
-                }`} />
-              </button>
-            </div>
-
-            {approvalSettings.approval_required && (
-              <>
-                {/* Roles requiring approval */}
-                <div className="p-4 bg-cream-warm rounded-xl">
-                  <h4 className="font-medium text-charcoal text-sm mb-2">Roles that need approval</h4>
-                  <p className="text-xs text-stone mb-3">Content from these roles must be reviewed before publishing.</p>
-                  <div className="flex gap-2">
-                    {(['member', 'viewer'] as const).map(role => {
-                      const isSelected = approvalSettings.roles_requiring_approval.includes(role);
-                      return (
-                        <button
-                          key={role}
-                          onClick={() => {
-                            const newRoles = isSelected
-                              ? approvalSettings.roles_requiring_approval.filter(r => r !== role)
-                              : [...approvalSettings.roles_requiring_approval, role];
-                            handleSaveApproval({ ...approvalSettings, roles_requiring_approval: newRoles });
-                          }}
-                          disabled={isSavingApproval}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
-                            isSelected ? 'bg-teal text-white' : 'bg-white text-stone border border-stone/20 hover:border-stone/40'
-                          }`}
-                        >
-                          {role}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Roles that can approve */}
-                <div className="p-4 bg-cream-warm rounded-xl">
-                  <h4 className="font-medium text-charcoal text-sm mb-2">Roles that can approve</h4>
-                  <p className="text-xs text-stone mb-3">These roles can approve or reject content.</p>
-                  <div className="flex gap-2">
-                    {(['owner', 'admin'] as const).map(role => {
-                      const isSelected = approvalSettings.roles_that_can_approve.includes(role);
-                      return (
-                        <button
-                          key={role}
-                          onClick={() => {
-                            const newRoles = isSelected
-                              ? approvalSettings.roles_that_can_approve.filter(r => r !== role)
-                              : [...approvalSettings.roles_that_can_approve, role];
-                            handleSaveApproval({ ...approvalSettings, roles_that_can_approve: newRoles });
-                          }}
-                          disabled={isSavingApproval}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
-                            isSelected ? 'bg-teal text-white' : 'bg-white text-stone border border-stone/20 hover:border-stone/40'
-                          }`}
-                        >
-                          {role}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Auto-approve owner */}
+              <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
                   <div>
-                    <h4 className="font-medium text-charcoal text-sm">Auto-approve owner content</h4>
-                    <p className="text-xs text-stone">Skip approval for content created by org owners.</p>
+                    <h3 className="font-medium text-charcoal">Brand Engine</h3>
+                    <p className="text-sm text-stone">AI-guided brand strategy system</p>
+                  </div>
+                  <Badge variant={organization?.brand_engine_enabled ? 'awareness' : 'conversion'}>
+                    {organization?.brand_engine_enabled ? 'Enabled' : 'Locked'}
+                  </Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Content Engine</h3>
+                    <p className="text-sm text-stone">AI content generation & calendar</p>
+                  </div>
+                  <Badge variant={organization?.content_engine_enabled ? 'awareness' : 'conversion'}>
+                    {organization?.content_engine_enabled ? 'Enabled' : 'Locked'}
+                  </Badge>
+                </div>
+              </div>
+
+              {!organization?.content_engine_enabled && (
+                <p className="text-sm text-stone mt-4">
+                  Complete all Brand Engine phases to unlock the Content Engine.
+                </p>
+              )}
+            </Card>
+          </div>
+        )}
+
+        {/* ── Integrations Tab ── */}
+        {activeTab === 'integrations' && (
+          <div className="space-y-6">
+            {/* Social Media Accounts (org owners/admins) */}
+            {isOwnerOrAdmin && (
+              <Card>
+                <h2 className="text-heading-md text-charcoal mb-2">Social Media Accounts</h2>
+                <p className="text-stone text-sm mb-6">
+                  Connect your social accounts to publish content directly from SkaleFlow.
+                </p>
+
+                {socialStatus === 'connected' && (
+                  <div className="mb-4 p-3 bg-teal/10 border border-teal/20 rounded-lg text-sm text-teal font-medium">
+                    Social account connected successfully!
+                  </div>
+                )}
+                {socialStatus === 'select' && (
+                  <div className="mb-4 p-3 bg-teal/10 border border-teal/20 rounded-lg text-sm text-teal font-medium">
+                    Account connected! Select which pages to connect below.
+                  </div>
+                )}
+                {socialStatus === 'error' && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                    Failed to connect social account. Please try again.
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {(['linkedin', 'facebook', 'instagram', 'twitter', 'tiktok', 'youtube'] as SocialPlatform[]).map(platform => (
+                    <SocialConnectionCard
+                      key={platform}
+                      platform={platform}
+                      connections={socialConnections.filter(c => c.platform === platform)}
+                      onDisconnect={handleDisconnectSocial}
+                      onManagePages={(p) => setPageSelectPlatform(p)}
+                    />
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {/* Google Drive Integration (org owners/admins) */}
+            {isOwnerOrAdmin && (
+              <Card>
+                <h2 className="text-heading-md text-charcoal mb-2">Google Drive</h2>
+                <p className="text-stone text-sm mb-6">
+                  Connect Google Drive to import creative assets directly into your content.
+                </p>
+
+                {driveStatus === 'connected' && (
+                  <div className="mb-4 p-3 bg-teal/10 border border-teal/20 rounded-lg text-sm text-teal font-medium">
+                    Google Drive connected successfully!
+                  </div>
+                )}
+                {driveStatus === 'error' && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                    Failed to connect Google Drive. Please try again.
+                  </div>
+                )}
+
+                <GoogleDriveConnectionCard
+                  connection={driveConnection}
+                  onDisconnect={handleDisconnectDrive}
+                />
+              </Card>
+            )}
+
+            {/* Google Calendar Integration (super_admin only) */}
+            {userRole === 'super_admin' && (
+              <Card>
+                <h2 className="text-heading-md text-charcoal mb-6">Google Calendar</h2>
+
+                {googleStatus === 'connected' && (
+                  <div className="mb-4 p-3 bg-teal/10 border border-teal/20 rounded-lg text-sm text-teal font-medium">
+                    Google Calendar connected successfully!
+                  </div>
+                )}
+                {googleStatus === 'error' && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                    Failed to connect Google Calendar. Please try again.
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-stone/10">
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                        <path d="M18.316 5.684H24v12.632h-5.684V5.684z" fill="#1967D2"/>
+                        <path d="M5.684 18.316V5.684h12.632v12.632H5.684z" fill="#fff"/>
+                        <path d="M5.684 5.684H0v12.632h5.684V5.684z" fill="#4285F4"/>
+                        <path d="M18.316 18.316H5.684V24h12.632v-5.684z" fill="#34A853"/>
+                        <path d="M18.316 0H5.684v5.684h12.632V0z" fill="#EA4335"/>
+                        <path d="M18.316 5.684H24V0h-5.684v5.684z" fill="#188038"/>
+                        <path d="M18.316 18.316H24V24h-5.684v-5.684z" fill="#1967D2"/>
+                        <path d="M0 18.316h5.684V24H0v-5.684z" fill="#1967D2"/>
+                        <path d="M0 0h5.684v5.684H0V0z" fill="#FBBC04"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-charcoal">Google Calendar</h3>
+                      <p className="text-sm text-stone">Required for meeting booking with applicants</p>
+                    </div>
+                  </div>
+                  {googleConnected ? (
+                    <div className="flex items-center gap-3">
+                      <Badge variant="awareness">Connected</Badge>
+                      <Button
+                        variant="ghost"
+                        className="text-red-600 hover:bg-red-50 text-sm"
+                        onClick={handleDisconnectGoogle}
+                      >
+                        <XMarkIcon className="w-4 h-4 mr-1" />
+                        Disconnect
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => window.location.href = '/api/auth/google'}
+                    >
+                      <LinkIcon className="w-4 h-4 mr-2" />
+                      Connect
+                    </Button>
+                  )}
+                </div>
+
+                {googleConnected && (
+                  <div className="mt-4 p-4 bg-cream-warm rounded-xl">
+                    <label className="block text-sm font-medium text-charcoal mb-2">
+                      Booking Calendar
+                    </label>
+                    <p className="text-xs text-stone mb-3">
+                      New meeting bookings will be created on this calendar.
+                    </p>
+                    {isLoadingCalendars ? (
+                      <div className="flex items-center gap-2 text-sm text-stone">
+                        <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-teal" />
+                        Loading calendars…
+                      </div>
+                    ) : googleCalendars.length > 0 ? (
+                      <div className="relative">
+                        <select
+                          value={selectedCalendarId}
+                          onChange={(e) => handleCalendarChange(e.target.value)}
+                          className="w-full appearance-none rounded-lg border border-stone/20 bg-white px-3 py-2 pr-10 text-sm text-charcoal focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal"
+                        >
+                          {googleCalendars.map((cal) => (
+                            <option key={cal.id} value={cal.id}>
+                              {cal.summary}{cal.primary ? ' (Primary)' : ''}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronUpDownIcon className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone" />
+                      </div>
+                    ) : (
+                      <p className="text-sm text-stone">No calendars found.</p>
+                    )}
+                  </div>
+                )}
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* ── Workflow Tab ── */}
+        {activeTab === 'workflow' && (
+          <div className="space-y-6">
+            <Card>
+              <div className="flex items-center gap-3 mb-6">
+                <ShieldCheckIcon className="w-6 h-6 text-teal" />
+                <div>
+                  <h2 className="text-heading-md text-charcoal">Content Workflow</h2>
+                  <p className="text-stone text-sm">Configure content approval requirements for your team.</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Require Content Approval</h3>
+                    <p className="text-sm text-stone">
+                      When enabled, content must be approved before it can be scheduled or published.
+                    </p>
                   </div>
                   <button
-                    onClick={() => handleSaveApproval({ ...approvalSettings, auto_approve_owner: !approvalSettings.auto_approve_owner })}
+                    onClick={() => handleSaveApproval({ ...approvalSettings, approval_required: !approvalSettings.approval_required })}
                     disabled={isSavingApproval}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${
-                      approvalSettings.auto_approve_owner ? 'bg-teal' : 'bg-stone/20'
+                    className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${
+                      approvalSettings.approval_required ? 'bg-teal' : 'bg-stone/20'
                     }`}
                   >
                     <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                      approvalSettings.auto_approve_owner ? 'translate-x-6' : ''
+                      approvalSettings.approval_required ? 'translate-x-6' : ''
                     }`} />
                   </button>
                 </div>
-              </>
-            )}
+
+                {approvalSettings.approval_required && (
+                  <>
+                    <div className="p-4 bg-cream-warm rounded-xl">
+                      <h4 className="font-medium text-charcoal text-sm mb-2">Roles that need approval</h4>
+                      <p className="text-xs text-stone mb-3">Content from these roles must be reviewed before publishing.</p>
+                      <div className="flex flex-wrap gap-2">
+                        {(['member', 'viewer'] as const).map(role => {
+                          const isSelected = approvalSettings.roles_requiring_approval.includes(role);
+                          return (
+                            <button
+                              key={role}
+                              onClick={() => {
+                                const newRoles = isSelected
+                                  ? approvalSettings.roles_requiring_approval.filter(r => r !== role)
+                                  : [...approvalSettings.roles_requiring_approval, role];
+                                handleSaveApproval({ ...approvalSettings, roles_requiring_approval: newRoles });
+                              }}
+                              disabled={isSavingApproval}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
+                                isSelected ? 'bg-teal text-white' : 'bg-white text-stone border border-stone/20 hover:border-stone/40'
+                              }`}
+                            >
+                              {role}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-cream-warm rounded-xl">
+                      <h4 className="font-medium text-charcoal text-sm mb-2">Roles that can approve</h4>
+                      <p className="text-xs text-stone mb-3">These roles can approve or reject content.</p>
+                      <div className="flex flex-wrap gap-2">
+                        {(['owner', 'admin'] as const).map(role => {
+                          const isSelected = approvalSettings.roles_that_can_approve.includes(role);
+                          return (
+                            <button
+                              key={role}
+                              onClick={() => {
+                                const newRoles = isSelected
+                                  ? approvalSettings.roles_that_can_approve.filter(r => r !== role)
+                                  : [...approvalSettings.roles_that_can_approve, role];
+                                handleSaveApproval({ ...approvalSettings, roles_that_can_approve: newRoles });
+                              }}
+                              disabled={isSavingApproval}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
+                                isSelected ? 'bg-teal text-white' : 'bg-white text-stone border border-stone/20 hover:border-stone/40'
+                              }`}
+                            >
+                              {role}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                      <div>
+                        <h4 className="font-medium text-charcoal text-sm">Auto-approve owner content</h4>
+                        <p className="text-xs text-stone">Skip approval for content created by org owners.</p>
+                      </div>
+                      <button
+                        onClick={() => handleSaveApproval({ ...approvalSettings, auto_approve_owner: !approvalSettings.auto_approve_owner })}
+                        disabled={isSavingApproval}
+                        className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${
+                          approvalSettings.auto_approve_owner ? 'bg-teal' : 'bg-stone/20'
+                        }`}
+                      >
+                        <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                          approvalSettings.auto_approve_owner ? 'translate-x-6' : ''
+                        }`} />
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </Card>
           </div>
-        </Card>
+        )}
+      </div>
+
+      {/* Global Modals (rendered outside tabs so they work regardless of active tab) */}
+      {pageSelectPlatform && (
+        <PageSelectionModal
+          platform={pageSelectPlatform}
+          isOpen={!!pageSelectPlatform}
+          onClose={() => setPageSelectPlatform(null)}
+          onPagesAdded={async () => {
+            if (organization) {
+              const { data: freshConns } = await supabase
+                .from('social_media_connections')
+                .select('id, platform, platform_username, platform_page_name, platform_page_id, account_type, is_active, connected_at, token_expires_at, metadata')
+                .eq('organization_id', organization.id);
+              if (freshConns) {
+                const safeConns = freshConns.map(c => {
+                  const meta = c.metadata as Record<string, unknown> | null;
+                  const pages = (meta?.pages as Array<Record<string, unknown>>) || [];
+                  return {
+                    ...c,
+                    metadata: pages.length > 0
+                      ? { pages: pages.map(p => ({ id: p.id, name: p.name, category: p.category })) }
+                      : null,
+                  };
+                });
+                setSocialConnections(safeConns as SocialConnectionRow[]);
+              }
+            }
+          }}
+        />
       )}
 
-      {/* Danger Zone */}
-      <Card className="border-red-200">
-        <h2 className="text-heading-md text-red-600 mb-4">Danger Zone</h2>
-        <p className="text-stone mb-4">
-          Contact support to cancel your subscription or delete your account.
-        </p>
-        <Button
-          variant="ghost"
-          className="text-red-600 hover:bg-red-50"
-          onClick={() => window.location.href = 'mailto:support@manamarketing.co.za'}
-        >
-          Contact Support
-        </Button>
-      </Card>
+      <ConfirmDialog
+        isOpen={disconnectModal.isOpen}
+        onClose={() => setDisconnectModal({ isOpen: false, type: 'social' })}
+        onConfirm={confirmDisconnect}
+        title="Confirm Disconnect"
+        message={`Are you sure you want to disconnect ${disconnectModal.platformName}?\n\n${
+          disconnectModal.type === 'google'
+            ? 'New meeting bookings will not have availability data.'
+            : disconnectModal.type === 'social'
+              ? 'You will no longer be able to publish content or view analytics for this account.'
+              : 'You will no longer be able to import assets from this Google Drive account.'
+        }`}
+        confirmText={isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+        variant="danger"
+      />
+
+      <AlertDialog
+        isOpen={alertDialog.isOpen}
+        onClose={() => setAlertDialog({ isOpen: false, title: '', message: '' })}
+        title={alertDialog.title}
+        message={alertDialog.message}
+        variant="danger"
+      />
     </div>
   );
 }
