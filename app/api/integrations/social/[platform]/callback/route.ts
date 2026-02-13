@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { exchangeCode, getRedirectUri, isValidPlatform } from '@/lib/social/auth';
 import { cookies } from 'next/headers';
 import type { Json } from '@/types/database';
@@ -76,11 +76,17 @@ export async function GET(
     });
 
     // Delete ALL existing connections for this org+platform (clean slate on reconnect)
-    await supabase
+    // Use service client to bypass RLS — ensures ALL rows are removed regardless of user_id
+    const serviceClient = createServiceClient();
+    const { error: deleteError } = await serviceClient
       .from('social_media_connections')
       .delete()
       .eq('organization_id', orgId)
       .eq('platform', platform);
+
+    if (deleteError) {
+      console.error('Failed to delete old connections:', deleteError);
+    }
 
     // Insert fresh profile connection
     const { error: insertError } = await supabase

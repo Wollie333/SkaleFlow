@@ -199,54 +199,62 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'No connection found for this platform' }, { status: 404 });
   }
 
-  console.log(`Found ${platformTyped} connection: type=${profileConn.account_type}, user=${profileConn.platform_username}`);
+  console.log(`[available-pages] Found ${platformTyped} connection: type=${profileConn.account_type}, user=${profileConn.platform_username}`);
 
   const metadata = (profileConn.metadata || {}) as Record<string, unknown>;
   let availablePages = (metadata.pages || []) as PageInfo[];
   let fetchError: string | null = null;
 
-  console.log(`Metadata pages for ${platformTyped}: count=${availablePages.length}`);
+  console.log(`[available-pages] Metadata pages for ${platformTyped}: count=${availablePages.length}`);
 
-  // If no pages in metadata or empty, fetch them from the API
-  if (availablePages.length === 0 && profileConn.access_token) {
+  // Only try API fetch with a PROFILE (user-scoped) token.
+  // Page-scoped tokens CANNOT call /me/accounts — Facebook returns:
+  //   "(#100) Tried accessing nonexisting field (accounts) on node type (Page)"
+  const canFetchFromApi = profileConn.account_type === 'profile' && !!profileConn.access_token;
+
+  // If no pages in metadata, fetch them from the platform API
+  if (availablePages.length === 0 && canFetchFromApi) {
     try {
-      console.log(`Fetching pages from ${platformTyped} API...`);
+      console.log(`[available-pages] Fetching pages from ${platformTyped} API (profile token)...`);
       if (platformTyped === 'facebook') {
         availablePages = await fetchFacebookPages(profileConn.access_token);
       } else if (platformTyped === 'instagram') {
         availablePages = await fetchInstagramAccounts(profileConn.access_token);
       } else if (platformTyped === 'linkedin') {
-        // Fetch LinkedIn organizations (company pages)
         availablePages = await fetchLinkedInOrganizations(profileConn.access_token);
       }
 
-      console.log(`Fetched ${availablePages.length} pages from ${platformTyped}`);
+      console.log(`[available-pages] Fetched ${availablePages.length} pages from ${platformTyped} API`);
 
-      // Update metadata with fetched pages
+      // Cache fetched pages in profile metadata for next time
       if (availablePages.length > 0) {
         const updatedMetadata = { ...metadata, pages: availablePages } as unknown as Record<string, Json>;
         await supabase
           .from('social_media_connections')
           .update({ metadata: updatedMetadata })
           .eq('id', profileConn.id);
-        console.log('Updated metadata with fetched pages');
       }
     } catch (error) {
       fetchError = error instanceof Error ? error.message : 'Unknown error fetching pages';
-      console.error('Error fetching pages:', fetchError);
+      console.error('[available-pages] Error fetching pages from API:', fetchError);
     }
+  } else if (availablePages.length === 0 && profileConn.account_type === 'page') {
+    console.log(`[available-pages] Skipping API fetch — connection is page type, cannot discover pages`);
+    fetchError = 'Profile connection not found. Your connected pages are shown below.';
   }
 
-  // Fetch existing page connections to mark which are already connected
-  const { data: existingPages } = await supabase
+  // Fetch existing page connections — these are pages the user already connected
+  const { data: existingPageConns } = await supabase
     .from('social_media_connections')
-    .select('platform_page_id')
+    .select('platform_page_id, platform_page_name, metadata')
     .eq('organization_id', membership.organization_id)
     .eq('platform', platformTyped)
-    .eq('account_type', 'page');
+    .eq('account_type', 'page')
+    .eq('is_active', true);
 
-  const connectedPageIds = new Set((existingPages || []).map(p => p.platform_page_id));
+  const connectedPageIds = new Set((existingPageConns || []).map(p => p.platform_page_id));
 
+  // Build page list from metadata/API results
   const pages = availablePages.map(p => ({
     id: p.id,
     name: p.name,
@@ -254,9 +262,23 @@ export async function GET(request: NextRequest) {
     isConnected: connectedPageIds.has(p.id),
   }));
 
-  console.log(`Returning ${pages.length} pages to client, error: ${fetchError || 'none'}`);
+  // Merge in any connected pages NOT already in the metadata/API list.
+  // This ensures already-connected pages always show even if metadata is empty.
+  for (const pc of existingPageConns || []) {
+    if (pc.platform_page_id && !pages.find(p => p.id === pc.platform_page_id)) {
+      const meta = (pc.metadata || {}) as Record<string, unknown>;
+      pages.push({
+        id: pc.platform_page_id,
+        name: pc.platform_page_name || pc.platform_page_id,
+        category: (meta.category as string) || null,
+        isConnected: true,
+      });
+    }
+  }
 
-  // If no pages found (with or without error), provide helpful hint
+  console.log(`[available-pages] Returning ${pages.length} pages (${connectedPageIds.size} connected)`);
+
+  // If no pages found at all, provide helpful hint
   if (pages.length === 0) {
     const errorMsg = fetchError || 'No pages found for this account';
     const hint = platformTyped === 'facebook'
@@ -278,6 +300,5 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     connectionId: profileConn.id,
     pages,
-    error: fetchError, // Include error even if we have pages (partial success)
   });
 }
