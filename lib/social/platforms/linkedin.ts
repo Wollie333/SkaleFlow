@@ -6,11 +6,7 @@ export const linkedinAdapter: PlatformAdapter = {
   platform: 'linkedin',
 
   getAuthUrl(state: string, redirectUri: string): string {
-    let scope = 'openid profile w_member_social';
-    // Optionally request org scopes for company page posting
-    if (process.env.LINKEDIN_ORG_SCOPE_ENABLED === 'true') {
-      scope += ' r_organization_social w_organization_social';
-    }
+    const scope = 'openid profile w_member_social r_organization_social w_organization_social';
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: process.env.LINKEDIN_CLIENT_ID!,

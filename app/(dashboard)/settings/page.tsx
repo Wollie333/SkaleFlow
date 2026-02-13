@@ -232,6 +232,11 @@ export default function SettingsPage() {
     if (gdriveParam) {
       setDriveStatus(gdriveParam);
     }
+
+    // Strip OAuth callback params from URL to prevent modal re-opening on refresh
+    if (socialParam || googleParam || gdriveParam) {
+      window.history.replaceState({}, '', '/settings');
+    }
   }, [supabase, searchParams]);
 
   const handleSaveProfile = async () => {
