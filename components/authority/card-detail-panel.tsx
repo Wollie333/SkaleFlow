@@ -304,6 +304,8 @@ export function CardDetailPanel({ cardId, onClose, onUpdate, contacts }: CardDet
 
   return (
     <>
+      {/* Backdrop — click to close */}
+      <div className="fixed inset-0 z-30 bg-black/20" onClick={onClose} />
       <div className="fixed inset-y-0 right-0 w-[28rem] bg-white border-l border-stone/15 shadow-2xl z-40 flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-stone/10">

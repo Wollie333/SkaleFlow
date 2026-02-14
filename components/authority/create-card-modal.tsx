@@ -25,6 +25,7 @@ interface CreateCardModalProps {
     priority: AuthorityPriority;
     target_outlet: string;
     contact_id: string | null;
+    new_contact?: { full_name: string; email: string; outlet: string; role: string };
     story_angle_id: string | null;
     custom_story_angle: string;
     target_date: string;
@@ -46,6 +47,8 @@ export function CreateCardModal({
   storyAngles,
 }: CreateCardModalProps) {
   const [loading, setLoading] = useState(false);
+  const [addNewContact, setAddNewContact] = useState(false);
+  const [newContact, setNewContact] = useState({ full_name: '', email: '', outlet: '', role: '' });
   const [formData, setFormData] = useState({
     opportunity_name: '',
     category: 'media_placement' as AuthorityCategory,
@@ -77,6 +80,8 @@ export function CreateCardModal({
         deal_value: 0,
         notes: '',
       });
+      setAddNewContact(false);
+      setNewContact({ full_name: '', email: '', outlet: '', role: '' });
     }
   }, [isOpen]);
 
@@ -88,7 +93,10 @@ export function CreateCardModal({
     try {
       await onSubmit({
         ...formData,
-        contact_id: formData.contact_id || null,
+        contact_id: addNewContact ? null : (formData.contact_id || null),
+        new_contact: addNewContact && newContact.full_name.trim()
+          ? { ...newContact, full_name: newContact.full_name.trim(), email: newContact.email.trim(), outlet: newContact.outlet.trim(), role: newContact.role.trim() }
+          : undefined,
         story_angle_id: formData.story_angle_id || null,
       });
       onClose();
@@ -167,10 +175,19 @@ export function CreateCardModal({
             />
           </div>
 
-          {/* Contact + Story Angle */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-charcoal mb-1">Contact Person</label>
+          {/* Contact Person */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-semibold text-charcoal">Contact Person</label>
+              <button
+                type="button"
+                onClick={() => { setAddNewContact(!addNewContact); setFormData({ ...formData, contact_id: '' }); }}
+                className="text-[10px] font-medium text-teal hover:text-teal-dark transition-colors"
+              >
+                {addNewContact ? 'Select existing' : '+ Add new'}
+              </button>
+            </div>
+            {!addNewContact ? (
               <select
                 value={formData.contact_id}
                 onChange={(e) => setFormData({ ...formData, contact_id: e.target.value })}
@@ -181,20 +198,63 @@ export function CreateCardModal({
                   <option key={c.id} value={c.id}>{c.full_name}{c.outlet ? ` (${c.outlet})` : ''}</option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-charcoal mb-1">Story Angle</label>
-              <select
-                value={formData.story_angle_id}
-                onChange={(e) => setFormData({ ...formData, story_angle_id: e.target.value })}
-                className="w-full px-3 py-2 border border-stone/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30"
-              >
-                <option value="">None / Custom</option>
-                {storyAngles.map((a) => (
-                  <option key={a.id} value={a.id}>{a.title}</option>
-                ))}
-              </select>
-            </div>
+            ) : (
+              <div className="space-y-2 p-3 bg-cream-warm/30 rounded-lg border border-stone/10">
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={newContact.full_name}
+                    onChange={(e) => setNewContact({ ...newContact, full_name: e.target.value })}
+                    className="px-3 py-1.5 border border-stone/20 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal/30"
+                    placeholder="Full name *"
+                  />
+                  <input
+                    type="email"
+                    value={newContact.email}
+                    onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
+                    className="px-3 py-1.5 border border-stone/20 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal/30"
+                    placeholder="Email"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={newContact.outlet}
+                    onChange={(e) => setNewContact({ ...newContact, outlet: e.target.value })}
+                    className="px-3 py-1.5 border border-stone/20 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal/30"
+                    placeholder="Outlet / Publication"
+                  />
+                  <select
+                    value={newContact.role}
+                    onChange={(e) => setNewContact({ ...newContact, role: e.target.value })}
+                    className="px-3 py-1.5 border border-stone/20 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal/30"
+                  >
+                    <option value="">Role (optional)</option>
+                    {CONTACT_ROLES.map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                </div>
+                <p className="text-[10px] text-stone">
+                  If a contact with this email already exists, their details will be updated.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Story Angle */}
+          <div>
+            <label className="block text-xs font-semibold text-charcoal mb-1">Story Angle</label>
+            <select
+              value={formData.story_angle_id}
+              onChange={(e) => setFormData({ ...formData, story_angle_id: e.target.value })}
+              className="w-full px-3 py-2 border border-stone/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30"
+            >
+              <option value="">None / Custom</option>
+              {storyAngles.map((a) => (
+                <option key={a.id} value={a.id}>{a.title}</option>
+              ))}
+            </select>
           </div>
 
           {/* Custom Story Angle */}

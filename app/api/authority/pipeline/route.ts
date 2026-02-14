@@ -84,6 +84,70 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Could not resolve pipeline stage' }, { status: 500 });
   }
 
+  // Handle inline new contact — find/create/update in authority_contacts
+  let resolvedContactId = rest.contact_id || null;
+  if (rest.new_contact && rest.new_contact.full_name) {
+    const nc = rest.new_contact;
+    const normEmail = nc.email ? nc.email.trim().toLowerCase() : null;
+
+    if (normEmail) {
+      // Check for existing contact with same email in this org
+      const { data: existing } = await db
+        .from('authority_contacts')
+        .select('id')
+        .eq('organization_id', organizationId)
+        .eq('email_normalised', normEmail)
+        .single();
+
+      if (existing) {
+        // Update fields that are non-empty in the new data
+        const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+        if (nc.full_name) updates.full_name = nc.full_name;
+        if (nc.outlet) updates.outlet = nc.outlet;
+        if (nc.role) updates.role = nc.role;
+
+        await db
+          .from('authority_contacts')
+          .update(updates)
+          .eq('id', existing.id);
+
+        resolvedContactId = existing.id;
+      } else {
+        // Create new contact
+        const { data: created } = await db
+          .from('authority_contacts')
+          .insert({
+            organization_id: organizationId,
+            full_name: nc.full_name,
+            email: nc.email || null,
+            outlet: nc.outlet || null,
+            role: nc.role || null,
+            source: 'pipeline',
+            created_by: user.id,
+          })
+          .select('id')
+          .single();
+        if (created) resolvedContactId = created.id;
+      }
+    } else {
+      // No email — just create a new contact (can't match without email)
+      const { data: created } = await db
+        .from('authority_contacts')
+        .insert({
+          organization_id: organizationId,
+          full_name: nc.full_name,
+          email: null,
+          outlet: nc.outlet || null,
+          role: nc.role || null,
+          source: 'pipeline',
+          created_by: user.id,
+        })
+        .select('id')
+        .single();
+      if (created) resolvedContactId = created.id;
+    }
+  }
+
   const { data: card, error } = await db
     .from('authority_pipeline_cards')
     .insert({
@@ -94,7 +158,7 @@ export async function POST(request: NextRequest) {
       created_by: user.id,
       priority: rest.priority || 'medium',
       target_outlet: rest.target_outlet || null,
-      contact_id: rest.contact_id || null,
+      contact_id: resolvedContactId,
       story_angle_id: rest.story_angle_id || null,
       custom_story_angle: rest.custom_story_angle || null,
       target_date: rest.target_date || null,
