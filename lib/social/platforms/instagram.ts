@@ -139,10 +139,9 @@ export const instagramAdapter: PlatformAdapter = {
         return { success: false, error: containerData.error.message };
       }
 
-      // Step 2: Wait for video processing if needed
-      if (isVideo) {
-        await waitForMediaProcessing(containerData.id, tokens.accessToken);
-      }
+      // Step 2: Wait for media container to be ready
+      // Instagram requires processing time for both images and videos
+      await waitForMediaProcessing(containerData.id, tokens.accessToken);
 
       // Step 3: Publish the container
       const publishRes = await fetch(`${GRAPH_API_BASE}/${igUserId}/media_publish`, {
@@ -157,6 +156,10 @@ export const instagramAdapter: PlatformAdapter = {
 
       if (publishData.error) {
         return { success: false, error: publishData.error.message };
+      }
+
+      if (!publishData.id) {
+        return { success: false, error: 'Instagram did not return a published media ID. Please try again.' };
       }
 
       // Get permalink
