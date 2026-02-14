@@ -994,46 +994,6 @@ export default function ContentEnginePage() {
             )}
           </Card>
 
-          {/* ── Post-Generation Actions ───────────────────────────── */}
-          {hasGeneratedItems && !batchId && (
-            <Card>
-              <h3 className="text-sm font-semibold text-charcoal mb-3">Batch Actions</h3>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowScheduleModal(true)}
-                >
-                  <CalendarDaysIcon className="w-4 h-4 mr-1.5" />
-                  Push All to Calendar
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleDownloadCSV}
-                >
-                  <ArrowDownTrayIcon className="w-4 h-4 mr-1.5" />
-                  Download CSV
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyAll}
-                >
-                  <ClipboardDocumentIcon className="w-4 h-4 mr-1.5" />
-                  {copyFeedback ? 'Copied!' : 'Copy All'}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleStartNewBatch}
-                >
-                  <ArrowPathIcon className="w-4 h-4 mr-1.5" />
-                  Start New Batch
-                </Button>
-              </div>
-            </Card>
-          )}
         </div>
 
         {/* ── Right Column (2/5) — Sticky Preview ─────────────────── */}
@@ -1154,6 +1114,47 @@ export default function ContentEnginePage() {
                 </div>
               )}
             </Card>
+
+            {/* ── Post-Generation Actions ───────────────────────────── */}
+            {hasGeneratedItems && !batchId && (
+              <Card>
+                <h3 className="text-sm font-semibold text-charcoal mb-3">Batch Actions</h3>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowScheduleModal(true)}
+                  >
+                    <CalendarDaysIcon className="w-4 h-4 mr-1.5" />
+                    Push All to Calendar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadCSV}
+                  >
+                    <ArrowDownTrayIcon className="w-4 h-4 mr-1.5" />
+                    Download CSV
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyAll}
+                  >
+                    <ClipboardDocumentIcon className="w-4 h-4 mr-1.5" />
+                    {copyFeedback ? 'Copied!' : 'Copy All'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleStartNewBatch}
+                  >
+                    <ArrowPathIcon className="w-4 h-4 mr-1.5" />
+                    Start New Batch
+                  </Button>
+                </div>
+              </Card>
+            )}
 
             {/* Per-placement config popover */}
             {configPopoverPlacement && (
