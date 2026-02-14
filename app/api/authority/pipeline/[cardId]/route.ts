@@ -90,10 +90,13 @@ export async function PATCH(
   if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
   const db = access.queryClient;
 
-  // Update card
+  // Separate commercial data from card fields
+  const { commercial, ...cardFields } = body;
+
+  // Update card (only card-level fields)
   const { data: card, error } = await db
     .from('authority_pipeline_cards')
-    .update({ ...body, updated_at: new Date().toISOString() })
+    .update({ ...cardFields, updated_at: new Date().toISOString() })
     .eq('id', cardId)
     .select()
     .single();
@@ -101,7 +104,7 @@ export async function PATCH(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Update commercial if included
-  if (body.commercial) {
+  if (commercial) {
     const { data: existing } = await db
       .from('authority_commercial')
       .select('id')
@@ -111,13 +114,13 @@ export async function PATCH(
     if (existing) {
       await db
         .from('authority_commercial')
-        .update({ ...body.commercial, updated_at: new Date().toISOString() })
+        .update({ ...commercial, updated_at: new Date().toISOString() })
         .eq('card_id', cardId);
     } else {
       await db.from('authority_commercial').insert({
         organization_id: existingCard.organization_id,
         card_id: cardId,
-        ...body.commercial,
+        ...commercial,
       });
     }
   }
