@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { checkAuthorityAccess } from '@/lib/authority/auth';
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -13,19 +14,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'organizationId and contacts array required' }, { status: 400 });
   }
 
-  // Verify owner/admin
-  const { data: member } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('organization_id', organizationId)
-    .eq('user_id', user.id)
-    .single();
-  if (!member || !['owner', 'admin'].includes(member.role)) {
+  // Verify owner/admin (super_admin bypass)
+  const access = await checkAuthorityAccess(supabase, user.id, organizationId);
+  if (!access.authorized || !['owner', 'admin'].includes(access.role!)) {
     return NextResponse.json({ error: 'Only owners and admins can import contacts' }, { status: 403 });
   }
+  const db = access.queryClient;
 
   // Get existing emails for duplicate detection
-  const { data: existingContacts } = await supabase
+  const { data: existingContacts } = await db
     .from('authority_contacts')
     .select('email_normalised')
     .eq('organization_id', organizationId)
@@ -110,7 +107,7 @@ export async function POST(request: NextRequest) {
 
   // Batch insert
   if (toInsert.length > 0) {
-    const { error } = await supabase
+    const { error } = await db
       .from('authority_contacts')
       .insert(toInsert);
 

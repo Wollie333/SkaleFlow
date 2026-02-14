@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { checkAuthorityAccess } from '@/lib/authority/auth';
 
 export async function GET(
   request: NextRequest,
@@ -11,7 +12,21 @@ export async function GET(
 
   const { cardId } = await params;
 
-  const { data: card, error } = await supabase
+  // Use service client for initial lookup to get organization_id (RLS-safe for super_admin)
+  const svc = createServiceClient();
+  const { data: cardOrg } = await svc
+    .from('authority_pipeline_cards')
+    .select('organization_id')
+    .eq('id', cardId)
+    .single();
+  if (!cardOrg) return NextResponse.json({ error: 'Card not found' }, { status: 404 });
+
+  // Verify membership (super_admin bypass)
+  const access = await checkAuthorityAccess(supabase, user.id, cardOrg.organization_id);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
+
+  const { data: card, error } = await db
     .from('authority_pipeline_cards')
     .select(`
       *,
@@ -25,29 +40,20 @@ export async function GET(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });
 
-  // Verify membership
-  const { data: member } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('organization_id', card.organization_id)
-    .eq('user_id', user.id)
-    .single();
-  if (!member) return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
-
   // Get checklist counts
-  const { count: checklistTotal } = await supabase
+  const { count: checklistTotal } = await db
     .from('authority_card_checklist')
     .select('id', { count: 'exact', head: true })
     .eq('card_id', cardId);
 
-  const { count: checklistCompleted } = await supabase
+  const { count: checklistCompleted } = await db
     .from('authority_card_checklist')
     .select('id', { count: 'exact', head: true })
     .eq('card_id', cardId)
     .eq('is_completed', true);
 
   // Get correspondence count
-  const { count: correspondenceCount } = await supabase
+  const { count: correspondenceCount } = await db
     .from('authority_correspondence')
     .select('id', { count: 'exact', head: true })
     .eq('card_id', cardId);
@@ -71,24 +77,21 @@ export async function PATCH(
   const { cardId } = await params;
   const body = await request.json();
 
-  // Verify card exists and user has access
-  const { data: existingCard } = await supabase
+  // Use service client for initial lookup to get organization_id (RLS-safe for super_admin)
+  const svc = createServiceClient();
+  const { data: existingCard } = await svc
     .from('authority_pipeline_cards')
     .select('organization_id')
     .eq('id', cardId)
     .single();
   if (!existingCard) return NextResponse.json({ error: 'Card not found' }, { status: 404 });
 
-  const { data: member } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('organization_id', existingCard.organization_id)
-    .eq('user_id', user.id)
-    .single();
-  if (!member) return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
+  const access = await checkAuthorityAccess(supabase, user.id, existingCard.organization_id);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
 
   // Update card
-  const { data: card, error } = await supabase
+  const { data: card, error } = await db
     .from('authority_pipeline_cards')
     .update({ ...body, updated_at: new Date().toISOString() })
     .eq('id', cardId)
@@ -99,19 +102,19 @@ export async function PATCH(
 
   // Update commercial if included
   if (body.commercial) {
-    const { data: existing } = await supabase
+    const { data: existing } = await db
       .from('authority_commercial')
       .select('id')
       .eq('card_id', cardId)
       .single();
 
     if (existing) {
-      await supabase
+      await db
         .from('authority_commercial')
         .update({ ...body.commercial, updated_at: new Date().toISOString() })
         .eq('card_id', cardId);
     } else {
-      await supabase.from('authority_commercial').insert({
+      await db.from('authority_commercial').insert({
         organization_id: existingCard.organization_id,
         card_id: cardId,
         ...body.commercial,
@@ -132,25 +135,23 @@ export async function DELETE(
 
   const { cardId } = await params;
 
-  const { data: card } = await supabase
+  // Use service client for initial lookup to get organization_id (RLS-safe for super_admin)
+  const svc = createServiceClient();
+  const { data: card } = await svc
     .from('authority_pipeline_cards')
     .select('organization_id')
     .eq('id', cardId)
     .single();
   if (!card) return NextResponse.json({ error: 'Card not found' }, { status: 404 });
 
-  // Only owners/admins can delete
-  const { data: member } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('organization_id', card.organization_id)
-    .eq('user_id', user.id)
-    .single();
-  if (!member || !['owner', 'admin'].includes(member.role)) {
+  // Only owners/admins can delete (super_admin bypass)
+  const access = await checkAuthorityAccess(supabase, user.id, card.organization_id);
+  if (!access.authorized || !['owner', 'admin'].includes(access.role!)) {
     return NextResponse.json({ error: 'Only owners and admins can delete cards' }, { status: 403 });
   }
+  const db = access.queryClient;
 
-  const { error } = await supabase
+  const { error } = await db
     .from('authority_pipeline_cards')
     .delete()
     .eq('id', cardId);

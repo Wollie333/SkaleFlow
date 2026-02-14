@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { checkAuthorityAccess } from '@/lib/authority/auth';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -9,7 +10,11 @@ export async function GET(request: NextRequest) {
   const organizationId = request.nextUrl.searchParams.get('organizationId');
   if (!organizationId) return NextResponse.json({ error: 'organizationId required' }, { status: 400 });
 
-  const { data, error } = await supabase
+  const access = await checkAuthorityAccess(supabase, user.id, organizationId);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
+
+  const { data, error } = await db
     .from('authority_story_angles')
     .select('*')
     .eq('organization_id', organizationId)
@@ -28,7 +33,11 @@ export async function POST(request: NextRequest) {
   const { organizationId, title, description, target_outlets, recommended_format } = body;
   if (!organizationId || !title) return NextResponse.json({ error: 'organizationId and title required' }, { status: 400 });
 
-  const { data, error } = await supabase
+  const access = await checkAuthorityAccess(supabase, user.id, organizationId);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
+
+  const { data, error } = await db
     .from('authority_story_angles')
     .insert({
       organization_id: organizationId,

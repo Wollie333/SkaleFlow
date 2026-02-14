@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { checkAuthorityAccess } from '@/lib/authority/auth';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -9,7 +10,12 @@ export async function GET(request: NextRequest) {
   const orgId = request.nextUrl.searchParams.get('organizationId');
   if (!orgId) return NextResponse.json({ error: 'organizationId required' }, { status: 400 });
 
-  const { data } = await supabase
+  // Verify membership (super_admin bypass)
+  const access = await checkAuthorityAccess(supabase, user.id, orgId);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
+
+  const { data } = await db
     .from('authority_email_config')
     .select('*')
     .eq('organization_id', orgId)
@@ -28,26 +34,22 @@ export async function POST(request: NextRequest) {
 
   if (!organizationId) return NextResponse.json({ error: 'organizationId required' }, { status: 400 });
 
-  // Verify admin/owner
-  const { data: member } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('organization_id', organizationId)
-    .eq('user_id', user.id)
-    .single();
-  if (!member || !['owner', 'admin'].includes(member.role)) {
+  // Verify admin/owner (super_admin bypass)
+  const access = await checkAuthorityAccess(supabase, user.id, organizationId);
+  if (!access.authorized || !['owner', 'admin'].includes(access.role!)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
+  const db = access.queryClient;
 
   // Check if config exists
-  const { data: existing } = await supabase
+  const { data: existing } = await db
     .from('authority_email_config')
     .select('id')
     .eq('organization_id', organizationId)
     .single();
 
   if (existing) {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('authority_email_config')
       .update({
         bcc_enabled: bcc_enabled ?? false,
@@ -63,7 +65,7 @@ export async function POST(request: NextRequest) {
     // Generate a BCC address
     const bccAddress = `authority+${organizationId.slice(0, 8)}@inbound.skaleflow.com`;
 
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('authority_email_config')
       .insert({
         organization_id: organizationId,

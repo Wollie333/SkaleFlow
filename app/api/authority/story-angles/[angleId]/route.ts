@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { checkAuthorityAccess } from '@/lib/authority/auth';
 
 export async function PATCH(
   request: NextRequest,
@@ -12,7 +13,16 @@ export async function PATCH(
   const { angleId } = await params;
   const body = await request.json();
 
-  const { data, error } = await supabase
+  // Look up organization_id from the record (service client to avoid RLS issues)
+  const svc = createServiceClient();
+  const { data: record } = await svc.from('authority_story_angles').select('organization_id').eq('id', angleId).single();
+  if (!record) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  const access = await checkAuthorityAccess(supabase, user.id, record.organization_id);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
+
+  const { data, error } = await db
     .from('authority_story_angles')
     .update({ ...body, updated_at: new Date().toISOString() })
     .eq('id', angleId)
@@ -33,7 +43,16 @@ export async function DELETE(
 
   const { angleId } = await params;
 
-  const { error } = await supabase
+  // Look up organization_id from the record (service client to avoid RLS issues)
+  const svc = createServiceClient();
+  const { data: record } = await svc.from('authority_story_angles').select('organization_id').eq('id', angleId).single();
+  if (!record) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  const access = await checkAuthorityAccess(supabase, user.id, record.organization_id);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
+
+  const { error } = await db
     .from('authority_story_angles')
     .delete()
     .eq('id', angleId);

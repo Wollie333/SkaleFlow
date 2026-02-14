@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { checkAuthorityAccess } from '@/lib/authority/auth';
 import { resolveModel, getProviderAdapter, requireCredits, deductCredits, isSuperAdmin, calculateCreditCost } from '@/lib/ai/server';
 import type { AIFeature } from '@/lib/ai/server';
 import { buildPressReleasePrompt } from '@/lib/authority/prompts';
@@ -14,6 +15,10 @@ export async function POST(request: NextRequest) {
   const { organizationId, category, storyAngle, outlet, additionalContext } = await request.json();
   if (!organizationId) return NextResponse.json({ error: 'organizationId required' }, { status: 400 });
 
+  const access = await checkAuthorityAccess(supabase, user.id, organizationId);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
+
   const resolvedModel = await resolveModel(organizationId, 'content_generation' as AIFeature);
   const adapter = getProviderAdapter(resolvedModel.provider);
 
@@ -21,14 +26,14 @@ export async function POST(request: NextRequest) {
   if (creditCheck) return creditCheck;
 
   // Get org name
-  const { data: org } = await supabase
+  const { data: org } = await db
     .from('organizations')
     .select('name')
     .eq('id', organizationId)
     .single();
 
   // Fetch brand data
-  const { data: outputs } = await supabase
+  const { data: outputs } = await db
     .from('brand_outputs')
     .select('output_key, output_value')
     .eq('organization_id', organizationId);

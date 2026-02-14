@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { checkAuthorityAccess } from '@/lib/authority/auth';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -10,17 +11,13 @@ export async function GET(request: NextRequest) {
   const organizationId = searchParams.get('organizationId');
   if (!organizationId) return NextResponse.json({ error: 'organizationId required' }, { status: 400 });
 
-  // Verify membership
-  const { data: member } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('organization_id', organizationId)
-    .eq('user_id', user.id)
-    .single();
-  if (!member) return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
+  // Verify membership (super_admin bypass)
+  const access = await checkAuthorityAccess(supabase, user.id, organizationId);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
 
   // Get cards with relations
-  const { data: cards, error } = await supabase
+  const { data: cards, error } = await db
     .from('authority_pipeline_cards')
     .select(`
       *,
@@ -49,16 +46,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'organizationId, opportunity_name, and category required' }, { status: 400 });
   }
 
-  // Verify owner/admin
-  const { data: member } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('organization_id', organizationId)
-    .eq('user_id', user.id)
-    .single();
-  if (!member || !['owner', 'admin'].includes(member.role)) {
+  // Verify owner/admin (super_admin bypass)
+  const access = await checkAuthorityAccess(supabase, user.id, organizationId);
+  if (!access.authorized || !['owner', 'admin'].includes(access.role!)) {
     return NextResponse.json({ error: 'Only owners and admins can create PR opportunities' }, { status: 403 });
   }
+  const db = access.queryClient;
 
   // Lazy-seed stages if first access
   const serviceClient = createServiceClient();
@@ -67,7 +60,7 @@ export async function POST(request: NextRequest) {
   // If no stage_id provided, use the default (Prospect)
   let resolvedStageId = stage_id;
   if (!resolvedStageId) {
-    const { data: defaultStage } = await supabase
+    const { data: defaultStage } = await db
       .from('authority_pipeline_stages')
       .select('id')
       .eq('organization_id', organizationId)
@@ -77,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     // Fallback to Prospect if no default
     if (!resolvedStageId) {
-      const { data: prospectStage } = await supabase
+      const { data: prospectStage } = await db
         .from('authority_pipeline_stages')
         .select('id')
         .eq('organization_id', organizationId)
@@ -91,7 +84,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Could not resolve pipeline stage' }, { status: 500 });
   }
 
-  const { data: card, error } = await supabase
+  const { data: card, error } = await db
     .from('authority_pipeline_cards')
     .insert({
       organization_id: organizationId,
@@ -120,7 +113,7 @@ export async function POST(request: NextRequest) {
 
   // Create commercial record if engagement type provided
   if (rest.engagement_type) {
-    await supabase.from('authority_commercial').insert({
+    await db.from('authority_commercial').insert({
       organization_id: organizationId,
       card_id: card.id,
       engagement_type: rest.engagement_type,

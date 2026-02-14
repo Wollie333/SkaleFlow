@@ -176,6 +176,7 @@ export function Sidebar({
   const [listeningExpanded, setListeningExpanded] = useState(false);
   const [analyticsExpanded, setAnalyticsExpanded] = useState(false);
   const [libraryExpanded, setLibraryExpanded] = useState(false);
+  const [authorityExpanded, setAuthorityExpanded] = useState(false);
 
   const isOwnerOrAdmin = orgRole === 'owner' || orgRole === 'admin';
   const isSuperAdmin = userRole === 'super_admin';
@@ -292,49 +293,79 @@ export function Sidebar({
               {engineItems.map((item) => {
                 const isEngine = item.href === '/authority';
                 const isActive = isEngine
-                  ? pathname === '/authority'
+                  ? pathname === '/authority' || pathname.startsWith('/authority')
                   : pathname === item.href || pathname.startsWith(item.href);
 
-                return (
-                  <div key={item.name}>
-                    <Link
-                      href={item.href}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
-                        isActive || (isEngine && pathname.startsWith('/authority'))
-                          ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
-                      )}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      {item.name}
-                    </Link>
-                    {/* Authority Engine sub-nav */}
-                    {isEngine && pathname.startsWith('/authority') && (
-                      <div className="space-y-1 mt-1">
-                        {authorityNavigation.map((sub) => {
-                          const subActive = sub.href === '/authority'
-                            ? pathname === '/authority'
-                            : pathname.startsWith(sub.href);
-                          return (
-                            <Link
-                              key={sub.name}
-                              href={sub.href}
-                              className={cn(
-                                'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
-                                subActive
-                                  ? 'bg-teal/10 text-teal'
-                                  : 'text-stone hover:bg-cream-warm hover:text-charcoal'
-                              )}
-                            >
-                              <sub.icon className="w-4 h-4" />
-                              {sub.name}
-                            </Link>
-                          );
-                        })}
+                if (isEngine) {
+                  // Authority Engine — collapsible with sub-nav
+                  return (
+                    <div key={item.name}>
+                      <div className="flex items-center">
+                        <Link
+                          href={item.href}
+                          className={cn(
+                            'flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                            isActive
+                              ? 'bg-teal/10 text-teal'
+                              : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
+                          )}
+                        >
+                          <item.icon className="w-5 h-5" />
+                          {item.name}
+                        </Link>
+                        <button
+                          onClick={() => setAuthorityExpanded(!authorityExpanded)}
+                          className="p-1.5 text-stone hover:text-charcoal transition-colors rounded"
+                        >
+                          {authorityExpanded ? (
+                            <ChevronDownIcon className="w-4 h-4" />
+                          ) : (
+                            <ChevronRightIcon className="w-4 h-4" />
+                          )}
+                        </button>
                       </div>
+                      {authorityExpanded && (
+                        <div className="space-y-1 mt-1">
+                          {authorityNavigation.map((sub) => {
+                            const subActive = sub.href === '/authority'
+                              ? pathname === '/authority'
+                              : pathname.startsWith(sub.href);
+                            return (
+                              <Link
+                                key={sub.name}
+                                href={sub.href}
+                                className={cn(
+                                  'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
+                                  subActive
+                                    ? 'bg-teal/10 text-teal'
+                                    : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                                )}
+                              >
+                                <sub.icon className="w-4 h-4" />
+                                {sub.name}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                      isActive
+                        ? 'bg-teal/10 text-teal'
+                        : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
                     )}
-                  </div>
+                  >
+                    <item.icon className="w-5 h-5" />
+                    {item.name}
+                  </Link>
                 );
               })}
             </div>

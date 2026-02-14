@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { checkAuthorityAccess } from '@/lib/authority/auth';
 
 export async function GET(
   request: NextRequest,
@@ -11,7 +12,21 @@ export async function GET(
 
   const { contactId } = await params;
 
-  const { data: contact, error } = await supabase
+  // Use service client for initial lookup to get organization_id (RLS-safe for super_admin)
+  const svc = createServiceClient();
+  const { data: contactOrg } = await svc
+    .from('authority_contacts')
+    .select('organization_id')
+    .eq('id', contactId)
+    .single();
+  if (!contactOrg) return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
+
+  // Verify membership (super_admin bypass)
+  const access = await checkAuthorityAccess(supabase, user.id, contactOrg.organization_id);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
+
+  const { data: contact, error } = await db
     .from('authority_contacts')
     .select('*')
     .eq('id', contactId)
@@ -19,24 +34,15 @@ export async function GET(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 404 });
 
-  // Verify membership
-  const { data: member } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('organization_id', contact.organization_id)
-    .eq('user_id', user.id)
-    .single();
-  if (!member) return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
-
   // Get relationship timeline: pipeline cards
-  const { data: cards } = await supabase
+  const { data: cards } = await db
     .from('authority_pipeline_cards')
     .select('id, opportunity_name, category, authority_pipeline_stages(name, slug, color), created_at, published_at')
     .eq('contact_id', contactId)
     .order('created_at', { ascending: false });
 
   // Get correspondence history
-  const { data: correspondence } = await supabase
+  const { data: correspondence } = await db
     .from('authority_correspondence')
     .select('id, type, direction, email_subject, summary, occurred_at')
     .eq('contact_id', contactId)
@@ -60,22 +66,21 @@ export async function PATCH(
   const { contactId } = await params;
   const body = await request.json();
 
-  const { data: existing } = await supabase
+  // Use service client for initial lookup to get organization_id (RLS-safe for super_admin)
+  const svc = createServiceClient();
+  const { data: existing } = await svc
     .from('authority_contacts')
     .select('organization_id')
     .eq('id', contactId)
     .single();
   if (!existing) return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
 
-  const { data: member } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('organization_id', existing.organization_id)
-    .eq('user_id', user.id)
-    .single();
-  if (!member) return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
+  // Verify membership (super_admin bypass)
+  const access = await checkAuthorityAccess(supabase, user.id, existing.organization_id);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
 
-  const { data: contact, error } = await supabase
+  const { data: contact, error } = await db
     .from('authority_contacts')
     .update({ ...body, updated_at: new Date().toISOString() })
     .eq('id', contactId)
@@ -97,24 +102,23 @@ export async function DELETE(
 
   const { contactId } = await params;
 
-  const { data: contact } = await supabase
+  // Use service client for initial lookup to get organization_id (RLS-safe for super_admin)
+  const svc = createServiceClient();
+  const { data: contact } = await svc
     .from('authority_contacts')
     .select('organization_id')
     .eq('id', contactId)
     .single();
   if (!contact) return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
 
-  const { data: member } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('organization_id', contact.organization_id)
-    .eq('user_id', user.id)
-    .single();
-  if (!member || !['owner', 'admin'].includes(member.role)) {
+  // Verify owner/admin (super_admin bypass)
+  const access = await checkAuthorityAccess(supabase, user.id, contact.organization_id);
+  if (!access.authorized || !['owner', 'admin'].includes(access.role!)) {
     return NextResponse.json({ error: 'Only owners and admins can delete contacts' }, { status: 403 });
   }
+  const db = access.queryClient;
 
-  const { error } = await supabase
+  const { error } = await db
     .from('authority_contacts')
     .delete()
     .eq('id', contactId);

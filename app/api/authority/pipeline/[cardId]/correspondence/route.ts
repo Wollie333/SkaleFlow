@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { checkAuthorityAccess } from '@/lib/authority/auth';
 
 export async function GET(
   request: NextRequest,
@@ -11,23 +12,20 @@ export async function GET(
 
   const { cardId } = await params;
 
-  // Verify card access
-  const { data: card } = await supabase
+  // Use service client for initial lookup to get organization_id (RLS-safe for super_admin)
+  const svc = createServiceClient();
+  const { data: card } = await svc
     .from('authority_pipeline_cards')
     .select('organization_id')
     .eq('id', cardId)
     .single();
   if (!card) return NextResponse.json({ error: 'Card not found' }, { status: 404 });
 
-  const { data: member } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('organization_id', card.organization_id)
-    .eq('user_id', user.id)
-    .single();
-  if (!member) return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
+  const access = await checkAuthorityAccess(supabase, user.id, card.organization_id);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
 
-  const { data: correspondence, error } = await supabase
+  const { data: correspondence, error } = await db
     .from('authority_correspondence')
     .select('*, authority_contacts(id, full_name, outlet)')
     .eq('card_id', cardId)
@@ -49,27 +47,24 @@ export async function POST(
   const { cardId } = await params;
   const body = await request.json();
 
-  // Verify card access
-  const { data: card } = await supabase
+  // Use service client for initial lookup to get organization_id (RLS-safe for super_admin)
+  const svc = createServiceClient();
+  const { data: card } = await svc
     .from('authority_pipeline_cards')
     .select('organization_id')
     .eq('id', cardId)
     .single();
   if (!card) return NextResponse.json({ error: 'Card not found' }, { status: 404 });
 
-  const { data: member } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('organization_id', card.organization_id)
-    .eq('user_id', user.id)
-    .single();
-  if (!member) return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
+  const access = await checkAuthorityAccess(supabase, user.id, card.organization_id);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
 
   if (!body.type || !body.occurred_at) {
     return NextResponse.json({ error: 'type and occurred_at required' }, { status: 400 });
   }
 
-  const { data: item, error } = await supabase
+  const { data: item, error } = await db
     .from('authority_correspondence')
     .insert({
       organization_id: card.organization_id,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { checkAuthorityAccess } from '@/lib/authority/auth';
 import { resolveModel, getProviderAdapter, requireCredits, deductCredits, isSuperAdmin, calculateCreditCost } from '@/lib/ai/server';
 import type { AIFeature } from '@/lib/ai/server';
 
@@ -11,6 +12,10 @@ export async function POST(request: NextRequest) {
   const { organizationId } = await request.json();
   if (!organizationId) return NextResponse.json({ error: 'organizationId required' }, { status: 400 });
 
+  const access = await checkAuthorityAccess(supabase, user.id, organizationId);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
+
   // Resolve model
   const resolvedModel = await resolveModel(organizationId, 'content_generation' as AIFeature);
   const adapter = getProviderAdapter(resolvedModel.provider);
@@ -20,7 +25,7 @@ export async function POST(request: NextRequest) {
   if (creditCheck) return creditCheck;
 
   // Fetch brand data for context
-  const { data: outputs } = await supabase
+  const { data: outputs } = await db
     .from('brand_outputs')
     .select('output_key, output_value')
     .eq('organization_id', organizationId);
@@ -31,7 +36,7 @@ export async function POST(request: NextRequest) {
     .join('\n');
 
   // Fetch existing angles to avoid duplicates
-  const { data: existing } = await supabase
+  const { data: existing } = await db
     .from('authority_story_angles')
     .select('title')
     .eq('organization_id', organizationId);

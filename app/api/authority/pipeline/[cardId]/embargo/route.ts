@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { checkAuthorityAccess } from '@/lib/authority/auth';
 
 export async function GET(
   request: NextRequest,
@@ -11,7 +12,16 @@ export async function GET(
 
   const { cardId } = await params;
 
-  const { data: card } = await supabase
+  // Look up organization_id from the card (service client to avoid RLS issues)
+  const svc = createServiceClient();
+  const { data: record } = await svc.from('authority_pipeline_cards').select('organization_id').eq('id', cardId).single();
+  if (!record) return NextResponse.json({ error: 'Card not found' }, { status: 404 });
+
+  const access = await checkAuthorityAccess(supabase, user.id, record.organization_id);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
+
+  const { data: card } = await db
     .from('authority_pipeline_cards')
     .select('embargo_active, embargo_date')
     .eq('id', cardId)
@@ -39,7 +49,16 @@ export async function PATCH(
   const { cardId } = await params;
   const { embargo_active, embargo_date } = await request.json();
 
-  const { data, error } = await supabase
+  // Look up organization_id from the card (service client to avoid RLS issues)
+  const svc = createServiceClient();
+  const { data: record } = await svc.from('authority_pipeline_cards').select('organization_id').eq('id', cardId).single();
+  if (!record) return NextResponse.json({ error: 'Card not found' }, { status: 404 });
+
+  const access = await checkAuthorityAccess(supabase, user.id, record.organization_id);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
+
+  const { data, error } = await db
     .from('authority_pipeline_cards')
     .update({
       embargo_active: embargo_active ?? false,

@@ -634,10 +634,15 @@ export default function SettingsPage() {
                     <h3 className="font-medium text-charcoal">Plan Features</h3>
                     <ul className="space-y-2">
                       {[
-                        'Brand Engine (all 12+ phases)',
-                        'Content Engine with AI generation',
-                        'Monthly content calendars',
-                        'CSV export',
+                        'Brand Engine (10-phase AI brand strategy)',
+                        'Content Engine with AI generation & scheduling',
+                        'Authority Engine (PR pipeline & newsroom)',
+                        'Social media publishing (LinkedIn, Facebook, Instagram, X, TikTok)',
+                        'Campaign-based content calendars',
+                        'Content approval workflow',
+                        'Brand playbook export',
+                        'Credit system & billing management',
+                        'Google Drive & Calendar integrations',
                         'Email support',
                       ].map((feature, i) => (
                         <li key={i} className="flex items-center gap-2 text-stone">
@@ -665,13 +670,16 @@ export default function SettingsPage() {
 
             {/* Feature Access */}
             <Card>
-              <h2 className="text-heading-md text-charcoal mb-6">Feature Access</h2>
+              <h2 className="text-heading-md text-charcoal mb-6">Features</h2>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
+                {/* SkaleFlow Engines */}
+                <p className="text-xs font-semibold text-teal-dark uppercase tracking-wider px-1">SkaleFlow Engines</p>
+
                 <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
                   <div>
                     <h3 className="font-medium text-charcoal">Brand Engine</h3>
-                    <p className="text-sm text-stone">AI-guided brand strategy system</p>
+                    <p className="text-sm text-stone">10-phase AI-guided brand strategy system</p>
                   </div>
                   <Badge variant={organization?.brand_engine_enabled ? 'awareness' : 'conversion'}>
                     {organization?.brand_engine_enabled ? 'Enabled' : 'Locked'}
@@ -681,11 +689,145 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
                   <div>
                     <h3 className="font-medium text-charcoal">Content Engine</h3>
-                    <p className="text-sm text-stone">AI content generation & calendar</p>
+                    <p className="text-sm text-stone">AI content generation, calendar & publishing</p>
                   </div>
                   <Badge variant={organization?.content_engine_enabled ? 'awareness' : 'conversion'}>
                     {organization?.content_engine_enabled ? 'Enabled' : 'Locked'}
                   </Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Authority Engine</h3>
+                    <p className="text-sm text-stone">PR pipeline, media contacts & public newsroom</p>
+                  </div>
+                  <Badge variant={(isOwnerOrAdmin || userRole === 'super_admin') ? 'awareness' : 'conversion'}>
+                    {(isOwnerOrAdmin || userRole === 'super_admin') ? 'Enabled' : 'Locked'}
+                  </Badge>
+                </div>
+
+                {/* Content & Publishing */}
+                <p className="text-xs font-semibold text-teal-dark uppercase tracking-wider px-1 mt-4">Content & Publishing</p>
+
+                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Content Calendar</h3>
+                    <p className="text-sm text-stone">Campaign-based scheduling with conflict prevention</p>
+                  </div>
+                  <Badge variant="awareness">Enabled</Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Social Media Publishing</h3>
+                    <p className="text-sm text-stone">Direct publishing to LinkedIn, Facebook, Instagram, X & TikTok</p>
+                  </div>
+                  <Badge variant="awareness">Enabled</Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Content Approval Workflow</h3>
+                    <p className="text-sm text-stone">Role-based review and approval for content</p>
+                  </div>
+                  <Badge variant="awareness">Enabled</Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Brand Playbook</h3>
+                    <p className="text-sm text-stone">Exportable brand guide styled with your identity</p>
+                  </div>
+                  <Badge variant="awareness">Enabled</Badge>
+                </div>
+
+                {/* AI & Credits */}
+                <p className="text-xs font-semibold text-teal-dark uppercase tracking-wider px-1 mt-4">AI & Credits</p>
+
+                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                  <div>
+                    <h3 className="font-medium text-charcoal">AI Content Generation</h3>
+                    <p className="text-sm text-stone">Queue-based batch generation with model selection</p>
+                  </div>
+                  <Badge variant="awareness">Enabled</Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Credit System & Billing</h3>
+                    <p className="text-sm text-stone">Monthly credits, top-up packs & invoice management</p>
+                  </div>
+                  <Badge variant="awareness">Enabled</Badge>
+                </div>
+
+                {/* Integrations */}
+                <p className="text-xs font-semibold text-teal-dark uppercase tracking-wider px-1 mt-4">Integrations</p>
+
+                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Google Drive</h3>
+                    <p className="text-sm text-stone">Import creative assets directly into content</p>
+                  </div>
+                  <Badge variant="awareness">Enabled</Badge>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Google Calendar</h3>
+                    <p className="text-sm text-stone">Meeting booking with applicants</p>
+                  </div>
+                  <Badge variant="awareness">Enabled</Badge>
+                </div>
+
+                {/* Coming Soon */}
+                <p className="text-xs font-semibold text-teal-dark uppercase tracking-wider px-1 mt-4">Coming Soon</p>
+
+                <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Social Inbox</h3>
+                    <p className="text-sm text-stone">Unified inbox for comments, DMs & mentions</p>
+                  </div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Social Listening</h3>
+                    <p className="text-sm text-stone">Brand mentions, trends & competitive reports</p>
+                  </div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Social Analytics</h3>
+                    <p className="text-sm text-stone">Post performance, audience insights & benchmarks</p>
+                  </div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Media Library</h3>
+                    <p className="text-sm text-stone">Hashtag vault, saved replies & competitor tracking</p>
+                  </div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Marketing Ads</h3>
+                    <p className="text-sm text-stone">Ad campaigns, audiences & creative library</p>
+                  </div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Sales Pipeline</h3>
+                    <p className="text-sm text-stone">CRM pipeline with automation workflows</p>
+                  </div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
                 </div>
               </div>
 

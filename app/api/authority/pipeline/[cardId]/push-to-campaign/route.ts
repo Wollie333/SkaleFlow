@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { checkAuthorityAccess } from '@/lib/authority/auth';
 import { AMPLIFICATION_POSTS, TEASER_POSTS } from '@/lib/authority/amplification-templates';
 
 export async function POST(
@@ -15,8 +16,16 @@ export async function POST(
   const { campaignType } = await request.json();
   // campaignType: 'teaser' (pre-launch) or 'amplification' (post-publish)
 
+  // Look up organization_id from the card (service client to avoid RLS issues)
+  const { data: cardLookup } = await serviceClient.from('authority_pipeline_cards').select('organization_id').eq('id', cardId).single();
+  if (!cardLookup) return NextResponse.json({ error: 'Card not found' }, { status: 404 });
+
+  const access = await checkAuthorityAccess(supabase, user.id, cardLookup.organization_id);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
+
   // Get card details
-  const { data: card } = await supabase
+  const { data: card } = await db
     .from('authority_pipeline_cards')
     .select(`
       *,

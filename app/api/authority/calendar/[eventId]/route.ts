@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { checkAuthorityAccess } from '@/lib/authority/auth';
 
 export async function PATCH(
   request: NextRequest,
@@ -12,6 +13,15 @@ export async function PATCH(
   const { eventId } = await params;
   const body = await request.json();
 
+  // Look up organization_id from the record (service client to avoid RLS issues)
+  const svc = createServiceClient();
+  const { data: record } = await svc.from('authority_calendar_events').select('organization_id').eq('id', eventId).single();
+  if (!record) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  const access = await checkAuthorityAccess(supabase, user.id, record.organization_id);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
+
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
   if (body.is_completed !== undefined) {
@@ -23,7 +33,7 @@ export async function PATCH(
   if (body.title !== undefined) updates.title = body.title;
   if (body.description !== undefined) updates.description = body.description;
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('authority_calendar_events')
     .update(updates)
     .eq('id', eventId)

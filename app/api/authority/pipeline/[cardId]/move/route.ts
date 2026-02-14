@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { checkAuthorityAccess } from '@/lib/authority/auth';
 import { STAGE_TIMESTAMP_MAP } from '@/lib/authority/constants';
 import { getChecklistForCategory } from '@/lib/authority/checklist-templates';
 import { calculateActivityScore } from '@/lib/authority/scoring';
@@ -21,25 +22,22 @@ export async function PATCH(
     return NextResponse.json({ error: 'stage_id required' }, { status: 400 });
   }
 
-  // Get existing card
-  const { data: card } = await supabase
+  // Use service client for initial lookup to get organization_id (RLS-safe for super_admin)
+  const svc = createServiceClient();
+  const { data: card } = await svc
     .from('authority_pipeline_cards')
     .select('*, authority_pipeline_stages(slug)')
     .eq('id', cardId)
     .single();
   if (!card) return NextResponse.json({ error: 'Card not found' }, { status: 404 });
 
-  // Verify membership
-  const { data: member } = await supabase
-    .from('org_members')
-    .select('role')
-    .eq('organization_id', card.organization_id)
-    .eq('user_id', user.id)
-    .single();
-  if (!member) return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
+  // Verify membership (super_admin bypass)
+  const access = await checkAuthorityAccess(supabase, user.id, card.organization_id);
+  if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  const db = access.queryClient;
 
   // Get target stage
-  const { data: targetStage } = await supabase
+  const { data: targetStage } = await db
     .from('authority_pipeline_stages')
     .select('id, slug, name, stage_type, color')
     .eq('id', stage_id)
@@ -78,7 +76,7 @@ export async function PATCH(
   }
 
   // Update the card
-  const { data: updatedCard, error } = await supabase
+  const { data: updatedCard, error } = await db
     .from('authority_pipeline_cards')
     .update(updates)
     .eq('id', cardId)
@@ -92,7 +90,7 @@ export async function PATCH(
 
   // Auto-generate checklist when moving to Content Prep (if none exists)
   if (targetStage.slug === 'content_prep') {
-    const { count } = await supabase
+    const { count } = await db
       .from('authority_card_checklist')
       .select('id', { count: 'exact', head: true })
       .eq('card_id', cardId);
