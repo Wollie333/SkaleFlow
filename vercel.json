@@ -27,6 +27,10 @@
     {
       "path": "/api/marketing/analytics/sync",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/authority/notifications/process",
+      "schedule": "0 7 * * *"
     }
   ]
 }

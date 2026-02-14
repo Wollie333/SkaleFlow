@@ -39,6 +39,7 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   NewspaperIcon,
+  GlobeAltIcon,
 } from '@heroicons/react/24/outline';
 
 interface FeaturePermissions {
@@ -120,6 +121,9 @@ const authorityNavigation: NavItem[] = [
   { name: 'Contacts', href: '/authority/contacts', icon: UsersIcon },
   { name: 'Press Kit', href: '/authority/press-kit', icon: DocumentTextIcon },
   { name: 'Press Releases', href: '/authority/press-releases', icon: DocumentTextIcon },
+  { name: 'PR Calendar', href: '/authority/calendar', icon: CalendarDaysIcon },
+  { name: 'Newsroom', href: '/authority/newsroom', icon: GlobeAltIcon },
+  { name: 'Settings', href: '/authority/settings', icon: Cog6ToothIcon },
 ];
 
 const adminNavigation: NavItem[] = [
