@@ -185,7 +185,7 @@ export function Sidebar({
   }
 
   if (canAccessContentEngine) {
-    baseNavItems.push({ name: 'Content Engine', href: '/content/create', icon: BoltIcon });
+    baseNavItems.push({ name: 'Content Engine', href: '/content/machine', icon: BoltIcon });
   }
 
   if (canAccessTeam) {

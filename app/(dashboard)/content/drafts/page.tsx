@@ -47,7 +47,7 @@ export default async function DraftsPage() {
           <h3 className="text-lg font-semibold text-charcoal mb-2">No drafts yet</h3>
           <p className="text-sm text-stone mb-6">Generate some content from the Content Machine and it will appear here.</p>
           <Link
-            href="/content/machine/social"
+            href="/content/machine"
             className="inline-flex items-center gap-2 px-4 py-2 bg-teal text-white text-sm font-medium rounded-lg hover:bg-teal-dark transition-colors"
           >
             <SparklesIcon className="w-4 h-4" />
