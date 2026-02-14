@@ -3,11 +3,10 @@
 interface MediaKitSectionProps {
   pressKit: {
     company_overview: string | null;
-    founder_name: string | null;
     founder_bio: string | null;
-    founder_headshot_url: string | null;
     speaking_topics: unknown;
     brand_guidelines_url: string | null;
+    hero_tagline?: string | null;
   } | null;
   logoUrl: string | null;
   primaryColor?: string;
@@ -34,25 +33,13 @@ export function MediaKitSection({ pressKit, logoUrl, primaryColor = '#14b8a6' }:
             </div>
           )}
 
-          {/* Founder */}
-          {pressKit.founder_name && (
+          {/* Founder Bio */}
+          {pressKit.founder_bio && (
             <div className="bg-white rounded-xl border border-gray-100 p-6">
               <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Founder</h3>
-              <div className="flex items-start gap-4">
-                {pressKit.founder_headshot_url && (
-                  <img
-                    src={pressKit.founder_headshot_url}
-                    alt={pressKit.founder_name}
-                    className="w-16 h-16 rounded-full object-cover flex-shrink-0"
-                  />
-                )}
-                <div>
-                  <p className="font-semibold text-gray-900">{pressKit.founder_name}</p>
-                  {pressKit.founder_bio && (
-                    <p className="text-sm text-gray-600 mt-1 line-clamp-4">{pressKit.founder_bio}</p>
-                  )}
-                </div>
-              </div>
+              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line line-clamp-6">
+                {pressKit.founder_bio}
+              </p>
             </div>
           )}
 
@@ -97,17 +84,6 @@ export function MediaKitSection({ pressKit, logoUrl, primaryColor = '#14b8a6' }:
                   className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
                 >
                   <span className="text-sm font-medium text-gray-900">Brand Guidelines</span>
-                  <span className="text-xs ml-auto" style={{ color: primaryColor }}>Download</span>
-                </a>
-              )}
-              {pressKit.founder_headshot_url && (
-                <a
-                  href={pressKit.founder_headshot_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
-                >
-                  <span className="text-sm font-medium text-gray-900">Founder Headshot</span>
                   <span className="text-xs ml-auto" style={{ color: primaryColor }}>Download</span>
                 </a>
               )}

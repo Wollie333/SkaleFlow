@@ -37,11 +37,10 @@ interface NewsroomData {
   }>;
   press_kit: {
     company_overview: string | null;
-    founder_name: string | null;
     founder_bio: string | null;
-    founder_headshot_url: string | null;
     speaking_topics: unknown;
     brand_guidelines_url: string | null;
+    hero_tagline: string | null;
   } | null;
   story_angles: Array<{
     id: string;

@@ -21,7 +21,7 @@ export async function GET(
   // Get published press releases
   const { data: pressReleases } = await supabase
     .from('authority_press_releases')
-    .select('id, headline, subtitle, body_content, published_at, media_contact_name, media_contact_email')
+    .select('id, headline, subtitle, body_content, published_at, contact_info')
     .eq('organization_id', org.id)
     .eq('status', 'published')
     .order('published_at', { ascending: false })
@@ -43,17 +43,17 @@ export async function GET(
   // Get press kit
   const { data: pressKit } = await supabase
     .from('authority_press_kit')
-    .select('company_overview, founder_name, founder_bio, founder_headshot_url, speaking_topics, brand_guidelines_url')
+    .select('brand_overview, boilerplate, founder_bio_short, founder_bio_long, speaking_topics, logo_usage_notes, hero_tagline')
     .eq('organization_id', org.id)
     .single();
 
-  // Get published story angles
+  // Get active story angles
   const { data: storyAngles } = await supabase
     .from('authority_story_angles')
-    .select('id, title, summary, category, newsworthiness')
+    .select('id, title, description, category, display_order')
     .eq('organization_id', org.id)
-    .eq('status', 'active')
-    .order('newsworthiness', { ascending: false })
+    .eq('is_active', true)
+    .order('display_order', { ascending: true })
     .limit(6);
 
   // Get brand data for styling
@@ -81,8 +81,20 @@ export async function GET(
       ...p,
       engagement_type: (p.authority_commercial as Array<{ engagement_type: string }> | null)?.[0]?.engagement_type || 'earned',
     })),
-    press_kit: pressKit || null,
-    story_angles: storyAngles || [],
+    press_kit: pressKit ? {
+      company_overview: pressKit.brand_overview,
+      founder_bio: pressKit.founder_bio_long || pressKit.founder_bio_short,
+      speaking_topics: pressKit.speaking_topics,
+      brand_guidelines_url: pressKit.logo_usage_notes,
+      hero_tagline: pressKit.hero_tagline,
+    } : null,
+    story_angles: (storyAngles || []).map(a => ({
+      id: a.id,
+      title: a.title,
+      summary: a.description,
+      category: a.category || 'general',
+      newsworthiness: 5,
+    })),
     brand: brandMap,
     outlets,
   });
