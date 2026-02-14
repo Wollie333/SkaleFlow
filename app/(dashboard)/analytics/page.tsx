@@ -3,72 +3,57 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { PageHeader } from '@/components/ui';
-import { ChartBarIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { ChartBarIcon, SparklesIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
-import { OverviewCards } from '@/components/analytics/overview-cards';
-import { PerformanceChart } from '@/components/analytics/performance-chart';
-import { TopPostsTable } from '@/components/analytics/top-posts-table';
-import { PlatformBreakdown } from '@/components/analytics/platform-breakdown';
+import { OverviewTabContent } from '@/components/analytics/overview-tab-content';
+import { PlatformTabContent } from '@/components/analytics/platform-tab-content';
 import { DateRangePicker, getDateFromRange, type DateRange } from '@/components/analytics/date-range-picker';
+import type { AnalyticsResponse } from '@/components/analytics/types';
+import type { AudienceInsight } from '@/components/analytics/audience-insights-panel';
 import type { SocialPlatform } from '@/types/database';
 import { PLATFORM_CONFIG } from '@/lib/social/types';
 
-interface AnalyticsResponse {
-  overview: {
-    totalPosts: number;
-    totalEngagement: number;
-    totalImpressions: number;
-    avgEngagementRate: number;
-  };
-  timeSeries: Array<{ date: string; engagement: number; impressions: number }>;
-  topPosts: Array<{
-    id: string;
-    contentItemId: string;
-    platform: SocialPlatform;
-    topic: string | null;
-    hook: string | null;
-    publishedAt: string;
-    postUrl: string | null;
-    likes: number;
-    comments: number;
-    shares: number;
-    impressions: number;
-    engagementRate: number;
-  }>;
-  platformSummary: Array<{
-    platform: SocialPlatform;
-    totalPosts: number;
-    avgEngagementRate: number;
-    totalLikes: number;
-    totalComments: number;
-    totalShares: number;
-    totalImpressions: number;
-  }>;
-}
+type AnalyticsTab = 'overview' | SocialPlatform;
 
 interface CampaignOption {
   id: string;
   name: string;
 }
 
-const platformFilters: { value: string; label: string }[] = [
-  { value: 'all', label: 'All Platforms' },
-  ...(['linkedin', 'facebook', 'instagram', 'twitter', 'tiktok'] as SocialPlatform[]).map(p => ({
-    value: p,
-    label: PLATFORM_CONFIG[p].name,
-  })),
-];
+const EMPTY_OVERVIEW: AnalyticsResponse['overview'] = {
+  totalPosts: 0,
+  totalEngagement: 0,
+  totalImpressions: 0,
+  avgEngagementRate: 0,
+  totalReach: 0,
+  totalClicks: 0,
+  totalSaves: 0,
+  totalVideoViews: 0,
+  totalLikes: 0,
+  totalComments: 0,
+  totalShares: 0,
+};
+
+const EMPTY_DATA: AnalyticsResponse = {
+  overview: EMPTY_OVERVIEW,
+  timeSeries: [],
+  topPosts: [],
+  platformSummary: [],
+  connectedPlatforms: [],
+};
 
 export default function AnalyticsPage() {
   const supabase = createClient();
   const [dateRange, setDateRange] = useState<DateRange>('30d');
-  const [platformFilter, setPlatformFilter] = useState('all');
   const [campaignFilter, setCampaignFilter] = useState('all');
   const [campaigns, setCampaigns] = useState<CampaignOption[]>([]);
   const [data, setData] = useState<AnalyticsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [contentEngineEnabled, setContentEngineEnabled] = useState(true);
+  const [activeTab, setActiveTab] = useState<AnalyticsTab>('overview');
+  const [audienceInsights, setAudienceInsights] = useState<AudienceInsight[]>([]);
+  const [audienceLoading, setAudienceLoading] = useState(false);
 
   // Load campaigns for the filter dropdown + check content engine access
   useEffect(() => {
@@ -106,7 +91,6 @@ export default function AnalyticsPage() {
       const dateFrom = getDateFromRange(dateRange);
       const dateTo = new Date().toISOString().split('T')[0];
       const params = new URLSearchParams({ dateFrom, dateTo });
-      if (platformFilter !== 'all') params.set('platform', platformFilter);
       if (campaignFilter !== 'all') params.set('calendarId', campaignFilter);
 
       const res = await fetch(`/api/content/analytics?${params}`);
@@ -116,11 +100,30 @@ export default function AnalyticsPage() {
       console.error('Failed to load analytics:', error);
     }
     setIsLoading(false);
-  }, [dateRange, platformFilter, campaignFilter]);
+  }, [dateRange, campaignFilter]);
+
+  // Fetch audience insights (separate endpoint, fetched once on mount)
+  const loadAudienceInsights = useCallback(async () => {
+    setAudienceLoading(true);
+    try {
+      const res = await fetch('/api/social/analytics/audience-insights');
+      const json = await res.json();
+      if (res.ok && json.insights) {
+        setAudienceInsights(json.insights);
+      }
+    } catch (error) {
+      console.error('Failed to load audience insights:', error);
+    }
+    setAudienceLoading(false);
+  }, []);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    loadAudienceInsights();
+  }, [loadAudienceInsights]);
 
   if (!contentEngineEnabled) {
     return (
@@ -137,6 +140,14 @@ export default function AnalyticsPage() {
     );
   }
 
+  const analyticsData = data || EMPTY_DATA;
+  const connectedPlatforms = analyticsData.connectedPlatforms || [];
+
+  // Find audience insight for the active platform tab
+  const activeAudienceInsight = activeTab !== 'overview'
+    ? audienceInsights.find(i => i.platform === activeTab) || null
+    : null;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -147,24 +158,40 @@ export default function AnalyticsPage() {
         action={<DateRangePicker value={dateRange} onChange={setDateRange} />}
       />
 
-      {/* Filters row */}
-      <div className="flex items-center gap-4 flex-wrap">
-        {/* Platform Filter */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          {platformFilters.map(filter => (
-            <button
-              key={filter.value}
-              onClick={() => setPlatformFilter(filter.value)}
-              className={cn(
-                'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
-                platformFilter === filter.value
-                  ? 'bg-teal text-white'
-                  : 'bg-cream-warm text-stone hover:text-charcoal'
-              )}
-            >
-              {filter.label}
-            </button>
-          ))}
+      {/* Filters row: Tabs + Campaign filter */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        {/* Tab bar */}
+        <div className="flex items-center gap-1 overflow-x-auto pb-1">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={cn(
+              'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors border-b-2',
+              activeTab === 'overview'
+                ? 'bg-teal/10 text-teal border-teal'
+                : 'bg-cream-warm text-stone hover:text-charcoal border-transparent'
+            )}
+          >
+            Overview
+          </button>
+          {connectedPlatforms.map(platform => {
+            const config = PLATFORM_CONFIG[platform];
+            const isActive = activeTab === platform;
+            return (
+              <button
+                key={platform}
+                onClick={() => setActiveTab(platform)}
+                className={cn(
+                  'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors border-b-2',
+                  isActive
+                    ? 'bg-white text-charcoal'
+                    : 'bg-cream-warm text-stone hover:text-charcoal border-transparent'
+                )}
+                style={isActive ? { borderColor: config.color } : undefined}
+              >
+                {config.name}
+              </button>
+            );
+          })}
         </div>
 
         {/* Campaign Filter */}
@@ -182,34 +209,35 @@ export default function AnalyticsPage() {
         )}
       </div>
 
-      {/* Overview Cards */}
-      <OverviewCards
-        data={data?.overview || {
-          totalPosts: 0,
-          totalEngagement: 0,
-          totalImpressions: 0,
-          avgEngagementRate: 0,
-        }}
-        isLoading={isLoading}
-      />
+      {/* No connections empty state */}
+      {!isLoading && connectedPlatforms.length === 0 && analyticsData.overview.totalPosts === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <Cog6ToothIcon className="w-12 h-12 text-stone/30 mb-4" />
+          <h3 className="text-heading-md text-charcoal mb-2">No social accounts connected</h3>
+          <p className="text-stone max-w-sm mb-4">
+            Connect your social media accounts in Settings to start tracking analytics.
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => window.location.href = '/settings'}
+          >
+            Go to Settings
+          </Button>
+        </div>
+      )}
 
-      {/* Performance Chart */}
-      <PerformanceChart
-        data={data?.timeSeries || []}
-        isLoading={isLoading}
-      />
-
-      {/* Top Posts Table */}
-      <TopPostsTable
-        posts={data?.topPosts || []}
-        isLoading={isLoading}
-      />
-
-      {/* Platform Breakdown */}
-      <PlatformBreakdown
-        data={data?.platformSummary || []}
-        isLoading={isLoading}
-      />
+      {/* Tab Content */}
+      {activeTab === 'overview' ? (
+        <OverviewTabContent data={analyticsData} isLoading={isLoading} />
+      ) : (
+        <PlatformTabContent
+          platform={activeTab}
+          data={analyticsData}
+          isLoading={isLoading}
+          audienceInsight={activeAudienceInsight}
+          audienceLoading={audienceLoading}
+        />
+      )}
     </div>
   );
 }

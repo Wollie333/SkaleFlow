@@ -12,12 +12,22 @@ interface PlatformSummary {
   totalLikes: number;
   totalComments: number;
   totalShares: number;
+  totalSaves: number;
   totalImpressions: number;
+  totalReach: number;
+  totalClicks: number;
+  totalVideoViews: number;
 }
 
 interface PlatformBreakdownProps {
   data: PlatformSummary[];
   isLoading?: boolean;
+}
+
+function formatCompact(v: number): string {
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `${(v / 1_000).toFixed(1)}k`;
+  return v.toLocaleString();
 }
 
 export function PlatformBreakdown({ data, isLoading }: PlatformBreakdownProps) {
@@ -43,6 +53,30 @@ export function PlatformBreakdown({ data, isLoading }: PlatformBreakdownProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {data.map(platform => {
           const config = PLATFORM_CONFIG[platform.platform];
+
+          // Build metric rows, only showing non-zero values
+          const metricRows: { label: string; value: string }[] = [
+            { label: 'Avg Engagement Rate', value: `${platform.avgEngagementRate.toFixed(2)}%` },
+            { label: 'Total Impressions', value: formatCompact(platform.totalImpressions) },
+          ];
+          if (platform.totalReach > 0) {
+            metricRows.push({ label: 'Reach', value: formatCompact(platform.totalReach) });
+          }
+          metricRows.push(
+            { label: 'Likes', value: platform.totalLikes.toLocaleString() },
+            { label: 'Comments', value: platform.totalComments.toLocaleString() },
+            { label: 'Shares', value: platform.totalShares.toLocaleString() },
+          );
+          if (platform.totalSaves > 0) {
+            metricRows.push({ label: 'Saves', value: formatCompact(platform.totalSaves) });
+          }
+          if (platform.totalClicks > 0) {
+            metricRows.push({ label: 'Clicks', value: formatCompact(platform.totalClicks) });
+          }
+          if (platform.totalVideoViews > 0) {
+            metricRows.push({ label: 'Video Views', value: formatCompact(platform.totalVideoViews) });
+          }
+
           return (
             <Card key={platform.platform} className="p-5">
               <div className="flex items-center gap-3 mb-4">
@@ -55,32 +89,12 @@ export function PlatformBreakdown({ data, isLoading }: PlatformBreakdownProps) {
               </div>
 
               <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm text-stone">Avg Engagement Rate</span>
-                  <span className="text-sm font-semibold text-charcoal">
-                    {platform.avgEngagementRate.toFixed(2)}%
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-stone">Total Impressions</span>
-                  <span className="text-sm font-semibold text-charcoal">
-                    {platform.totalImpressions >= 1000
-                      ? `${(platform.totalImpressions / 1000).toFixed(1)}k`
-                      : platform.totalImpressions.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-stone">Likes</span>
-                  <span className="text-sm text-charcoal">{platform.totalLikes.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-stone">Comments</span>
-                  <span className="text-sm text-charcoal">{platform.totalComments.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-stone">Shares</span>
-                  <span className="text-sm text-charcoal">{platform.totalShares.toLocaleString()}</span>
-                </div>
+                {metricRows.map(row => (
+                  <div key={row.label} className="flex justify-between">
+                    <span className="text-sm text-stone">{row.label}</span>
+                    <span className="text-sm font-semibold text-charcoal">{row.value}</span>
+                  </div>
+                ))}
               </div>
             </Card>
           );

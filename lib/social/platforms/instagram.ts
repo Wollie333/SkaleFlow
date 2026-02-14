@@ -1,6 +1,6 @@
 import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData } from '../types';
 
-const GRAPH_API_VERSION = 'v19.0';
+const GRAPH_API_VERSION = 'v22.0';
 const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
 export const instagramAdapter: PlatformAdapter = {
@@ -178,45 +178,82 @@ export const instagramAdapter: PlatformAdapter = {
 
   async getPostAnalytics(tokens: TokenData, postId: string): Promise<AnalyticsData> {
     try {
-      const metricsRes = await fetch(
-        `${GRAPH_API_BASE}/${postId}/insights?metric=impressions,reach,saved,likes,comments,shares,video_views&access_token=${tokens.accessToken}`
-      );
-      const metricsData = await metricsRes.json();
-
+      // Step 1: Fetch basic counts (works for all media types)
       const basicRes = await fetch(
-        `${GRAPH_API_BASE}/${postId}?fields=like_count,comments_count&access_token=${tokens.accessToken}`
+        `${GRAPH_API_BASE}/${postId}?fields=like_count,comments_count,media_type&access_token=${tokens.accessToken}`
       );
       const basicData = await basicRes.json();
 
-      const getMetric = (name: string): number => {
-        const metric = metricsData.data?.find((d: { name: string }) => d.name === name);
-        return metric?.values?.[0]?.value || 0;
-      };
+      if (basicData.error) {
+        console.error('[Instagram Analytics] Basic fields error:', basicData.error.message);
+        return { likes: 0, comments: 0, shares: 0, saves: 0, impressions: 0, reach: 0, clicks: 0, videoViews: 0, engagementRate: 0 };
+      }
 
-      const likes = basicData.like_count || getMetric('likes');
-      const comments = basicData.comments_count || getMetric('comments');
-      const shares = getMetric('shares');
-      const saves = getMetric('saved');
-      const impressions = getMetric('impressions');
-      const reach = getMetric('reach');
-      const videoViews = getMetric('video_views');
+      const likes = basicData.like_count || 0;
+      const comments = basicData.comments_count || 0;
 
-      const totalEngagement = likes + comments + shares + saves;
+      // Step 2: Fetch insights — only use metrics valid for Instagram media objects
+      // Valid: impressions, reach, saved (all media types)
+      // Video-only: video_views, plays, ig_reels_aggregated_all_plays_count
+      let impressions = 0;
+      let reach = 0;
+      let saves = 0;
+      let videoViews = 0;
+
+      try {
+        const insightMetrics = 'impressions,reach,saved';
+        const metricsRes = await fetch(
+          `${GRAPH_API_BASE}/${postId}/insights?metric=${insightMetrics}&access_token=${tokens.accessToken}`
+        );
+        const metricsData = await metricsRes.json();
+
+        if (metricsData.data && !metricsData.error) {
+          const getMetric = (name: string): number => {
+            const metric = metricsData.data?.find((d: { name: string }) => d.name === name);
+            return metric?.values?.[0]?.value || 0;
+          };
+          impressions = getMetric('impressions');
+          reach = getMetric('reach');
+          saves = getMetric('saved');
+        }
+      } catch {
+        // Insights may not be available for all post types (e.g., promoted posts)
+      }
+
+      // Step 3: For VIDEO/REEL, try to fetch video views separately
+      const mediaType = basicData.media_type;
+      if (mediaType === 'VIDEO') {
+        try {
+          const videoRes = await fetch(
+            `${GRAPH_API_BASE}/${postId}/insights?metric=plays&access_token=${tokens.accessToken}`
+          );
+          const videoData = await videoRes.json();
+          if (videoData.data && !videoData.error) {
+            const playsMetric = videoData.data.find((d: { name: string }) => d.name === 'plays');
+            videoViews = playsMetric?.values?.[0]?.value || 0;
+          }
+        } catch {
+          // Video metrics not available
+        }
+      }
+
+      const totalEngagement = likes + comments + saves;
       const engagementRate = reach > 0 ? (totalEngagement / reach) * 100 : 0;
 
       return {
         likes,
         comments,
-        shares,
+        shares: 0, // Instagram API doesn't expose share counts
         saves,
         impressions,
         reach,
         clicks: 0,
         videoViews,
         engagementRate: Math.round(engagementRate * 100) / 100,
-        metadata: { ...metricsData, ...basicData },
+        metadata: basicData,
       };
-    } catch {
+    } catch (error) {
+      console.error('[Instagram Analytics] Failed:', error);
       return { likes: 0, comments: 0, shares: 0, saves: 0, impressions: 0, reach: 0, clicks: 0, videoViews: 0, engagementRate: 0 };
     }
   },
@@ -240,7 +277,7 @@ function buildInstagramCaption(post: PostPayload): string {
 async function waitForMediaProcessing(containerId: string, accessToken: string, maxRetries = 30): Promise<void> {
   for (let i = 0; i < maxRetries; i++) {
     const res = await fetch(
-      `https://graph.facebook.com/v19.0/${containerId}?fields=status_code&access_token=${accessToken}`
+      `${GRAPH_API_BASE}/${containerId}?fields=status_code&access_token=${accessToken}`
     );
     const data = await res.json();
 

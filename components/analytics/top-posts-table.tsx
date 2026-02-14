@@ -7,7 +7,7 @@ import { PLATFORM_CONFIG } from '@/lib/social/types';
 import type { SocialPlatform } from '@/types/database';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 
-interface TopPost {
+export interface TopPost {
   id: string;
   contentItemId: string;
   platform: SocialPlatform;
@@ -18,18 +18,35 @@ interface TopPost {
   likes: number;
   comments: number;
   shares: number;
+  saves: number;
   impressions: number;
+  reach: number;
+  clicks: number;
+  videoViews: number;
   engagementRate: number;
 }
 
 interface TopPostsTableProps {
   posts: TopPost[];
   isLoading?: boolean;
+  visibleColumns?: SortKey[];
 }
 
-type SortKey = 'likes' | 'comments' | 'shares' | 'impressions' | 'engagementRate';
+export type SortKey = 'likes' | 'comments' | 'shares' | 'saves' | 'impressions' | 'reach' | 'clicks' | 'videoViews' | 'engagementRate';
 
-export function TopPostsTable({ posts, isLoading }: TopPostsTableProps) {
+const ALL_COLUMNS: { key: SortKey; label: string }[] = [
+  { key: 'likes', label: 'Likes' },
+  { key: 'comments', label: 'Comments' },
+  { key: 'shares', label: 'Shares' },
+  { key: 'saves', label: 'Saves' },
+  { key: 'impressions', label: 'Impressions' },
+  { key: 'reach', label: 'Reach' },
+  { key: 'clicks', label: 'Clicks' },
+  { key: 'videoViews', label: 'Video Views' },
+  { key: 'engagementRate', label: 'Eng. Rate' },
+];
+
+export function TopPostsTable({ posts, isLoading, visibleColumns }: TopPostsTableProps) {
   const [sortBy, setSortBy] = useState<SortKey>('engagementRate');
   const [sortDesc, setSortDesc] = useState(true);
 
@@ -46,6 +63,10 @@ export function TopPostsTable({ posts, isLoading }: TopPostsTableProps) {
     const diff = (a[sortBy] || 0) - (b[sortBy] || 0);
     return sortDesc ? -diff : diff;
   });
+
+  const columns = visibleColumns
+    ? ALL_COLUMNS.filter(col => visibleColumns.includes(col.key))
+    : ALL_COLUMNS;
 
   if (isLoading) {
     return (
@@ -68,14 +89,6 @@ export function TopPostsTable({ posts, isLoading }: TopPostsTableProps) {
       </Card>
     );
   }
-
-  const columns: { key: SortKey; label: string }[] = [
-    { key: 'likes', label: 'Likes' },
-    { key: 'comments', label: 'Comments' },
-    { key: 'shares', label: 'Shares' },
-    { key: 'impressions', label: 'Impressions' },
-    { key: 'engagementRate', label: 'Eng. Rate' },
-  ];
 
   return (
     <Card className="p-6">
