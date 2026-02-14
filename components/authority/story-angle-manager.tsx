@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PlusIcon, TrashIcon, SparklesIcon, PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { CONFIRMED_FORMATS } from '@/lib/authority/constants';
 import { getClientModelsForFeature, type ClientModelOption } from '@/lib/ai/client-models';
@@ -25,18 +25,24 @@ interface StoryAngleManagerProps {
   angles: StoryAngle[];
   organizationId: string;
   onRefresh: () => void;
+  defaultModelId?: string;
 }
 
 const AI_MODELS = getClientModelsForFeature('content_generation');
 
-export function StoryAngleManager({ angles, organizationId, onRefresh }: StoryAngleManagerProps) {
+export function StoryAngleManager({ angles, organizationId, onRefresh, defaultModelId }: StoryAngleManagerProps) {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiStatus, setAiStatus] = useState<'idle' | 'generating' | 'done' | 'error'>('idle');
   const [aiError, setAiError] = useState('');
-  const [selectedModel, setSelectedModel] = useState(AI_MODELS[0]?.id || '');
+  const [selectedModel, setSelectedModel] = useState(defaultModelId || AI_MODELS[0]?.id || '');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+
+  // Sync when parent changes the model
+  useEffect(() => {
+    if (defaultModelId) setSelectedModel(defaultModelId);
+  }, [defaultModelId]);
   const [formData, setFormData] = useState({ title: '', description: '', target_outlets: '', recommended_format: '' });
 
   const handleCreate = async () => {
