@@ -6,7 +6,15 @@ export const linkedinAdapter: PlatformAdapter = {
   platform: 'linkedin',
 
   getAuthUrl(state: string, redirectUri: string): string {
-    const scope = 'openid profile w_member_social r_organization_social w_organization_social r_organization_admin';
+    // Base scopes: "Sign In with LinkedIn" + "Share on LinkedIn" products (available by default)
+    let scope = 'openid profile w_member_social';
+
+    // Organization scopes require "Community Management API" product to be approved in LinkedIn Developer Portal.
+    // Enable via env var once that product is granted, otherwise LinkedIn shows "Bummer, something went wrong."
+    if (process.env.LINKEDIN_ENABLE_ORG_SCOPES === 'true') {
+      scope += ' r_organization_social w_organization_social r_organization_admin';
+    }
+
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: process.env.LINKEDIN_CLIENT_ID!,
