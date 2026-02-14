@@ -7,6 +7,7 @@ import {
   DocumentTextIcon,
   PlusIcon,
   ArrowUpTrayIcon,
+  ArrowDownTrayIcon,
   DocumentDuplicateIcon,
   ChevronDownIcon,
   ChevronRightIcon,
@@ -207,6 +208,110 @@ export default function AdminTemplatesPage() {
     fetchTemplates();
   };
 
+  const handleDownloadLayout = () => {
+    const content = `---
+# ── SKALEFLOW TEMPLATE LAYOUT ──
+# Fill in the YAML front matter below for auto-classification.
+# Then write each section with its heading.
+
+# REQUIRED front matter:
+category: social_framework
+# Valid: social_framework | video_script | hook | cta | seo_content | email_outreach | web_copy
+
+content_type: post
+# Valid: post | script | hook | cta
+
+tier: core_rotation
+# Valid: core_rotation | high_impact | strategic
+
+# OPTIONAL front matter:
+format_category: short
+# Valid: short | medium | long | carousel | static
+
+funnel_stages: awareness, consideration
+# Valid: awareness | consideration | conversion
+
+storybrand_stages: character (primary), external_problem, guide
+# Valid: character | external_problem | internal_problem | philosophical_problem | guide | plan | call_to_action | failure | success
+# Add (primary) after the main stage
+
+platforms: instagram, facebook, linkedin
+# Valid: instagram | facebook | linkedin | twitter | tiktok | youtube
+---
+
+# Template Name Here
+
+## Description
+One paragraph explaining what this framework does and when to use it.
+
+## Structure
+Step-by-step flow of the framework. Number each step.
+1. Step one — what happens first
+2. Step two — what follows
+3. Step three — conclusion
+
+## Psychology
+Why this framework works. What cognitive principles does it leverage?
+
+## Hook Rules
+Rules for the opening 1-2 lines. How should the content grab attention?
+- What technique? (question, bold claim, stat, story)
+- What tone? (direct, curious, provocative)
+- Length guideline (1 line, 2 lines, etc.)
+
+## Body Rules
+Rules for the main content body.
+- Structure: how many sections/points?
+- Depth: how detailed?
+- Evidence: examples, stats, stories?
+- Flow: how should ideas connect?
+
+## CTA Rules
+Rules for the closing/call-to-action.
+- How direct should the ask be?
+- Question, command, or invitation?
+- What action should the reader take?
+
+## Tone & Voice
+Writing personality and style guidelines.
+- Adjectives describing the voice
+- Sentence length and complexity
+- Formality level
+- Do's and don'ts
+
+## Formatting Rules
+Visual/structural rules for the output.
+- Target word count or range
+- Line break frequency
+- Use of bullet points, numbering, bold, headers
+- Platform-specific notes
+- Mobile readability
+
+## When to Use
+- Scenario where this template excels
+- Another good use case
+
+## When NOT to Use
+- Scenario where this template shouldn't be used
+- Another bad use case
+
+## Example
+[Paste a complete example of content created using this framework]
+
+## Prompt Instructions
+[Optional additional instructions for the AI that don't fit in other sections]
+`;
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'skaleflow-template-layout.md';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const filteredTemplates = templates;
   const totalActive = templates.filter(t => t.is_active).length;
   const totalInactive = templates.filter(t => !t.is_active).length;
@@ -224,17 +329,14 @@ export default function AdminTemplatesPage() {
         ]}
         action={
           <div className="flex gap-2">
-            {totalLegacy > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBulkStandardise}
-                disabled={standardising}
-              >
-                <SparklesIcon className="w-4 h-4 mr-1.5" />
-                {standardising ? 'Standardising...' : `Standardise (${totalLegacy})`}
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadLayout}
+            >
+              <ArrowDownTrayIcon className="w-4 h-4 mr-1.5" />
+              Download Layout
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -242,14 +344,6 @@ export default function AdminTemplatesPage() {
             >
               <ArrowUpTrayIcon className="w-4 h-4 mr-1.5" />
               Upload .md
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowBulkImportModal(true)}
-            >
-              <DocumentDuplicateIcon className="w-4 h-4 mr-1.5" />
-              Bulk Import
             </Button>
             <Button
               size="sm"
@@ -263,7 +357,7 @@ export default function AdminTemplatesPage() {
       />
 
       {/* Stats bar */}
-      <div className="flex gap-4 text-sm text-stone">
+      <div className="flex items-center gap-4 text-sm text-stone">
         <span>{templates.length} templates</span>
         <span className="text-stone/30">|</span>
         <span className="text-teal">{totalActive} active</span>
@@ -275,6 +369,16 @@ export default function AdminTemplatesPage() {
           <>
             <span className="text-stone/30">|</span>
             <span className="text-amber-600">{totalLegacy} legacy</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBulkStandardise}
+              disabled={standardising}
+              className="ml-1 text-xs"
+            >
+              <SparklesIcon className="w-3.5 h-3.5 mr-1" />
+              {standardising ? 'Standardising...' : 'Standardise All'}
+            </Button>
           </>
         )}
       </div>

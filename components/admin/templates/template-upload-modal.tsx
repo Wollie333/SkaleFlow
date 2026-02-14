@@ -255,6 +255,15 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
   const handleCreate = async () => {
     if (!parsed) return;
 
+    // Strict validation: block creation if sections are missing
+    if (parsed.missing_sections.length > 0) {
+      setError(
+        `Cannot create template — missing sections: ${parsed.missing_sections.join(', ')}. ` +
+        'Download the layout file for the required format.'
+      );
+      return;
+    }
+
     setSaving(true);
     setError('');
 
@@ -530,21 +539,21 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
                 </div>
               </details>
 
-              {/* Missing sections warning */}
+              {/* Missing sections — blocks creation */}
               {parsed.missing_sections.length > 0 && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <p className="text-xs font-semibold text-amber-800 mb-1">
-                    Missing standardised sections ({parsed.missing_sections.length}):
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-xs font-semibold text-red-800 mb-1">
+                    Missing required sections ({parsed.missing_sections.length}):
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {parsed.missing_sections.map(s => (
-                      <span key={s} className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-medium">
+                      <span key={s} className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-medium">
                         {s}
                       </span>
                     ))}
                   </div>
-                  <p className="text-[10px] text-amber-600 mt-1.5">
-                    Template will still be created, but AI won&apos;t get standardised guidance. Use the &quot;Standardise&quot; tool later to fill these in.
+                  <p className="text-[10px] text-red-600 mt-1.5">
+                    Template cannot be created until all sections are present. Download the layout file for the required format.
                   </p>
                 </div>
               )}
@@ -721,7 +730,7 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
               <Button
                 size="sm"
                 onClick={handleCreate}
-                disabled={saving || classifying}
+                disabled={saving || classifying || parsed.missing_sections.length > 0}
               >
                 {saving ? 'Creating...' : 'Create Template'}
               </Button>
