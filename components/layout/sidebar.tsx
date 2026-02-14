@@ -192,16 +192,20 @@ export function Sidebar({
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   ];
 
-  if (canAccessBrandEngine) {
-    baseNavItems.push({ name: 'Brand Engine', href: '/brand', icon: SparklesIcon });
-  }
-
-  if (canAccessContentEngine) {
-    baseNavItems.push({ name: 'Content Engine', href: '/content/machine', icon: BoltIcon });
-  }
-
   if (canAccessTeam) {
     baseNavItems.push({ name: 'My Team', href: '/team', icon: UserGroupIcon });
+  }
+
+  // SkaleFlow Engines
+  const engineItems: NavItem[] = [];
+  if (canAccessBrandEngine) {
+    engineItems.push({ name: 'Brand Engine', href: '/brand', icon: SparklesIcon });
+  }
+  if (canAccessContentEngine) {
+    engineItems.push({ name: 'Content Engine', href: '/content/machine', icon: BoltIcon });
+  }
+  if (isOwnerOrAdmin || isSuperAdmin) {
+    engineItems.push({ name: 'Authority Engine', href: '/authority', icon: NewspaperIcon });
   }
 
   // Total pending reviews = change_requests + content pending_review notifications
@@ -274,6 +278,65 @@ export function Sidebar({
                   </span>
                 )}
               </Link>
+            </div>
+          </div>
+        )}
+
+        {/* SkaleFlow Engines */}
+        {engineItems.length > 0 && (
+          <div className="mt-6">
+            <h4 className="px-3 text-xs font-semibold text-teal-dark uppercase tracking-wider mb-2">
+              SkaleFlow Engines
+            </h4>
+            <div className="space-y-1">
+              {engineItems.map((item) => {
+                const isEngine = item.href === '/authority';
+                const isActive = isEngine
+                  ? pathname === '/authority'
+                  : pathname === item.href || pathname.startsWith(item.href);
+
+                return (
+                  <div key={item.name}>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                        isActive || (isEngine && pathname.startsWith('/authority'))
+                          ? 'bg-teal/10 text-teal'
+                          : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
+                      )}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      {item.name}
+                    </Link>
+                    {/* Authority Engine sub-nav */}
+                    {isEngine && pathname.startsWith('/authority') && (
+                      <div className="space-y-1 mt-1">
+                        {authorityNavigation.map((sub) => {
+                          const subActive = sub.href === '/authority'
+                            ? pathname === '/authority'
+                            : pathname.startsWith(sub.href);
+                          return (
+                            <Link
+                              key={sub.name}
+                              href={sub.href}
+                              className={cn(
+                                'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
+                                subActive
+                                  ? 'bg-teal/10 text-teal'
+                                  : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                              )}
+                            >
+                              <sub.icon className="w-4 h-4" />
+                              {sub.name}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -474,36 +537,6 @@ export function Sidebar({
             )}
           </div>
         </div>
-
-        {/* Authority Engine — owners/admins only */}
-        {isOwnerOrAdmin && (
-          <div className="mt-6">
-            <h4 className="px-3 text-xs font-semibold text-teal-dark uppercase tracking-wider mb-2">
-              Authority Engine
-            </h4>
-            <div className="space-y-1">
-              {authorityNavigation.map((item) => {
-                const isActive = pathname === item.href || (item.href !== '/authority' && pathname.startsWith(item.href));
-                const isExact = item.href === '/authority' && pathname === '/authority';
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={cn(
-                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                      (isExact || isActive)
-                        ? 'bg-teal/10 text-teal'
-                        : 'text-stone hover:bg-cream-warm hover:text-charcoal'
-                    )}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    {item.name}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Marketing Section — locked for non-super_admins */}
         <div className="mt-6">
