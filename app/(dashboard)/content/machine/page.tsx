@@ -28,6 +28,7 @@ import {
   ArrowDownTrayIcon,
   ClipboardDocumentIcon,
   ArrowPathIcon,
+  LightBulbIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import { FORMAT_LABELS, getFormatCategory, type ContentFormat } from '@/config/script-frameworks';
@@ -185,6 +186,9 @@ export default function ContentEnginePage() {
   const [selectedBrandVars, setSelectedBrandVars] = useState<Set<string>>(new Set());
   const [showBrandVarModal, setShowBrandVarModal] = useState(false);
   const [showBrandPanel, setShowBrandPanel] = useState(false);
+
+  // Creative direction prompt
+  const [creativeDirection, setCreativeDirection] = useState('');
 
   // Templates — empty = smart mode (AI picks best template)
   const [selectedTemplates, setSelectedTemplates] = useState<TemplateOverrides>({});
@@ -450,6 +454,7 @@ export default function ContentEnginePage() {
           modelOverride: effectiveModelId,
           selectedBrandVariables: selectedBrandVars.size > 0 ? Array.from(selectedBrandVars) : null,
           templateOverrides: (selectedTemplates.script || selectedTemplates.hook || selectedTemplates.cta) ? selectedTemplates : null,
+          creativeDirection: creativeDirection || null,
         }),
       });
 
@@ -834,6 +839,26 @@ export default function ContentEnginePage() {
                 ))}
               </select>
             </div>
+          </Card>
+
+          {/* ── Creative Direction ─────────────────────────────────── */}
+          <Card>
+            <div className="flex items-center gap-2 mb-2">
+              <LightBulbIcon className="w-4 h-4 text-gold" />
+              <label className="text-xs font-semibold text-charcoal">Creative Direction</label>
+              <span className="text-[10px] text-stone">(optional)</span>
+            </div>
+            <textarea
+              value={creativeDirection}
+              onChange={e => setCreativeDirection(e.target.value)}
+              rows={2}
+              placeholder='e.g. "Focus on our new group coaching launch" or "Address objections from price-sensitive leads"'
+              className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-gold/20 focus:border-gold placeholder:text-stone/40 resize-none"
+              maxLength={500}
+            />
+            {creativeDirection && (
+              <p className="text-[10px] text-stone mt-1 text-right">{creativeDirection.length}/500</p>
+            )}
           </Card>
 
           {/* ── Brand Variables ───────────────────────────────────── */}

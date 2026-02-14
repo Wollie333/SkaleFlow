@@ -329,7 +329,8 @@ export function buildSystemPrompt(
   brandContext: Record<string, unknown>,
   orgName: string,
   selectedBrandVariables?: string[],
-  rejectionFeedback?: string
+  rejectionFeedback?: string,
+  creativeDirection?: string
 ): string {
   const brandPrompt = Object.keys(brandContext).length > 0
     ? buildBrandContextPrompt(brandContext, selectedBrandVariables)
@@ -337,11 +338,17 @@ export function buildSystemPrompt(
 
   const feedbackSection = rejectionFeedback || '';
 
+  const directionSection = creativeDirection
+    ? `\nCREATIVE DIRECTION (from the founder — this is the #1 priority):
+"${creativeDirection}"
+All content MUST align with this direction. Use it as the north star for topic selection, messaging angle, and tone. Every post should clearly serve this directive.\n`
+    : '';
+
   return `You are a content strategist and scriptwriter for ${orgName}. You create original, brand-specific content.
 
 ${brandPrompt}
 ${feedbackSection}
-
+${directionSection}
 CRITICAL RULES:
 - Every piece of content you create must be 100% UNIQUE — never repeat a topic, hook, angle, or script structure.
 - Write in the brand's voice using the brand's actual language, terms, and offer names.
@@ -365,7 +372,8 @@ export function buildEnhancedPrompt(
   framework: ReturnType<typeof getScriptFramework>,
   previouslyGenerated?: Array<{ title: string; hook: string; topic: string }>,
   itemIndex?: number,
-  themeHint?: string | null
+  themeHint?: string | null,
+  creativeDirection?: string
 ): string {
   // Build uniqueness enforcement section — capped to avoid bloating the prompt
   // Only include the most recent 8 entries with titles only (hooks are too verbose)
@@ -491,8 +499,14 @@ STRUCTURE:
     return guides[p] || '';
   }).filter(Boolean).join('\n\n');
 
+  const directionDirective = creativeDirection
+    ? `\nCREATIVE DIRECTION (highest priority — the founder's intent for this content):
+"${creativeDirection}"
+Every aspect of this post — topic, angle, hook, examples, CTA — must serve this direction. Interpret it as the guiding theme.\n`
+    : '';
+
   return `Create a ${framework.formatCategory}-form content piece for ${orgName}.
-${uniquenessSection}${topicDirective}${positionSeed}
+${uniquenessSection}${topicDirective}${positionSeed}${directionDirective}
 
 CONTENT PARAMETERS:
 - Funnel: ${item.funnel_stage} ${getFunnelGuidance(item.funnel_stage)}
@@ -756,7 +770,8 @@ export async function generateSingleItem(
   previouslyGenerated: Array<{ title: string; hook: string; topic: string }>,
   selectedBrandVariables?: string[] | null,
   rejectionFeedback?: string,
-  templateOverrides?: { script?: string; hook?: string; cta?: string }
+  templateOverrides?: { script?: string; hook?: string; cta?: string },
+  creativeDirection?: string
 ): Promise<{
   success: boolean;
   error?: string;
@@ -838,7 +853,7 @@ export async function generateSingleItem(
     : selectSmartVariables(previouslyGenerated.length);
   console.log(`[GEN-SINGLE] Brand variables: ${effectiveVars.length} selected (${selectedBrandVariables ? 'user-chosen' : 'smart-random'}): ${effectiveVars.join(', ')}`);
 
-  const systemPrompt = buildSystemPrompt(brandContext, org?.name || 'Your Brand', effectiveVars, rejectionFeedback);
+  const systemPrompt = buildSystemPrompt(brandContext, org?.name || 'Your Brand', effectiveVars, rejectionFeedback, creativeDirection);
   console.log(`[GEN-SINGLE] System prompt size: ${systemPrompt.length} chars`);
 
   // Higher temperature for free/weaker models
@@ -851,7 +866,8 @@ export async function generateSingleItem(
     framework,
     previouslyGenerated,
     itemIndex,
-    themeHint
+    themeHint,
+    creativeDirection
   );
 
   const maxTokens = framework.formatCategory === 'long' ? 6144 :

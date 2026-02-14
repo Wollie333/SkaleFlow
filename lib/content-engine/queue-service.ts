@@ -23,6 +23,7 @@ interface EnqueueParams {
   generateScripts?: boolean;
   selectedPlacements?: string[] | null;
   templateOverrides?: { script?: string; hook?: string; cta?: string } | null;
+  creativeDirection?: string | null;
 }
 
 /**
@@ -31,7 +32,7 @@ interface EnqueueParams {
  */
 export async function enqueueBatch(
   supabase: ServiceClient,
-  { orgId, calendarId, userId, contentItemIds, modelId, selectedBrandVariables, generateScripts, selectedPlacements, templateOverrides }: EnqueueParams
+  { orgId, calendarId, userId, contentItemIds, modelId, selectedBrandVariables, generateScripts, selectedPlacements, templateOverrides, creativeDirection }: EnqueueParams
 ): Promise<{ batchId: string; totalItems: number }> {
   console.log(`[QUEUE-ENQUEUE-SVC] enqueueBatch: orgId=${orgId}, modelId=${modelId}, items=${contentItemIds.length}, userId=${userId}`);
 
@@ -59,6 +60,7 @@ export async function enqueueBatch(
       generate_scripts: generateScripts || false,
       selected_placements: (selectedPlacements || null) as unknown as Json,
       template_overrides: (templateOverrides || null) as unknown as Json,
+      creative_direction: creativeDirection || null,
     })
     .select('id')
     .single();
@@ -509,7 +511,7 @@ export async function processOneBatchItem(
   // Load batch context
   const { data: batch, error: batchLoadError } = await supabase
     .from('generation_batches')
-    .select('model_id, user_id, uniqueness_log, selected_brand_variables, template_overrides')
+    .select('model_id, user_id, uniqueness_log, selected_brand_variables, template_overrides, creative_direction')
     .eq('id', batchId)
     .single();
 
@@ -590,7 +592,8 @@ export async function processOneBatchItem(
       allPrevious,
       selectedVars,
       rejectionFeedback || undefined,
-      batchTemplateOverrides
+      batchTemplateOverrides,
+      batch.creative_direction || undefined
     );
 
     const genElapsed = Date.now() - genStartTime;

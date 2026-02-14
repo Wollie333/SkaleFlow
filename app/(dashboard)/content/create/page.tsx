@@ -19,6 +19,7 @@ import {
   XMarkIcon,
   LinkIcon,
   PaperAirplaneIcon,
+  LightBulbIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import {
@@ -173,6 +174,9 @@ export default function ContentCreatePage() {
   const [utmParams, setUtmParams] = useState<UTMParams | null>(null);
   const [showUtmModal, setShowUtmModal] = useState(false);
   const [targetUrl, setTargetUrl] = useState('');
+
+  // Creative direction prompt
+  const [creativeDirection, setCreativeDirection] = useState('');
 
   // Content angles for config modal
   const [contentAngles, setContentAngles] = useState<Array<{
@@ -378,6 +382,7 @@ export default function ContentCreatePage() {
           platforms: getEnabledPlatforms(platformPlacements),
           modelOverride: effectiveModelId,
           existingCaption: editFields.caption || null,
+          creativeDirection: creativeDirection || null,
         }),
       });
 
@@ -843,6 +848,7 @@ export default function ContentCreatePage() {
                   calendarId: calId,
                   contentItemIds: ideaIds,
                   modelOverride: bulkEffectiveModelId,
+                  creativeDirection: creativeDirection || null,
                 }),
               });
               const queueData = await queueRes.json();
@@ -1183,6 +1189,26 @@ export default function ContentCreatePage() {
                     brandCategories={brandCategories}
                   />
                 </div>
+              </Card>
+
+              {/* Creative Direction */}
+              <Card>
+                <div className="flex items-center gap-2 mb-2">
+                  <LightBulbIcon className="w-4 h-4 text-gold" />
+                  <label className="text-sm font-medium text-charcoal-700">Creative Direction</label>
+                  <span className="text-xs text-stone">(optional)</span>
+                </div>
+                <textarea
+                  value={creativeDirection}
+                  onChange={e => setCreativeDirection(e.target.value)}
+                  rows={2}
+                  placeholder="e.g. &quot;Focus on our new group coaching launch&quot; or &quot;Address objections from price-sensitive leads&quot;"
+                  className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-gold/20 focus:border-gold placeholder:text-stone/40 resize-none"
+                  maxLength={500}
+                />
+                {creativeDirection && (
+                  <p className="text-xs text-stone mt-1 text-right">{creativeDirection.length}/500</p>
+                )}
               </Card>
 
               {/* Creative Assets */}

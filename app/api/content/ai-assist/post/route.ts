@@ -14,6 +14,7 @@ export async function POST(request: Request) {
       modelOverride,
       existingCaption,
       selectedBrandVariables,
+      creativeDirection,
     } = await request.json();
 
     if (!organizationId) {
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
       modelOverride,
       existingCaption,
       selectedBrandVariables,
+      creativeDirection: creativeDirection || null,
     });
 
     return NextResponse.json(result);

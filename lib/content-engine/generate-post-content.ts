@@ -26,6 +26,7 @@ export async function generatePostContent(
     modelOverride?: string | null;
     existingCaption?: string | null;
     selectedBrandVariables?: string[] | null;
+    creativeDirection?: string | null;
   }
 ): Promise<GeneratePostResult> {
   // Get brand context
@@ -55,10 +56,16 @@ export async function generatePostContent(
 
   const isEnhancement = !!params.existingCaption;
 
+  const directionSection = params.creativeDirection
+    ? `\nCREATIVE DIRECTION (from the founder — this is the #1 priority):
+"${params.creativeDirection}"
+All content MUST align with this direction. Use it as the north star for topic selection, messaging angle, and tone.\n`
+    : '';
+
   const systemPrompt = `You are a social media content strategist for ${orgName}. You create engaging, brand-aligned social media posts.
 
 ${brandPrompt}
-
+${directionSection}
 RULES:
 - Write in the brand's authentic voice
 - Be specific, not generic

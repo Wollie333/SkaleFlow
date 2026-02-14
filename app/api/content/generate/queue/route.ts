@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   console.log('[QUEUE-ENQUEUE] User:', user.id);
 
   const body = await request.json();
-  const { organizationId, calendarId, contentItemIds, modelOverride, selectedBrandVariables, templateOverrides } = body;
+  const { organizationId, calendarId, contentItemIds, modelOverride, selectedBrandVariables, templateOverrides, creativeDirection } = body;
   console.log('[QUEUE-ENQUEUE] Body:', { organizationId, calendarId, modelOverride, itemCount: contentItemIds?.length, hasBrandVars: !!selectedBrandVariables, hasTemplateOverrides: !!templateOverrides });
 
   if (!organizationId || !contentItemIds || !Array.isArray(contentItemIds) || contentItemIds.length === 0) {
@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
       modelId: modelOverride,
       selectedBrandVariables: selectedBrandVariables || null,
       templateOverrides: templateOverrides || null,
+      creativeDirection: creativeDirection || null,
     });
 
     console.log(`[QUEUE-ENQUEUE] Batch created: ${batchId}, totalItems: ${totalItems}`);
