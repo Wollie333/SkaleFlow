@@ -52,7 +52,14 @@ export async function getScriptFrameworkFromDB(
           structure,
           psychology,
           prompt_instructions,
-          when_to_use
+          when_to_use,
+          hook_rules,
+          body_rules,
+          cta_rules,
+          tone_voice,
+          formatting_rules,
+          is_standardised,
+          description
         )
       `)
       .eq('funnel_stage', funnelStage)
@@ -122,23 +129,31 @@ export async function getScriptFrameworkFromDB(
       ? getOutputFormat(formatCategory, platforms)
       : OUTPUT_FORMATS[formatCategory as keyof typeof OUTPUT_FORMATS];
 
-    // Build combined prompt instructions
-    let promptInstructions = template.prompt_instructions;
+    // Build combined prompt instructions — prefer standardised sections if available
+    let promptInstructions: string;
 
-    // For social frameworks, inject extra context (structure, psychology, when-to-use)
-    if (template.category === 'social_framework') {
-      const extras: string[] = [];
-      if (template.structure) extras.push(`Structure: ${template.structure}`);
-      if (template.psychology) extras.push(`Psychology: ${template.psychology}`);
-      if (template.when_to_use && template.when_to_use.length > 0) {
-        extras.push(`Best used when: ${template.when_to_use.join('; ')}`);
-      }
-      if (extras.length > 0) {
-        promptInstructions = `${extras.join('\n')}\n\n${promptInstructions}`;
+    if (template.is_standardised && template.hook_rules && template.body_rules && template.cta_rules) {
+      // ── Standardised prompt assembly ──
+      promptInstructions = assembleStandardisedPrompt(template);
+    } else {
+      // ── Legacy prompt assembly (backward-compatible) ──
+      promptInstructions = template.prompt_instructions;
+
+      // For social frameworks, inject extra context (structure, psychology, when-to-use)
+      if (template.category === 'social_framework') {
+        const extras: string[] = [];
+        if (template.structure) extras.push(`Structure: ${template.structure}`);
+        if (template.psychology) extras.push(`Psychology: ${template.psychology}`);
+        if (template.when_to_use && template.when_to_use.length > 0) {
+          extras.push(`Best used when: ${template.when_to_use.join('; ')}`);
+        }
+        if (extras.length > 0) {
+          promptInstructions = `${extras.join('\n')}\n\n${promptInstructions}`;
+        }
       }
     }
 
-    // Append hook + CTA instructions
+    // Append hook + CTA instructions (for both standardised and legacy)
     promptInstructions = `${promptInstructions}\n\nHook style: ${hookResult.promptInstructions}\n\nCTA style: ${ctaResult.promptInstructions}`;
 
     console.log(`${LOG_PREFIX} Using DB template: ${template.template_key} (${template.name})`);
@@ -286,6 +301,71 @@ export async function getTemplatesForGeneration(
       isPrimary: m.is_primary,
       confidenceScore: m.confidence_score,
     }));
+}
+
+// ── Standardised prompt assembly ────────────────────────────
+
+/**
+ * Assemble a consistent, high-quality prompt from atomic template sections.
+ * This ensures every template gives the AI the same depth and structure of guidance.
+ */
+function assembleStandardisedPrompt(template: TemplateRow): string {
+  const sections: string[] = [];
+
+  // 1. Framework identity
+  sections.push(`You are generating content using the "${template.name}" framework.`);
+
+  // 2. Description / overview
+  if (template.description) {
+    sections.push(`OVERVIEW: ${template.description}`);
+  }
+
+  // 3. Structure (the step-by-step flow)
+  if (template.structure) {
+    sections.push(`STRUCTURE:\n${template.structure}`);
+  }
+
+  // 4. Psychology (why it works)
+  if (template.psychology) {
+    sections.push(`WHY THIS WORKS:\n${template.psychology}`);
+  }
+
+  // 5. Hook rules
+  if (template.hook_rules) {
+    sections.push(`HOOK RULES (Opening):\n${template.hook_rules}`);
+  }
+
+  // 6. Body rules
+  if (template.body_rules) {
+    sections.push(`BODY RULES (Main Content):\n${template.body_rules}`);
+  }
+
+  // 7. CTA rules
+  if (template.cta_rules) {
+    sections.push(`CTA RULES (Closing):\n${template.cta_rules}`);
+  }
+
+  // 8. Tone & voice
+  if (template.tone_voice) {
+    sections.push(`TONE & VOICE:\n${template.tone_voice}`);
+  }
+
+  // 9. Formatting rules
+  if (template.formatting_rules) {
+    sections.push(`FORMATTING:\n${template.formatting_rules}`);
+  }
+
+  // 10. When to use context
+  if (template.when_to_use && template.when_to_use.length > 0) {
+    sections.push(`BEST USED WHEN: ${template.when_to_use.join('; ')}`);
+  }
+
+  // 11. Any additional prompt instructions (custom overrides)
+  if (template.prompt_instructions) {
+    sections.push(`ADDITIONAL INSTRUCTIONS:\n${template.prompt_instructions}`);
+  }
+
+  return sections.join('\n\n');
 }
 
 // ── Internal helpers ────────────────────────────────────────

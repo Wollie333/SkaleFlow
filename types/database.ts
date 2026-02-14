@@ -3607,6 +3607,12 @@ export interface Database {
           prompt_instructions: string;
           output_format: string | null;
           markdown_source: string | null;
+          hook_rules: string | null;
+          body_rules: string | null;
+          cta_rules: string | null;
+          tone_voice: string | null;
+          formatting_rules: string | null;
+          is_standardised: boolean;
           is_active: boolean;
           is_system: boolean;
           sort_order: number;
@@ -3633,6 +3639,12 @@ export interface Database {
           prompt_instructions: string;
           output_format?: string | null;
           markdown_source?: string | null;
+          hook_rules?: string | null;
+          body_rules?: string | null;
+          cta_rules?: string | null;
+          tone_voice?: string | null;
+          formatting_rules?: string | null;
+          is_standardised?: boolean;
           is_active?: boolean;
           is_system?: boolean;
           sort_order?: number;
@@ -3659,6 +3671,12 @@ export interface Database {
           prompt_instructions?: string;
           output_format?: string | null;
           markdown_source?: string | null;
+          hook_rules?: string | null;
+          body_rules?: string | null;
+          cta_rules?: string | null;
+          tone_voice?: string | null;
+          formatting_rules?: string | null;
+          is_standardised?: boolean;
           is_active?: boolean;
           is_system?: boolean;
           sort_order?: number;

@@ -109,6 +109,12 @@ export async function POST(request: Request) {
         prompt_instructions: template.prompt_instructions,
         output_format: template.output_format || null,
         markdown_source: template.markdown_source || null,
+        hook_rules: template.hook_rules || null,
+        body_rules: template.body_rules || null,
+        cta_rules: template.cta_rules || null,
+        tone_voice: template.tone_voice || null,
+        formatting_rules: template.formatting_rules || null,
+        is_standardised: !!(template.hook_rules && template.body_rules && template.cta_rules && template.tone_voice && template.formatting_rules),
         is_active: template.is_active !== false,
         sort_order: template.sort_order || 0,
         created_by: user.id,
@@ -186,6 +192,8 @@ export async function PATCH(request: Request) {
       'tier', 'funnel_stages', 'structure', 'psychology', 'description',
       'when_to_use', 'when_not_to_use', 'example_content', 'prompt_instructions',
       'output_format', 'markdown_source', 'is_active', 'sort_order',
+      'hook_rules', 'body_rules', 'cta_rules', 'tone_voice', 'formatting_rules',
+      'is_standardised',
     ];
 
     for (const field of allowedFields) {

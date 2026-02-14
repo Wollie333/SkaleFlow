@@ -12,6 +12,7 @@ import {
   ChevronRightIcon,
   PencilSquareIcon,
   MagnifyingGlassIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 import { TemplateEditModal } from '@/components/admin/templates/template-edit-modal';
 import { TemplateUploadModal } from '@/components/admin/templates/template-upload-modal';
@@ -44,6 +45,12 @@ interface TemplateRow {
   prompt_instructions: string;
   output_format: string | null;
   markdown_source: string | null;
+  hook_rules: string | null;
+  body_rules: string | null;
+  cta_rules: string | null;
+  tone_voice: string | null;
+  formatting_rules: string | null;
+  is_standardised: boolean;
   is_active: boolean;
   is_system: boolean;
   sort_order: number;
@@ -108,6 +115,33 @@ export default function AdminTemplatesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
+  const [standardising, setStandardising] = useState(false);
+  const [standardiseResult, setStandardiseResult] = useState('');
+
+  const handleBulkStandardise = async () => {
+    setStandardising(true);
+    setStandardiseResult('');
+    try {
+      const res = await fetch('/api/admin/templates/standardise', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ batch: true }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStandardiseResult(
+          `Standardised ${data.processed} templates${data.remaining > 0 ? ` (${data.remaining} remaining — run again)` : ''}.${data.failed > 0 ? ` ${data.failed} failed.` : ''}`
+        );
+        fetchTemplates();
+      } else {
+        setStandardiseResult(data.error || 'Failed');
+      }
+    } catch {
+      setStandardiseResult('Failed to standardise');
+    } finally {
+      setStandardising(false);
+    }
+  };
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -176,6 +210,8 @@ export default function AdminTemplatesPage() {
   const filteredTemplates = templates;
   const totalActive = templates.filter(t => t.is_active).length;
   const totalInactive = templates.filter(t => !t.is_active).length;
+  const totalStandardised = templates.filter(t => t.is_standardised).length;
+  const totalLegacy = templates.length - totalStandardised;
 
   return (
     <div className="space-y-6">
@@ -188,6 +224,17 @@ export default function AdminTemplatesPage() {
         ]}
         action={
           <div className="flex gap-2">
+            {totalLegacy > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBulkStandardise}
+                disabled={standardising}
+              >
+                <SparklesIcon className="w-4 h-4 mr-1.5" />
+                {standardising ? 'Standardising...' : `Standardise (${totalLegacy})`}
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -222,7 +269,23 @@ export default function AdminTemplatesPage() {
         <span className="text-teal">{totalActive} active</span>
         <span className="text-stone/30">|</span>
         <span className="text-stone/50">{totalInactive} inactive</span>
+        <span className="text-stone/30">|</span>
+        <span className="text-green-600">{totalStandardised} standardised</span>
+        {totalLegacy > 0 && (
+          <>
+            <span className="text-stone/30">|</span>
+            <span className="text-amber-600">{totalLegacy} legacy</span>
+          </>
+        )}
       </div>
+
+      {/* Standardise result message */}
+      {standardiseResult && (
+        <div className="p-3 bg-purple-50 text-purple-700 text-sm rounded-lg flex items-center gap-2">
+          <SparklesIcon className="w-4 h-4" />
+          {standardiseResult}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
@@ -358,6 +421,17 @@ export default function AdminTemplatesPage() {
                       </span>
                     ))}
                   </div>
+
+                  {/* Standardised indicator */}
+                  {template.is_standardised ? (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-green-50 text-green-600">
+                      Std
+                    </span>
+                  ) : (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-50 text-amber-600">
+                      Legacy
+                    </span>
+                  )}
 
                   {/* System badge */}
                   {template.is_system && (
