@@ -9,31 +9,50 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { organizationId } = await request.json();
+  const { organizationId, modelId } = await request.json();
   if (!organizationId) return NextResponse.json({ error: 'organizationId required' }, { status: 400 });
 
   const access = await checkAuthorityAccess(supabase, user.id, organizationId);
   if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
   const db = access.queryClient;
 
-  // Resolve model
-  const resolvedModel = await resolveModel(organizationId, 'content_generation' as AIFeature);
+  // Resolve model — use client-selected model if provided
+  const resolvedModel = await resolveModel(organizationId, 'content_generation' as AIFeature, modelId || null, user.id);
   const adapter = getProviderAdapter(resolvedModel.provider);
 
   // Check credits
   const creditCheck = await requireCredits(organizationId, resolvedModel.id, 500, 1500, user.id);
   if (creditCheck) return creditCheck;
 
-  // Fetch brand data for context
+  // Fetch brand data for context — only the key variables needed for story angles
+  const PR_RELEVANT_KEYS = [
+    'brand_positioning', 'brand_promise', 'brand_story', 'brand_voice',
+    'target_audience', 'ideal_customer', 'unique_value_proposition',
+    'competitive_advantage', 'founder_story', 'brand_mission', 'brand_vision',
+    'brand_archetype', 'key_messages', 'industry', 'niche',
+    'content_pillars', 'brand_personality', 'brand_values',
+  ];
+
   const { data: outputs } = await db
     .from('brand_outputs')
     .select('output_key, output_value')
-    .eq('organization_id', organizationId);
+    .eq('organization_id', organizationId)
+    .in('output_key', PR_RELEVANT_KEYS);
 
-  const brandContext = (outputs || [])
+  const brandLines = (outputs || [])
     .filter((o) => o.output_value)
-    .map((o) => `${o.output_key}: ${typeof o.output_value === 'string' ? o.output_value : JSON.stringify(o.output_value)}`)
-    .join('\n');
+    .map((o) => {
+      const val = typeof o.output_value === 'string' ? o.output_value : JSON.stringify(o.output_value);
+      // Truncate long values to keep within token limits
+      return `${o.output_key}: ${val.length > 500 ? val.slice(0, 500) + '...' : val}`;
+    });
+
+  // Cap total brand context at ~6000 chars (~2000 tokens) to stay within model limits
+  let brandContext = '';
+  for (const line of brandLines) {
+    if ((brandContext + line).length > 6000) break;
+    brandContext += (brandContext ? '\n' : '') + line;
+  }
 
   // Fetch existing angles to avoid duplicates
   const { data: existing } = await db

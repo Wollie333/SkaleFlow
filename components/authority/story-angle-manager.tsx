@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { PlusIcon, TrashIcon, SparklesIcon, PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { CONFIRMED_FORMATS } from '@/lib/authority/constants';
+import { getClientModelsForFeature, type ClientModelOption } from '@/lib/ai/client-models';
 
 interface StoryAngle {
   id: string;
@@ -13,18 +14,29 @@ interface StoryAngle {
   created_at: string;
 }
 
+interface Suggestion {
+  title: string;
+  description: string;
+  target_outlets: string;
+  recommended_format: string;
+}
+
 interface StoryAngleManagerProps {
   angles: StoryAngle[];
   organizationId: string;
   onRefresh: () => void;
 }
 
+const AI_MODELS = getClientModelsForFeature('content_generation');
+
 export function StoryAngleManager({ angles, organizationId, onRefresh }: StoryAngleManagerProps) {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [suggesting, setSuggesting] = useState(false);
-  const [suggestError, setSuggestError] = useState('');
-  const [suggestions, setSuggestions] = useState<Array<{ title: string; description: string; target_outlets: string; recommended_format: string }> | null>(null);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiStatus, setAiStatus] = useState<'idle' | 'generating' | 'done' | 'error'>('idle');
+  const [aiError, setAiError] = useState('');
+  const [selectedModel, setSelectedModel] = useState(AI_MODELS[0]?.id || '');
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [formData, setFormData] = useState({ title: '', description: '', target_outlets: '', recommended_format: '' });
 
   const handleCreate = async () => {
@@ -54,41 +66,63 @@ export function StoryAngleManager({ angles, organizationId, onRefresh }: StoryAn
     onRefresh();
   };
 
-  const handleSuggest = async () => {
-    setSuggesting(true);
-    setSuggestions(null);
-    setSuggestError('');
+  const openAiModal = () => {
+    setShowAiModal(true);
+    setAiStatus('idle');
+    setAiError('');
+    setSuggestions([]);
+  };
+
+  const runGeneration = async () => {
+    setAiStatus('generating');
+    setAiError('');
+    setSuggestions([]);
     try {
       const res = await fetch('/api/authority/story-angles/suggest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ organizationId }),
+        body: JSON.stringify({ organizationId, modelId: selectedModel || undefined }),
       });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setSuggestions(data);
+          setAiStatus('done');
         } else {
-          setSuggestError('Unexpected response format');
+          setAiError('No suggestions generated — try again');
+          setAiStatus('error');
         }
       } else {
         const body = await res.json().catch(() => ({}));
-        setSuggestError(body.error || `Failed (${res.status})`);
+        setAiError(body.error || `Generation failed (${res.status})`);
+        setAiStatus('error');
       }
     } catch {
-      setSuggestError('Network error — please try again');
-    } finally {
-      setSuggesting(false);
+      setAiError('Network error — please try again');
+      setAiStatus('error');
     }
   };
 
-  const handleAcceptSuggestion = async (suggestion: { title: string; description: string; target_outlets: string; recommended_format: string }) => {
+  const handleAcceptSuggestion = async (suggestion: Suggestion) => {
     await fetch('/api/authority/story-angles', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ organizationId, ...suggestion }),
     });
-    setSuggestions((prev) => prev?.filter((s) => s.title !== suggestion.title) || null);
+    setSuggestions((prev) => prev.filter((s) => s.title !== suggestion.title));
+    onRefresh();
+  };
+
+  const handleAcceptAll = async () => {
+    for (const s of suggestions) {
+      await fetch('/api/authority/story-angles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ organizationId, ...s }),
+      });
+    }
+    setSuggestions([]);
+    setShowAiModal(false);
     onRefresh();
   };
 
@@ -114,12 +148,11 @@ export function StoryAngleManager({ angles, organizationId, onRefresh }: StoryAn
         <h3 className="font-serif font-semibold text-charcoal">Story Angles</h3>
         <div className="flex items-center gap-2">
           <button
-            onClick={handleSuggest}
-            disabled={suggesting}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gold border border-gold/30 rounded-lg hover:bg-gold/5 transition-colors disabled:opacity-50"
+            onClick={openAiModal}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gold border border-gold/30 rounded-lg hover:bg-gold/5 transition-colors"
           >
             <SparklesIcon className="w-3.5 h-3.5" />
-            {suggesting ? 'Generating...' : 'AI Suggest'}
+            AI Suggest
           </button>
           <button
             onClick={() => { setShowAdd(true); setFormData({ title: '', description: '', target_outlets: '', recommended_format: '' }); }}
@@ -130,42 +163,6 @@ export function StoryAngleManager({ angles, organizationId, onRefresh }: StoryAn
           </button>
         </div>
       </div>
-
-      {/* AI Error */}
-      {suggestError && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-xs text-red-700">{suggestError}</p>
-        </div>
-      )}
-
-      {/* AI Suggestions */}
-      {suggestions && suggestions.length > 0 && (
-        <div className="bg-gold/5 border border-gold/20 rounded-xl p-4 space-y-3">
-          <p className="text-xs font-semibold text-gold">AI Suggestions — click to add</p>
-          {suggestions.map((s, i) => (
-            <div key={i} className="flex items-start justify-between gap-3 p-3 bg-white rounded-lg border border-stone/10">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-charcoal">{s.title}</p>
-                <p className="text-xs text-stone mt-0.5">{s.description}</p>
-                {s.target_outlets && <p className="text-[10px] text-stone/60 mt-1">Outlets: {s.target_outlets}</p>}
-              </div>
-              <button
-                onClick={() => handleAcceptSuggestion(s)}
-                className="flex-shrink-0 p-1.5 text-green-500 hover:bg-green-50 rounded-lg"
-                title="Accept"
-              >
-                <CheckIcon className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-          <button
-            onClick={() => setSuggestions(null)}
-            className="text-xs text-stone hover:text-charcoal"
-          >
-            Dismiss all
-          </button>
-        </div>
-      )}
 
       {/* Add Form */}
       {showAdd && (
@@ -282,6 +279,194 @@ export function StoryAngleManager({ angles, organizationId, onRefresh }: StoryAn
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* AI Suggest Modal */}
+      {showAiModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
+              <div className="flex items-center gap-2">
+                <SparklesIcon className="w-5 h-5 text-gold" />
+                <h3 className="font-serif font-semibold text-charcoal">AI Story Angles</h3>
+              </div>
+              {aiStatus !== 'generating' && (
+                <button
+                  onClick={() => setShowAiModal(false)}
+                  className="p-1.5 text-stone hover:text-charcoal rounded-lg hover:bg-cream-warm transition-colors"
+                >
+                  <XMarkIcon className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Modal Body */}
+            <div className="px-6 py-5 overflow-y-auto max-h-[60vh]">
+              {/* Idle State — Model Selector */}
+              {aiStatus === 'idle' && (
+                <div className="space-y-5">
+                  <p className="text-xs text-stone">
+                    AI will analyse your brand profile and suggest 5 compelling story angles for media outreach.
+                  </p>
+
+                  {/* Model Selector */}
+                  <div>
+                    <label className="block text-xs font-medium text-charcoal mb-2">AI Model</label>
+                    <div className="space-y-2">
+                      {AI_MODELS.map((model) => (
+                        <label
+                          key={model.id}
+                          className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                            selectedModel === model.id
+                              ? 'border-teal/40 bg-teal/5'
+                              : 'border-stone/15 hover:border-stone/30'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="ai-model"
+                            value={model.id}
+                            checked={selectedModel === model.id}
+                            onChange={() => setSelectedModel(model.id)}
+                            className="w-3.5 h-3.5 text-teal focus:ring-teal/30"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-medium text-charcoal">{model.name}</span>
+                            <span className="text-[10px] text-stone ml-2">{model.provider}</span>
+                          </div>
+                          {model.isFree ? (
+                            <span className="text-[10px] font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">Free</span>
+                          ) : (
+                            <span className="text-[10px] font-medium text-stone">~{model.estimatedCreditsPerMessage} credits</span>
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={runGeneration}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-gold rounded-lg hover:bg-gold/90 transition-colors"
+                  >
+                    <SparklesIcon className="w-4 h-4" />
+                    Generate Story Angles
+                  </button>
+                </div>
+              )}
+
+              {/* Generating State */}
+              {aiStatus === 'generating' && (
+                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-full border-2 border-gold/20" />
+                    <div className="absolute inset-0 w-12 h-12 rounded-full border-2 border-transparent border-t-gold animate-spin" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-charcoal">Generating story angles...</p>
+                    <p className="text-xs text-stone mt-1">Analysing your brand profile to suggest compelling PR angles</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Error State */}
+              {aiStatus === 'error' && (
+                <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                  <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
+                    <XMarkIcon className="w-6 h-6 text-red-500" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-charcoal">Generation failed</p>
+                    <p className="text-xs text-red-600 mt-1 max-w-xs">{aiError}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowAiModal(false)}
+                      className="px-4 py-2 text-xs font-medium text-stone border border-stone/20 rounded-lg hover:bg-cream-warm transition-colors"
+                    >
+                      Close
+                    </button>
+                    <button
+                      onClick={() => setAiStatus('idle')}
+                      className="px-4 py-2 text-xs font-medium text-white bg-gold rounded-lg hover:bg-gold/90 transition-colors"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Results State */}
+              {aiStatus === 'done' && suggestions.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-xs text-stone">
+                    {suggestions.length} angle{suggestions.length !== 1 ? 's' : ''} generated. Accept the ones you like.
+                  </p>
+                  {suggestions.map((s, i) => (
+                    <div key={i} className="flex items-start gap-3 p-4 bg-cream-warm/30 rounded-xl border border-stone/10">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-charcoal">{s.title}</p>
+                        <p className="text-xs text-stone mt-1">{s.description}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          {s.recommended_format && (
+                            <span className="text-[10px] font-medium text-teal bg-teal/10 px-1.5 py-0.5 rounded-full">
+                              {getFormatLabel(s.recommended_format) || s.recommended_format}
+                            </span>
+                          )}
+                          {s.target_outlets && (
+                            <span className="text-[10px] text-stone/60">Outlets: {s.target_outlets}</span>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleAcceptSuggestion(s)}
+                        className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 border border-green-200 transition-colors"
+                      >
+                        <CheckIcon className="w-3.5 h-3.5" />
+                        Add
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* All accepted */}
+              {aiStatus === 'done' && suggestions.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-8 space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center">
+                    <CheckIcon className="w-6 h-6 text-green-500" />
+                  </div>
+                  <p className="text-sm font-medium text-charcoal">All angles added!</p>
+                  <button
+                    onClick={() => setShowAiModal(false)}
+                    className="px-4 py-2 text-xs font-medium text-white bg-teal rounded-lg hover:bg-teal-dark transition-colors"
+                  >
+                    Done
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            {aiStatus === 'done' && suggestions.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-stone/10 bg-cream-warm/20">
+                <button
+                  onClick={() => setShowAiModal(false)}
+                  className="px-4 py-2 text-xs font-medium text-stone border border-stone/20 rounded-lg hover:bg-white transition-colors"
+                >
+                  Dismiss
+                </button>
+                <button
+                  onClick={handleAcceptAll}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-teal rounded-lg hover:bg-teal-dark transition-colors"
+                >
+                  <CheckIcon className="w-3.5 h-3.5" />
+                  Accept All ({suggestions.length})
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
