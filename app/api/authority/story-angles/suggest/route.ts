@@ -63,25 +63,27 @@ Respond in JSON format:
 
 Return ONLY the JSON array, no additional text.`;
 
-  const response = await adapter.complete({
-    messages: [{ role: 'user', content: prompt }],
-    maxTokens: 1500,
-    temperature: 0.8,
-    modelId: resolvedModel.modelId,
-  });
-
-  // Deduct credits
-  const creditCost = calculateCreditCost(resolvedModel.id, response.inputTokens, response.outputTokens);
-  const superAdmin = await isSuperAdmin(user.id);
-  if (!superAdmin && creditCost > 0) {
-    await deductCredits(organizationId, user.id, creditCost, null, `AI story angle suggestions — ${resolvedModel.name}`);
-  }
-
   try {
+    const response = await adapter.complete({
+      messages: [{ role: 'user', content: prompt }],
+      maxTokens: 1500,
+      temperature: 0.8,
+      modelId: resolvedModel.modelId,
+    });
+
+    // Deduct credits
+    const creditCost = calculateCreditCost(resolvedModel.id, response.inputTokens, response.outputTokens);
+    const superAdmin = await isSuperAdmin(user.id);
+    if (!superAdmin && creditCost > 0) {
+      await deductCredits(organizationId, user.id, creditCost, null, `AI story angle suggestions — ${resolvedModel.name}`);
+    }
+
     const text = response.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const suggestions = JSON.parse(text);
     return NextResponse.json(suggestions);
-  } catch {
-    return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 });
+  } catch (err) {
+    console.error('Story angle AI generation failed:', err);
+    const message = err instanceof Error ? err.message : 'AI generation failed';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

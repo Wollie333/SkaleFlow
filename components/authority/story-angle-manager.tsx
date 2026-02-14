@@ -23,6 +23,7 @@ export function StoryAngleManager({ angles, organizationId, onRefresh }: StoryAn
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [suggesting, setSuggesting] = useState(false);
+  const [suggestError, setSuggestError] = useState('');
   const [suggestions, setSuggestions] = useState<Array<{ title: string; description: string; target_outlets: string; recommended_format: string }> | null>(null);
   const [formData, setFormData] = useState({ title: '', description: '', target_outlets: '', recommended_format: '' });
 
@@ -56,6 +57,7 @@ export function StoryAngleManager({ angles, organizationId, onRefresh }: StoryAn
   const handleSuggest = async () => {
     setSuggesting(true);
     setSuggestions(null);
+    setSuggestError('');
     try {
       const res = await fetch('/api/authority/story-angles/suggest', {
         method: 'POST',
@@ -63,8 +65,18 @@ export function StoryAngleManager({ angles, organizationId, onRefresh }: StoryAn
         body: JSON.stringify({ organizationId }),
       });
       if (res.ok) {
-        setSuggestions(await res.json());
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setSuggestions(data);
+        } else {
+          setSuggestError('Unexpected response format');
+        }
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setSuggestError(body.error || `Failed (${res.status})`);
       }
+    } catch {
+      setSuggestError('Network error — please try again');
     } finally {
       setSuggesting(false);
     }
@@ -118,6 +130,13 @@ export function StoryAngleManager({ angles, organizationId, onRefresh }: StoryAn
           </button>
         </div>
       </div>
+
+      {/* AI Error */}
+      {suggestError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-xs text-red-700">{suggestError}</p>
+        </div>
+      )}
 
       {/* AI Suggestions */}
       {suggestions && suggestions.length > 0 && (

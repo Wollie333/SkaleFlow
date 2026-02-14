@@ -92,15 +92,15 @@ export default function AuthorityPressKitPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl">
+    <div className="p-6">
       <div className="flex items-center gap-3 mb-6">
         <DocumentTextIcon className="w-6 h-6 text-teal" />
         <h1 className="text-2xl font-serif font-bold text-charcoal">Press Kit</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        {/* Press Kit Builder - 3 cols */}
-        <div className="lg:col-span-3">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Press Kit Builder - 2 cols */}
+        <div className="xl:col-span-2">
           <div className="bg-white border border-stone/10 rounded-xl p-6 shadow-sm">
             <PressKitBuilder
               pressKit={pressKit as Parameters<typeof PressKitBuilder>[0]['pressKit']}
@@ -111,8 +111,8 @@ export default function AuthorityPressKitPage() {
           </div>
         </div>
 
-        {/* Story Angles - 2 cols */}
-        <div className="lg:col-span-2">
+        {/* Story Angles - 1 col */}
+        <div className="xl:col-span-1">
           <div className="bg-white border border-stone/10 rounded-xl p-6 shadow-sm">
             <StoryAngleManager
               angles={storyAngles}
