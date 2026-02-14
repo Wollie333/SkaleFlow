@@ -170,7 +170,7 @@ export function Sidebar({
 
   // Permission helpers
   const canAccessBrandEngine = isSuperAdmin || isOwnerOrAdmin || teamPermissions?.brand_engine?.access === true;
-  const canAccessContentEngine = contentEngineEnabled && (isSuperAdmin || isOwnerOrAdmin || teamPermissions?.content_engine?.access === true);
+  const canAccessContentEngine = isSuperAdmin || isOwnerOrAdmin || (contentEngineEnabled && teamPermissions?.content_engine?.access === true);
   const canAccessTeam = isSuperAdmin || isOwnerOrAdmin;
   const canAccessBilling = isSuperAdmin || isOwnerOrAdmin;
   const canAccessReviews = isSuperAdmin || isOwnerOrAdmin;
@@ -182,6 +182,10 @@ export function Sidebar({
 
   if (canAccessBrandEngine) {
     baseNavItems.push({ name: 'Brand Engine', href: '/brand', icon: SparklesIcon });
+  }
+
+  if (canAccessContentEngine) {
+    baseNavItems.push({ name: 'Content Engine', href: '/content/create', icon: BoltIcon });
   }
 
   if (canAccessTeam) {
