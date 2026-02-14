@@ -91,7 +91,7 @@ export function AuthorityColumn({ stage, cards, onCardClick, onAddCard }: Author
           {!isClosed && (
             <button
               onClick={onAddCard}
-              className="w-full flex items-center justify-center gap-1 px-2 py-2 text-xs text-stone hover:text-teal hover:bg-cream-warm rounded-lg border border-dashed border-stone/15 hover:border-teal/30 transition-all"
+              className="w-full flex items-center justify-center gap-1.5 px-2 py-2.5 text-xs font-medium text-teal bg-teal/10 hover:bg-teal/20 rounded-lg border border-teal/20 hover:border-teal/40 transition-all"
             >
               <PlusIcon className="w-3.5 h-3.5" />
               Add opportunity

@@ -24,9 +24,9 @@ export default function AuthorityPressKitPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data } = await supabase
-        .from('users')
+        .from('org_members')
         .select('organization_id')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single();
       if (data?.organization_id) setOrganizationId(data.organization_id);
     }
