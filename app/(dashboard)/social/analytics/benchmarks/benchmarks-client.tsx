@@ -76,7 +76,7 @@ export function BenchmarksClient({ benchmarks, orgMetrics, industry }: Benchmark
     <div className="p-6 md:p-8 space-y-6">
       <PageHeader
         title="Industry Benchmarks"
-        description={`Compare your performance against ${industry} industry standards`}
+        subtitle={`Compare your performance against ${industry} industry standards`}
       />
 
       {/* Platform Selector */}

@@ -120,8 +120,9 @@ function DraggablePost({
     data: { item },
   });
   const isPublished = item.status === 'published';
-  const hasMedia = item.media_urls && item.media_urls.length > 0;
-  const thumbnail = hasMedia ? item.media_urls[0] : null;
+  const mediaUrls = item.media_urls ?? [];
+  const hasMedia = mediaUrls.length > 0;
+  const thumbnail = hasMedia ? mediaUrls[0] : null;
 
   // Get status badge color
   const getStatusColor = (status: ContentStatus) => {

@@ -209,7 +209,7 @@ export function KeywordManager({ keywords: initialKeywords, organizationId, onCl
                     </div>
 
                     <div className="space-y-2">
-                      {typeKeywords.map((keyword) => (
+                      {typeKeywords.map((keyword: any) => (
                         <div
                           key={keyword.id}
                           className={cn(

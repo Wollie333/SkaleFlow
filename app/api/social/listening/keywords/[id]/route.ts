@@ -4,9 +4,10 @@ import { createClient } from '@/lib/supabase/server';
 // PATCH /api/social/listening/keywords/[id] - Update a keyword
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     const {
@@ -30,7 +31,7 @@ export async function PATCH(
     const { data, error } = await supabase
       .from('social_listening_keywords')
       .update(updates)
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single();
 
@@ -49,9 +50,10 @@ export async function PATCH(
 // DELETE /api/social/listening/keywords/[id] - Delete a keyword
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     const {
@@ -65,7 +67,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('social_listening_keywords')
       .delete()
-      .eq('id', params.id);
+      .eq('id', id);
 
     if (error) {
       console.error('Error deleting keyword:', error);

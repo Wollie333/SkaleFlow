@@ -169,7 +169,7 @@ export function PostsPerformanceClient({ organizationId, connections }: PostsPer
       <div className="p-6 md:p-8 space-y-6">
         <PageHeader
           title="Post Performance"
-          description="Detailed analytics for each social media post"
+          subtitle="Detailed analytics for each social media post"
         />
         <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
           <p className="text-stone mb-4">No social media accounts connected yet.</p>
@@ -184,7 +184,7 @@ export function PostsPerformanceClient({ organizationId, connections }: PostsPer
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <PageHeader
             title="Post Performance"
-            description={`Detailed analytics for ${filteredPosts.length} posts`}
+            subtitle={`Detailed analytics for ${filteredPosts.length} posts`}
           />
           <Button
             onClick={fetchPlatformPosts}

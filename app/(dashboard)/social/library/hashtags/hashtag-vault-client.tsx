@@ -113,7 +113,7 @@ export function HashtagVaultClient({
     <div className="p-6 md:p-8 space-y-6">
       <PageHeader
         title="Hashtag Vault"
-        description="Save and organize hashtag sets for quick insertion into posts"
+        subtitle="Save and organize hashtag sets for quick insertion into posts"
       />
 
       {/* Controls */}

@@ -66,7 +66,7 @@ export function SavedRepliesPicker({
             </div>
           ) : (
             <div className="space-y-3">
-              {Object.entries(groupedReplies).map(([category, replies]) => (
+              {(Object.entries(groupedReplies) as [string, any[]][]).map(([category, replies]) => (
                 <div key={category}>
                   <h4 className="px-2 text-xs font-semibold text-stone uppercase tracking-wider mb-1">
                     {category}

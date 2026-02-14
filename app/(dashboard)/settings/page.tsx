@@ -317,7 +317,7 @@ export default function SettingsPage() {
     });
   };
 
-  const handleDisconnectSocial = (connectionId: string) => {
+  const handleDisconnectSocial = async (connectionId: string) => {
     const conn = socialConnections.find(c => c.id === connectionId);
     const platformName = conn?.platform_page_name || conn?.platform_username || conn?.platform || 'this account';
     setDisconnectModal({
@@ -328,7 +328,7 @@ export default function SettingsPage() {
     });
   };
 
-  const handleDisconnectDrive = (connectionId: string) => {
+  const handleDisconnectDrive = async (connectionId: string) => {
     const driveName = driveConnection?.drive_email || 'Google Drive';
     setDisconnectModal({
       isOpen: true,

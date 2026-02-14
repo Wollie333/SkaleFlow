@@ -675,7 +675,7 @@ export default function BillingPage() {
               <div className="p-4 rounded-xl bg-gradient-to-br from-red-50 to-red-100 border border-red-200">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-semibold text-red-900">💸 Real API Costs</h4>
-                  <Badge variant="outline" className="bg-white/50">What You Pay</Badge>
+                  <Badge variant="default" className="bg-white/50">What You Pay</Badge>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
                   <div>
@@ -704,7 +704,7 @@ export default function BillingPage() {
               <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-semibold text-emerald-900">💰 Sales Revenue Potential</h4>
-                  <Badge variant="outline" className="bg-white/50">100% Markup</Badge>
+                  <Badge variant="default" className="bg-white/50">100% Markup</Badge>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
                   <div>
@@ -737,7 +737,7 @@ export default function BillingPage() {
               <div className="p-4 rounded-xl bg-gradient-to-br from-gold/20 to-gold/30 border border-gold/40">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-semibold text-charcoal">📈 Profit Margin</h4>
-                  <Badge variant="outline" className="bg-white/50">Revenue - Cost</Badge>
+                  <Badge variant="default" className="bg-white/50">Revenue - Cost</Badge>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
                   <div>

@@ -676,7 +676,6 @@ export default function BrandPhaseDetailPage() {
     } else {
       handleSendMessage(`I'd like to work on **${displayName}**. Help me define it based on what we've discussed so far. Present the structured output as YAML with key: ${outputKey}`);
     }
-    setMobileTab('chat');
   }, [currentPhase, organizationId, outputs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleManualEdit = useCallback(async (outputKey: string, newValue: string) => {

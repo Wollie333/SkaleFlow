@@ -30,6 +30,7 @@ interface TopPostsTableProps {
   posts: TopPost[];
   isLoading?: boolean;
   visibleColumns?: SortKey[];
+  onPostClick?: (post: TopPost) => void;
 }
 
 export type SortKey = 'likes' | 'comments' | 'shares' | 'saves' | 'impressions' | 'reach' | 'clicks' | 'videoViews' | 'engagementRate';
@@ -46,7 +47,7 @@ const ALL_COLUMNS: { key: SortKey; label: string }[] = [
   { key: 'engagementRate', label: 'Eng. Rate' },
 ];
 
-export function TopPostsTable({ posts, isLoading, visibleColumns }: TopPostsTableProps) {
+export function TopPostsTable({ posts, isLoading, visibleColumns, onPostClick }: TopPostsTableProps) {
   const [sortBy, setSortBy] = useState<SortKey>('engagementRate');
   const [sortDesc, setSortDesc] = useState(true);
 
@@ -116,7 +117,14 @@ export function TopPostsTable({ posts, isLoading, visibleColumns }: TopPostsTabl
           </thead>
           <tbody>
             {sortedPosts.map(post => (
-              <tr key={post.id} className="border-b border-stone/5 hover:bg-cream-warm/50">
+              <tr
+                key={post.id}
+                className={cn(
+                  'border-b border-stone/5 hover:bg-cream-warm/50',
+                  onPostClick && 'cursor-pointer'
+                )}
+                onClick={() => onPostClick?.(post)}
+              >
                 <td className="py-3 pr-4">
                   <div className="max-w-[200px]">
                     <p className="text-sm font-medium text-charcoal truncate">
@@ -148,6 +156,7 @@ export function TopPostsTable({ posts, isLoading, visibleColumns }: TopPostsTabl
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-teal hover:text-teal/80"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <ArrowTopRightOnSquareIcon className="w-4 h-4" />
                     </a>

@@ -173,7 +173,7 @@ export default async function DashboardLayout({
   }
 
   // Fetch credit balance for super admin warning banner
-  let creditBalance = null;
+  let creditBalance: { totalRemaining: number; isSuperAdmin: boolean } | undefined = undefined;
   if (membership?.organization_id) {
     try {
       const balance = await checkCredits(
@@ -193,7 +193,7 @@ export default async function DashboardLayout({
   return (
     <DashboardLayoutClient
       headerProps={{
-        user: { email: user.email!, full_name: userData?.full_name, avatar_url: userData?.avatar_url },
+        user: { email: user.email!, full_name: userData?.full_name, avatar_url: userData?.avatar_url ?? undefined },
         initialUnreadCount: notificationCount || 0,
         organizationId: membership?.organization_id,
         draftCount: draftCount,

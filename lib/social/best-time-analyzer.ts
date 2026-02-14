@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import Anthropic from '@anthropic-ai/sdk';
+import type { SocialPlatform } from '@/types/database';
 
 export interface BestTimeAnalysis {
   platform: string;
@@ -26,7 +27,7 @@ export interface BestTimeSuggestion {
  */
 export async function analyzeOptimalPostingTimes(
   organizationId: string,
-  platform: string
+  platform: SocialPlatform | string
 ): Promise<BestTimeAnalysis | null> {
   const supabase = await createClient();
 
@@ -36,24 +37,11 @@ export async function analyzeOptimalPostingTimes(
 
   const { data: posts, error } = await supabase
     .from('published_posts')
-    .select(`
-      id,
-      platform,
-      published_at,
-      post_analytics (
-        impressions,
-        reach,
-        likes,
-        comments,
-        shares,
-        engagement_rate
-      )
-    `)
+    .select('id, platform, published_at, post_analytics(*)')
     .eq('organization_id', organizationId)
-    .eq('platform', platform)
+    .eq('platform', platform as SocialPlatform)
     .eq('publish_status', 'published')
-    .gte('published_at', ninetyDaysAgo.toISOString())
-    .not('post_analytics', 'is', null);
+    .gte('published_at', ninetyDaysAgo.toISOString()) as { data: any[] | null; error: any };
 
   if (error || !posts || posts.length < 10) {
     console.log(`Not enough data for ${platform}. Need at least 10 posts.`);
@@ -208,11 +196,19 @@ export async function suggestBestTime(
   }
 
   // Use the first platform's analysis (or could merge multiple platforms)
-  const analysis = analyses?.[0] || null;
+  const raw = analyses?.[0] || null;
 
-  if (!analysis || !analysis.best_times) {
+  if (!raw || !raw.best_times) {
     return null;
   }
+
+  // Cast Json fields to their runtime types
+  const analysis = {
+    ...raw,
+    best_times: raw.best_times as Record<string, string[]>,
+    confidence_score: raw.confidence_score as number,
+    avg_engagement_by_hour: (raw.avg_engagement_by_hour || {}) as Record<string, number>,
+  };
 
   // Determine target date
   const targetDate = preferredDate ? new Date(preferredDate) : new Date();
@@ -247,7 +243,7 @@ export async function suggestBestTime(
 
   if (isToday) {
     const currentHour = now.getHours();
-    const futureTime = bestTimesForDay.find((time) => {
+    const futureTime = bestTimesForDay.find((time: any) => {
       const hour = parseInt(time.split(':')[0]);
       return hour > currentHour;
     });

@@ -6,10 +6,12 @@ import { fetchLinkedInPosts } from '@/lib/social/platforms/history/linkedin';
 import type { ConnectionWithTokens } from '@/lib/social/token-manager';
 import { ensureValidToken } from '@/lib/social/token-manager';
 
+// Allow up to 60s for this route (fetches from multiple platform APIs)
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
 
-  // Authenticate user
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -18,7 +20,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Get user's organization
   const { data: membership } = await supabase
     .from('org_members')
     .select('organization_id')
@@ -31,7 +32,6 @@ export async function POST(request: NextRequest) {
 
   const organizationId = membership.organization_id;
 
-  // Get all active connections for this organization
   const { data: connections } = await supabase
     .from('social_media_connections')
     .select('*')
@@ -42,18 +42,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'No active social media connections found', posts: [] });
   }
 
-  const allPosts: any[] = [];
-  let fetchedCount = 0;
-  let failedCount = 0;
-  const errors: Array<{ platform: string; error: string }> = [];
-
-  // For Facebook/Instagram/LinkedIn, only use PAGE-type connections (not profile).
-  // Profile connections don't have page IDs and can't fetch page analytics.
+  // For Facebook/Instagram/LinkedIn, only use PAGE-type connections
   const pageConnections = connections.filter(c => {
     if (['facebook', 'instagram', 'linkedin'].includes(c.platform)) {
       return c.account_type === 'page';
     }
-    return true; // Other platforms use profile connections
+    return true;
   });
 
   if (pageConnections.length === 0) {
@@ -67,59 +61,71 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // Fetch posts from each connected platform page
-  for (const connection of pageConnections) {
-    try {
-      console.log(`Fetching posts for ${connection.platform}:`, {
-        platform: connection.platform,
-        accountType: connection.account_type,
-        pageId: connection.platform_page_id,
-        username: connection.platform_username,
-        pageName: connection.platform_page_name,
-      });
-
+  // Fetch from all platforms in PARALLEL (not sequential) to avoid timeout
+  const results = await Promise.allSettled(
+    pageConnections.map(async (connection) => {
       const tokens = await ensureValidToken(connection as unknown as ConnectionWithTokens);
-      let platformPosts: any[] = [];
+
+      // Limit to 25 posts per platform to keep response times reasonable
+      const limit = 25;
 
       switch (connection.platform) {
         case 'facebook':
-          platformPosts = await fetchFacebookPosts(tokens, 50);
-          break;
+          return {
+            platform: connection.platform,
+            posts: (await fetchFacebookPosts(tokens, limit)).map(p => ({
+              ...p,
+              platform: connection.platform,
+              connectionId: connection.id,
+              accountName: connection.platform_username || connection.platform_page_name || 'Unknown',
+            })),
+          };
         case 'instagram':
-          platformPosts = await fetchInstagramPosts(tokens, 50);
-          break;
+          return {
+            platform: connection.platform,
+            posts: (await fetchInstagramPosts(tokens, limit)).map(p => ({
+              ...p,
+              platform: connection.platform,
+              connectionId: connection.id,
+              accountName: connection.platform_username || connection.platform_page_name || 'Unknown',
+            })),
+          };
         case 'linkedin':
-          platformPosts = await fetchLinkedInPosts(tokens, 50);
-          break;
+          return {
+            platform: connection.platform,
+            posts: (await fetchLinkedInPosts(tokens, limit)).map(p => ({
+              ...p,
+              platform: connection.platform,
+              connectionId: connection.id,
+              accountName: connection.platform_username || connection.platform_page_name || 'Unknown',
+            })),
+          };
         default:
-          console.log(`Skipping unsupported platform: ${connection.platform}`);
-          continue;
+          return { platform: connection.platform, posts: [] };
       }
+    })
+  );
 
-      console.log(`Fetched ${platformPosts.length} posts from ${connection.platform}`);
+  const allPosts: any[] = [];
+  const errors: Array<{ platform: string; error: string }> = [];
+  let fetchedCount = 0;
+  let failedCount = 0;
 
-      // Add platform and connection info to each post
-      const postsWithMeta = platformPosts.map((post) => ({
-        ...post,
-        platform: connection.platform,
-        connectionId: connection.id,
-        accountName: connection.platform_username || connection.platform_page_name || 'Unknown',
-      }));
-
-      allPosts.push(...postsWithMeta);
-      fetchedCount += platformPosts.length;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`Failed to fetch ${connection.platform} posts:`, errorMessage, error);
-      errors.push({ platform: connection.platform, error: errorMessage });
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      allPosts.push(...result.value.posts);
+      fetchedCount += result.value.posts.length;
+    } else {
+      const errorMessage = result.reason instanceof Error ? result.reason.message : 'Unknown error';
+      // Try to extract platform name from error context
+      console.error('Platform fetch failed:', errorMessage);
+      errors.push({ platform: 'unknown', error: errorMessage });
       failedCount++;
     }
   }
 
   // Sort posts by date (newest first)
   allPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-  console.log(`Total posts fetched: ${allPosts.length}, Errors: ${errors.length}`);
 
   return NextResponse.json({
     message: allPosts.length > 0
@@ -129,7 +135,7 @@ export async function POST(request: NextRequest) {
         : 'No posts found',
     posts: allPosts,
     totalPosts: allPosts.length,
-    connectionsProcessed: connections.length,
+    connectionsProcessed: pageConnections.length,
     fetchedCount,
     failedCount,
     errors: errors.length > 0 ? errors : undefined,

@@ -38,6 +38,7 @@ import {
   TrophyIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  NewspaperIcon,
 } from '@heroicons/react/24/outline';
 
 interface FeaturePermissions {
@@ -112,6 +113,13 @@ const socialLibraryNav: NavItem[] = [
   { name: 'Saved Replies', href: '/social/library/replies', icon: ChatBubbleLeftRightIcon },
   { name: 'Media Library', href: '/social/library/media', icon: PhotoIcon },
   { name: 'Competitors', href: '/social/library/competitors', icon: UsersIcon },
+];
+
+const authorityNavigation: NavItem[] = [
+  { name: 'Pipeline', href: '/authority', icon: NewspaperIcon },
+  { name: 'Contacts', href: '/authority/contacts', icon: UsersIcon },
+  { name: 'Press Kit', href: '/authority/press-kit', icon: DocumentTextIcon },
+  { name: 'Press Releases', href: '/authority/press-releases', icon: DocumentTextIcon },
 ];
 
 const adminNavigation: NavItem[] = [
@@ -462,6 +470,36 @@ export function Sidebar({
             )}
           </div>
         </div>
+
+        {/* Authority Engine — owners/admins only */}
+        {isOwnerOrAdmin && (
+          <div className="mt-6">
+            <h4 className="px-3 text-xs font-semibold text-teal-dark uppercase tracking-wider mb-2">
+              Authority Engine
+            </h4>
+            <div className="space-y-1">
+              {authorityNavigation.map((item) => {
+                const isActive = pathname === item.href || (item.href !== '/authority' && pathname.startsWith(item.href));
+                const isExact = item.href === '/authority' && pathname === '/authority';
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                      (isExact || isActive)
+                        ? 'bg-teal/10 text-teal'
+                        : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                    )}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Marketing Section — locked for non-super_admins */}
         <div className="mt-6">

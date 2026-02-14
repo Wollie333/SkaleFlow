@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { AnalyticsOverviewClient } from './analytics-overview-client';
+import { AnalyticsOverviewClient } from './analytics-overview-client-old';
 
 export const metadata = {
   title: 'Analytics Overview - SkaleFlow',

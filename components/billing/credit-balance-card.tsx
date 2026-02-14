@@ -60,7 +60,7 @@ export function CreditBalanceCard({
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-charcoal">System Available Credits</h3>
-          <Badge variant="outline" className="bg-teal/10 text-teal">
+          <Badge variant="default" className="bg-teal/10 text-teal">
             Real-Time
           </Badge>
         </div>
@@ -83,7 +83,7 @@ export function CreditBalanceCard({
                 ${Math.abs(systemTotalCostUSD).toFixed(2)}
               </span>
               {systemTotalCostUSD < 0 && (
-                <Badge variant="outline" className="bg-red-100 text-red-700">
+                <Badge variant="default" className="bg-red-100 text-red-700">
                   Negative
                 </Badge>
               )}
@@ -197,7 +197,7 @@ export function CreditBalanceCard({
             {totalRemaining.toLocaleString()}
           </span>
           {totalRemaining < 0 && isSuperAdmin && (
-            <Badge variant="outline" className="bg-red-100 text-red-700 text-xs">
+            <Badge variant="default" className="bg-red-100 text-red-700 text-xs">
               Negative
             </Badge>
           )}

@@ -181,13 +181,13 @@ export function AIProviderConnections() {
                   </Badge>
                 )}
                 {balance.status === 'offline' && (
-                  <Badge variant="outline" className="bg-stone/5 text-stone flex items-center gap-1">
+                  <Badge variant="default" className="bg-stone/5 text-stone flex items-center gap-1">
                     <XCircleIcon className="w-3 h-3" />
                     Offline
                   </Badge>
                 )}
                 {balance.status === 'error' && (
-                  <Badge variant="outline" className="bg-red-100 text-red-700 flex items-center gap-1">
+                  <Badge variant="default" className="bg-red-100 text-red-700 flex items-center gap-1">
                     <ExclamationTriangleIcon className="w-3 h-3" />
                     Error
                   </Badge>

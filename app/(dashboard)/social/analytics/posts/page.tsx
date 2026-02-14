@@ -40,7 +40,7 @@ export default async function PostPerformancePage() {
   return (
     <PostsPerformanceClient
       organizationId={organizationId}
-      connections={connections || []}
+      connections={(connections || []).map(c => ({ ...c, platform_username: c.platform_username ?? undefined, platform_page_name: c.platform_page_name ?? undefined }))}
     />
   );
 }

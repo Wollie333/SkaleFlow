@@ -82,6 +82,31 @@ export type TemplateTier = 'core_rotation' | 'high_impact' | 'strategic';
 export type TemplateContentType = 'post' | 'script' | 'hook' | 'cta';
 export type ContentFeedbackType = 'rejected' | 'accepted' | 'regenerated';
 
+// Authority Engine types
+export type AuthorityCategory = 'press_release' | 'media_placement' | 'magazine_feature' | 'podcast_appearance' | 'live_event' | 'tv_video' | 'award_recognition' | 'thought_leadership';
+export type AuthorityPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type AuthorityStageType = 'active' | 'closed_won' | 'closed_lost';
+export type AuthorityReachTier = 'local' | 'regional' | 'national' | 'international';
+export type AuthorityEngagementType = 'earned' | 'paid' | 'contra' | 'sponsored';
+export type AuthorityPaymentStatus = 'not_invoiced' | 'invoiced' | 'paid' | 'overdue';
+export type AuthorityPaymentTerms = 'upfront' | '50_50' | 'on_publication' | 'net_30' | 'custom';
+export type AuthorityContactRole = 'journalist' | 'editor' | 'podcast_host' | 'event_organiser' | 'pr_agent' | 'other';
+export type AuthorityContactWarmth = 'cold' | 'warm' | 'hot' | 'active' | 'published';
+export type AuthorityContactSource = 'manual' | 'press_page_inquiry' | 'email_capture' | 'csv_import' | 'referral';
+export type AuthorityCorrespondenceType = 'email' | 'phone_call' | 'meeting' | 'note' | 'other';
+export type AuthorityCorrespondenceDirection = 'inbound' | 'outbound';
+export type AuthorityAssetType = 'clipping_screenshot' | 'clipping_pdf' | 'clipping_url' | 'publication_logo' | 'headshot' | 'product_image' | 'brand_logo' | 'document' | 'attachment' | 'other';
+export type AuthorityPressReleaseStatus = 'draft' | 'in_review' | 'published' | 'archived';
+export type AuthorityPressReleaseTemplate = 'product_launch' | 'milestone' | 'partnership' | 'award' | 'event' | 'executive_appointment' | 'crisis_response';
+export type AuthorityQuestStatus = 'locked' | 'active' | 'completed';
+export type AuthorityRoundStatus = 'active' | 'completed' | 'expired';
+export type AuthorityCalendarEventType = 'submission_deadline' | 'publication_date' | 'embargo_lift' | 'follow_up' | 'speaking_event' | 'amplification_post' | 'quest_deadline' | 'custom';
+export type AuthorityNotificationType = 'follow_up_due' | 'publication_approaching' | 'embargo_lifting' | 'inbound_inquiry' | 'deadline_approaching' | 'published_prompt' | 'quest_milestone' | 'payment_overdue' | 'inactivity_warning' | 'seasonal_prompt';
+export type AuthorityNotificationChannel = 'in_app' | 'email' | 'push';
+export type AuthorityDeclineReason = 'not_relevant' | 'bad_timing' | 'wrong_contact' | 'full_calendar' | 'budget_constraints' | 'other';
+export type AuthorityConfirmedFormat = 'feature_article' | 'news_piece' | 'podcast_episode' | 'column' | 'interview' | 'speaking_slot';
+export type AuthorityInquiryFormat = 'article' | 'podcast' | 'video_interview' | 'written_qa' | 'other';
+
 export interface Database {
   public: {
     Tables: {
@@ -98,6 +123,7 @@ export interface Database {
           email_verified: boolean;
           onboarding_completed: boolean;
           approved: boolean;
+          organization_id: string | null;
         };
         Insert: {
           id?: string;
@@ -111,6 +137,7 @@ export interface Database {
           email_verified?: boolean;
           onboarding_completed?: boolean;
           approved?: boolean;
+          organization_id?: string | null;
         };
         Update: {
           id?: string;
@@ -124,6 +151,7 @@ export interface Database {
           email_verified?: boolean;
           onboarding_completed?: boolean;
           approved?: boolean;
+          organization_id?: string | null;
         };
         Relationships: [];
       };
@@ -138,6 +166,7 @@ export interface Database {
           brand_engine_status: BrandEngineStatus;
           content_engine_enabled: boolean;
           playbook_share_token: string | null;
+          industry: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -151,6 +180,7 @@ export interface Database {
           brand_engine_status?: BrandEngineStatus;
           content_engine_enabled?: boolean;
           playbook_share_token?: string | null;
+          industry?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -164,6 +194,7 @@ export interface Database {
           brand_engine_status?: BrandEngineStatus;
           content_engine_enabled?: boolean;
           playbook_share_token?: string | null;
+          industry?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -3721,6 +3752,1879 @@ export interface Database {
           },
         ];
       };
+
+      // ================================================================
+      // Authority Engine Tables
+      // ================================================================
+
+      authority_pipeline_stages: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          slug: string;
+          description: string | null;
+          stage_order: number;
+          stage_type: AuthorityStageType;
+          color: string | null;
+          is_default: boolean;
+          is_system: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          slug: string;
+          description?: string | null;
+          stage_order: number;
+          stage_type?: AuthorityStageType;
+          color?: string | null;
+          is_default?: boolean;
+          is_system?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          slug?: string;
+          description?: string | null;
+          stage_order?: number;
+          stage_type?: AuthorityStageType;
+          color?: string | null;
+          is_default?: boolean;
+          is_system?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_pipeline_stages_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_contacts: {
+        Row: {
+          id: string;
+          organization_id: string;
+          full_name: string;
+          email: string | null;
+          phone: string | null;
+          outlet: string | null;
+          role: string | null;
+          beat: string | null;
+          location: string | null;
+          linkedin_url: string | null;
+          twitter_url: string | null;
+          website_url: string | null;
+          warmth: AuthorityContactWarmth;
+          source: AuthorityContactSource;
+          email_normalised: string | null;
+          notes: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          full_name: string;
+          email?: string | null;
+          phone?: string | null;
+          outlet?: string | null;
+          role?: string | null;
+          beat?: string | null;
+          location?: string | null;
+          linkedin_url?: string | null;
+          twitter_url?: string | null;
+          website_url?: string | null;
+          warmth?: AuthorityContactWarmth;
+          source?: AuthorityContactSource;
+          email_normalised?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          full_name?: string;
+          email?: string | null;
+          phone?: string | null;
+          outlet?: string | null;
+          role?: string | null;
+          beat?: string | null;
+          location?: string | null;
+          linkedin_url?: string | null;
+          twitter_url?: string | null;
+          website_url?: string | null;
+          warmth?: AuthorityContactWarmth;
+          source?: AuthorityContactSource;
+          email_normalised?: string | null;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_contacts_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_story_angles: {
+        Row: {
+          id: string;
+          organization_id: string;
+          title: string;
+          description: string;
+          category: string | null;
+          target_audience: string | null;
+          suggested_outlets: string | null;
+          is_active: boolean;
+          is_ai_generated: boolean;
+          display_order: number;
+          times_used: number;
+          times_successful: number;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          title: string;
+          description: string;
+          category?: string | null;
+          target_audience?: string | null;
+          suggested_outlets?: string | null;
+          is_active?: boolean;
+          is_ai_generated?: boolean;
+          display_order?: number;
+          times_used?: number;
+          times_successful?: number;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          title?: string;
+          description?: string;
+          category?: string | null;
+          target_audience?: string | null;
+          suggested_outlets?: string | null;
+          is_active?: boolean;
+          is_ai_generated?: boolean;
+          display_order?: number;
+          times_used?: number;
+          times_successful?: number;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_story_angles_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_press_kit: {
+        Row: {
+          id: string;
+          organization_id: string;
+          brand_overview: string | null;
+          boilerplate: string | null;
+          founder_bio_short: string | null;
+          founder_bio_long: string | null;
+          fact_sheet: Json;
+          speaking_topics: Json;
+          social_stats: Json;
+          brand_colors: Json;
+          brand_fonts: Json;
+          logo_usage_notes: string | null;
+          public_page_enabled: boolean;
+          public_page_slug: string | null;
+          hero_tagline: string | null;
+          setup_completed: boolean;
+          setup_completed_at: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          brand_overview?: string | null;
+          boilerplate?: string | null;
+          founder_bio_short?: string | null;
+          founder_bio_long?: string | null;
+          fact_sheet?: Json;
+          speaking_topics?: Json;
+          social_stats?: Json;
+          brand_colors?: Json;
+          brand_fonts?: Json;
+          logo_usage_notes?: string | null;
+          public_page_enabled?: boolean;
+          public_page_slug?: string | null;
+          hero_tagline?: string | null;
+          setup_completed?: boolean;
+          setup_completed_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          brand_overview?: string | null;
+          boilerplate?: string | null;
+          founder_bio_short?: string | null;
+          founder_bio_long?: string | null;
+          fact_sheet?: Json;
+          speaking_topics?: Json;
+          social_stats?: Json;
+          brand_colors?: Json;
+          brand_fonts?: Json;
+          logo_usage_notes?: string | null;
+          public_page_enabled?: boolean;
+          public_page_slug?: string | null;
+          hero_tagline?: string | null;
+          setup_completed?: boolean;
+          setup_completed_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_press_kit_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_pipeline_cards: {
+        Row: {
+          id: string;
+          organization_id: string;
+          opportunity_name: string;
+          stage_id: string;
+          category: AuthorityCategory;
+          priority: AuthorityPriority;
+          target_outlet: string | null;
+          contact_id: string | null;
+          story_angle_id: string | null;
+          custom_story_angle: string | null;
+          target_date: string | null;
+          pitched_at: string | null;
+          agreed_at: string | null;
+          submitted_at: string | null;
+          published_at: string | null;
+          amplified_at: string | null;
+          archived_at: string | null;
+          confirmed_format: string | null;
+          confirmed_angle: string | null;
+          submission_deadline: string | null;
+          expected_publication_date: string | null;
+          embargo_date: string | null;
+          embargo_active: boolean;
+          live_url: string | null;
+          reach_tier: AuthorityReachTier;
+          decline_reason: string | null;
+          decline_reason_other: string | null;
+          decline_try_again_date: string | null;
+          decline_referred_to: string | null;
+          no_response_follow_up_count: number;
+          on_hold_reason: string | null;
+          on_hold_resume_date: string | null;
+          content_campaign_id: string | null;
+          pre_launch_campaign_id: string | null;
+          notes: string | null;
+          authority_points_earned: number;
+          points_calculated: boolean;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          opportunity_name: string;
+          stage_id: string;
+          category: AuthorityCategory;
+          priority?: AuthorityPriority;
+          target_outlet?: string | null;
+          contact_id?: string | null;
+          story_angle_id?: string | null;
+          custom_story_angle?: string | null;
+          target_date?: string | null;
+          pitched_at?: string | null;
+          agreed_at?: string | null;
+          submitted_at?: string | null;
+          published_at?: string | null;
+          amplified_at?: string | null;
+          archived_at?: string | null;
+          confirmed_format?: string | null;
+          confirmed_angle?: string | null;
+          submission_deadline?: string | null;
+          expected_publication_date?: string | null;
+          embargo_date?: string | null;
+          embargo_active?: boolean;
+          live_url?: string | null;
+          reach_tier?: AuthorityReachTier;
+          decline_reason?: string | null;
+          decline_reason_other?: string | null;
+          decline_try_again_date?: string | null;
+          decline_referred_to?: string | null;
+          no_response_follow_up_count?: number;
+          on_hold_reason?: string | null;
+          on_hold_resume_date?: string | null;
+          content_campaign_id?: string | null;
+          pre_launch_campaign_id?: string | null;
+          notes?: string | null;
+          authority_points_earned?: number;
+          points_calculated?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          opportunity_name?: string;
+          stage_id?: string;
+          category?: AuthorityCategory;
+          priority?: AuthorityPriority;
+          target_outlet?: string | null;
+          contact_id?: string | null;
+          story_angle_id?: string | null;
+          custom_story_angle?: string | null;
+          target_date?: string | null;
+          pitched_at?: string | null;
+          agreed_at?: string | null;
+          submitted_at?: string | null;
+          published_at?: string | null;
+          amplified_at?: string | null;
+          archived_at?: string | null;
+          confirmed_format?: string | null;
+          confirmed_angle?: string | null;
+          submission_deadline?: string | null;
+          expected_publication_date?: string | null;
+          embargo_date?: string | null;
+          embargo_active?: boolean;
+          live_url?: string | null;
+          reach_tier?: AuthorityReachTier;
+          decline_reason?: string | null;
+          decline_reason_other?: string | null;
+          decline_try_again_date?: string | null;
+          decline_referred_to?: string | null;
+          no_response_follow_up_count?: number;
+          on_hold_reason?: string | null;
+          on_hold_resume_date?: string | null;
+          content_campaign_id?: string | null;
+          pre_launch_campaign_id?: string | null;
+          notes?: string | null;
+          authority_points_earned?: number;
+          points_calculated?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_pipeline_cards_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_pipeline_cards_stage_id_fkey";
+            columns: ["stage_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_pipeline_stages";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_pipeline_cards_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_pipeline_cards_story_angle_id_fkey";
+            columns: ["story_angle_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_story_angles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_commercial: {
+        Row: {
+          id: string;
+          organization_id: string;
+          card_id: string;
+          engagement_type: AuthorityEngagementType;
+          deal_value: number;
+          currency: string;
+          payment_status: AuthorityPaymentStatus;
+          payment_terms: string | null;
+          payment_terms_custom: string | null;
+          invoice_reference: string | null;
+          invoice_date: string | null;
+          payment_due_date: string | null;
+          payment_received_date: string | null;
+          budget_notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          card_id: string;
+          engagement_type: AuthorityEngagementType;
+          deal_value?: number;
+          currency?: string;
+          payment_status?: AuthorityPaymentStatus;
+          payment_terms?: string | null;
+          payment_terms_custom?: string | null;
+          invoice_reference?: string | null;
+          invoice_date?: string | null;
+          payment_due_date?: string | null;
+          payment_received_date?: string | null;
+          budget_notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          card_id?: string;
+          engagement_type?: AuthorityEngagementType;
+          deal_value?: number;
+          currency?: string;
+          payment_status?: AuthorityPaymentStatus;
+          payment_terms?: string | null;
+          payment_terms_custom?: string | null;
+          invoice_reference?: string | null;
+          invoice_date?: string | null;
+          payment_due_date?: string | null;
+          payment_received_date?: string | null;
+          budget_notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_commercial_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_commercial_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: true;
+            referencedRelation: "authority_pipeline_cards";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_correspondence: {
+        Row: {
+          id: string;
+          organization_id: string;
+          card_id: string;
+          contact_id: string | null;
+          type: AuthorityCorrespondenceType;
+          direction: AuthorityCorrespondenceDirection | null;
+          email_subject: string | null;
+          email_from: string | null;
+          email_to: string | null;
+          email_cc: string | null;
+          email_bcc: string | null;
+          email_body_text: string | null;
+          email_body_html: string | null;
+          email_message_id: string | null;
+          email_in_reply_to: string | null;
+          email_thread_id: string | null;
+          summary: string | null;
+          content: string | null;
+          occurred_at: string;
+          duration_minutes: number | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          card_id: string;
+          contact_id?: string | null;
+          type: AuthorityCorrespondenceType;
+          direction?: AuthorityCorrespondenceDirection | null;
+          email_subject?: string | null;
+          email_from?: string | null;
+          email_to?: string | null;
+          email_cc?: string | null;
+          email_bcc?: string | null;
+          email_body_text?: string | null;
+          email_body_html?: string | null;
+          email_message_id?: string | null;
+          email_in_reply_to?: string | null;
+          email_thread_id?: string | null;
+          summary?: string | null;
+          content?: string | null;
+          occurred_at: string;
+          duration_minutes?: number | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          card_id?: string;
+          contact_id?: string | null;
+          type?: AuthorityCorrespondenceType;
+          direction?: AuthorityCorrespondenceDirection | null;
+          email_subject?: string | null;
+          email_from?: string | null;
+          email_to?: string | null;
+          email_cc?: string | null;
+          email_bcc?: string | null;
+          email_body_text?: string | null;
+          email_body_html?: string | null;
+          email_message_id?: string | null;
+          email_in_reply_to?: string | null;
+          email_thread_id?: string | null;
+          summary?: string | null;
+          content?: string | null;
+          occurred_at?: string;
+          duration_minutes?: number | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_correspondence_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_correspondence_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_pipeline_cards";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_correspondence_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_contacts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_press_releases: {
+        Row: {
+          id: string;
+          organization_id: string;
+          title: string;
+          subtitle: string | null;
+          template_type: string | null;
+          headline: string;
+          subheadline: string | null;
+          dateline: string | null;
+          body_content: string;
+          quotes: Json;
+          boilerplate: string | null;
+          contact_info: string | null;
+          status: AuthorityPressReleaseStatus;
+          published_at: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          is_public: boolean;
+          public_excerpt: string | null;
+          slug: string | null;
+          card_id: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          title: string;
+          subtitle?: string | null;
+          template_type?: string | null;
+          headline: string;
+          subheadline?: string | null;
+          dateline?: string | null;
+          body_content: string;
+          quotes?: Json;
+          boilerplate?: string | null;
+          contact_info?: string | null;
+          status?: AuthorityPressReleaseStatus;
+          published_at?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          is_public?: boolean;
+          public_excerpt?: string | null;
+          slug?: string | null;
+          card_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          title?: string;
+          subtitle?: string | null;
+          template_type?: string | null;
+          headline?: string;
+          subheadline?: string | null;
+          dateline?: string | null;
+          body_content?: string;
+          quotes?: Json;
+          boilerplate?: string | null;
+          contact_info?: string | null;
+          status?: AuthorityPressReleaseStatus;
+          published_at?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          is_public?: boolean;
+          public_excerpt?: string | null;
+          slug?: string | null;
+          card_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_press_releases_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_press_releases_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_pipeline_cards";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_assets: {
+        Row: {
+          id: string;
+          organization_id: string;
+          card_id: string | null;
+          correspondence_id: string | null;
+          press_release_id: string | null;
+          press_kit_id: string | null;
+          asset_type: AuthorityAssetType;
+          file_name: string | null;
+          file_url: string;
+          file_size: number | null;
+          mime_type: string | null;
+          title: string | null;
+          description: string | null;
+          alt_text: string | null;
+          outlet_name: string | null;
+          is_public: boolean;
+          public_display_order: number | null;
+          key_quotes: Json;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          card_id?: string | null;
+          correspondence_id?: string | null;
+          press_release_id?: string | null;
+          press_kit_id?: string | null;
+          asset_type: AuthorityAssetType;
+          file_name?: string | null;
+          file_url: string;
+          file_size?: number | null;
+          mime_type?: string | null;
+          title?: string | null;
+          description?: string | null;
+          alt_text?: string | null;
+          outlet_name?: string | null;
+          is_public?: boolean;
+          public_display_order?: number | null;
+          key_quotes?: Json;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          card_id?: string | null;
+          correspondence_id?: string | null;
+          press_release_id?: string | null;
+          press_kit_id?: string | null;
+          asset_type?: AuthorityAssetType;
+          file_name?: string | null;
+          file_url?: string;
+          file_size?: number | null;
+          mime_type?: string | null;
+          title?: string | null;
+          description?: string | null;
+          alt_text?: string | null;
+          outlet_name?: string | null;
+          is_public?: boolean;
+          public_display_order?: number | null;
+          key_quotes?: Json;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_assets_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_assets_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_pipeline_cards";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_assets_correspondence_id_fkey";
+            columns: ["correspondence_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_correspondence";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_assets_press_release_id_fkey";
+            columns: ["press_release_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_press_releases";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_assets_press_kit_id_fkey";
+            columns: ["press_kit_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_press_kit";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_quests: {
+        Row: {
+          id: string;
+          organization_id: string;
+          quest_name: string;
+          quest_slug: string;
+          tier: number;
+          description: string | null;
+          requirements: Json;
+          status: AuthorityQuestStatus;
+          progress_percentage: number;
+          started_at: string | null;
+          completed_at: string | null;
+          target_completion_date: string | null;
+          points_threshold_min: number;
+          points_threshold_max: number | null;
+          is_system: boolean;
+          is_current: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          quest_name: string;
+          quest_slug: string;
+          tier: number;
+          description?: string | null;
+          requirements: Json;
+          status?: AuthorityQuestStatus;
+          progress_percentage?: number;
+          started_at?: string | null;
+          completed_at?: string | null;
+          target_completion_date?: string | null;
+          points_threshold_min: number;
+          points_threshold_max?: number | null;
+          is_system?: boolean;
+          is_current?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          quest_name?: string;
+          quest_slug?: string;
+          tier?: number;
+          description?: string | null;
+          requirements?: Json;
+          status?: AuthorityQuestStatus;
+          progress_percentage?: number;
+          started_at?: string | null;
+          completed_at?: string | null;
+          target_completion_date?: string | null;
+          points_threshold_min?: number;
+          points_threshold_max?: number | null;
+          is_system?: boolean;
+          is_current?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_quests_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_scores: {
+        Row: {
+          id: string;
+          organization_id: string;
+          card_id: string;
+          base_points: number;
+          reach_multiplier: number;
+          engagement_multiplier: number;
+          amplification_bonus: number;
+          round_bonus: number;
+          consistency_bonus: number;
+          total_points: number;
+          activity_category: string;
+          reach_tier: AuthorityReachTier;
+          engagement_type: AuthorityEngagementType;
+          description: string | null;
+          scored_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          card_id: string;
+          base_points: number;
+          reach_multiplier?: number;
+          engagement_multiplier?: number;
+          amplification_bonus?: number;
+          round_bonus?: number;
+          consistency_bonus?: number;
+          total_points: number;
+          activity_category: string;
+          reach_tier: AuthorityReachTier;
+          engagement_type: AuthorityEngagementType;
+          description?: string | null;
+          scored_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          card_id?: string;
+          base_points?: number;
+          reach_multiplier?: number;
+          engagement_multiplier?: number;
+          amplification_bonus?: number;
+          round_bonus?: number;
+          consistency_bonus?: number;
+          total_points?: number;
+          activity_category?: string;
+          reach_tier?: AuthorityReachTier;
+          engagement_type?: AuthorityEngagementType;
+          description?: string | null;
+          scored_at?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_scores_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_scores_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_pipeline_cards";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_calendar_events: {
+        Row: {
+          id: string;
+          organization_id: string;
+          card_id: string | null;
+          event_type: AuthorityCalendarEventType;
+          title: string;
+          description: string | null;
+          event_date: string;
+          event_time: string | null;
+          reminder_sent: boolean;
+          reminder_days_before: number;
+          is_completed: boolean;
+          completed_at: string | null;
+          is_recurring: boolean;
+          recurrence_pattern: string | null;
+          color: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          card_id?: string | null;
+          event_type: AuthorityCalendarEventType;
+          title: string;
+          description?: string | null;
+          event_date: string;
+          event_time?: string | null;
+          reminder_sent?: boolean;
+          reminder_days_before?: number;
+          is_completed?: boolean;
+          completed_at?: string | null;
+          is_recurring?: boolean;
+          recurrence_pattern?: string | null;
+          color?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          card_id?: string | null;
+          event_type?: AuthorityCalendarEventType;
+          title?: string;
+          description?: string | null;
+          event_date?: string;
+          event_time?: string | null;
+          reminder_sent?: boolean;
+          reminder_days_before?: number;
+          is_completed?: boolean;
+          completed_at?: string | null;
+          is_recurring?: boolean;
+          recurrence_pattern?: string | null;
+          color?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_calendar_events_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_calendar_events_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_pipeline_cards";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_notifications: {
+        Row: {
+          id: string;
+          organization_id: string;
+          user_id: string;
+          notification_type: AuthorityNotificationType;
+          title: string;
+          message: string;
+          card_id: string | null;
+          contact_id: string | null;
+          quest_id: string | null;
+          channel: AuthorityNotificationChannel;
+          is_read: boolean;
+          read_at: string | null;
+          is_sent: boolean;
+          sent_at: string | null;
+          scheduled_for: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          user_id: string;
+          notification_type: AuthorityNotificationType;
+          title: string;
+          message: string;
+          card_id?: string | null;
+          contact_id?: string | null;
+          quest_id?: string | null;
+          channel?: AuthorityNotificationChannel;
+          is_read?: boolean;
+          read_at?: string | null;
+          is_sent?: boolean;
+          sent_at?: string | null;
+          scheduled_for?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          user_id?: string;
+          notification_type?: AuthorityNotificationType;
+          title?: string;
+          message?: string;
+          card_id?: string | null;
+          contact_id?: string | null;
+          quest_id?: string | null;
+          channel?: AuthorityNotificationChannel;
+          is_read?: boolean;
+          read_at?: string | null;
+          is_sent?: boolean;
+          sent_at?: string | null;
+          scheduled_for?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_notifications_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_notifications_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_notifications_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_pipeline_cards";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_notifications_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_notifications_quest_id_fkey";
+            columns: ["quest_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_quests";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_card_checklist: {
+        Row: {
+          id: string;
+          card_id: string;
+          organization_id: string;
+          item_text: string;
+          is_completed: boolean;
+          completed_at: string | null;
+          completed_by: string | null;
+          is_system: boolean;
+          display_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          card_id: string;
+          organization_id: string;
+          item_text: string;
+          is_completed?: boolean;
+          completed_at?: string | null;
+          completed_by?: string | null;
+          is_system?: boolean;
+          display_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          card_id?: string;
+          organization_id?: string;
+          item_text?: string;
+          is_completed?: boolean;
+          completed_at?: string | null;
+          completed_by?: string | null;
+          is_system?: boolean;
+          display_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_card_checklist_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_pipeline_cards";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_card_checklist_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_email_config: {
+        Row: {
+          id: string;
+          organization_id: string;
+          bcc_address: string;
+          bcc_enabled: boolean;
+          gmail_connected: boolean;
+          gmail_access_token: string | null;
+          gmail_refresh_token: string | null;
+          gmail_token_expiry: string | null;
+          gmail_email: string | null;
+          gmail_sync_enabled: boolean;
+          gmail_last_sync: string | null;
+          outlook_connected: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          bcc_address: string;
+          bcc_enabled?: boolean;
+          gmail_connected?: boolean;
+          gmail_access_token?: string | null;
+          gmail_refresh_token?: string | null;
+          gmail_token_expiry?: string | null;
+          gmail_email?: string | null;
+          gmail_sync_enabled?: boolean;
+          gmail_last_sync?: string | null;
+          outlook_connected?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          bcc_address?: string;
+          bcc_enabled?: boolean;
+          gmail_connected?: boolean;
+          gmail_access_token?: string | null;
+          gmail_refresh_token?: string | null;
+          gmail_token_expiry?: string | null;
+          gmail_email?: string | null;
+          gmail_sync_enabled?: boolean;
+          gmail_last_sync?: string | null;
+          outlook_connected?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_email_config_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_rounds: {
+        Row: {
+          id: string;
+          organization_id: string;
+          round_name: string;
+          round_number: number;
+          requirements: Json;
+          linked_card_ids: Json;
+          status: AuthorityRoundStatus;
+          started_at: string;
+          target_completion_date: string | null;
+          completed_at: string | null;
+          bonus_percentage: number;
+          bonus_applied: boolean;
+          is_system: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          round_name: string;
+          round_number: number;
+          requirements: Json;
+          linked_card_ids?: Json;
+          status?: AuthorityRoundStatus;
+          started_at?: string;
+          target_completion_date?: string | null;
+          completed_at?: string | null;
+          bonus_percentage?: number;
+          bonus_applied?: boolean;
+          is_system?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          round_name?: string;
+          round_number?: number;
+          requirements?: Json;
+          linked_card_ids?: Json;
+          status?: AuthorityRoundStatus;
+          started_at?: string;
+          target_completion_date?: string | null;
+          completed_at?: string | null;
+          bonus_percentage?: number;
+          bonus_applied?: boolean;
+          is_system?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_rounds_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_press_page_inquiries: {
+        Row: {
+          id: string;
+          organization_id: string;
+          journalist_name: string;
+          journalist_outlet: string;
+          journalist_email: string;
+          journalist_phone: string | null;
+          topic_of_interest: string;
+          preferred_format: string | null;
+          deadline: string | null;
+          additional_notes: string | null;
+          story_angle_id: string | null;
+          is_processed: boolean;
+          processed_at: string | null;
+          contact_id: string | null;
+          card_id: string | null;
+          ip_address: string | null;
+          user_agent: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          journalist_name: string;
+          journalist_outlet: string;
+          journalist_email: string;
+          journalist_phone?: string | null;
+          topic_of_interest: string;
+          preferred_format?: string | null;
+          deadline?: string | null;
+          additional_notes?: string | null;
+          story_angle_id?: string | null;
+          is_processed?: boolean;
+          processed_at?: string | null;
+          contact_id?: string | null;
+          card_id?: string | null;
+          ip_address?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          journalist_name?: string;
+          journalist_outlet?: string;
+          journalist_email?: string;
+          journalist_phone?: string | null;
+          topic_of_interest?: string;
+          preferred_format?: string | null;
+          deadline?: string | null;
+          additional_notes?: string | null;
+          story_angle_id?: string | null;
+          is_processed?: boolean;
+          processed_at?: string | null;
+          contact_id?: string | null;
+          card_id?: string | null;
+          ip_address?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_press_page_inquiries_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_press_page_inquiries_story_angle_id_fkey";
+            columns: ["story_angle_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_story_angles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_press_page_inquiries_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_press_page_inquiries_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "authority_pipeline_cards";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      competitors: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          description: string | null;
+          website: string | null;
+          logo_url: string | null;
+          linkedin_handle: string | null;
+          facebook_handle: string | null;
+          instagram_handle: string | null;
+          twitter_handle: string | null;
+          tiktok_handle: string | null;
+          youtube_handle: string | null;
+          is_active: boolean;
+          track_mentions: boolean;
+          track_performance: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          description?: string | null;
+          website?: string | null;
+          logo_url?: string | null;
+          linkedin_handle?: string | null;
+          facebook_handle?: string | null;
+          instagram_handle?: string | null;
+          twitter_handle?: string | null;
+          tiktok_handle?: string | null;
+          youtube_handle?: string | null;
+          is_active?: boolean;
+          track_mentions?: boolean;
+          track_performance?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          description?: string | null;
+          website?: string | null;
+          logo_url?: string | null;
+          linkedin_handle?: string | null;
+          facebook_handle?: string | null;
+          instagram_handle?: string | null;
+          twitter_handle?: string | null;
+          tiktok_handle?: string | null;
+          youtube_handle?: string | null;
+          is_active?: boolean;
+          track_mentions?: boolean;
+          track_performance?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      competitor_metrics: {
+        Row: {
+          id: string;
+          competitor_id: string;
+          metric_date: string;
+          platform: string | null;
+          followers: number | null;
+          engagement_rate: number | null;
+          posts_count: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          competitor_id: string;
+          metric_date: string;
+          platform?: string | null;
+          followers?: number | null;
+          engagement_rate?: number | null;
+          posts_count?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          competitor_id?: string;
+          metric_date?: string;
+          platform?: string | null;
+          followers?: number | null;
+          engagement_rate?: number | null;
+          posts_count?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      hashtag_sets: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          description: string | null;
+          hashtags: string[];
+          platforms: string[];
+          category: string;
+          last_used_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          description?: string | null;
+          hashtags: string[];
+          platforms?: string[];
+          category?: string;
+          last_used_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          description?: string | null;
+          hashtags?: string[];
+          platforms?: string[];
+          category?: string;
+          last_used_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      hashtag_analytics: {
+        Row: {
+          id: string;
+          organization_id: string;
+          hashtag: string;
+          used_count: number;
+          avg_engagement_rate: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          hashtag: string;
+          used_count?: number;
+          avg_engagement_rate?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          hashtag?: string;
+          used_count?: number;
+          avg_engagement_rate?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      social_listening_keywords: {
+        Row: {
+          id: string;
+          organization_id: string;
+          keyword: string;
+          keyword_type: string;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          keyword: string;
+          keyword_type?: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          keyword?: string;
+          keyword_type?: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      social_listening_mentions: {
+        Row: {
+          id: string;
+          organization_id: string;
+          keyword_id: string | null;
+          platform: string;
+          author_name: string | null;
+          author_username: string | null;
+          message: string;
+          sentiment: string;
+          is_read: boolean;
+          is_flagged: boolean;
+          notes: string | null;
+          published_at: string;
+          discovered_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          keyword_id?: string | null;
+          platform: string;
+          author_name?: string | null;
+          author_username?: string | null;
+          message: string;
+          sentiment?: string;
+          is_read?: boolean;
+          is_flagged?: boolean;
+          notes?: string | null;
+          published_at: string;
+          discovered_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          keyword_id?: string | null;
+          platform?: string;
+          author_name?: string | null;
+          author_username?: string | null;
+          message?: string;
+          sentiment?: string;
+          is_read?: boolean;
+          is_flagged?: boolean;
+          notes?: string | null;
+          published_at?: string;
+          discovered_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      social_listening_trends: {
+        Row: {
+          id: string;
+          organization_id: string;
+          keyword: string | null;
+          topic: string | null;
+          mention_count: number;
+          time_period: string;
+          analyzed_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          keyword?: string | null;
+          topic?: string | null;
+          mention_count: number;
+          time_period: string;
+          analyzed_at: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          keyword?: string | null;
+          topic?: string | null;
+          mention_count?: number;
+          time_period?: string;
+          analyzed_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      social_interactions: {
+        Row: {
+          id: string;
+          organization_id: string;
+          connection_id: string;
+          platform: string;
+          interaction_type: string;
+          platform_interaction_id: string;
+          parent_interaction_id: string | null;
+          message: string | null;
+          author_platform_id: string | null;
+          author_name: string | null;
+          author_username: string | null;
+          author_avatar_url: string | null;
+          is_read: boolean;
+          is_replied: boolean;
+          is_flagged: boolean;
+          assigned_to: string | null;
+          replied_at: string | null;
+          replied_by: string | null;
+          interaction_timestamp: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          connection_id: string;
+          platform: string;
+          interaction_type: string;
+          platform_interaction_id: string;
+          parent_interaction_id?: string | null;
+          message?: string | null;
+          author_platform_id?: string | null;
+          author_name?: string | null;
+          author_username?: string | null;
+          author_avatar_url?: string | null;
+          is_read?: boolean;
+          is_replied?: boolean;
+          is_flagged?: boolean;
+          assigned_to?: string | null;
+          replied_at?: string | null;
+          replied_by?: string | null;
+          interaction_timestamp: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          connection_id?: string;
+          platform?: string;
+          interaction_type?: string;
+          platform_interaction_id?: string;
+          parent_interaction_id?: string | null;
+          message?: string | null;
+          author_platform_id?: string | null;
+          author_name?: string | null;
+          author_username?: string | null;
+          author_avatar_url?: string | null;
+          is_read?: boolean;
+          is_replied?: boolean;
+          is_flagged?: boolean;
+          assigned_to?: string | null;
+          replied_at?: string | null;
+          replied_by?: string | null;
+          interaction_timestamp?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      posting_schedule_analysis: {
+        Row: {
+          id: string;
+          organization_id: string;
+          platform: string;
+          best_times: Json;
+          confidence_score: number;
+          sample_size: number;
+          avg_engagement_by_hour: Json;
+          avg_reach_by_hour: Json | null;
+          analyzed_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          platform: string;
+          best_times: Json;
+          confidence_score: number;
+          sample_size: number;
+          avg_engagement_by_hour: Json;
+          avg_reach_by_hour?: Json | null;
+          analyzed_at: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          platform?: string;
+          best_times?: Json;
+          confidence_score?: number;
+          sample_size?: number;
+          avg_engagement_by_hour?: Json;
+          avg_reach_by_hour?: Json | null;
+          analyzed_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      industry_benchmarks: {
+        Row: {
+          id: string;
+          industry: string;
+          platform: string | null;
+          metric_name: string;
+          metric_value: number;
+          metric_unit: string | null;
+          source: string | null;
+          period: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          industry: string;
+          platform?: string | null;
+          metric_name: string;
+          metric_value: number;
+          metric_unit?: string | null;
+          source?: string | null;
+          period?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          industry?: string;
+          platform?: string | null;
+          metric_name?: string;
+          metric_value?: number;
+          metric_unit?: string | null;
+          source?: string | null;
+          period?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      saved_replies: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          content: string;
+          category: string | null;
+          use_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          content: string;
+          category?: string | null;
+          use_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          content?: string;
+          category?: string | null;
+          use_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {};
     Functions: {
@@ -3731,6 +5635,18 @@ export interface Database {
         Returns: Json;
       };
       reset_monthly_credits: {
+        Args: {
+          p_org_id: string;
+        };
+        Returns: void;
+      };
+      seed_authority_stages: {
+        Args: {
+          p_org_id: string;
+        };
+        Returns: void;
+      };
+      seed_authority_quests: {
         Args: {
           p_org_id: string;
         };

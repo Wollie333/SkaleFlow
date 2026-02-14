@@ -36,7 +36,7 @@ export default async function DraftsPage() {
     <div className="p-6 md:p-8 space-y-6">
       <PageHeader
         title="Drafts"
-        description={`${items.length} draft${items.length !== 1 ? 's' : ''} ready for review and scheduling`}
+        subtitle={`${items.length} draft${items.length !== 1 ? 's' : ''} ready for review and scheduling`}
       />
 
       {items.length === 0 ? (

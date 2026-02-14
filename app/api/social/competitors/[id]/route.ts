@@ -4,9 +4,10 @@ import { createClient } from '@/lib/supabase/server';
 // PATCH /api/social/competitors/[id] - Update a competitor
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     const {
@@ -50,7 +51,7 @@ export async function PATCH(
     const { data, error } = await supabase
       .from('competitors')
       .update(updates)
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single();
 
@@ -69,9 +70,10 @@ export async function PATCH(
 // DELETE /api/social/competitors/[id] - Delete a competitor
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
 
     const {
@@ -82,7 +84,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { error } = await supabase.from('competitors').delete().eq('id', params.id);
+    const { error } = await supabase.from('competitors').delete().eq('id', id);
 
     if (error) {
       console.error('Error deleting competitor:', error);

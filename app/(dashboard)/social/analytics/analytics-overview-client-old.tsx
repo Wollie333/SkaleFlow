@@ -81,7 +81,7 @@ export function AnalyticsOverviewClient({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <PageHeader
           title="Analytics Overview"
-          description="Comprehensive performance insights for the last 30 days"
+          subtitle="Comprehensive performance insights for the last 30 days"
         />
         <div className="flex flex-col gap-2">
           <Button

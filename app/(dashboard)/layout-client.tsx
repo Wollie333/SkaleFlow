@@ -10,7 +10,7 @@ import type { FeaturePermissions } from '@/lib/permissions';
 interface DashboardLayoutClientProps {
   children: React.ReactNode;
   headerProps: {
-    user: { email: string; full_name?: string };
+    user: { email: string; full_name?: string; avatar_url?: string };
     initialUnreadCount: number;
     organizationId?: string;
     draftCount: number;

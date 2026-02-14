@@ -111,7 +111,7 @@ export function ListeningDashboardClient({
     <div className="p-6 md:p-8 space-y-6">
       <PageHeader
         title="Social Listening"
-        description="Track brand mentions, sentiment, and trends across social media"
+        subtitle="Track brand mentions, sentiment, and trends across social media"
       />
 
       {/* Top Stats */}

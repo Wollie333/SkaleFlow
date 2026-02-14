@@ -24,16 +24,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the interaction
-    const { data: interaction, error: interactionError } = await supabase
+    // Get the interaction with its social connection
+    const { data: interactionRaw, error: interactionError } = await supabase
       .from('social_interactions')
-      .select('*, connection:social_media_connections!inner(*)')
+      .select('*')
       .eq('id', interactionId)
       .single();
 
-    if (interactionError || !interaction) {
+    if (interactionError || !interactionRaw) {
       return NextResponse.json({ error: 'Interaction not found' }, { status: 404 });
     }
+
+    // Fetch associated connection
+    const { data: connectionData } = await supabase
+      .from('social_media_connections')
+      .select('*')
+      .eq('id', interactionRaw.connection_id)
+      .single();
+
+    const interaction = { ...interactionRaw, connection: connectionData };
 
     // TODO: Implement platform-specific reply logic
     // This would call the appropriate platform adapter method
@@ -50,7 +59,7 @@ export async function POST(request: NextRequest) {
         platform_interaction_id: `reply_${Date.now()}`, // Temporary - would be platform ID
         parent_interaction_id: interaction.id,
         message,
-        author_platform_id: interaction.connection.platform_user_id,
+        author_platform_id: interaction.connection?.platform_user_id ?? 'unknown',
         author_name: 'You',
         is_read: true,
         is_replied: true,

@@ -74,7 +74,7 @@ export function InboxClient({ organizationId, initialFilters }: InboxClientProps
     <div className="p-6 md:p-8 space-y-6">
       <PageHeader
         title="Social Inbox"
-        description="Manage all your social media interactions in one place"
+        subtitle="Manage all your social media interactions in one place"
       />
 
       {/* Filter Tabs */}
