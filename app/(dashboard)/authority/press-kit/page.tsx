@@ -15,6 +15,7 @@ export default function AuthorityPressKitPage() {
 
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [selectedModelId, setSelectedModelId] = useState(AI_MODELS[0]?.id || '');
+  const [defaultPlaybookUrl, setDefaultPlaybookUrl] = useState<string>('');
   const [pressKit, setPressKit] = useState<Record<string, unknown> | null>(null);
   const [storyAngles, setStoryAngles] = useState<Array<{
     id: string; title: string; description: string | null;
@@ -54,17 +55,30 @@ export default function AuthorityPressKitPage() {
     }
     if (anglesRes.ok) setStoryAngles(await anglesRes.json());
 
-    // Fetch brand data for pre-population
-    const { data: outputs } = await supabase
-      .from('brand_outputs')
-      .select('output_key, output_value')
-      .eq('organization_id', organizationId);
+    // Fetch brand data + org slug in parallel
+    const [{ data: outputs }, { data: orgInfo }] = await Promise.all([
+      supabase
+        .from('brand_outputs')
+        .select('output_key, output_value')
+        .eq('organization_id', organizationId),
+      supabase
+        .from('organizations')
+        .select('slug')
+        .eq('id', organizationId)
+        .single(),
+    ]);
 
     const bd: Record<string, string> = {};
     (outputs || []).forEach((o) => {
       if (o.output_value) bd[o.output_key] = typeof o.output_value === 'string' ? o.output_value : JSON.stringify(o.output_value);
     });
     setBrandData(bd);
+
+    // Build default brand visual guide URL (public page)
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    if (orgInfo?.slug) {
+      setDefaultPlaybookUrl(`${origin}/brand-guide/${orgInfo.slug}`);
+    }
 
     setLoading(false);
   }, [organizationId]);
@@ -121,6 +135,7 @@ export default function AuthorityPressKitPage() {
               brandData={brandData}
               onSave={handleSavePressKit}
               selectedModelId={selectedModelId}
+              defaultPlaybookUrl={defaultPlaybookUrl}
             />
           </div>
         </div>

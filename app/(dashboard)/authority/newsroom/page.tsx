@@ -85,7 +85,7 @@ export default function NewsroomManagePage() {
   };
 
   return (
-    <div className="p-6 max-w-4xl">
+    <div className="p-6">
       <div className="flex items-center gap-3 mb-6">
         <GlobeAltIcon className="w-6 h-6 text-teal" />
         <h1 className="text-2xl font-serif font-bold text-charcoal">Newsroom</h1>

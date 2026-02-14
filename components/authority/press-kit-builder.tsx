@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { SparklesIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, XMarkIcon, CheckIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import type { FactSheet } from '@/lib/authority/types';
 
 interface PressKitData {
@@ -20,6 +20,7 @@ interface PressKitBuilderProps {
   brandData: Record<string, string>;
   onSave: (data: Record<string, unknown>) => Promise<void>;
   selectedModelId?: string;
+  defaultPlaybookUrl?: string;
 }
 
 type AiFieldName = 'company_overview' | 'mission_statement' | 'founder_bio' | 'speaking_topics' | 'milestones' | 'awards' | 'key_stats';
@@ -35,7 +36,7 @@ const AI_FIELD_LABELS: Record<AiFieldName, string> = {
   key_stats: 'Key Statistics',
 };
 
-export function PressKitBuilder({ pressKit, organizationId, brandData, onSave, selectedModelId }: PressKitBuilderProps) {
+export function PressKitBuilder({ pressKit, organizationId, brandData, onSave, selectedModelId, defaultPlaybookUrl }: PressKitBuilderProps) {
   const [activeSection, setActiveSection] = useState('overview');
   const [saving, setSaving] = useState(false);
 
@@ -72,7 +73,7 @@ export function PressKitBuilder({ pressKit, organizationId, brandData, onSave, s
       setFounderBio(pressKit.founder_bio || '');
       setMissionStatement(pressKit.mission_statement || '');
       setSpeakingTopics(pressKit.speaking_topics || []);
-      setBrandGuidelinesUrl(pressKit.brand_guidelines_url || '');
+      setBrandGuidelinesUrl(pressKit.brand_guidelines_url || defaultPlaybookUrl || '');
 
       const fs = pressKit.fact_sheet;
       if (fs) {
@@ -88,8 +89,9 @@ export function PressKitBuilder({ pressKit, organizationId, brandData, onSave, s
       setCompanyOverview(brandData['brand_positioning'] || brandData['brand_story'] || '');
       setFounderBio(brandData['founder_bio'] || '');
       setMissionStatement(brandData['brand_mission'] || brandData['mission_statement'] || '');
+      setBrandGuidelinesUrl(defaultPlaybookUrl || '');
     }
-  }, [pressKit, brandData]);
+  }, [pressKit, brandData, defaultPlaybookUrl]);
 
   // Get current value for the field being written
   const getCurrentValue = (field: AiFieldName): string => {
@@ -358,15 +360,36 @@ export function PressKitBuilder({ pressKit, organizationId, brandData, onSave, s
       {/* Brand Guidelines */}
       {activeSection === 'brand' && (
         <div>
-          <label className="block text-xs font-semibold text-charcoal mb-1">Brand Guidelines URL</label>
-          <p className="text-[10px] text-stone mb-2">Link to your downloadable brand guide (or your playbook page).</p>
-          <input
-            type="url"
-            value={brandGuidelinesUrl}
-            onChange={(e) => setBrandGuidelinesUrl(e.target.value)}
-            className="w-full px-3 py-2 border border-stone/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30"
-            placeholder="https://..."
-          />
+          <label className="block text-xs font-semibold text-charcoal mb-1">Brand Visual Guide URL</label>
+          <p className="text-[10px] text-stone mb-2">
+            Link to your public brand visual guide. Defaults to your SkaleFlow brand guide page.
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={brandGuidelinesUrl}
+              onChange={(e) => setBrandGuidelinesUrl(e.target.value)}
+              className="flex-1 px-3 py-2 border border-stone/20 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/30"
+              placeholder="https://..."
+            />
+            {defaultPlaybookUrl && brandGuidelinesUrl !== defaultPlaybookUrl && (
+              <button
+                type="button"
+                onClick={() => setBrandGuidelinesUrl(defaultPlaybookUrl)}
+                className="flex items-center gap-1 px-2.5 py-2 text-[10px] font-medium text-teal border border-teal/30 rounded-lg hover:bg-teal/5 transition-colors whitespace-nowrap"
+                title="Restore default SkaleFlow brand guide link"
+              >
+                <ArrowPathIcon className="w-3 h-3" />
+                Restore default
+              </button>
+            )}
+          </div>
+          {defaultPlaybookUrl && brandGuidelinesUrl === defaultPlaybookUrl && (
+            <p className="text-[10px] text-teal mt-1.5 flex items-center gap-1">
+              <CheckIcon className="w-3 h-3" />
+              Using your SkaleFlow brand visual guide
+            </p>
+          )}
         </div>
       )}
 
