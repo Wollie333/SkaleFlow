@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isToday, startOfWeek, endOfWeek, isSameMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckCircleIcon, EyeIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckCircleIcon, EyeIcon, PencilIcon, DocumentDuplicateIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import {
   DndContext,
   DragOverlay,
@@ -46,6 +46,7 @@ interface CalendarViewProps {
   onMovePost?: (itemId: string, newDate: string) => void;
   onAddPost?: (date: Date) => void;
   onDeletePost?: (itemId: string) => void;
+  onClonePost?: (item: BaseContentItem) => void;
   selectionMode?: boolean;
   selectedIds?: Set<string>;
   onSelectionChange?: (ids: Set<string>) => void;
@@ -108,11 +109,13 @@ function DraggablePost({
   item,
   onItemClick,
   onPreview,
+  onClone,
   onDelete,
 }: {
   item: BaseContentItem;
   onItemClick: (item: BaseContentItem) => void;
   onPreview?: (item: BaseContentItem) => void;
+  onClone?: (item: BaseContentItem) => void;
   onDelete?: (item: BaseContentItem) => void;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -230,6 +233,17 @@ function DraggablePost({
         <button
           onClick={(e) => {
             e.stopPropagation();
+            onClone?.(item);
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="p-2 bg-white/10 rounded hover:bg-teal/30 transition-colors"
+          title="Clone"
+        >
+          <DocumentDuplicateIcon className="w-4 h-4 text-white" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
             onDelete?.(item);
           }}
           onPointerDown={(e) => e.stopPropagation()}
@@ -250,6 +264,7 @@ function DroppableDay({
   onItemClick,
   onAddPost,
   onPreview,
+  onClone,
   onDelete,
   selectionMode,
   selectedIds,
@@ -261,6 +276,7 @@ function DroppableDay({
   onItemClick: (item: BaseContentItem) => void;
   onAddPost?: (date: Date) => void;
   onPreview?: (item: BaseContentItem) => void;
+  onClone?: (item: BaseContentItem) => void;
   onDelete?: (item: BaseContentItem) => void;
   selectionMode?: boolean;
   selectedIds?: Set<string>;
@@ -309,7 +325,7 @@ function DroppableDay({
               onToggle={onToggleSelection}
             />
           ) : (
-            <DraggablePost key={item.id} item={item} onItemClick={onItemClick} onPreview={onPreview} onDelete={onDelete} />
+            <DraggablePost key={item.id} item={item} onItemClick={onItemClick} onPreview={onPreview} onClone={onClone} onDelete={onDelete} />
           )
         ))}
         {dayItems.length > 4 && (
@@ -322,7 +338,7 @@ function DroppableDay({
   );
 }
 
-export function CalendarView({ items, onItemClick, onMonthChange, onMovePost, onAddPost, onDeletePost, selectionMode, selectedIds, onSelectionChange }: CalendarViewProps) {
+export function CalendarView({ items, onItemClick, onMonthChange, onMovePost, onAddPost, onDeletePost, onClonePost, selectionMode, selectedIds, onSelectionChange }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [activeItem, setActiveItem] = useState<BaseContentItem | null>(null);
   const [previewItem, setPreviewItem] = useState<BaseContentItem | null>(null);
@@ -457,6 +473,7 @@ export function CalendarView({ items, onItemClick, onMonthChange, onMovePost, on
                 onItemClick={onItemClick}
                 onAddPost={onAddPost}
                 onPreview={setPreviewItem}
+                onClone={onClonePost}
                 onDelete={setDeleteItem}
                 selectionMode={selectionMode}
                 selectedIds={selectedIds}

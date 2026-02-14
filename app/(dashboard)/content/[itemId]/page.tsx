@@ -21,6 +21,7 @@ import {
   PaperAirplaneIcon,
   SparklesIcon,
   LinkIcon,
+  DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import { useBrandVariables } from '@/hooks/useBrandVariables';
@@ -138,6 +139,9 @@ export default function PostEditPage() {
     subtitle?: string;
   }>({ variant: 'success', title: '' });
   const [showPostActionPopup, setShowPostActionPopup] = useState(false);
+
+  // Clone state
+  const [isCloning, setIsCloning] = useState(false);
 
   // Variation group state
   const [variationSiblings, setVariationSiblings] = useState<VariationSibling[]>([]);
@@ -446,7 +450,30 @@ export default function PostEditPage() {
     setIsAiAssisting(false);
   };
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Post action popup handlers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  // Clone handler
+  const handleClone = async () => {
+    if (!item) return;
+    setIsCloning(true);
+    try {
+      const res = await fetch(`/api/content/items/${item.id}/clone`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        router.push(`/content/${data.item.id}`);
+      } else {
+        setModalConfig({ variant: 'error', title: 'Clone Failed', subtitle: 'Could not duplicate this post' });
+        setShowModal(true);
+      }
+    } catch {
+      setModalConfig({ variant: 'error', title: 'Clone Failed', subtitle: 'An unexpected error occurred' });
+      setShowModal(true);
+    } finally {
+      setIsCloning(false);
+    }
+  };
+
+  //Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Post action popup handlers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
   const handlePopupSaveDraft = async (): Promise<string | null> => {
     await handleSave();
     return item?.id || null;
@@ -819,6 +846,15 @@ export default function PostEditPage() {
       <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-stone/10 -mx-6 px-6 py-4 flex flex-wrap items-center justify-between gap-3 z-30">
         <div className="flex items-center gap-2 flex-wrap">
           <StatusBadge status={item.status} />
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleClone}
+            isLoading={isCloning}
+          >
+            <DocumentDuplicateIcon className="w-4 h-4 mr-1" />
+            Clone
+          </Button>
           {/* Review actions (for admins/owners) */}
           {canApprove && (item.status === 'pending_review' || item.status === 'revision_requested') && (
             <>

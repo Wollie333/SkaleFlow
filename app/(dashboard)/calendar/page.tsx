@@ -468,6 +468,20 @@ export default function CalendarPage() {
     }
   };
 
+  const handleClonePost = async (item: { id: string }) => {
+    try {
+      const res = await fetch(`/api/content/items/${item.id}/clone`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        router.push(`/content/${data.item.id}`);
+      }
+    } catch (error) {
+      console.error('Failed to clone post:', error);
+    }
+  };
+
   const handleQuickCreate = async (data: {
     scheduled_date: string;
     format: string;
@@ -832,6 +846,7 @@ export default function CalendarPage() {
           onMovePost={handleMovePost}
           onAddPost={handleAddPost}
           onDeletePost={handleDeletePost}
+          onClonePost={handleClonePost}
           selectionMode={calendarSelectionMode}
           selectedIds={calendarSelectedIds}
           onSelectionChange={setCalendarSelectedIds}
