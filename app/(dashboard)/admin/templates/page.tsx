@@ -8,7 +8,6 @@ import {
   PlusIcon,
   ArrowUpTrayIcon,
   ArrowDownTrayIcon,
-  DocumentDuplicateIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   PencilSquareIcon,
@@ -328,7 +327,7 @@ Visual/structural rules for the output.
           { label: 'Templates' },
         ]}
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               size="sm"
