@@ -102,7 +102,7 @@ export default function InvitePage({ params }: InvitePageProps) {
             Invitation Error
           </h1>
           <p className="text-stone mb-8">{error}</p>
-          <Button onClick={() => router.push('/login')} variant="outline">
+          <Button onClick={() => router.push('/login')} variant="outline" className="border-cream/25 text-cream hover:border-cream/50">
             Go to Login
           </Button>
         </div>

@@ -393,15 +393,15 @@ Visual/structural rules for the output.
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         {/* Category tabs */}
-        <div className="flex gap-1 bg-cream-warm rounded-lg p-0.5">
+        <div className="flex gap-1 bg-white border border-stone/15 rounded-lg p-0.5">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.value}
               onClick={() => setCategoryFilter(cat.value)}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                 categoryFilter === cat.value
-                  ? 'bg-white text-charcoal shadow-sm'
-                  : 'text-stone hover:text-charcoal'
+                  ? 'bg-teal text-white shadow-sm'
+                  : 'text-charcoal hover:bg-cream-warm'
               }`}
             >
               {cat.label}
