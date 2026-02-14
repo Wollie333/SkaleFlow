@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { SparklesIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import type { FactSheet } from '@/lib/authority/types';
 
 interface PressKitData {
@@ -18,11 +19,32 @@ interface PressKitBuilderProps {
   organizationId: string;
   brandData: Record<string, string>;
   onSave: (data: Record<string, unknown>) => Promise<void>;
+  selectedModelId?: string;
 }
 
-export function PressKitBuilder({ pressKit, organizationId, brandData, onSave }: PressKitBuilderProps) {
+type AiFieldName = 'company_overview' | 'mission_statement' | 'founder_bio' | 'speaking_topics' | 'milestones' | 'awards' | 'key_stats';
+type AiModalStatus = 'generating' | 'done' | 'error';
+
+const AI_FIELD_LABELS: Record<AiFieldName, string> = {
+  company_overview: 'Company Overview',
+  mission_statement: 'Mission Statement',
+  founder_bio: 'Founder Bio',
+  speaking_topics: 'Speaking Topics',
+  milestones: 'Key Milestones',
+  awards: 'Awards & Recognition',
+  key_stats: 'Key Statistics',
+};
+
+export function PressKitBuilder({ pressKit, organizationId, brandData, onSave, selectedModelId }: PressKitBuilderProps) {
   const [activeSection, setActiveSection] = useState('overview');
   const [saving, setSaving] = useState(false);
+
+  // AI modal state
+  const [aiModalField, setAiModalField] = useState<AiFieldName | null>(null);
+  const [aiModalStatus, setAiModalStatus] = useState<AiModalStatus>('generating');
+  const [aiGeneratedText, setAiGeneratedText] = useState('');
+  const [aiGeneratedItems, setAiGeneratedItems] = useState<string[]>([]);
+  const [aiError, setAiError] = useState('');
 
   // Form state
   const [companyOverview, setCompanyOverview] = useState('');
@@ -68,6 +90,78 @@ export function PressKitBuilder({ pressKit, organizationId, brandData, onSave }:
       setMissionStatement(brandData['brand_mission'] || brandData['mission_statement'] || '');
     }
   }, [pressKit, brandData]);
+
+  // Get current value for the field being written
+  const getCurrentValue = (field: AiFieldName): string => {
+    switch (field) {
+      case 'company_overview': return companyOverview;
+      case 'mission_statement': return missionStatement;
+      case 'founder_bio': return founderBio;
+      default: return '';
+    }
+  };
+
+  // AI write handler
+  const handleAiWrite = async (field: AiFieldName) => {
+    setAiModalField(field);
+    setAiModalStatus('generating');
+    setAiGeneratedText('');
+    setAiGeneratedItems([]);
+    setAiError('');
+
+    try {
+      const res = await fetch('/api/authority/ai/press-kit-field', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organizationId,
+          fieldName: field,
+          modelId: selectedModelId || null,
+          currentValue: getCurrentValue(field) || null,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Generation failed');
+      }
+
+      const data = await res.json();
+      if (data.type === 'list') {
+        setAiGeneratedItems(data.items || []);
+      } else {
+        setAiGeneratedText(data.text || '');
+      }
+      setAiModalStatus('done');
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'Generation failed');
+      setAiModalStatus('error');
+    }
+  };
+
+  // Accept AI generated content
+  const handleAcceptAi = () => {
+    if (!aiModalField) return;
+
+    if (aiGeneratedText) {
+      switch (aiModalField) {
+        case 'company_overview': setCompanyOverview(aiGeneratedText); break;
+        case 'mission_statement': setMissionStatement(aiGeneratedText); break;
+        case 'founder_bio': setFounderBio(aiGeneratedText); break;
+      }
+    }
+
+    if (aiGeneratedItems.length > 0) {
+      switch (aiModalField) {
+        case 'speaking_topics': setSpeakingTopics(prev => [...prev, ...aiGeneratedItems]); break;
+        case 'milestones': setMilestones(prev => [...prev, ...aiGeneratedItems]); break;
+        case 'awards': setAwards(prev => [...prev, ...aiGeneratedItems]); break;
+        case 'key_stats': setKeyStats(prev => [...prev, ...aiGeneratedItems]); break;
+      }
+    }
+
+    setAiModalField(null);
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -134,7 +228,7 @@ export function PressKitBuilder({ pressKit, organizationId, brandData, onSave }:
       {activeSection === 'overview' && (
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-semibold text-charcoal mb-1">Company Overview</label>
+            <FieldLabel label="Company Overview" onAiWrite={() => handleAiWrite('company_overview')} />
             <p className="text-[10px] text-stone mb-2">A concise summary for journalists. Pre-populated from your Brand Engine.</p>
             <textarea
               value={companyOverview}
@@ -145,7 +239,7 @@ export function PressKitBuilder({ pressKit, organizationId, brandData, onSave }:
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-charcoal mb-1">Mission Statement</label>
+            <FieldLabel label="Mission Statement" onAiWrite={() => handleAiWrite('mission_statement')} />
             <textarea
               value={missionStatement}
               onChange={(e) => setMissionStatement(e.target.value)}
@@ -160,7 +254,7 @@ export function PressKitBuilder({ pressKit, organizationId, brandData, onSave }:
       {/* Founder Bio */}
       {activeSection === 'founder' && (
         <div>
-          <label className="block text-xs font-semibold text-charcoal mb-1">Founder / CEO Bio</label>
+          <FieldLabel label="Founder / CEO Bio" onAiWrite={() => handleAiWrite('founder_bio')} />
           <p className="text-[10px] text-stone mb-2">Pre-populated from your Brand Engine. Edit for media use.</p>
           <textarea
             value={founderBio}
@@ -217,6 +311,7 @@ export function PressKitBuilder({ pressKit, organizationId, brandData, onSave }:
             onAdd={() => addToList(milestones, setMilestones, newMilestone, setNewMilestone)}
             onRemove={(i) => removeFromList(milestones, setMilestones, i)}
             placeholder="e.g., Launched in 2020, Series A in 2022"
+            onAiWrite={() => handleAiWrite('milestones')}
           />
 
           {/* Awards */}
@@ -228,6 +323,7 @@ export function PressKitBuilder({ pressKit, organizationId, brandData, onSave }:
             onAdd={() => addToList(awards, setAwards, newAward, setNewAward)}
             onRemove={(i) => removeFromList(awards, setAwards, i)}
             placeholder="e.g., Top 50 Startups 2024"
+            onAiWrite={() => handleAiWrite('awards')}
           />
 
           {/* Key Stats */}
@@ -239,6 +335,7 @@ export function PressKitBuilder({ pressKit, organizationId, brandData, onSave }:
             onAdd={() => addToList(keyStats, setKeyStats, newStat, setNewStat)}
             onRemove={(i) => removeFromList(keyStats, setKeyStats, i)}
             placeholder="e.g., 10,000+ users"
+            onAiWrite={() => handleAiWrite('key_stats')}
           />
         </div>
       )}
@@ -254,6 +351,7 @@ export function PressKitBuilder({ pressKit, organizationId, brandData, onSave }:
           onRemove={(i) => removeFromList(speakingTopics, setSpeakingTopics, i)}
           placeholder="e.g., The Future of African Tech"
           description="Topics the founder/team can speak about in media, podcasts, and events."
+          onAiWrite={() => handleAiWrite('speaking_topics')}
         />
       )}
 
@@ -280,6 +378,163 @@ export function PressKitBuilder({ pressKit, organizationId, brandData, onSave }:
       >
         {saving ? 'Saving...' : 'Save Press Kit'}
       </button>
+
+      {/* AI Write Modal */}
+      {aiModalField && (
+        <AiWriteModal
+          fieldName={AI_FIELD_LABELS[aiModalField]}
+          status={aiModalStatus}
+          generatedText={aiGeneratedText}
+          generatedItems={aiGeneratedItems}
+          error={aiError}
+          onAccept={handleAcceptAi}
+          onRetry={() => handleAiWrite(aiModalField)}
+          onClose={() => setAiModalField(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// Field Label with AI Write Button
+// ============================================================================
+
+function FieldLabel({ label, onAiWrite }: { label: string; onAiWrite: () => void }) {
+  return (
+    <div className="flex items-center gap-2 mb-1">
+      <label className="text-xs font-semibold text-charcoal">{label}</label>
+      <button
+        type="button"
+        onClick={onAiWrite}
+        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-gold bg-gold/10 rounded-md hover:bg-gold/20 transition-colors"
+        title="Write with AI"
+      >
+        <SparklesIcon className="w-3 h-3" />
+        AI
+      </button>
+    </div>
+  );
+}
+
+// ============================================================================
+// AI Write Modal
+// ============================================================================
+
+function AiWriteModal({
+  fieldName,
+  status,
+  generatedText,
+  generatedItems,
+  error,
+  onAccept,
+  onRetry,
+  onClose,
+}: {
+  fieldName: string;
+  status: AiModalStatus;
+  generatedText: string;
+  generatedItems: string[];
+  error: string;
+  onAccept: () => void;
+  onRetry: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-stone/10">
+          <div className="flex items-center gap-2">
+            <SparklesIcon className="w-4 h-4 text-gold" />
+            <h3 className="text-sm font-semibold text-charcoal">Write with AI</h3>
+            <span className="text-xs text-stone">— {fieldName}</span>
+          </div>
+          <button onClick={onClose} className="text-stone hover:text-charcoal transition-colors">
+            <XMarkIcon className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
+          {status === 'generating' && (
+            <div className="flex flex-col items-center justify-center py-10">
+              <div className="w-8 h-8 border-2 border-gold/30 border-t-gold rounded-full animate-spin mb-3" />
+              <p className="text-sm text-charcoal font-medium">Generating {fieldName}...</p>
+              <p className="text-xs text-stone mt-1">Using your brand profile to write tailored content</p>
+            </div>
+          )}
+
+          {status === 'done' && generatedText && (
+            <div className="space-y-3">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-stone">Generated Content</p>
+              <div className="p-3 bg-cream-warm/30 rounded-lg border border-stone/10">
+                <p className="text-sm text-charcoal leading-relaxed whitespace-pre-line">{generatedText}</p>
+              </div>
+            </div>
+          )}
+
+          {status === 'done' && generatedItems.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-stone">Generated Items</p>
+              <div className="space-y-1.5">
+                {generatedItems.map((item, i) => (
+                  <div key={i} className="flex items-center gap-2 px-3 py-2 bg-cream-warm/30 rounded-lg border border-stone/10">
+                    <CheckIcon className="w-3.5 h-3.5 text-teal flex-shrink-0" />
+                    <span className="text-sm text-charcoal">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {status === 'error' && (
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center mb-3">
+                <XMarkIcon className="w-5 h-5 text-red-500" />
+              </div>
+              <p className="text-sm font-medium text-charcoal mb-1">Generation Failed</p>
+              <p className="text-xs text-stone text-center">{error}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-stone/10 bg-cream-warm/20">
+          {status === 'done' && (
+            <>
+              <button
+                onClick={onRetry}
+                className="px-3 py-1.5 text-xs font-medium text-stone hover:text-charcoal transition-colors"
+              >
+                Regenerate
+              </button>
+              <button
+                onClick={onAccept}
+                className="px-4 py-1.5 text-xs font-medium text-white bg-teal rounded-lg hover:bg-teal-dark transition-colors"
+              >
+                Accept
+              </button>
+            </>
+          )}
+          {status === 'error' && (
+            <button
+              onClick={onRetry}
+              className="px-4 py-1.5 text-xs font-medium text-white bg-teal rounded-lg hover:bg-teal-dark transition-colors"
+            >
+              Try Again
+            </button>
+          )}
+          {status === 'generating' && (
+            <button
+              onClick={onClose}
+              className="px-3 py-1.5 text-xs font-medium text-stone hover:text-charcoal transition-colors"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -297,6 +552,7 @@ function ListEditor({
   onRemove,
   placeholder,
   description,
+  onAiWrite,
 }: {
   label: string;
   items: string[];
@@ -306,10 +562,15 @@ function ListEditor({
   onRemove: (index: number) => void;
   placeholder: string;
   description?: string;
+  onAiWrite?: () => void;
 }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-charcoal mb-1">{label}</label>
+      {onAiWrite ? (
+        <FieldLabel label={label} onAiWrite={onAiWrite} />
+      ) : (
+        <label className="block text-xs font-semibold text-charcoal mb-1">{label}</label>
+      )}
       {description && <p className="text-[10px] text-stone mb-2">{description}</p>}
       <div className="space-y-1.5 mb-2">
         {items.map((item, i) => (
@@ -319,7 +580,7 @@ function ListEditor({
               onClick={() => onRemove(i)}
               className="text-stone hover:text-red-500 transition-colors"
             >
-              <span className="text-xs">×</span>
+              <span className="text-xs">&times;</span>
             </button>
           </div>
         ))}

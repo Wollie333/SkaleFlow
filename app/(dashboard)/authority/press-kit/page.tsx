@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { PressKitBuilder } from '@/components/authority/press-kit-builder';
 import { StoryAngleManager } from '@/components/authority/story-angle-manager';
-import { DocumentTextIcon, CpuChipIcon } from '@heroicons/react/24/outline';
+import { ModelSelector } from '@/components/ai/model-selector';
+import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import { getClientModelsForFeature } from '@/lib/ai/client-models';
 
 const AI_MODELS = getClientModelsForFeature('content_generation');
@@ -102,20 +103,12 @@ export default function AuthorityPressKitPage() {
           <DocumentTextIcon className="w-6 h-6 text-teal" />
           <h1 className="text-2xl font-serif font-bold text-charcoal">Press Kit</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <CpuChipIcon className="w-4 h-4 text-stone" />
-          <select
-            value={selectedModelId}
-            onChange={(e) => setSelectedModelId(e.target.value)}
-            className="text-xs border border-stone/20 rounded-lg px-2.5 py-1.5 bg-white text-charcoal focus:outline-none focus:ring-1 focus:ring-teal/30"
-          >
-            {AI_MODELS.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}{m.isFree ? ' (Free)' : ` (~${m.estimatedCreditsPerMessage} cr)`}
-              </option>
-            ))}
-          </select>
-        </div>
+        <ModelSelector
+          models={AI_MODELS}
+          selectedModelId={selectedModelId}
+          onSelect={setSelectedModelId}
+          compact
+        />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -127,6 +120,7 @@ export default function AuthorityPressKitPage() {
               organizationId={organizationId!}
               brandData={brandData}
               onSave={handleSavePressKit}
+              selectedModelId={selectedModelId}
             />
           </div>
         </div>
