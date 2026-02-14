@@ -862,91 +862,97 @@ export default function ContentEnginePage() {
           </Card>
 
           {/* ── Brand Variables ───────────────────────────────────── */}
-          <button
-            onClick={() => setShowBrandVarModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-charcoal hover:border-teal/30 hover:text-teal transition-colors w-full justify-between"
-          >
-            <div className="flex flex-col items-start">
-              <span>Brand Variables</span>
-              {selectedBrandVars.size === 0 && (
-                <span className="text-[10px] text-stone">AI picks 7 random per post for variety</span>
-              )}
-            </div>
-            <span className={cn(
-              'text-xs px-2 py-0.5 rounded-full font-medium shrink-0',
-              selectedBrandVars.size === 0
-                ? 'bg-teal/10 text-teal'
-                : 'bg-gold/10 text-gold'
-            )}>
-              {selectedBrandVars.size === 0 ? 'Smart Mode' : `${selectedBrandVars.size}/${MAX_BRAND_VARS}`}
-            </span>
-          </button>
+          <Card>
+            <button
+              onClick={() => setShowBrandVarModal(true)}
+              className="flex items-center gap-2 text-sm text-charcoal hover:text-teal transition-colors w-full justify-between"
+            >
+              <div className="flex flex-col items-start">
+                <span className="text-xs font-semibold text-charcoal">Brand Variables</span>
+                {selectedBrandVars.size === 0 && (
+                  <span className="text-[10px] text-stone">AI picks 7 random per post for variety</span>
+                )}
+              </div>
+              <span className={cn(
+                'text-xs px-2 py-0.5 rounded-full font-medium shrink-0',
+                selectedBrandVars.size === 0
+                  ? 'bg-teal/10 text-teal'
+                  : 'bg-gold/10 text-gold'
+              )}>
+                {selectedBrandVars.size === 0 ? 'Smart Mode' : `${selectedBrandVars.size}/${MAX_BRAND_VARS}`}
+              </span>
+            </button>
+          </Card>
 
           {/* ── Templates ─────────────────────────────────────────── */}
-          <button
-            onClick={() => setShowTemplateModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-charcoal hover:border-teal/30 hover:text-teal transition-colors w-full justify-between"
-          >
-            <div className="flex flex-col items-start">
-              <span>Templates</span>
-              {!selectedTemplates.script && !selectedTemplates.hook && !selectedTemplates.cta ? (
-                <span className="text-[10px] text-stone">AI picks best template per post</span>
-              ) : (
-                <span className="text-[10px] text-stone line-clamp-1">
-                  {[
-                    selectedTemplates.script && `Script: ${getTemplateName(selectedTemplates.script)?.name || selectedTemplates.script}`,
-                    selectedTemplates.hook && `Hook: ${getTemplateName(selectedTemplates.hook)?.name || selectedTemplates.hook}`,
-                    selectedTemplates.cta && `CTA: ${getTemplateName(selectedTemplates.cta)?.name || selectedTemplates.cta}`,
-                  ].filter(Boolean).join(' · ')}
-                </span>
-              )}
-            </div>
-            <span className={cn(
-              'text-xs px-2 py-0.5 rounded-full font-medium shrink-0',
-              !selectedTemplates.script && !selectedTemplates.hook && !selectedTemplates.cta
-                ? 'bg-teal/10 text-teal'
-                : 'bg-gold/10 text-gold'
-            )}>
-              {!selectedTemplates.script && !selectedTemplates.hook && !selectedTemplates.cta
-                ? 'Smart Mode'
-                : `${[selectedTemplates.script, selectedTemplates.hook, selectedTemplates.cta].filter(Boolean).length} override${[selectedTemplates.script, selectedTemplates.hook, selectedTemplates.cta].filter(Boolean).length !== 1 ? 's' : ''}`}
-            </span>
-          </button>
+          <Card>
+            <button
+              onClick={() => setShowTemplateModal(true)}
+              className="flex items-center gap-2 text-sm text-charcoal hover:text-teal transition-colors w-full justify-between"
+            >
+              <div className="flex flex-col items-start">
+                <span className="text-xs font-semibold text-charcoal">Templates</span>
+                {!selectedTemplates.script && !selectedTemplates.hook && !selectedTemplates.cta ? (
+                  <span className="text-[10px] text-stone">AI picks best template per post</span>
+                ) : (
+                  <span className="text-[10px] text-stone line-clamp-1">
+                    {[
+                      selectedTemplates.script && `Script: ${getTemplateName(selectedTemplates.script)?.name || selectedTemplates.script}`,
+                      selectedTemplates.hook && `Hook: ${getTemplateName(selectedTemplates.hook)?.name || selectedTemplates.hook}`,
+                      selectedTemplates.cta && `CTA: ${getTemplateName(selectedTemplates.cta)?.name || selectedTemplates.cta}`,
+                    ].filter(Boolean).join(' · ')}
+                  </span>
+                )}
+              </div>
+              <span className={cn(
+                'text-xs px-2 py-0.5 rounded-full font-medium shrink-0',
+                !selectedTemplates.script && !selectedTemplates.hook && !selectedTemplates.cta
+                  ? 'bg-teal/10 text-teal'
+                  : 'bg-gold/10 text-gold'
+              )}>
+                {!selectedTemplates.script && !selectedTemplates.hook && !selectedTemplates.cta
+                  ? 'Smart Mode'
+                  : `${[selectedTemplates.script, selectedTemplates.hook, selectedTemplates.cta].filter(Boolean).length} override${[selectedTemplates.script, selectedTemplates.hook, selectedTemplates.cta].filter(Boolean).length !== 1 ? 's' : ''}`}
+              </span>
+            </button>
+          </Card>
 
           {/* ── AI Model ─────────────────────────────────────────── */}
-          <div className="flex items-center justify-between px-4 py-2.5 rounded-lg border border-stone/20">
-            <div className="flex items-center gap-2">
-              <SparklesIcon className="w-4 h-4 text-stone" />
-              <span className="text-sm text-charcoal">
-                {selectedModel ? selectedModel.name : 'Select AI Model'}
-              </span>
-              {selectedModel && (
-                <span className={cn(
-                  'text-xs px-1.5 py-0.5 rounded-full font-medium',
-                  selectedModel.isFree ? 'bg-teal/10 text-teal' : 'bg-gold/10 text-gold'
-                )}>
-                  {selectedModel.isFree ? 'Free' : `~${selectedModel.estimatedCreditsPerMessage * placementCount} cr`}
+          <Card>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <SparklesIcon className="w-4 h-4 text-teal" />
+                <span className="text-xs font-semibold text-charcoal">
+                  {selectedModel ? selectedModel.name : 'Select AI Model'}
                 </span>
-              )}
+                {selectedModel && (
+                  <span className={cn(
+                    'text-xs px-1.5 py-0.5 rounded-full font-medium',
+                    selectedModel.isFree ? 'bg-teal/10 text-teal' : 'bg-gold/10 text-gold'
+                  )}>
+                    {selectedModel.isFree ? 'Free' : `~${selectedModel.estimatedCreditsPerMessage * placementCount} cr`}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => setShowModelPicker(!showModelPicker)}
+                className="text-xs font-medium text-teal hover:underline"
+              >
+                {showModelPicker ? 'Hide' : 'Change'}
+              </button>
             </div>
-            <button
-              onClick={() => setShowModelPicker(!showModelPicker)}
-              className="text-xs font-medium text-teal hover:underline"
-            >
-              {showModelPicker ? 'Hide' : 'Change'}
-            </button>
-          </div>
 
-          {showModelPicker && (
-            <Card>
-              <AIModelPicker
-                models={models}
-                selectedModelId={effectiveModelId}
-                onSelect={(id) => { setSelectedModelId(id); setShowModelPicker(false); }}
-                costLabelFn={m => m.isFree ? 'Free' : `~${m.estimatedCreditsPerMessage * placementCount} cr`}
-              />
-            </Card>
-          )}
+            {showModelPicker && (
+              <div className="mt-3 pt-3 border-t border-stone/10">
+                <AIModelPicker
+                  models={models}
+                  selectedModelId={effectiveModelId}
+                  onSelect={(id) => { setSelectedModelId(id); setShowModelPicker(false); }}
+                  costLabelFn={m => m.isFree ? 'Free' : `~${m.estimatedCreditsPerMessage * placementCount} cr`}
+                />
+              </div>
+            )}
+          </Card>
 
           {/* ── Cost Estimate & Generate ─────────────────────────── */}
           <Card>
