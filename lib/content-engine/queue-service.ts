@@ -60,7 +60,8 @@ export async function enqueueBatch(
       generate_scripts: generateScripts || false,
       selected_placements: (selectedPlacements || null) as unknown as Json,
       template_overrides: (templateOverrides || null) as unknown as Json,
-      creative_direction: creativeDirection || null,
+      // Only include creative_direction when set (column may not exist pre-migration 049)
+      ...(creativeDirection ? { creative_direction: creativeDirection } : {}),
     })
     .select('id')
     .single();
@@ -511,7 +512,7 @@ export async function processOneBatchItem(
   // Load batch context
   const { data: batch, error: batchLoadError } = await supabase
     .from('generation_batches')
-    .select('model_id, user_id, uniqueness_log, selected_brand_variables, template_overrides, creative_direction')
+    .select('model_id, user_id, uniqueness_log, selected_brand_variables, template_overrides')
     .eq('id', batchId)
     .single();
 
@@ -524,6 +525,21 @@ export async function processOneBatchItem(
   }
 
   console.log(`[QUEUE-PROCESS] Batch context: model=${batch.model_id}, user=${batch.user_id}`);
+
+  // Safely fetch creative_direction (column may not exist pre-migration 049)
+  let batchCreativeDirection: string | undefined;
+  try {
+    const { data: dirRow } = await supabase
+      .from('generation_batches')
+      .select('creative_direction')
+      .eq('id', batchId)
+      .single();
+    if (dirRow && typeof (dirRow as Record<string, unknown>).creative_direction === 'string') {
+      batchCreativeDirection = (dirRow as Record<string, unknown>).creative_direction as string;
+    }
+  } catch {
+    // Column doesn't exist yet — ignore
+  }
 
   // Parse uniqueness log
   const uniquenessLog = Array.isArray(batch.uniqueness_log)
@@ -593,7 +609,7 @@ export async function processOneBatchItem(
       selectedVars,
       rejectionFeedback || undefined,
       batchTemplateOverrides,
-      batch.creative_direction || undefined
+      batchCreativeDirection
     );
 
     const genElapsed = Date.now() - genStartTime;
