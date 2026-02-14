@@ -69,7 +69,7 @@ export default function AuthorityPressReleasesPage() {
   };
 
   return (
-    <div className="p-6 max-w-4xl">
+    <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <DocumentTextIcon className="w-6 h-6 text-teal" />

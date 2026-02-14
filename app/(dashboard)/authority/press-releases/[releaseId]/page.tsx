@@ -79,7 +79,7 @@ export default function PressReleaseEditorPage() {
   }
 
   return (
-    <div className="p-6 max-w-3xl">
+    <div className="p-6">
       <button
         onClick={() => router.push('/authority/press-releases')}
         className="flex items-center gap-1.5 text-xs text-stone hover:text-teal mb-4 transition-colors"
