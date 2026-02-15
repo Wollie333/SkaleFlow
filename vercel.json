@@ -34,7 +34,7 @@
     },
     {
       "path": "/api/authority/email/sync",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 */2 * * *"
     }
   ]
 }
