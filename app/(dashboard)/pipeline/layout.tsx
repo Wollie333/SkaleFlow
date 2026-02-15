@@ -11,13 +11,16 @@ export default async function PipelineLayout({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: userData } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+  // Allow super_admin, org owners, and org admins
+  const [{ data: userData }, { data: member }] = await Promise.all([
+    supabase.from('users').select('role').eq('id', user.id).single(),
+    supabase.from('org_members').select('role').eq('user_id', user.id).single(),
+  ]);
 
-  if (userData?.role !== 'super_admin') {
+  const isSuperAdmin = userData?.role === 'super_admin';
+  const isOwnerOrAdmin = member && ['owner', 'admin'].includes(member.role);
+
+  if (!isSuperAdmin && !isOwnerOrAdmin) {
     redirect('/dashboard');
   }
 

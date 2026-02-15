@@ -82,6 +82,14 @@ export type TemplateTier = 'core_rotation' | 'high_impact' | 'strategic';
 export type TemplateContentType = 'post' | 'script' | 'hook' | 'cta';
 export type ContentFeedbackType = 'rejected' | 'accepted' | 'regenerated';
 
+// CRM types
+export type CrmLifecycleStage = 'lead' | 'prospect' | 'opportunity' | 'customer' | 'churned';
+export type CrmContactSource = 'manual' | 'website' | 'referral' | 'social_media' | 'pipeline' | 'import' | 'other';
+export type CrmDealStatus = 'open' | 'won' | 'lost';
+export type CrmInvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+export type CrmActivityType = 'email' | 'call' | 'meeting' | 'note' | 'deal_created' | 'deal_won' | 'deal_lost' | 'invoice_sent' | 'invoice_paid' | 'stage_changed' | 'contact_created' | 'contact_updated' | 'tag_added' | 'tag_removed';
+export type CrmBillingInterval = 'once' | 'monthly' | 'quarterly' | 'annual';
+
 // Authority Engine types
 export type AuthorityCategory = 'press_release' | 'media_placement' | 'magazine_feature' | 'podcast_appearance' | 'live_event' | 'tv_video' | 'award_recognition' | 'thought_leadership';
 export type AuthorityPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -2199,6 +2207,7 @@ export interface Database {
           custom_fields: Json;
           notes: string | null;
           created_by: string | null;
+          crm_contact_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -2217,6 +2226,7 @@ export interface Database {
           custom_fields?: Json;
           notes?: string | null;
           created_by?: string | null;
+          crm_contact_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -2235,6 +2245,7 @@ export interface Database {
           custom_fields?: Json;
           notes?: string | null;
           created_by?: string | null;
+          crm_contact_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -5823,6 +5834,442 @@ export interface Database {
           use_count?: number;
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      // ========== CRM Tables ==========
+
+      crm_companies: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          industry: string | null;
+          website: string | null;
+          size: string | null;
+          annual_revenue_cents: number | null;
+          billing_address: Json;
+          phone: string | null;
+          email: string | null;
+          logo_url: string | null;
+          custom_fields: Json;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          industry?: string | null;
+          website?: string | null;
+          size?: string | null;
+          annual_revenue_cents?: number | null;
+          billing_address?: Json;
+          phone?: string | null;
+          email?: string | null;
+          logo_url?: string | null;
+          custom_fields?: Json;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          industry?: string | null;
+          website?: string | null;
+          size?: string | null;
+          annual_revenue_cents?: number | null;
+          billing_address?: Json;
+          phone?: string | null;
+          email?: string | null;
+          logo_url?: string | null;
+          custom_fields?: Json;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      crm_contacts: {
+        Row: {
+          id: string;
+          organization_id: string;
+          first_name: string;
+          last_name: string;
+          email: string | null;
+          email_normalised: string | null;
+          phone: string | null;
+          job_title: string | null;
+          company_id: string | null;
+          lifecycle_stage: string;
+          source: string;
+          assigned_to: string | null;
+          custom_fields: Json;
+          last_contacted_at: string | null;
+          lifetime_value_cents: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          first_name: string;
+          last_name: string;
+          email?: string | null;
+          email_normalised?: string | null;
+          phone?: string | null;
+          job_title?: string | null;
+          company_id?: string | null;
+          lifecycle_stage?: string;
+          source?: string;
+          assigned_to?: string | null;
+          custom_fields?: Json;
+          last_contacted_at?: string | null;
+          lifetime_value_cents?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          first_name?: string;
+          last_name?: string;
+          email?: string | null;
+          email_normalised?: string | null;
+          phone?: string | null;
+          job_title?: string | null;
+          company_id?: string | null;
+          lifecycle_stage?: string;
+          source?: string;
+          assigned_to?: string | null;
+          custom_fields?: Json;
+          last_contacted_at?: string | null;
+          lifetime_value_cents?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      crm_tags: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          color: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          color?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          color?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      crm_contact_tags: {
+        Row: {
+          id: string;
+          contact_id: string;
+          tag_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          contact_id: string;
+          tag_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          contact_id?: string;
+          tag_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      crm_products: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          description: string | null;
+          sku: string | null;
+          price_cents: number;
+          currency: string;
+          recurring: boolean;
+          billing_interval: string;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          description?: string | null;
+          sku?: string | null;
+          price_cents?: number;
+          currency?: string;
+          recurring?: boolean;
+          billing_interval?: string;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          description?: string | null;
+          sku?: string | null;
+          price_cents?: number;
+          currency?: string;
+          recurring?: boolean;
+          billing_interval?: string;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      crm_deals: {
+        Row: {
+          id: string;
+          organization_id: string;
+          title: string;
+          contact_id: string | null;
+          company_id: string | null;
+          pipeline_id: string | null;
+          stage_id: string | null;
+          value_cents: number;
+          probability: number;
+          expected_close_date: string | null;
+          status: string;
+          lost_reason: string | null;
+          assigned_to: string | null;
+          products: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          title: string;
+          contact_id?: string | null;
+          company_id?: string | null;
+          pipeline_id?: string | null;
+          stage_id?: string | null;
+          value_cents?: number;
+          probability?: number;
+          expected_close_date?: string | null;
+          status?: string;
+          lost_reason?: string | null;
+          assigned_to?: string | null;
+          products?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          title?: string;
+          contact_id?: string | null;
+          company_id?: string | null;
+          pipeline_id?: string | null;
+          stage_id?: string | null;
+          value_cents?: number;
+          probability?: number;
+          expected_close_date?: string | null;
+          status?: string;
+          lost_reason?: string | null;
+          assigned_to?: string | null;
+          products?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      crm_invoices: {
+        Row: {
+          id: string;
+          organization_id: string;
+          invoice_number: string;
+          contact_id: string | null;
+          company_id: string | null;
+          deal_id: string | null;
+          status: string;
+          subtotal_cents: number;
+          tax_rate: number;
+          tax_cents: number;
+          total_cents: number;
+          currency: string;
+          due_date: string | null;
+          paid_at: string | null;
+          billing_from: Json;
+          billing_to: Json;
+          share_token: string | null;
+          notes: string | null;
+          footer_text: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          invoice_number: string;
+          contact_id?: string | null;
+          company_id?: string | null;
+          deal_id?: string | null;
+          status?: string;
+          subtotal_cents?: number;
+          tax_rate?: number;
+          tax_cents?: number;
+          total_cents?: number;
+          currency?: string;
+          due_date?: string | null;
+          paid_at?: string | null;
+          billing_from?: Json;
+          billing_to?: Json;
+          share_token?: string | null;
+          notes?: string | null;
+          footer_text?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          invoice_number?: string;
+          contact_id?: string | null;
+          company_id?: string | null;
+          deal_id?: string | null;
+          status?: string;
+          subtotal_cents?: number;
+          tax_rate?: number;
+          tax_cents?: number;
+          total_cents?: number;
+          currency?: string;
+          due_date?: string | null;
+          paid_at?: string | null;
+          billing_from?: Json;
+          billing_to?: Json;
+          share_token?: string | null;
+          notes?: string | null;
+          footer_text?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      crm_invoice_items: {
+        Row: {
+          id: string;
+          invoice_id: string;
+          product_id: string | null;
+          description: string;
+          quantity: number;
+          unit_price_cents: number;
+          total_cents: number;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          invoice_id: string;
+          product_id?: string | null;
+          description: string;
+          quantity?: number;
+          unit_price_cents?: number;
+          total_cents?: number;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          invoice_id?: string;
+          product_id?: string | null;
+          description?: string;
+          quantity?: number;
+          unit_price_cents?: number;
+          total_cents?: number;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "crm_invoice_items_invoice_id_fkey";
+            columns: ["invoice_id"];
+            isOneToOne: false;
+            referencedRelation: "crm_invoices";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      crm_activity: {
+        Row: {
+          id: string;
+          organization_id: string;
+          contact_id: string | null;
+          company_id: string | null;
+          deal_id: string | null;
+          invoice_id: string | null;
+          activity_type: string;
+          title: string;
+          description: string | null;
+          metadata: Json;
+          performed_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          contact_id?: string | null;
+          company_id?: string | null;
+          deal_id?: string | null;
+          invoice_id?: string | null;
+          activity_type: string;
+          title: string;
+          description?: string | null;
+          metadata?: Json;
+          performed_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          contact_id?: string | null;
+          company_id?: string | null;
+          deal_id?: string | null;
+          invoice_id?: string | null;
+          activity_type?: string;
+          title?: string;
+          description?: string | null;
+          metadata?: Json;
+          performed_by?: string | null;
+          created_at?: string;
         };
         Relationships: [];
       };

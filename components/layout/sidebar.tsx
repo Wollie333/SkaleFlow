@@ -40,6 +40,9 @@ import {
   ChevronRightIcon,
   NewspaperIcon,
   GlobeAltIcon,
+  BuildingOfficeIcon,
+  CubeIcon,
+  ShareIcon,
 } from '@heroicons/react/24/outline';
 
 interface FeaturePermissions {
@@ -71,6 +74,16 @@ const marketingNavigation: NavItem[] = [
 
 const salesNavigation: NavItem[] = [
   { name: 'Pipeline', href: '/pipeline', icon: FunnelIcon },
+];
+
+const crmNavigation: NavItem[] = [
+  { name: 'Dashboard', href: '/crm', icon: HomeIcon },
+  { name: 'Contacts', href: '/crm/contacts', icon: UsersIcon },
+  { name: 'Companies', href: '/crm/companies', icon: BuildingOfficeIcon },
+  { name: 'Deals', href: '/crm/deals', icon: CurrencyDollarIcon },
+  { name: 'Pipeline', href: '/pipeline', icon: FunnelIcon },
+  { name: 'Products', href: '/crm/products', icon: CubeIcon },
+  { name: 'Invoices', href: '/crm/invoices', icon: DocumentTextIcon },
 ];
 
 const contentNavigation: NavItem[] = [
@@ -177,6 +190,9 @@ export function Sidebar({
   const [analyticsExpanded, setAnalyticsExpanded] = useState(false);
   const [libraryExpanded, setLibraryExpanded] = useState(false);
   const [authorityExpanded, setAuthorityExpanded] = useState(false);
+  const [socialEngineExpanded, setSocialEngineExpanded] = useState(false);
+  const [adsEngineExpanded, setAdsEngineExpanded] = useState(false);
+  const [crmExpanded, setCrmExpanded] = useState(false);
 
   const isOwnerOrAdmin = orgRole === 'owner' || orgRole === 'admin';
   const isSuperAdmin = userRole === 'super_admin';
@@ -569,85 +585,104 @@ export function Sidebar({
           </div>
         </div>
 
-        {/* Marketing Section — locked for non-super_admins */}
+        {/* Ads Engine Section — below Social Media Management */}
         <div className="mt-6">
-          <h4 className="px-3 text-xs font-semibold text-teal-dark uppercase tracking-wider mb-2 flex items-center gap-2">
-            Marketing
-            {!isSuperAdmin && <LockClosedIcon className="w-3 h-3 text-stone/40" />}
-          </h4>
-          <div className="space-y-1">
-            {isSuperAdmin ? (
-              marketingNavigation.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={cn(
-                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-teal/10 text-teal'
-                        : 'text-stone hover:bg-cream-warm hover:text-charcoal'
-                    )}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    {item.name}
-                  </Link>
-                );
-              })
-            ) : (
-              marketingNavigation.map((item) => (
-                <div
-                  key={item.name}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-stone/40 cursor-not-allowed"
-                >
-                  <item.icon className="w-5 h-5" />
-                  {item.name}
-                </div>
-              ))
-            )}
+          <div className="flex items-center">
+            <button
+              onClick={() => setAdsEngineExpanded(!adsEngineExpanded)}
+              className="flex-1 flex items-center justify-between px-3 py-1 group"
+            >
+              <h4 className="text-xs font-semibold text-teal-dark uppercase tracking-wider flex items-center gap-2">
+                Ads Engine
+                {!isSuperAdmin && <LockClosedIcon className="w-3 h-3 text-stone/40" />}
+              </h4>
+              {adsEngineExpanded ? (
+                <ChevronDownIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
+              ) : (
+                <ChevronRightIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
+              )}
+            </button>
           </div>
+          {adsEngineExpanded && (
+            <div className="space-y-1 mt-2">
+              {isSuperAdmin ? (
+                marketingNavigation.map((item) => {
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
+                        isActive
+                          ? 'bg-teal/10 text-teal'
+                          : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                      )}
+                    >
+                      <item.icon className="w-4 h-4" />
+                      {item.name}
+                    </Link>
+                  );
+                })
+              ) : (
+                marketingNavigation.map((item) => (
+                  <div
+                    key={item.name}
+                    className="flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium text-stone/40 cursor-not-allowed"
+                  >
+                    <item.icon className="w-4 h-4" />
+                    {item.name}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Sales Section — locked for non-super_admins */}
-        <div className="mt-6">
-          <h4 className="px-3 text-xs font-semibold text-teal-dark uppercase tracking-wider mb-2 flex items-center gap-2">
-            Sales
-            {!isSuperAdmin && <LockClosedIcon className="w-3 h-3 text-stone/40" />}
-          </h4>
-          <div className="space-y-1">
-            {isSuperAdmin ? (
-              salesNavigation.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={cn(
-                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-teal/10 text-teal'
-                        : 'text-stone hover:bg-cream-warm hover:text-charcoal'
-                    )}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    {item.name}
-                  </Link>
-                );
-              })
-            ) : (
-              salesNavigation.map((item) => (
-                <div
-                  key={item.name}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-stone/40 cursor-not-allowed"
-                >
-                  <item.icon className="w-5 h-5" />
-                  {item.name}
-                </div>
-              ))
+        {/* CRM Section — accessible to owners/admins/super_admins */}
+        {(isOwnerOrAdmin || isSuperAdmin) && (
+          <div className="mt-6">
+            <div className="flex items-center">
+              <button
+                onClick={() => setCrmExpanded(!crmExpanded)}
+                className="flex-1 flex items-center justify-between px-3 py-1 group"
+              >
+                <h4 className="text-xs font-semibold text-teal-dark uppercase tracking-wider flex items-center gap-2">
+                  CRM
+                </h4>
+                {crmExpanded ? (
+                  <ChevronDownIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
+                ) : (
+                  <ChevronRightIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
+                )}
+              </button>
+            </div>
+            {crmExpanded && (
+              <div className="space-y-1 mt-2">
+                {crmNavigation.map((item) => {
+                  const isActive = item.href === '/crm'
+                    ? pathname === '/crm'
+                    : pathname === item.href || pathname.startsWith(item.href + '/');
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
+                        isActive
+                          ? 'bg-teal/10 text-teal'
+                          : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                      )}
+                    >
+                      <item.icon className="w-4 h-4" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
             )}
           </div>
-        </div>
+        )}
 
         {/* Admin Navigation */}
         {isSuperAdmin && (
