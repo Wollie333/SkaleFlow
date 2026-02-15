@@ -83,7 +83,7 @@ export default function PipelineAnalyticsPage() {
   });
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <PageHeader
         title="Pipeline Analytics"
         icon={ChartBarIcon}
