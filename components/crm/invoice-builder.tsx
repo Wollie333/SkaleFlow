@@ -551,7 +551,7 @@ export function InvoiceBuilder({
         </div>
         {!isReadOnly && (
           <Button
-            variant="default"
+            variant="outline"
             onClick={handleAddLineItem}
             className="mt-4 border-teal text-teal hover:bg-teal/10"
           >

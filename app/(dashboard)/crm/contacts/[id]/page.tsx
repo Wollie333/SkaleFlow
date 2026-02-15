@@ -89,7 +89,7 @@ export default function ContactDetailPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <ContactDetailHeader
-        contact={contact}
+        contact={contact as any}
         onEdit={() => setShowEditModal(true)}
         organizationId={organizationId}
       />
@@ -102,7 +102,7 @@ export default function ContactDetailPage() {
         <ContactFormModal
           isOpen={showEditModal}
           organizationId={organizationId}
-          contact={contact}
+          contact={contact as any}
           onClose={() => setShowEditModal(false)}
           onSaved={() => {
             setShowEditModal(false);

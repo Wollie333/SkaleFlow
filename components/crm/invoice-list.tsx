@@ -162,7 +162,7 @@ export function InvoiceList({ organizationId }: InvoiceListProps) {
           <p className="text-stone-500 mb-4">No invoices found</p>
           <Button
             onClick={() => router.push('/crm/invoices/new')}
-            variant="default"
+            variant="outline"
             className="border-teal text-teal hover:bg-teal/10"
           >
             <PlusIcon className="h-5 w-5 mr-2" />
@@ -264,7 +264,7 @@ export function InvoiceList({ organizationId }: InvoiceListProps) {
           </p>
           <div className="flex items-center gap-2">
             <Button
-              variant="default"
+              variant="outline"
               size="sm"
               onClick={() => setPage(page - 1)}
               disabled={page === 1}
@@ -275,7 +275,7 @@ export function InvoiceList({ organizationId }: InvoiceListProps) {
               Page {page} of {totalPages}
             </span>
             <Button
-              variant="default"
+              variant="outline"
               size="sm"
               onClick={() => setPage(page + 1)}
               disabled={page >= totalPages}

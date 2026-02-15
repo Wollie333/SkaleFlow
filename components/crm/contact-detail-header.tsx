@@ -11,7 +11,7 @@ import {
   DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 
-interface Contact {
+interface ContactHeaderData {
   id: string;
   first_name: string;
   last_name: string;
@@ -21,11 +21,12 @@ interface Contact {
   lifecycle_stage: string;
   lifetime_value_cents: number;
   created_at: string;
-  [key: string]: unknown;
+  company?: { id: string; name: string } | null;
 }
 
+
 interface ContactDetailHeaderProps {
-  contact: Contact;
+  contact: ContactHeaderData;
   onEdit: () => void;
   organizationId: string;
 }
