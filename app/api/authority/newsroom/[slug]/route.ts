@@ -12,7 +12,7 @@ export async function GET(
   // Find org by slug
   const { data: org } = await supabase
     .from('organizations')
-    .select('id, name, slug, logo_url, industry')
+    .select('id, name, slug, logo_url')
     .eq('slug', slug)
     .single();
 
@@ -45,7 +45,7 @@ export async function GET(
     .from('authority_press_kit')
     .select('brand_overview, boilerplate, founder_bio_short, founder_bio_long, speaking_topics, logo_usage_notes, hero_tagline')
     .eq('organization_id', org.id)
-    .single();
+    .maybeSingle();
 
   // Get active story angles
   const { data: storyAngles } = await supabase
@@ -79,7 +79,7 @@ export async function GET(
     press_releases: pressReleases || [],
     placements: (placements || []).map(p => ({
       ...p,
-      engagement_type: (p.authority_commercial as Array<{ engagement_type: string }> | null)?.[0]?.engagement_type || 'earned',
+      engagement_type: (p.authority_commercial as { engagement_type: string } | null)?.engagement_type || 'earned',
     })),
     press_kit: pressKit ? {
       company_overview: pressKit.brand_overview,
