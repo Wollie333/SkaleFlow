@@ -38,6 +38,11 @@ import {
   TrophyIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  NewspaperIcon,
+  GlobeAltIcon,
+  ShareIcon,
+  BuildingOfficeIcon,
+  CubeIcon,
 } from '@heroicons/react/24/outline';
 
 interface FeaturePermissions {
@@ -114,6 +119,26 @@ const socialLibraryNav: NavItem[] = [
   { name: 'Competitors', href: '/social/library/competitors', icon: UsersIcon },
 ];
 
+const authorityNavigation: NavItem[] = [
+  { name: 'Pipeline', href: '/authority', icon: NewspaperIcon },
+  { name: 'Contacts', href: '/authority/contacts', icon: UsersIcon },
+  { name: 'Press Kit', href: '/authority/press-kit', icon: DocumentTextIcon },
+  { name: 'Press Releases', href: '/authority/press-releases', icon: DocumentTextIcon },
+  { name: 'PR Calendar', href: '/authority/calendar', icon: CalendarDaysIcon },
+  { name: 'Newsroom', href: '/authority/newsroom', icon: GlobeAltIcon },
+  { name: 'Settings', href: '/authority/settings', icon: Cog6ToothIcon },
+];
+
+const crmNavigation: NavItem[] = [
+  { name: 'Dashboard', href: '/crm', icon: HomeIcon },
+  { name: 'Contacts', href: '/crm/contacts', icon: UsersIcon },
+  { name: 'Companies', href: '/crm/companies', icon: BuildingOfficeIcon },
+  { name: 'Deals', href: '/crm/deals', icon: CurrencyDollarIcon },
+  { name: 'Pipeline', href: '/pipeline', icon: FunnelIcon },
+  { name: 'Products', href: '/crm/products', icon: CubeIcon },
+  { name: 'Invoices', href: '/crm/invoices', icon: DocumentTextIcon },
+];
+
 const adminNavigation: NavItem[] = [
   { name: 'Applications', href: '/admin/pipeline', icon: FunnelIcon },
   { name: 'Meetings', href: '/admin/meetings', icon: VideoCameraIcon },
@@ -166,6 +191,10 @@ export function MobileSidebar({
   const [listeningExpanded, setListeningExpanded] = useState(false);
   const [analyticsExpanded, setAnalyticsExpanded] = useState(false);
   const [libraryExpanded, setLibraryExpanded] = useState(false);
+  const [authorityExpanded, setAuthorityExpanded] = useState(false);
+  const [socialEngineExpanded, setSocialEngineExpanded] = useState(false);
+  const [adsEngineExpanded, setAdsEngineExpanded] = useState(false);
+  const [crmExpanded, setCrmExpanded] = useState(false);
 
   const isOwnerOrAdmin = orgRole === 'owner' || orgRole === 'admin';
   const isSuperAdmin = userRole === 'super_admin';
@@ -182,13 +211,23 @@ export function MobileSidebar({
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   ];
 
-  if (canAccessBrandEngine) {
-    baseNavItems.push({ name: 'Brand Engine', href: '/brand', icon: SparklesIcon });
-  }
-
   if (canAccessTeam) {
     baseNavItems.push({ name: 'My Team', href: '/team', icon: UserGroupIcon });
   }
+
+  // SkaleFlow Engines
+  const engineItems: NavItem[] = [];
+  if (canAccessBrandEngine) {
+    engineItems.push({ name: 'Brand Engine', href: '/brand', icon: SparklesIcon });
+  }
+  if (canAccessContentEngine) {
+    engineItems.push({ name: 'Content Engine', href: '/content/machine', icon: BoltIcon });
+  }
+  if (isOwnerOrAdmin || isSuperAdmin) {
+    engineItems.push({ name: 'Authority Engine', href: '/authority', icon: NewspaperIcon });
+  }
+  // Social Engine — available to all users
+  engineItems.push({ name: 'Social Engine', href: '/calendar', icon: ShareIcon });
 
   // Total pending reviews
   const totalPendingReviews = (pendingReviewCount || 0);
@@ -311,287 +350,424 @@ export function MobileSidebar({
             </div>
           )}
 
-          {/* Social Media Management Section - Available to all users */}
-          <div className="mt-6">
-            <h4 className="px-3 text-xs font-semibold text-teal-dark uppercase tracking-wider mb-2">
-              Social Media Management
-            </h4>
+          {/* SkaleFlow Engines */}
+          {engineItems.length > 0 && (
+            <div className="mt-6">
+              <h4 className="px-3 text-xs font-semibold text-teal-dark uppercase tracking-wider mb-2">
+                SkaleFlow Engines
+              </h4>
+              <div className="space-y-1">
+                {engineItems.map((item) => {
+                  const isAuthority = item.name === 'Authority Engine';
+                  const isSocial = item.name === 'Social Engine';
+                  const isActive = isAuthority
+                    ? pathname === '/authority' || pathname.startsWith('/authority')
+                    : isSocial
+                    ? pathname === '/calendar' || pathname.startsWith('/calendar') || pathname.startsWith('/content') || pathname.startsWith('/social')
+                    : pathname === item.href || pathname.startsWith(item.href);
 
-            {/* Publishing Subsection */}
-            <div className="mb-2">
-              <button
-                onClick={() => setPublishingExpanded(!publishingExpanded)}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-stone hover:text-charcoal transition-colors"
-              >
-                <CalendarDaysIcon className="w-4 h-4" />
-                <span className="flex-1 text-left">Publishing</span>
-                {publishingExpanded ? (
-                  <ChevronDownIcon className="w-4 h-4" />
-                ) : (
-                  <ChevronRightIcon className="w-4 h-4" />
-                )}
-              </button>
-              {publishingExpanded && (
-                <div className="space-y-1 mt-1">
-                  {socialPublishingNav.map((item) => {
-                    const isActive = pathname === item.href || pathname.startsWith(item.href);
+                  if (isAuthority) {
                     return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        onClick={onClose}
-                        className={cn(
-                          'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
-                          isActive
-                            ? 'bg-teal/10 text-teal'
-                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                      <div key={item.name}>
+                        <div className="flex items-center">
+                          <Link
+                            href={item.href}
+                            onClick={onClose}
+                            className={cn(
+                              'flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                              isActive
+                                ? 'bg-teal/10 text-teal'
+                                : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
+                            )}
+                          >
+                            <item.icon className="w-5 h-5" />
+                            {item.name}
+                          </Link>
+                          <button
+                            onClick={() => setAuthorityExpanded(!authorityExpanded)}
+                            className="p-1.5 text-stone hover:text-charcoal transition-colors rounded"
+                          >
+                            {authorityExpanded ? (
+                              <ChevronDownIcon className="w-4 h-4" />
+                            ) : (
+                              <ChevronRightIcon className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                        {authorityExpanded && (
+                          <div className="space-y-1 mt-1">
+                            {authorityNavigation.map((sub) => {
+                              const subActive = sub.href === '/authority'
+                                ? pathname === '/authority'
+                                : pathname.startsWith(sub.href);
+                              return (
+                                <Link
+                                  key={sub.name}
+                                  href={sub.href}
+                                  onClick={onClose}
+                                  className={cn(
+                                    'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
+                                    subActive
+                                      ? 'bg-teal/10 text-teal'
+                                      : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                                  )}
+                                >
+                                  <sub.icon className="w-4 h-4" />
+                                  {sub.name}
+                                </Link>
+                              );
+                            })}
+                          </div>
                         )}
-                      >
-                        <item.icon className="w-4 h-4" />
-                        {item.name}
-                      </Link>
+                      </div>
                     );
-                  })}
-                </div>
-              )}
-            </div>
+                  }
 
-            {/* Inbox Subsection */}
-            <div className="mb-2">
-              <button
-                onClick={() => setInboxExpanded(!inboxExpanded)}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-stone hover:text-charcoal transition-colors"
-              >
-                <InboxIcon className="w-4 h-4" />
-                <span className="flex-1 text-left">Inbox</span>
-                {inboxExpanded ? (
-                  <ChevronDownIcon className="w-4 h-4" />
-                ) : (
-                  <ChevronRightIcon className="w-4 h-4" />
-                )}
-              </button>
-              {inboxExpanded && (
-                <div className="space-y-1 mt-1">
-                  {socialInboxNav.map((item) => {
-                    const isActive = pathname === item.href || pathname.startsWith(item.href);
+                  if (isSocial) {
                     return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        onClick={onClose}
-                        className={cn(
-                          'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
-                          isActive
-                            ? 'bg-teal/10 text-teal'
-                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
-                        )}
-                      >
-                        <item.icon className="w-4 h-4" />
-                        {item.name}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                      <div key={item.name}>
+                        <div className="flex items-center">
+                          <button
+                            onClick={() => setSocialEngineExpanded(!socialEngineExpanded)}
+                            className={cn(
+                              'flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                              isActive
+                                ? 'bg-teal/10 text-teal'
+                                : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
+                            )}
+                          >
+                            <item.icon className="w-5 h-5" />
+                            {item.name}
+                            {socialEngineExpanded ? (
+                              <ChevronDownIcon className="w-4 h-4 ml-auto" />
+                            ) : (
+                              <ChevronRightIcon className="w-4 h-4 ml-auto" />
+                            )}
+                          </button>
+                        </div>
+                        {socialEngineExpanded && (
+                          <div className="ml-4 mt-1">
+                            {/* Publishing */}
+                            <div className="mb-1">
+                              <button
+                                onClick={() => setPublishingExpanded(!publishingExpanded)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-stone hover:text-charcoal transition-colors"
+                              >
+                                <CalendarDaysIcon className="w-4 h-4" />
+                                <span className="flex-1 text-left">Publishing</span>
+                                {publishingExpanded ? (
+                                  <ChevronDownIcon className="w-4 h-4" />
+                                ) : (
+                                  <ChevronRightIcon className="w-4 h-4" />
+                                )}
+                              </button>
+                              {publishingExpanded && (
+                                <div className="space-y-1 mt-1">
+                                  {socialPublishingNav.map((navItem) => {
+                                    const navActive = pathname === navItem.href || pathname.startsWith(navItem.href);
+                                    return (
+                                      <Link
+                                        key={navItem.name}
+                                        href={navItem.href}
+                                        onClick={onClose}
+                                        className={cn(
+                                          'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
+                                          navActive
+                                            ? 'bg-teal/10 text-teal'
+                                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                                        )}
+                                      >
+                                        <navItem.icon className="w-4 h-4" />
+                                        {navItem.name}
+                                      </Link>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
 
-            {/* Listening Subsection */}
-            <div className="mb-2">
-              <button
-                onClick={() => setListeningExpanded(!listeningExpanded)}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-stone hover:text-charcoal transition-colors"
-              >
-                <MicrophoneIcon className="w-4 h-4" />
-                <span className="flex-1 text-left">Listening</span>
-                {listeningExpanded ? (
-                  <ChevronDownIcon className="w-4 h-4" />
-                ) : (
-                  <ChevronRightIcon className="w-4 h-4" />
-                )}
-              </button>
-              {listeningExpanded && (
-                <div className="space-y-1 mt-1">
-                  {socialListeningNav.map((item) => {
-                    const isActive = pathname === item.href || pathname.startsWith(item.href);
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        onClick={onClose}
-                        className={cn(
-                          'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
-                          isActive
-                            ? 'bg-teal/10 text-teal'
-                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
-                        )}
-                      >
-                        <item.icon className="w-4 h-4" />
-                        {item.name}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                            {/* Inbox */}
+                            <div className="mb-1">
+                              <button
+                                onClick={() => setInboxExpanded(!inboxExpanded)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-stone hover:text-charcoal transition-colors"
+                              >
+                                <InboxIcon className="w-4 h-4" />
+                                <span className="flex-1 text-left">Inbox</span>
+                                {inboxExpanded ? (
+                                  <ChevronDownIcon className="w-4 h-4" />
+                                ) : (
+                                  <ChevronRightIcon className="w-4 h-4" />
+                                )}
+                              </button>
+                              {inboxExpanded && (
+                                <div className="space-y-1 mt-1">
+                                  {socialInboxNav.map((navItem) => {
+                                    const navActive = pathname === navItem.href || pathname.startsWith(navItem.href);
+                                    return (
+                                      <Link
+                                        key={navItem.name}
+                                        href={navItem.href}
+                                        onClick={onClose}
+                                        className={cn(
+                                          'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
+                                          navActive
+                                            ? 'bg-teal/10 text-teal'
+                                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                                        )}
+                                      >
+                                        <navItem.icon className="w-4 h-4" />
+                                        {navItem.name}
+                                      </Link>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
 
-            {/* Analytics Subsection */}
-            <div className="mb-2">
-              <button
-                onClick={() => setAnalyticsExpanded(!analyticsExpanded)}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-stone hover:text-charcoal transition-colors"
-              >
-                <ChartBarIcon className="w-4 h-4" />
-                <span className="flex-1 text-left">Analytics</span>
-                {analyticsExpanded ? (
-                  <ChevronDownIcon className="w-4 h-4" />
-                ) : (
-                  <ChevronRightIcon className="w-4 h-4" />
-                )}
-              </button>
-              {analyticsExpanded && (
-                <div className="space-y-1 mt-1">
-                  {socialAnalyticsNav.map((item) => {
-                    const isActive = pathname === item.href || pathname.startsWith(item.href);
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        onClick={onClose}
-                        className={cn(
-                          'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
-                          isActive
-                            ? 'bg-teal/10 text-teal'
-                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
-                        )}
-                      >
-                        <item.icon className="w-4 h-4" />
-                        {item.name}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                            {/* Listening */}
+                            <div className="mb-1">
+                              <button
+                                onClick={() => setListeningExpanded(!listeningExpanded)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-stone hover:text-charcoal transition-colors"
+                              >
+                                <MicrophoneIcon className="w-4 h-4" />
+                                <span className="flex-1 text-left">Listening</span>
+                                {listeningExpanded ? (
+                                  <ChevronDownIcon className="w-4 h-4" />
+                                ) : (
+                                  <ChevronRightIcon className="w-4 h-4" />
+                                )}
+                              </button>
+                              {listeningExpanded && (
+                                <div className="space-y-1 mt-1">
+                                  {socialListeningNav.map((navItem) => {
+                                    const navActive = pathname === navItem.href || pathname.startsWith(navItem.href);
+                                    return (
+                                      <Link
+                                        key={navItem.name}
+                                        href={navItem.href}
+                                        onClick={onClose}
+                                        className={cn(
+                                          'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
+                                          navActive
+                                            ? 'bg-teal/10 text-teal'
+                                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                                        )}
+                                      >
+                                        <navItem.icon className="w-4 h-4" />
+                                        {navItem.name}
+                                      </Link>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
 
-            {/* Library Subsection */}
-            <div className="mb-2">
-              <button
-                onClick={() => setLibraryExpanded(!libraryExpanded)}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-stone hover:text-charcoal transition-colors"
-              >
-                <FolderIcon className="w-4 h-4" />
-                <span className="flex-1 text-left">Library</span>
-                {libraryExpanded ? (
-                  <ChevronDownIcon className="w-4 h-4" />
-                ) : (
-                  <ChevronRightIcon className="w-4 h-4" />
-                )}
-              </button>
-              {libraryExpanded && (
-                <div className="space-y-1 mt-1">
-                  {socialLibraryNav.map((item) => {
-                    const isActive = pathname === item.href || pathname.startsWith(item.href);
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        onClick={onClose}
-                        className={cn(
-                          'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
-                          isActive
-                            ? 'bg-teal/10 text-teal'
-                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
-                        )}
-                      >
-                        <item.icon className="w-4 h-4" />
-                        {item.name}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
+                            {/* Analytics */}
+                            <div className="mb-1">
+                              <button
+                                onClick={() => setAnalyticsExpanded(!analyticsExpanded)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-stone hover:text-charcoal transition-colors"
+                              >
+                                <ChartBarIcon className="w-4 h-4" />
+                                <span className="flex-1 text-left">Analytics</span>
+                                {analyticsExpanded ? (
+                                  <ChevronDownIcon className="w-4 h-4" />
+                                ) : (
+                                  <ChevronRightIcon className="w-4 h-4" />
+                                )}
+                              </button>
+                              {analyticsExpanded && (
+                                <div className="space-y-1 mt-1">
+                                  {socialAnalyticsNav.map((navItem) => {
+                                    const navActive = pathname === navItem.href || pathname.startsWith(navItem.href);
+                                    return (
+                                      <Link
+                                        key={navItem.name}
+                                        href={navItem.href}
+                                        onClick={onClose}
+                                        className={cn(
+                                          'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
+                                          navActive
+                                            ? 'bg-teal/10 text-teal'
+                                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                                        )}
+                                      >
+                                        <navItem.icon className="w-4 h-4" />
+                                        {navItem.name}
+                                      </Link>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
 
-          {/* Marketing Section */}
-          <div className="mt-6">
-            <h4 className="px-3 text-xs font-semibold text-teal-dark uppercase tracking-wider mb-2 flex items-center gap-2">
-              Marketing
-              {!isSuperAdmin && <LockClosedIcon className="w-3 h-3 text-stone/40" />}
-            </h4>
-            <div className="space-y-1">
-              {isSuperAdmin ? (
-                marketingNavigation.map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                            {/* Library */}
+                            <div className="mb-1">
+                              <button
+                                onClick={() => setLibraryExpanded(!libraryExpanded)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-stone hover:text-charcoal transition-colors"
+                              >
+                                <FolderIcon className="w-4 h-4" />
+                                <span className="flex-1 text-left">Library</span>
+                                {libraryExpanded ? (
+                                  <ChevronDownIcon className="w-4 h-4" />
+                                ) : (
+                                  <ChevronRightIcon className="w-4 h-4" />
+                                )}
+                              </button>
+                              {libraryExpanded && (
+                                <div className="space-y-1 mt-1">
+                                  {socialLibraryNav.map((navItem) => {
+                                    const navActive = pathname === navItem.href || pathname.startsWith(navItem.href);
+                                    return (
+                                      <Link
+                                        key={navItem.name}
+                                        href={navItem.href}
+                                        onClick={onClose}
+                                        className={cn(
+                                          'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
+                                          navActive
+                                            ? 'bg-teal/10 text-teal'
+                                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                                        )}
+                                      >
+                                        <navItem.icon className="w-4 h-4" />
+                                        {navItem.name}
+                                      </Link>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
                   return (
                     <Link
                       key={item.name}
                       href={item.href}
+                      onClick={onClose}
                       className={cn(
-                        'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                        'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                         isActive
                           ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                          : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
                       )}
                     >
                       <item.icon className="w-5 h-5" />
                       {item.name}
                     </Link>
                   );
-                })
-              ) : (
-                marketingNavigation.map((item) => (
-                  <div
-                    key={item.name}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-stone/40 cursor-not-allowed"
-                  >
-                    <item.icon className="w-5 h-5" />
-                    {item.name}
-                  </div>
-                ))
-              )}
+                })}
+              </div>
             </div>
+          )}
+
+          {/* Ads Engine Section */}
+          <div className="mt-6">
+            <div className="flex items-center">
+              <button
+                onClick={() => setAdsEngineExpanded(!adsEngineExpanded)}
+                className="flex-1 flex items-center justify-between px-3 py-1 group"
+              >
+                <h4 className="text-xs font-semibold text-teal-dark uppercase tracking-wider flex items-center gap-2">
+                  Ads Engine
+                  {!isSuperAdmin && <LockClosedIcon className="w-3 h-3 text-stone/40" />}
+                </h4>
+                {adsEngineExpanded ? (
+                  <ChevronDownIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
+                ) : (
+                  <ChevronRightIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
+                )}
+              </button>
+            </div>
+            {adsEngineExpanded && (
+              <div className="space-y-1 mt-2">
+                {isSuperAdmin ? (
+                  marketingNavigation.map((item) => {
+                    const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={onClose}
+                        className={cn(
+                          'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
+                          isActive
+                            ? 'bg-teal/10 text-teal'
+                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                        )}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        {item.name}
+                      </Link>
+                    );
+                  })
+                ) : (
+                  marketingNavigation.map((item) => (
+                    <div
+                      key={item.name}
+                      className="flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium text-stone/40 cursor-not-allowed"
+                    >
+                      <item.icon className="w-4 h-4" />
+                      {item.name}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Sales Section */}
-          <div className="mt-6">
-            <h4 className="px-3 text-xs font-semibold text-teal-dark uppercase tracking-wider mb-2 flex items-center gap-2">
-              Sales
-              {!isSuperAdmin && <LockClosedIcon className="w-3 h-3 text-stone/40" />}
-            </h4>
-            <div className="space-y-1">
-              {isSuperAdmin ? (
-                salesNavigation.map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                        isActive
-                          ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream-warm hover:text-charcoal'
-                      )}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      {item.name}
-                    </Link>
-                  );
-                })
-              ) : (
-                salesNavigation.map((item) => (
-                  <div
-                    key={item.name}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-stone/40 cursor-not-allowed"
-                  >
-                    <item.icon className="w-5 h-5" />
-                    {item.name}
-                  </div>
-                ))
+          {/* CRM Section */}
+          {(isOwnerOrAdmin || isSuperAdmin) && (
+            <div className="mt-6">
+              <div className="flex items-center">
+                <button
+                  onClick={() => setCrmExpanded(!crmExpanded)}
+                  className="flex-1 flex items-center justify-between px-3 py-1 group"
+                >
+                  <h4 className="text-xs font-semibold text-teal-dark uppercase tracking-wider flex items-center gap-2">
+                    CRM
+                  </h4>
+                  {crmExpanded ? (
+                    <ChevronDownIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
+                  ) : (
+                    <ChevronRightIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
+                  )}
+                </button>
+              </div>
+              {crmExpanded && (
+                <div className="space-y-1 mt-2">
+                  {crmNavigation.map((item) => {
+                    const isActive = item.href === '/crm'
+                      ? pathname === '/crm'
+                      : pathname === item.href || pathname.startsWith(item.href + '/');
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={onClose}
+                        className={cn(
+                          'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
+                          isActive
+                            ? 'bg-teal/10 text-teal'
+                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                        )}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        {item.name}
+                      </Link>
+                    );
+                  })}
+                </div>
               )}
             </div>
-          </div>
+          )}
 
           {/* Admin Navigation */}
           {isSuperAdmin && (
