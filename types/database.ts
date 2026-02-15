@@ -3889,6 +3889,7 @@ export interface Database {
           source: AuthorityContactSource;
           email_normalised: string | null;
           notes: string | null;
+          last_contacted_at: string | null;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -3910,6 +3911,7 @@ export interface Database {
           source?: AuthorityContactSource;
           email_normalised?: string | null;
           notes?: string | null;
+          last_contacted_at?: string | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -3931,6 +3933,7 @@ export interface Database {
           source?: AuthorityContactSource;
           email_normalised?: string | null;
           notes?: string | null;
+          last_contacted_at?: string | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -4323,7 +4326,7 @@ export interface Database {
         Row: {
           id: string;
           organization_id: string;
-          card_id: string;
+          card_id: string | null;
           contact_id: string | null;
           type: AuthorityCorrespondenceType;
           direction: AuthorityCorrespondenceDirection | null;
@@ -4342,13 +4345,14 @@ export interface Database {
           occurred_at: string;
           duration_minutes: number | null;
           created_by: string | null;
+          synced_by_user_id: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
           organization_id: string;
-          card_id: string;
+          card_id?: string | null;
           contact_id?: string | null;
           type: AuthorityCorrespondenceType;
           direction?: AuthorityCorrespondenceDirection | null;
@@ -4367,13 +4371,14 @@ export interface Database {
           occurred_at: string;
           duration_minutes?: number | null;
           created_by?: string | null;
+          synced_by_user_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
           organization_id?: string;
-          card_id?: string;
+          card_id?: string | null;
           contact_id?: string | null;
           type?: AuthorityCorrespondenceType;
           direction?: AuthorityCorrespondenceDirection | null;
@@ -4392,6 +4397,7 @@ export interface Database {
           occurred_at?: string;
           duration_minutes?: number | null;
           created_by?: string | null;
+          synced_by_user_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -5053,6 +5059,76 @@ export interface Database {
             foreignKeyName: "authority_email_config_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      authority_email_connections: {
+        Row: {
+          id: string;
+          user_id: string;
+          organization_id: string;
+          provider: string;
+          email_address: string;
+          access_token: string;
+          refresh_token: string;
+          token_expires_at: string;
+          is_active: boolean;
+          sync_enabled: boolean;
+          last_history_id: string | null;
+          last_sync_at: string | null;
+          connected_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          organization_id: string;
+          provider?: string;
+          email_address: string;
+          access_token: string;
+          refresh_token: string;
+          token_expires_at: string;
+          is_active?: boolean;
+          sync_enabled?: boolean;
+          last_history_id?: string | null;
+          last_sync_at?: string | null;
+          connected_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          organization_id?: string;
+          provider?: string;
+          email_address?: string;
+          access_token?: string;
+          refresh_token?: string;
+          token_expires_at?: string;
+          is_active?: boolean;
+          sync_enabled?: boolean;
+          last_history_id?: string | null;
+          last_sync_at?: string | null;
+          connected_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "authority_email_connections_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "authority_email_connections_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
             referencedRelation: "organizations";
             referencedColumns: ["id"];
           },

@@ -12,6 +12,7 @@ import { SocialConnectionCard } from '@/components/integrations/social-connectio
 import type { SocialConnectionRow } from '@/components/integrations/social-connection-card';
 import { PageSelectionModal } from '@/components/integrations/page-selection-modal';
 import { GoogleDriveConnectionCard } from '@/components/integrations/google-drive-connection-card';
+import { GmailConnectionCard } from '@/components/integrations/gmail-connection-card';
 import { AvatarUpload } from '@/components/profile/avatar-upload';
 import type { SocialPlatform, Json } from '@/types/database';
 import { AiBetaTab } from '@/components/settings/ai-beta-tab';
@@ -62,6 +63,8 @@ export default function SettingsPage() {
   const [pageSelectPlatform, setPageSelectPlatform] = useState<SocialPlatform | null>(null);
   const [driveConnection, setDriveConnection] = useState<{ id: string; drive_email: string | null; is_active: boolean; connected_at: string; token_expires_at: string | null } | null>(null);
   const [driveStatus, setDriveStatus] = useState<string | null>(null);
+  const [gmailConnection, setGmailConnection] = useState<{ id: string; email_address: string; is_active: boolean; connected_at: string; token_expires_at: string | null } | null>(null);
+  const [gmailStatus, setGmailStatus] = useState<string | null>(null);
   const [orgRole, setOrgRole] = useState<string>('');
   const [aiBetaEnabled, setAiBetaEnabled] = useState(false);
   const [googleCalendars, setGoogleCalendars] = useState<{ id: string; summary: string; primary: boolean }[]>([]);
@@ -203,7 +206,24 @@ export default function SettingsPage() {
             setDriveConnection(driveConn);
           }
         } catch {
-          // Table doesn't exist yet â€" skip silently
+          // Table doesn't exist yet — skip silently
+        }
+
+        // Load Gmail connection for current user (per-user, not per-org)
+        try {
+          const { data: gmailConn } = await supabase
+            .from('authority_email_connections')
+            .select('id, email_address, is_active, connected_at, token_expires_at')
+            .eq('user_id', authUser.id)
+            .eq('provider', 'gmail')
+            .eq('is_active', true)
+            .maybeSingle();
+
+          if (gmailConn) {
+            setGmailConnection(gmailConn);
+          }
+        } catch {
+          // Table doesn't exist yet — skip silently
         }
       }
 
@@ -247,12 +267,19 @@ export default function SettingsPage() {
       setActiveTab('integrations');
     }
 
+    // Check for Gmail callback status
+    const gmailParam = searchParams.get('gmail');
+    if (gmailParam) {
+      setGmailStatus(gmailParam);
+      setActiveTab('integrations');
+    }
+
     if (googleParam) {
       setActiveTab('integrations');
     }
 
     // Strip OAuth callback params from URL to prevent modal re-opening on refresh
-    if (socialParam || googleParam || gdriveParam) {
+    if (socialParam || googleParam || gdriveParam || gmailParam) {
       window.history.replaceState({}, '', '/settings');
     }
   }, [supabase, searchParams]);
@@ -339,6 +366,28 @@ export default function SettingsPage() {
       connectionId,
       platformName: driveName,
     });
+  };
+
+  const handleDisconnectGmail = async () => {
+    try {
+      const res = await fetch('/api/integrations/gmail/disconnect', { method: 'POST' });
+      if (!res.ok) {
+        setAlertDialog({
+          isOpen: true,
+          title: 'Error',
+          message: 'Failed to disconnect Gmail. Please try again.',
+        });
+      } else {
+        setGmailConnection(null);
+        setGmailStatus(null);
+      }
+    } catch {
+      setAlertDialog({
+        isOpen: true,
+        title: 'Error',
+        message: 'An unexpected error occurred. Please try again.',
+      });
+    }
   };
 
   const confirmDisconnect = async () => {
@@ -491,7 +540,7 @@ export default function SettingsPage() {
 
   // Build visible tabs based on user role
   const isOwnerOrAdmin = ['owner', 'admin'].includes(orgRole);
-  const showIntegrations = isOwnerOrAdmin || userRole === 'super_admin';
+  const showIntegrations = true; // All users can see integrations (Gmail is per-user)
   const showWorkflow = isOwnerOrAdmin && !!organization?.content_engine_enabled;
 
   const visibleTabs: { key: SettingsTab; label: string }[] = [
@@ -910,6 +959,30 @@ export default function SettingsPage() {
                 />
               </Card>
             )}
+
+            {/* Gmail Integration (all team members — per-user connection) */}
+            <Card>
+              <h2 className="text-heading-md text-charcoal mb-2">Email Integration</h2>
+              <p className="text-stone text-sm mb-6">
+                Connect your Gmail to send and sync emails with media contacts in the Authority Engine.
+              </p>
+
+              {gmailStatus === 'connected' && (
+                <div className="mb-4 p-3 bg-teal/10 border border-teal/20 rounded-lg text-sm text-teal font-medium">
+                  Gmail connected successfully!
+                </div>
+              )}
+              {gmailStatus === 'error' && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                  Failed to connect Gmail. Please try again.
+                </div>
+              )}
+
+              <GmailConnectionCard
+                connection={gmailConnection}
+                onDisconnect={handleDisconnectGmail}
+              />
+            </Card>
 
             {/* Google Calendar Integration (super_admin only) */}
             {userRole === 'super_admin' && (

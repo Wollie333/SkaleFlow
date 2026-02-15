@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { ContactList, type AuthorityContactListItem } from '@/components/authority/contact-list';
 import { CreateContactModal } from '@/components/authority/create-contact-modal';
@@ -34,6 +35,7 @@ interface Contact {
 
 export default function AuthorityContactsPage() {
   const supabase = createClient();
+  const router = useRouter();
 
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -109,11 +111,8 @@ export default function AuthorityContactsPage() {
   };
 
   const handleContactClick = (contact: AuthorityContactListItem) => {
-    // Find the full contact data to open the edit modal
-    const fullContact = contacts.find((c) => c.id === contact.id);
-    if (!fullContact) return;
-    setEditContact(fullContact);
-    setShowCreateModal(true);
+    // Navigate to contact detail page
+    router.push(`/authority/contacts/${contact.id}`);
   };
 
   return (

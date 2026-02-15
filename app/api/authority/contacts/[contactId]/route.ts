@@ -11,6 +11,7 @@ export async function GET(
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { contactId } = await params;
+  const url = new URL(request.url);
 
   // Use service client for initial lookup to get organization_id (RLS-safe for super_admin)
   const svc = createServiceClient();
@@ -41,10 +42,15 @@ export async function GET(
     .eq('contact_id', contactId)
     .order('created_at', { ascending: false });
 
-  // Get correspondence history
+  // Get correspondence history — full fields if include=correspondence requested
+  const includeParam = url.searchParams.get('include');
+  const correspondenceSelect = includeParam === 'correspondence'
+    ? 'id, type, direction, email_subject, email_from, email_to, email_body_text, summary, content, occurred_at, card_id'
+    : 'id, type, direction, email_subject, summary, occurred_at';
+
   const { data: correspondence } = await db
     .from('authority_correspondence')
-    .select('id, type, direction, email_subject, summary, occurred_at')
+    .select(correspondenceSelect)
     .eq('contact_id', contactId)
     .order('occurred_at', { ascending: false });
 

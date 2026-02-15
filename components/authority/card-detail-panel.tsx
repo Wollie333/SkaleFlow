@@ -20,6 +20,7 @@ import { CATEGORY_CONFIG, PRIORITY_CONFIG, WARMTH_CONFIG, CONFIRMED_FORMATS } fr
 import { ChecklistSection } from './checklist-section';
 import { AddCorrespondenceModal } from './add-correspondence-modal';
 import { PitchEmailGenerator } from './pitch-email-generator';
+import { EmailComposeModal } from './contact-detail/email-compose-modal';
 import type { AuthorityCategory, AuthorityPriority, AuthorityReachTier, AuthorityCorrespondenceType } from '@/lib/authority/types';
 
 // ============================================================================
@@ -135,6 +136,10 @@ export function CardDetailPanel({ cardId, onClose, onUpdate, contacts }: CardDet
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showCorrespondenceModal, setShowCorrespondenceModal] = useState(false);
+  const [showEmailCompose, setShowEmailCompose] = useState(false);
+  const [hasGmailConnection, setHasGmailConnection] = useState(false);
+  const [pitchPrefillSubject, setPitchPrefillSubject] = useState('');
+  const [pitchPrefillBody, setPitchPrefillBody] = useState('');
 
   // Editable fields
   const [editNotes, setEditNotes] = useState('');
@@ -195,6 +200,29 @@ export function CardDetailPanel({ cardId, onClose, onUpdate, contacts }: CardDet
     const res = await fetch(`/api/authority/pipeline/${cardId}/correspondence`);
     if (res.ok) setCorrespondence(await res.json());
   }, [cardId]);
+
+  // Check Gmail connection
+  useEffect(() => {
+    async function checkGmail() {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase
+          .from('authority_email_connections')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('provider', 'gmail')
+          .eq('is_active', true)
+          .maybeSingle();
+        setHasGmailConnection(!!data);
+      } catch {
+        // Table may not exist yet
+      }
+    }
+    checkGmail();
+  }, []);
 
   useEffect(() => {
     if (cardId) {
@@ -663,13 +691,24 @@ export function CardDetailPanel({ cardId, onClose, onUpdate, contacts }: CardDet
               {/* ---- CORRESPONDENCE TAB ---- */}
               {activeTab === 'correspondence' && (
                 <div className="p-5 space-y-3">
-                  <button
-                    onClick={() => setShowCorrespondenceModal(true)}
-                    className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-teal border border-teal/30 rounded-lg hover:bg-teal/5 transition-colors"
-                  >
-                    <PlusIcon className="w-3.5 h-3.5" />
-                    Log Correspondence
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowCorrespondenceModal(true)}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-teal border border-teal/30 rounded-lg hover:bg-teal/5 transition-colors"
+                    >
+                      <PlusIcon className="w-3.5 h-3.5" />
+                      Log Correspondence
+                    </button>
+                    {hasGmailConnection && contact && (
+                      <button
+                        onClick={() => setShowEmailCompose(true)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-gold border border-gold/30 rounded-lg hover:bg-gold/5 transition-colors"
+                      >
+                        <EnvelopeIcon className="w-3.5 h-3.5" />
+                        Send Email
+                      </button>
+                    )}
+                  </div>
 
                   {correspondence.length === 0 ? (
                     <p className="text-xs text-stone text-center py-6">No correspondence logged yet</p>
@@ -718,6 +757,12 @@ export function CardDetailPanel({ cardId, onClose, onUpdate, contacts }: CardDet
                         contactWarmth={contact.warmth}
                         storyAngle={card.authority_story_angles?.title || card.custom_story_angle}
                         category={card.category}
+                        hasGmail={hasGmailConnection}
+                        onSendViaGmail={(subject, body) => {
+                          setPitchPrefillSubject(subject);
+                          setPitchPrefillBody(body);
+                          setShowEmailCompose(true);
+                        }}
                       />
                     </div>
                   )}
@@ -747,7 +792,33 @@ export function CardDetailPanel({ cardId, onClose, onUpdate, contacts }: CardDet
         onSubmit={handleAddCorrespondence}
         contacts={contacts}
         defaultContactId={card?.contact_id}
+        hasGmail={hasGmailConnection}
+        organizationId={card?.organization_id}
+        onEmailSent={() => { fetchCorrespondence(); onUpdate(); }}
       />
+
+      {/* Email Compose Modal */}
+      {card && contact && (
+        <EmailComposeModal
+          isOpen={showEmailCompose}
+          onClose={() => {
+            setShowEmailCompose(false);
+            setPitchPrefillSubject('');
+            setPitchPrefillBody('');
+          }}
+          organizationId={card.organization_id}
+          contactId={contact.id}
+          contactEmail={contact.email}
+          contactName={contact.full_name}
+          cardId={cardId}
+          prefillSubject={pitchPrefillSubject || undefined}
+          prefillBody={pitchPrefillBody || undefined}
+          onSent={() => {
+            fetchCorrespondence();
+            onUpdate();
+          }}
+        />
+      )}
     </>
   );
 }

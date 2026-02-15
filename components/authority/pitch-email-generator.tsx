@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SparklesIcon, ClipboardDocumentIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, ClipboardDocumentIcon, CheckIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
 
 interface PitchEmailGeneratorProps {
   organizationId: string;
@@ -10,6 +10,11 @@ interface PitchEmailGeneratorProps {
   contactWarmth: string;
   storyAngle?: string | null;
   category: string;
+  contactEmail?: string | null;
+  contactId?: string | null;
+  cardId?: string | null;
+  hasGmail?: boolean;
+  onSendViaGmail?: (subject: string, body: string) => void;
 }
 
 export function PitchEmailGenerator({
@@ -19,6 +24,8 @@ export function PitchEmailGenerator({
   contactWarmth,
   storyAngle,
   category,
+  hasGmail,
+  onSendViaGmail,
 }: PitchEmailGeneratorProps) {
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -81,21 +88,39 @@ export function PitchEmailGenerator({
       </button>
 
       {result && (
-        <div className="relative">
-          <div className="bg-cream-warm/40 rounded-lg p-3 text-xs text-charcoal whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
-            {result}
+        <div className="space-y-2">
+          <div className="relative">
+            <div className="bg-cream-warm/40 rounded-lg p-3 text-xs text-charcoal whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
+              {result}
+            </div>
+            <button
+              onClick={handleCopy}
+              className="absolute top-2 right-2 p-1.5 bg-white rounded-lg shadow-sm border border-stone/10 hover:bg-cream-warm transition-colors"
+              title="Copy to clipboard"
+            >
+              {copied ? (
+                <CheckIcon className="w-3.5 h-3.5 text-green-500" />
+              ) : (
+                <ClipboardDocumentIcon className="w-3.5 h-3.5 text-stone" />
+              )}
+            </button>
           </div>
-          <button
-            onClick={handleCopy}
-            className="absolute top-2 right-2 p-1.5 bg-white rounded-lg shadow-sm border border-stone/10 hover:bg-cream-warm transition-colors"
-            title="Copy to clipboard"
-          >
-            {copied ? (
-              <CheckIcon className="w-3.5 h-3.5 text-green-500" />
-            ) : (
-              <ClipboardDocumentIcon className="w-3.5 h-3.5 text-stone" />
-            )}
-          </button>
+          {hasGmail && onSendViaGmail && (
+            <button
+              onClick={() => {
+                // Extract subject from first line if it looks like "Subject: ..."
+                const lines = result.split('\n');
+                const subjectLine = lines.find(l => l.toLowerCase().startsWith('subject:'));
+                const subject = subjectLine ? subjectLine.replace(/^subject:\s*/i, '').trim() : `Pitch to ${contactName}`;
+                const body = subjectLine ? lines.filter(l => l !== subjectLine).join('\n').trim() : result;
+                onSendViaGmail(subject, body);
+              }}
+              className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-teal border border-teal/30 rounded-lg hover:bg-teal/5 transition-colors"
+            >
+              <PaperAirplaneIcon className="w-3.5 h-3.5" />
+              Send via Gmail
+            </button>
+          )}
         </div>
       )}
     </div>
