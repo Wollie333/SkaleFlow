@@ -50,8 +50,19 @@ export default function AuthorityPressKitPage() {
     ]);
 
     if (kitRes.ok) {
-      const data = await kitRes.json();
-      setPressKit(data);
+      const raw = await kitRes.json();
+      // Map DB column names → builder field names
+      if (raw) {
+        setPressKit({
+          id: raw.id,
+          company_overview: raw.brand_overview || null,
+          founder_bio: raw.founder_bio_long || raw.founder_bio_short || null,
+          mission_statement: raw.boilerplate || null,
+          fact_sheet: raw.fact_sheet || null,
+          speaking_topics: raw.speaking_topics || null,
+          brand_guidelines_url: raw.logo_usage_notes || null,
+        });
+      }
     }
     if (anglesRes.ok) setStoryAngles(await anglesRes.json());
 
@@ -88,11 +99,25 @@ export default function AuthorityPressKitPage() {
   }, [loadData]);
 
   const handleSavePressKit = async (data: Record<string, unknown>) => {
-    await fetch('/api/authority/press-kit', {
+    // Map builder field names → DB column names
+    const dbData = {
+      organizationId: data.organizationId,
+      brand_overview: data.company_overview ?? null,
+      founder_bio_long: data.founder_bio ?? null,
+      boilerplate: data.mission_statement ?? null,
+      fact_sheet: data.fact_sheet ?? null,
+      speaking_topics: data.speaking_topics ?? null,
+      logo_usage_notes: data.brand_guidelines_url ?? null,
+    };
+    const res = await fetch('/api/authority/press-kit', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify(dbData),
     });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error('Press kit save failed:', err);
+    }
     loadData();
   };
 
