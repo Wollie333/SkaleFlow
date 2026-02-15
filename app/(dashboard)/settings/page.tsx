@@ -68,6 +68,7 @@ export default function SettingsPage() {
   const [canvaStatus, setCanvaStatus] = useState<string | null>(null);
   const [gmailConnection, setGmailConnection] = useState<{ id: string; email_address: string; is_active: boolean; connected_at: string; token_expires_at: string | null } | null>(null);
   const [gmailStatus, setGmailStatus] = useState<string | null>(null);
+  const [gmailErrorMessage, setGmailErrorMessage] = useState<string | null>(null);
   const [orgRole, setOrgRole] = useState<string>('');
   const [aiBetaEnabled, setAiBetaEnabled] = useState(false);
   const [googleCalendars, setGoogleCalendars] = useState<{ id: string; summary: string; primary: boolean }[]>([]);
@@ -297,6 +298,8 @@ export default function SettingsPage() {
     const gmailParam = searchParams.get('gmail');
     if (gmailParam) {
       setGmailStatus(gmailParam);
+      const gmailMsg = searchParams.get('message');
+      if (gmailMsg) setGmailErrorMessage(gmailMsg);
       setActiveTab('integrations');
     }
 
@@ -1047,7 +1050,7 @@ export default function SettingsPage() {
               )}
               {gmailStatus === 'error' && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                  Failed to connect Gmail. Please try again.
+                  Failed to connect Gmail. {gmailErrorMessage && <span className="block mt-1 text-xs text-red-500">{gmailErrorMessage}</span>}
                 </div>
               )}
 

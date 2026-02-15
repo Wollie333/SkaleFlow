@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const cookieStore = await cookies();
     const storedState = cookieStore.get('gmail_oauth_state')?.value;
     if (!storedState || storedState !== state) {
-      return NextResponse.redirect(new URL('/settings?tab=integrations&gmail=error&message=Invalid+state', siteUrl));
+      return NextResponse.redirect(new URL(`/settings?tab=integrations&gmail=error&message=${encodeURIComponent('State mismatch — please try again')}`, siteUrl));
     }
 
     // Clear state cookie
@@ -41,10 +41,24 @@ export async function GET(request: NextRequest) {
     }
 
     // Exchange code for tokens
-    const tokens = await exchangeGmailCode(code);
+    let tokens;
+    try {
+      tokens = await exchangeGmailCode(code);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Token exchange failed';
+      console.error('Gmail token exchange error:', msg);
+      return NextResponse.redirect(new URL(`/settings?tab=integrations&gmail=error&message=${encodeURIComponent('Token exchange: ' + msg)}`, siteUrl));
+    }
 
     // Get Gmail profile (email + initial historyId)
-    const profile = await getGmailProfile(tokens.access_token);
+    let profile;
+    try {
+      profile = await getGmailProfile(tokens.access_token);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Profile fetch failed';
+      console.error('Gmail profile error:', msg);
+      return NextResponse.redirect(new URL(`/settings?tab=integrations&gmail=error&message=${encodeURIComponent('Gmail API: ' + msg)}`, siteUrl));
+    }
 
     // Deactivate existing Gmail connection for this user
     const serviceClient = createServiceClient();
@@ -55,7 +69,7 @@ export async function GET(request: NextRequest) {
       .eq('provider', 'gmail');
 
     // Insert new connection
-    await serviceClient
+    const { error: insertError } = await serviceClient
       .from('authority_email_connections')
       .insert({
         user_id: userId,
@@ -71,9 +85,15 @@ export async function GET(request: NextRequest) {
         connected_at: new Date().toISOString(),
       });
 
+    if (insertError) {
+      console.error('Gmail DB insert error:', insertError);
+      return NextResponse.redirect(new URL(`/settings?tab=integrations&gmail=error&message=${encodeURIComponent('DB: ' + insertError.message)}`, siteUrl));
+    }
+
     return NextResponse.redirect(new URL('/settings?tab=integrations&gmail=connected', siteUrl));
   } catch (error) {
     console.error('Gmail callback error:', error);
-    return NextResponse.redirect(new URL('/settings?tab=integrations&gmail=error&message=Failed+to+connect', siteUrl));
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.redirect(new URL(`/settings?tab=integrations&gmail=error&message=${encodeURIComponent(msg)}`, siteUrl));
   }
 }
