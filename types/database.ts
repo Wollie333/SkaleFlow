@@ -1513,6 +1513,59 @@ export interface Database {
           },
         ];
       };
+      canva_connections: {
+        Row: {
+          id: string;
+          organization_id: string;
+          user_id: string;
+          access_token: string;
+          refresh_token: string;
+          token_expires_at: string;
+          canva_user_id: string | null;
+          scopes: string[] | null;
+          is_active: boolean;
+          connected_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          user_id: string;
+          access_token: string;
+          refresh_token: string;
+          token_expires_at: string;
+          canva_user_id?: string | null;
+          scopes?: string[] | null;
+          is_active?: boolean;
+          connected_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          user_id?: string;
+          access_token?: string;
+          refresh_token?: string;
+          token_expires_at?: string;
+          canva_user_id?: string | null;
+          scopes?: string[] | null;
+          is_active?: boolean;
+          connected_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "canva_connections_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       google_drive_connections: {
         Row: {
           id: string;
@@ -5543,35 +5596,47 @@ export interface Database {
         Row: {
           id: string;
           organization_id: string;
-          keyword: string | null;
-          topic: string | null;
+          trend_type: string;
+          trend_value: string;
           mention_count: number;
+          growth_rate: number | null;
+          peak_timestamp: string | null;
+          related_keywords: string[] | null;
+          top_influencers: Json;
+          platform_distribution: Json;
           time_period: string;
           analyzed_at: string;
           created_at: string;
-          updated_at: string;
         };
         Insert: {
           id?: string;
           organization_id: string;
-          keyword?: string | null;
-          topic?: string | null;
+          trend_type: string;
+          trend_value: string;
           mention_count: number;
+          growth_rate?: number | null;
+          peak_timestamp?: string | null;
+          related_keywords?: string[] | null;
+          top_influencers?: Json;
+          platform_distribution?: Json;
           time_period: string;
-          analyzed_at: string;
+          analyzed_at?: string;
           created_at?: string;
-          updated_at?: string;
         };
         Update: {
           id?: string;
           organization_id?: string;
-          keyword?: string | null;
-          topic?: string | null;
+          trend_type?: string;
+          trend_value?: string;
           mention_count?: number;
+          growth_rate?: number | null;
+          peak_timestamp?: string | null;
+          related_keywords?: string[] | null;
+          top_influencers?: Json;
+          platform_distribution?: Json;
           time_period?: string;
           analyzed_at?: string;
           created_at?: string;
-          updated_at?: string;
         };
         Relationships: [];
       };

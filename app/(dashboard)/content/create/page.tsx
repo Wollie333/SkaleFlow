@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Button, Card, PageHeader, ActionModal } from '@/components/ui';
 import { BrandVariablesPanel, CreativeAssetSpecs, MediaUpload, UTMBuilderModal, PostActionPopup, AIModelPicker, type UploadedFile, type PublishResult, IconPicker } from '@/components/content';
 import { DriveFilePicker } from '@/components/content/drive-file-picker';
+import { CanvaDesignPicker } from '@/components/content/canva-design-picker';
 import { PreviewPanel } from '@/components/content/preview-panel';
 import { InstanceEditForm, type InstanceSpec } from '@/components/content/instance-edit-form';
 import ScriptModal, { type ScriptData } from '@/components/content/script-modal';
@@ -131,6 +132,8 @@ export default function ContentCreatePage() {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [showDrivePicker, setShowDrivePicker] = useState(false);
   const [hasDriveConnection, setHasDriveConnection] = useState(false);
+  const [hasCanvaConnection, setHasCanvaConnection] = useState(false);
+  const [showCanvaPicker, setShowCanvaPicker] = useState(false);
 
   // AI model selection
   const [showModelModal, setShowModelModal] = useState(false);
@@ -237,6 +240,15 @@ export default function ContentCreatePage() {
           .eq('is_active', true)
           .maybeSingle();
         setHasDriveConnection(!!driveConn);
+
+        // Check Canva connection
+        const { data: canvaConn } = await supabase
+          .from('canva_connections')
+          .select('id')
+          .eq('organization_id', membership.organization_id)
+          .eq('is_active', true)
+          .maybeSingle();
+        setHasCanvaConnection(!!canvaConn);
 
         // Load content angles for config modal
         const { data: angles } = await supabase
@@ -785,6 +797,50 @@ export default function ContentCreatePage() {
     setUploadedFiles(prev => [...prev, ...files]);
   };
 
+  const handleCreateWithCanva = async () => {
+    const platform = platforms[0] || 'instagram';
+    const sizeMap: Record<string, { width: number; height: number }> = {
+      instagram: { width: 1080, height: 1080 },
+      facebook: { width: 1200, height: 630 },
+      linkedin: { width: 1200, height: 627 },
+      twitter: { width: 1200, height: 675 },
+      tiktok: { width: 1080, height: 1920 },
+      youtube: { width: 1280, height: 720 },
+    };
+    const size = sizeMap[platform] || { width: 1080, height: 1080 };
+    const title = 'SkaleFlow Design';
+
+    try {
+      const res = await fetch('/api/canva/designs/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, ...size }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create design');
+      window.open(data.editUrl, '_blank');
+    } catch (err) {
+      console.error('Failed to create Canva design:', err);
+    }
+  };
+
+  const handleImportFromCanva = async (designId: string) => {
+    const res = await fetch('/api/canva/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ designId }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to import design');
+
+    setUploadedFiles(prev => [...prev, {
+      url: data.url,
+      fileName: data.fileName,
+      fileType: 'image/png',
+      fileSize: 0,
+    }]);
+  };
+
   const bulkEffectiveModelId = bulkModelId || orgDefaultModel || null;
   const bulkSelectedModel = bulkEffectiveModelId ? models.find(m => m.id === bulkEffectiveModelId) : null;
 
@@ -1221,6 +1277,8 @@ export default function ContentCreatePage() {
                     uploadedFiles={uploadedFiles}
                     onFilesChange={setUploadedFiles}
                     onImportFromDrive={hasDriveConnection ? () => setShowDrivePicker(true) : undefined}
+                    onCreateWithCanva={hasCanvaConnection ? handleCreateWithCanva : undefined}
+                    onImportFromCanva={hasCanvaConnection ? () => setShowCanvaPicker(true) : undefined}
                   />
                 )}
               </Card>
@@ -1381,6 +1439,13 @@ export default function ContentCreatePage() {
           contentItemId={currentItemId || undefined}
           onImport={handleDriveImport}
           onClose={() => setShowDrivePicker(false)}
+        />
+      )}
+
+      {showCanvaPicker && (
+        <CanvaDesignPicker
+          onImport={handleImportFromCanva}
+          onClose={() => setShowCanvaPicker(false)}
         />
       )}
 

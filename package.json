@@ -32,6 +32,7 @@
     "react-dom": "^19.0.0",
     "recharts": "^3.7.0",
     "resend": "^6.9.1",
+    "sharp": "^0.34.5",
     "tailwind-merge": "^2.5.2",
     "yaml": "^2.5.1"
   },
@@ -40,6 +41,7 @@
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/sharp": "^0.31.1",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.0",
     "eslint-config-next": "^15.5.11",

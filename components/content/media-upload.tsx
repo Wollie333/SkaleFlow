@@ -23,6 +23,8 @@ interface MediaUploadProps {
   onFilesChange: (files: UploadedFile[]) => void;
   onImportFromDrive?: () => void;
   onImportFromLibrary?: () => void;
+  onCreateWithCanva?: () => void;
+  onImportFromCanva?: () => void;
 }
 
 export function MediaUpload({
@@ -32,6 +34,8 @@ export function MediaUpload({
   onFilesChange,
   onImportFromDrive,
   onImportFromLibrary,
+  onCreateWithCanva,
+  onImportFromCanva,
 }: MediaUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -193,12 +197,12 @@ export function MediaUpload({
       </div>
 
       {/* Import buttons */}
-      {(onImportFromDrive || onImportFromLibrary) && (
-        <div className="flex gap-2 mt-3">
+      {(onImportFromDrive || onImportFromLibrary || onCreateWithCanva || onImportFromCanva) && (
+        <div className="flex flex-wrap gap-2 mt-3">
           {onImportFromLibrary && (
             <button
               onClick={onImportFromLibrary}
-              className="flex-1 px-3 py-2 text-xs font-medium text-stone hover:text-charcoal bg-cream-warm hover:bg-stone/10 rounded-lg transition-colors"
+              className="flex-1 min-w-[140px] px-3 py-2 text-xs font-medium text-stone hover:text-charcoal bg-cream-warm hover:bg-stone/10 rounded-lg transition-colors"
             >
               Choose from Library
             </button>
@@ -206,9 +210,25 @@ export function MediaUpload({
           {onImportFromDrive && (
             <button
               onClick={onImportFromDrive}
-              className="flex-1 px-3 py-2 text-xs font-medium text-stone hover:text-charcoal bg-cream-warm hover:bg-stone/10 rounded-lg transition-colors"
+              className="flex-1 min-w-[140px] px-3 py-2 text-xs font-medium text-stone hover:text-charcoal bg-cream-warm hover:bg-stone/10 rounded-lg transition-colors"
             >
               Import from Google Drive
+            </button>
+          )}
+          {onCreateWithCanva && (
+            <button
+              onClick={onCreateWithCanva}
+              className="flex-1 min-w-[140px] px-3 py-2 text-xs font-medium text-stone hover:text-charcoal bg-cream-warm hover:bg-stone/10 rounded-lg transition-colors"
+            >
+              Create with Canva
+            </button>
+          )}
+          {onImportFromCanva && (
+            <button
+              onClick={onImportFromCanva}
+              className="flex-1 min-w-[140px] px-3 py-2 text-xs font-medium text-stone hover:text-charcoal bg-cream-warm hover:bg-stone/10 rounded-lg transition-colors"
+            >
+              Import from Canva
             </button>
           )}
         </div>

@@ -12,6 +12,7 @@ import { SocialConnectionCard } from '@/components/integrations/social-connectio
 import type { SocialConnectionRow } from '@/components/integrations/social-connection-card';
 import { PageSelectionModal } from '@/components/integrations/page-selection-modal';
 import { GoogleDriveConnectionCard } from '@/components/integrations/google-drive-connection-card';
+import { CanvaConnectionCard } from '@/components/integrations/canva-connection-card';
 import { GmailConnectionCard } from '@/components/integrations/gmail-connection-card';
 import { AvatarUpload } from '@/components/profile/avatar-upload';
 import type { SocialPlatform, Json } from '@/types/database';
@@ -63,6 +64,8 @@ export default function SettingsPage() {
   const [pageSelectPlatform, setPageSelectPlatform] = useState<SocialPlatform | null>(null);
   const [driveConnection, setDriveConnection] = useState<{ id: string; drive_email: string | null; is_active: boolean; connected_at: string; token_expires_at: string | null } | null>(null);
   const [driveStatus, setDriveStatus] = useState<string | null>(null);
+  const [canvaConnection, setCanvaConnection] = useState<{ id: string; canva_user_id: string | null; is_active: boolean; connected_at: string; token_expires_at: string | null } | null>(null);
+  const [canvaStatus, setCanvaStatus] = useState<string | null>(null);
   const [gmailConnection, setGmailConnection] = useState<{ id: string; email_address: string; is_active: boolean; connected_at: string; token_expires_at: string | null } | null>(null);
   const [gmailStatus, setGmailStatus] = useState<string | null>(null);
   const [orgRole, setOrgRole] = useState<string>('');
@@ -209,6 +212,22 @@ export default function SettingsPage() {
           // Table doesn't exist yet — skip silently
         }
 
+        // Load Canva connection
+        try {
+          const { data: canvaConn } = await supabase
+            .from('canva_connections')
+            .select('id, canva_user_id, is_active, connected_at, token_expires_at')
+            .eq('organization_id', org.id)
+            .eq('is_active', true)
+            .maybeSingle();
+
+          if (canvaConn) {
+            setCanvaConnection(canvaConn);
+          }
+        } catch {
+          // Table doesn't exist yet — skip silently
+        }
+
         // Load Gmail connection for current user (per-user, not per-org)
         try {
           const { data: gmailConn } = await supabase
@@ -267,6 +286,13 @@ export default function SettingsPage() {
       setActiveTab('integrations');
     }
 
+    // Check for Canva OAuth callback status
+    const canvaParam = searchParams.get('canva');
+    if (canvaParam) {
+      setCanvaStatus(canvaParam);
+      setActiveTab('integrations');
+    }
+
     // Check for Gmail callback status
     const gmailParam = searchParams.get('gmail');
     if (gmailParam) {
@@ -279,7 +305,7 @@ export default function SettingsPage() {
     }
 
     // Strip OAuth callback params from URL to prevent modal re-opening on refresh
-    if (socialParam || googleParam || gdriveParam || gmailParam) {
+    if (socialParam || googleParam || gdriveParam || canvaParam || gmailParam) {
       window.history.replaceState({}, '', '/settings');
     }
   }, [supabase, searchParams]);
@@ -366,6 +392,26 @@ export default function SettingsPage() {
       connectionId,
       platformName: driveName,
     });
+  };
+
+  const handleDisconnectCanva = async () => {
+    try {
+      const res = await fetch('/api/integrations/canva/disconnect', { method: 'POST' });
+      if (!res.ok) {
+        setAlertDialog({ isOpen: true, title: 'Error', message: 'Failed to disconnect Canva. Please try again.' });
+      } else {
+        setCanvaConnection(null);
+        setCanvaStatus(null);
+      }
+    } catch {
+      setAlertDialog({ isOpen: true, title: 'Error', message: 'Failed to disconnect Canva.' });
+    }
+  };
+
+  const handleSyncCanvaBrand = async () => {
+    const res = await fetch('/api/canva/sync-brand', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Brand sync failed');
   };
 
   const handleDisconnectGmail = async () => {
@@ -956,6 +1002,33 @@ export default function SettingsPage() {
                 <GoogleDriveConnectionCard
                   connection={driveConnection}
                   onDisconnect={handleDisconnectDrive}
+                />
+              </Card>
+            )}
+
+            {/* Canva Integration (owner/admin only) */}
+            {['owner', 'admin'].includes(orgRole) && (
+              <Card>
+                <h2 className="text-heading-md text-charcoal mb-2">Canva</h2>
+                <p className="text-stone text-sm mb-6">
+                  Connect Canva to create and import designs directly from your content editor.
+                </p>
+
+                {canvaStatus === 'connected' && (
+                  <div className="mb-4 p-3 bg-teal/10 border border-teal/20 rounded-lg text-sm text-teal font-medium">
+                    Canva connected successfully!
+                  </div>
+                )}
+                {canvaStatus === 'error' && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                    Failed to connect Canva. {searchParams.get('message') || 'Please try again.'}
+                  </div>
+                )}
+
+                <CanvaConnectionCard
+                  connection={canvaConnection}
+                  onDisconnect={handleDisconnectCanva}
+                  onSyncBrand={handleSyncCanvaBrand}
                 />
               </Card>
             )}

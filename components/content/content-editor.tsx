@@ -15,6 +15,7 @@ import { CreativeAssetSpecs } from './creative-asset-specs';
 import { ScriptTemplateBadge } from './script-template-badge';
 import { PlatformOverrideTabs } from './platform-override-tabs';
 import { MediaUpload, type UploadedFile } from './media-upload';
+import { CanvaDesignPicker } from './canva-design-picker';
 import { CommentThread } from './comment-thread';
 import { TagSelector } from './tag-selector';
 import { ContentBrief } from './content-brief';
@@ -99,6 +100,8 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
       fileSize: 0,
     }))
   );
+  const [showCanvaPicker, setShowCanvaPicker] = useState(false);
+  const [canvaConnected, setCanvaConnected] = useState(false);
 
   // Load team members for assignment
   useEffect(() => {
@@ -120,6 +123,68 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
     }
     loadTeam();
   }, [organizationId]);
+
+  // Check Canva connection status
+  useEffect(() => {
+    if (!organizationId) return;
+    const supabase = createClient();
+    supabase
+      .from('canva_connections')
+      .select('id, is_active')
+      .eq('organization_id', organizationId)
+      .eq('is_active', true)
+      .limit(1)
+      .single()
+      .then(({ data }) => {
+        setCanvaConnected(!!data);
+      });
+  }, [organizationId]);
+
+  const handleCreateWithCanva = async () => {
+    // Determine platform-appropriate size
+    const platform = formData.platforms?.[0] || 'instagram';
+    const sizeMap: Record<string, { width: number; height: number }> = {
+      instagram: { width: 1080, height: 1080 },
+      facebook: { width: 1200, height: 630 },
+      linkedin: { width: 1200, height: 627 },
+      twitter: { width: 1200, height: 675 },
+      tiktok: { width: 1080, height: 1920 },
+      youtube: { width: 1280, height: 720 },
+    };
+    const size = sizeMap[platform] || { width: 1080, height: 1080 };
+    const title = formData.title || 'SkaleFlow Design';
+
+    try {
+      const res = await fetch('/api/canva/designs/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, ...size }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create design');
+      window.open(data.editUrl, '_blank');
+    } catch (err) {
+      console.error('Failed to create Canva design:', err);
+    }
+  };
+
+  const handleImportFromCanva = async (designId: string) => {
+    const res = await fetch('/api/canva/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ designId }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to import design');
+
+    const newFile: UploadedFile = {
+      url: data.url,
+      fileName: data.fileName,
+      fileType: 'image/png',
+      fileSize: 0,
+    };
+    setUploadedFiles(prev => [...prev, newFile]);
+  };
 
   const { categories: brandCategories, flatVariables: brandFlatVariables } = useBrandVariables(organizationId || null);
   const formatCategory = getFormatCategory(item.format as ContentFormat);
@@ -616,6 +681,8 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
               contentItemId={item.id}
               uploadedFiles={uploadedFiles}
               onFilesChange={setUploadedFiles}
+              onCreateWithCanva={canvaConnected ? handleCreateWithCanva : undefined}
+              onImportFromCanva={canvaConnected ? () => setShowCanvaPicker(true) : undefined}
             />
           </div>
         )}
@@ -861,6 +928,14 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
         <Button onClick={onClose} variant="ghost" className="flex-1">Cancel</Button>
         <Button onClick={handleSave} isLoading={isSaving} className="flex-1">Save Changes</Button>
       </div>
+
+      {/* Canva Design Picker Modal */}
+      {showCanvaPicker && (
+        <CanvaDesignPicker
+          onImport={handleImportFromCanva}
+          onClose={() => setShowCanvaPicker(false)}
+        />
+      )}
     </div>
   );
 }
