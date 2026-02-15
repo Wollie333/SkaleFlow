@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { checkAuthorityAccess } from '@/lib/authority/auth';
 
+// Map DB column names to what the client expects
+function mapChecklistForClient(item: Record<string, unknown>) {
+  return {
+    ...item,
+    // Client expects label & is_custom
+    label: item.item_text,
+    is_custom: !item.is_system,
+  };
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ cardId: string }> }
@@ -33,7 +43,7 @@ export async function GET(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json(items || []);
+  return NextResponse.json((items || []).map(mapChecklistForClient));
 }
 
 export async function POST(
@@ -60,25 +70,27 @@ export async function POST(
   if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
   const db = access.queryClient;
 
-  if (!body.item_text) {
-    return NextResponse.json({ error: 'item_text required' }, { status: 400 });
+  // Accept both label (client name) and item_text (DB name)
+  const itemText = body.item_text || body.label;
+  if (!itemText) {
+    return NextResponse.json({ error: 'item_text or label required' }, { status: 400 });
   }
 
-  // Get the highest display_order for this card
+  // Get the highest display_order for this card (maybeSingle — may have no items)
   const { data: lastItem } = await db
     .from('authority_card_checklist')
     .select('display_order')
     .eq('card_id', cardId)
     .order('display_order', { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   const { data: item, error } = await db
     .from('authority_card_checklist')
     .insert({
       card_id: cardId,
       organization_id: card.organization_id,
-      item_text: body.item_text,
+      item_text: itemText,
       is_system: false,
       display_order: (lastItem?.display_order ?? -1) + 1,
     })
@@ -87,7 +99,7 @@ export async function POST(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json(item, { status: 201 });
+  return NextResponse.json(mapChecklistForClient(item), { status: 201 });
 }
 
 export async function PATCH(
@@ -134,5 +146,5 @@ export async function PATCH(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json(item);
+  return NextResponse.json(mapChecklistForClient(item));
 }

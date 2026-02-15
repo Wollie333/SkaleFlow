@@ -169,7 +169,7 @@ export async function PATCH(
         .from('authority_commercial')
         .select('engagement_type')
         .eq('card_id', cardId)
-        .single();
+        .maybeSingle();
 
       const engagementType = (commercial?.engagement_type || 'earned') as AuthorityEngagementType;
 

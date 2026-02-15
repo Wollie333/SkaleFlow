@@ -58,6 +58,13 @@ export async function GET(
     .select('id', { count: 'exact', head: true })
     .eq('card_id', cardId);
 
+  // Map commercial field names for client (invoice_reference -> invoice_number)
+  const rawCard = card as Record<string, unknown>;
+  const commercial = rawCard.authority_commercial as Record<string, unknown> | null;
+  if (commercial) {
+    (commercial as Record<string, unknown>).invoice_number = commercial.invoice_reference ?? null;
+  }
+
   return NextResponse.json({
     ...card,
     checklist_count: checklistTotal || 0,
@@ -118,6 +125,13 @@ export async function PATCH(
   // Update commercial if included — use service client to bypass RLS
   // (auth already verified above via checkAuthorityAccess)
   if (commercial) {
+    // Map client field names to DB columns: invoice_number -> invoice_reference
+    const dbCommercial: Record<string, unknown> = { ...commercial };
+    if ('invoice_number' in dbCommercial) {
+      dbCommercial.invoice_reference = dbCommercial.invoice_number;
+      delete dbCommercial.invoice_number;
+    }
+
     const { data: existing } = await svc
       .from('authority_commercial')
       .select('id')
@@ -127,7 +141,7 @@ export async function PATCH(
     if (existing) {
       const { error: comErr } = await svc
         .from('authority_commercial')
-        .update({ ...commercial, updated_at: new Date().toISOString() })
+        .update({ ...dbCommercial, updated_at: new Date().toISOString() })
         .eq('card_id', cardId);
       if (comErr) return NextResponse.json({ error: comErr.message }, { status: 500 });
     } else {
@@ -136,7 +150,7 @@ export async function PATCH(
         .insert({
           organization_id: existingCard.organization_id,
           card_id: cardId,
-          ...commercial,
+          ...dbCommercial,
         });
       if (comErr) return NextResponse.json({ error: comErr.message }, { status: 500 });
     }

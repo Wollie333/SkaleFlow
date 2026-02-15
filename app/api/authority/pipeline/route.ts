@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
 
   // Create commercial record if engagement type provided
   if (rest.engagement_type) {
-    await db.from('authority_commercial').insert({
+    const { error: comErr } = await db.from('authority_commercial').insert({
       organization_id: organizationId,
       card_id: card.id,
       engagement_type: rest.engagement_type,
@@ -185,6 +185,7 @@ export async function POST(request: NextRequest) {
       currency: rest.currency || 'ZAR',
       payment_terms: rest.payment_terms || null,
     });
+    if (comErr) console.error('Failed to create commercial record:', comErr.message);
   }
 
   return NextResponse.json(card, { status: 201 });

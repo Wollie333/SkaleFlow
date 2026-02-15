@@ -209,20 +209,28 @@ export function CardDetailPanel({ cardId, onClose, onUpdate, contacts }: CardDet
   const handleSaveDetails = async () => {
     if (!cardId) return;
     setSaving(true);
-    await fetch(`/api/authority/pipeline/${cardId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        notes: editNotes || null,
-        live_url: editLiveUrl || null,
-        clipping_url: editClippingUrl || null,
-        confirmed_format: editConfirmedFormat || null,
-        embargo_active: editEmbargoActive,
-        embargo_date: editEmbargoDate || null,
-        submission_deadline: editSubmissionDeadline || null,
-        expected_publication_date: editExpectedPubDate || null,
-      }),
-    });
+    try {
+      const res = await fetch(`/api/authority/pipeline/${cardId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notes: editNotes || null,
+          live_url: editLiveUrl || null,
+          clipping_url: editClippingUrl || null,
+          confirmed_format: editConfirmedFormat || null,
+          embargo_active: editEmbargoActive,
+          embargo_date: editEmbargoDate || null,
+          submission_deadline: editSubmissionDeadline || null,
+          expected_publication_date: editExpectedPubDate || null,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error('Failed to save details:', err);
+      }
+    } catch (err) {
+      console.error('Details save error:', err);
+    }
     setSaving(false);
     fetchCard();
     onUpdate();
@@ -260,31 +268,46 @@ export function CardDetailPanel({ cardId, onClose, onUpdate, contacts }: CardDet
 
   // Checklist toggle
   const handleChecklistToggle = async (itemId: string, completed: boolean) => {
-    await fetch(`/api/authority/pipeline/${cardId}/checklist`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ itemId, is_completed: completed }),
-    });
+    try {
+      const res = await fetch(`/api/authority/pipeline/${cardId}/checklist`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId, is_completed: completed }),
+      });
+      if (!res.ok) console.error('Failed to toggle checklist:', await res.json().catch(() => ({})));
+    } catch (err) {
+      console.error('Checklist toggle error:', err);
+    }
     fetchChecklist();
   };
 
   // Add checklist item
   const handleAddChecklistItem = async (label: string) => {
-    await fetch(`/api/authority/pipeline/${cardId}/checklist`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ label }),
-    });
+    try {
+      const res = await fetch(`/api/authority/pipeline/${cardId}/checklist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label }),
+      });
+      if (!res.ok) console.error('Failed to add checklist item:', await res.json().catch(() => ({})));
+    } catch (err) {
+      console.error('Checklist add error:', err);
+    }
     fetchChecklist();
   };
 
   // Add correspondence
   const handleAddCorrespondence = async (data: Record<string, unknown>) => {
-    await fetch(`/api/authority/pipeline/${cardId}/correspondence`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
+    try {
+      const res = await fetch(`/api/authority/pipeline/${cardId}/correspondence`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) console.error('Failed to add correspondence:', await res.json().catch(() => ({})));
+    } catch (err) {
+      console.error('Correspondence add error:', err);
+    }
     fetchCorrespondence();
     onUpdate();
   };

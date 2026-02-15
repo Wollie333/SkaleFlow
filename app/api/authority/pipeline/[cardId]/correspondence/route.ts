@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { checkAuthorityAccess } from '@/lib/authority/auth';
 
+// Map DB column names to what the client expects
+function mapCorrespondenceForClient(item: Record<string, unknown>) {
+  return {
+    ...item,
+    // Client expects correspondence_type, subject, body
+    correspondence_type: item.type,
+    subject: item.email_subject || item.summary || '',
+    body: item.content || item.email_body_text || null,
+  };
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ cardId: string }> }
@@ -33,7 +44,7 @@ export async function GET(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json(correspondence || []);
+  return NextResponse.json((correspondence || []).map(mapCorrespondenceForClient));
 }
 
 export async function POST(
@@ -60,7 +71,12 @@ export async function POST(
   if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
   const db = access.queryClient;
 
-  if (!body.type || !body.occurred_at) {
+  // Accept both old client names and DB names:
+  // correspondence_type -> type, subject -> email_subject, body -> content
+  const corrType = body.type || body.correspondence_type;
+  const occurredAt = body.occurred_at;
+
+  if (!corrType || !occurredAt) {
     return NextResponse.json({ error: 'type and occurred_at required' }, { status: 400 });
   }
 
@@ -70,17 +86,17 @@ export async function POST(
       organization_id: card.organization_id,
       card_id: cardId,
       contact_id: body.contact_id || null,
-      type: body.type,
+      type: corrType,
       direction: body.direction || null,
-      email_subject: body.email_subject || null,
+      email_subject: body.email_subject || body.subject || null,
       email_from: body.email_from || null,
       email_to: body.email_to || null,
       email_cc: body.email_cc || null,
       email_body_text: body.email_body_text || null,
       email_body_html: body.email_body_html || null,
       summary: body.summary || null,
-      content: body.content || null,
-      occurred_at: body.occurred_at,
+      content: body.content || body.body || null,
+      occurred_at: occurredAt,
       duration_minutes: body.duration_minutes || null,
       created_by: user.id,
     })
@@ -89,5 +105,5 @@ export async function POST(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json(item, { status: 201 });
+  return NextResponse.json(mapCorrespondenceForClient(item), { status: 201 });
 }

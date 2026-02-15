@@ -54,7 +54,7 @@ export async function POST(
   // Get or create a calendar for this campaign
   const campaignName = `${campaignType === 'teaser' ? 'Teaser' : 'Amplification'}: ${card.opportunity_name}`;
 
-  const { data: calendar } = await serviceClient
+  const { data: calendar, error: calErr } = await serviceClient
     .from('content_calendars')
     .insert({
       organization_id: card.organization_id,
@@ -66,7 +66,7 @@ export async function POST(
     .select('id')
     .single();
 
-  if (!calendar) return NextResponse.json({ error: 'Failed to create campaign calendar' }, { status: 500 });
+  if (calErr || !calendar) return NextResponse.json({ error: calErr?.message || 'Failed to create campaign calendar' }, { status: 500 });
 
   // Create content items
   const items = templates.map((tpl) => {

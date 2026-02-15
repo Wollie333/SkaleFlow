@@ -57,11 +57,19 @@ export default function PressReleaseEditorPage() {
   }, [loadRelease]);
 
   const handleSave = async (data: Record<string, unknown>) => {
-    await fetch(`/api/authority/press-releases/${releaseId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
+    try {
+      const res = await fetch(`/api/authority/press-releases/${releaseId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error('Failed to save press release:', err);
+      }
+    } catch (err) {
+      console.error('Press release save error:', err);
+    }
     loadRelease();
   };
 

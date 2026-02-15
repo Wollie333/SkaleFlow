@@ -22,15 +22,35 @@ export async function PATCH(
   if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
   const db = access.queryClient;
 
+  // Map client field names to DB column names (accept both old and new names)
+  const updateFields: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (body.title !== undefined) updateFields.title = body.title;
+  if (body.description !== undefined) updateFields.description = body.description;
+  // target_outlets (client) -> suggested_outlets (DB)
+  if (body.suggested_outlets !== undefined) updateFields.suggested_outlets = body.suggested_outlets;
+  if (body.target_outlets !== undefined) updateFields.suggested_outlets = body.target_outlets;
+  // recommended_format (client) -> category (DB)
+  if (body.category !== undefined) updateFields.category = body.category;
+  if (body.recommended_format !== undefined) updateFields.category = body.recommended_format;
+  if (body.target_audience !== undefined) updateFields.target_audience = body.target_audience;
+  if (body.is_active !== undefined) updateFields.is_active = body.is_active;
+
   const { data, error } = await db
     .from('authority_story_angles')
-    .update({ ...body, updated_at: new Date().toISOString() })
+    .update(updateFields)
     .eq('id', angleId)
     .select()
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+
+  // Map back for client
+  const mapped = {
+    ...data,
+    target_outlets: (data as Record<string, unknown>).suggested_outlets ?? null,
+    recommended_format: (data as Record<string, unknown>).category ?? null,
+  };
+  return NextResponse.json(mapped);
 }
 
 export async function DELETE(
