@@ -7,14 +7,9 @@ export const metadata = {
   description: 'Manage all your social media interactions in one place',
 };
 
-export default async function SocialInboxPage({
-  searchParams,
-}: {
-  searchParams: { type?: string; platform?: string; sentiment?: string; status?: string };
-}) {
+export default async function SocialInboxPage() {
   const supabase = await createClient();
 
-  // Check authentication
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -34,23 +29,5 @@ export default async function SocialInboxPage({
     redirect('/dashboard');
   }
 
-  const organizationId = membership.organization_id;
-
-  // Get filter values
-  const type = searchParams.type || 'all';
-  const platform = searchParams.platform || 'all';
-  const sentiment = searchParams.sentiment || 'all';
-  const status = searchParams.status || 'all';
-
-  return (
-    <InboxClient
-      organizationId={organizationId}
-      initialFilters={{
-        type,
-        platform,
-        sentiment,
-        status,
-      }}
-    />
-  );
+  return <InboxClient organizationId={membership.organization_id} />;
 }
