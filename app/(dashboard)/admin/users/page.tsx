@@ -35,6 +35,7 @@ interface User {
   full_name: string;
   role: string;
   approved: boolean;
+  ai_beta_enabled?: boolean;
   created_at: string;
   last_login_at: string | null;
   org_members: UserOrg[];
@@ -53,6 +54,7 @@ export default function AdminUsersPage() {
   const [orgName, setOrgName] = useState('');
   const [orgLoading, setOrgLoading] = useState(false);
   const [showAddUser, setShowAddUser] = useState(false);
+  const [betaLoading, setBetaLoading] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -193,6 +195,29 @@ export default function AdminUsersPage() {
       setError('Failed to assign organization');
     } finally {
       setOrgLoading(false);
+    }
+  };
+
+  const handleAiBetaToggle = async (userId: string, enabled: boolean) => {
+    setBetaLoading(userId);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, aiBetaEnabled: enabled }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Failed to update AI beta status');
+        return;
+      }
+
+      await fetchUsers();
+    } catch {
+      setError('Failed to update AI beta status');
+    } finally {
+      setBetaLoading(null);
     }
   };
 
@@ -419,6 +444,7 @@ export default function AdminUsersPage() {
                   <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Organization</th>
                   <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Tier</th>
                   <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Role</th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">AI Beta</th>
                   <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Last Login</th>
                   <th className="text-right px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Actions</th>
                 </tr>
@@ -477,6 +503,23 @@ export default function AdminUsersPage() {
                       }`}>
                         {user.role === 'super_admin' ? 'Super Admin' : user.role === 'team_member' ? 'Team Member' : 'Client'}
                       </span>
+                    </td>
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                      {user.role !== 'super_admin' ? (
+                        <button
+                          onClick={() => handleAiBetaToggle(user.id, !user.ai_beta_enabled)}
+                          disabled={betaLoading === user.id}
+                          className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 disabled:opacity-50 ${
+                            user.ai_beta_enabled ? 'bg-teal' : 'bg-stone/20'
+                          }`}
+                        >
+                          <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                            user.ai_beta_enabled ? 'translate-x-5' : ''
+                          }`} />
+                        </button>
+                      ) : (
+                        <span className="text-stone text-xs">—</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-stone">
                       {user.last_login_at ? formatDate(user.last_login_at) : 'Never'}

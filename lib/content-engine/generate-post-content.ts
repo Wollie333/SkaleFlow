@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { buildBrandContextPrompt } from '@/config/script-frameworks';
 import { buildBrandContextMap } from '@/lib/content-engine/generate-content';
-import { resolveModel, getProviderAdapter, deductCredits, calculateCreditCost } from '@/lib/ai/server';
+import { resolveModel, getProviderAdapterForUser, deductCredits, calculateCreditCost } from '@/lib/ai/server';
 import type { AIFeature } from '@/lib/ai';
 
 export interface GeneratePostResult {
@@ -48,7 +48,7 @@ export async function generatePostContent(
 
   // Resolve model
   const resolvedModel = await resolveModel(orgId, 'content_generation' as AIFeature, params.modelOverride);
-  const adapter = getProviderAdapter(resolvedModel.provider);
+  const { adapter, usingUserKey } = await getProviderAdapterForUser(resolvedModel.provider, userId);
 
   const brandPrompt = Object.keys(brandContext).length > 0
     ? buildBrandContextPrompt(brandContext, params.selectedBrandVariables || undefined)
@@ -172,8 +172,8 @@ Write the caption in the brand's voice. Be specific — reference actual brand o
     modelId: resolvedModel.modelId,
   });
 
-  // Deduct credits for paid models
-  if (!resolvedModel.isFree) {
+  // Deduct credits for paid models (skip when using user's own key)
+  if (!resolvedModel.isFree && !usingUserKey) {
     const creditCost = calculateCreditCost(resolvedModel.id, response.inputTokens, response.outputTokens);
     if (creditCost > 0) {
       await deductCredits(orgId, userId, creditCost, null, 'AI assist post generation');

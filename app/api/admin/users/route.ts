@@ -50,6 +50,7 @@ export async function GET() {
         full_name,
         role,
         approved,
+        ai_beta_enabled,
         created_at,
         last_login_at,
         org_members!org_members_user_id_fkey (
@@ -105,13 +106,27 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { userId, approved, tierId, action } = body;
+    const { userId, approved, tierId, action, aiBetaEnabled } = body;
 
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
     const serviceSupabase = createServiceClient();
+
+    // Handle AI Beta toggle
+    if (typeof aiBetaEnabled === 'boolean') {
+      const { error: betaError } = await serviceSupabase
+        .from('users')
+        .update({ ai_beta_enabled: aiBetaEnabled })
+        .eq('id', userId);
+
+      if (betaError) {
+        console.error('Failed to update AI beta status:', betaError);
+        return NextResponse.json({ error: 'Failed to update AI beta status' }, { status: 500 });
+      }
+      return NextResponse.json({ success: true });
+    }
 
     // Handle pause (revoke approval)
     if (action === 'pause') {

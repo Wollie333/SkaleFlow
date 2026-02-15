@@ -182,7 +182,7 @@ export { requireCredits } from './middleware';
 
 // Re-export client-safe provider registry functions for convenience
 // (these are pure functions with no server dependencies, but commonly used with server functions)
-export { getModelConfig, getModelsForFeature, getProviderAdapter, getDefaultModelForFeature, MODEL_CATALOG } from './providers/registry';
+export { getModelConfig, getModelsForFeature, getProviderAdapter, getProviderAdapterForUser, getDefaultModelForFeature, MODEL_CATALOG } from './providers/registry';
 
 // Re-export types
 export type { AIFeature, AIProvider, AIModelConfig } from './providers/types';

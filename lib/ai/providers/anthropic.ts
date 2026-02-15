@@ -6,12 +6,9 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
 });
 
-export const anthropicAdapter: AIProviderAdapter = {
-  provider: 'anthropic',
-
-  async complete(request: AICompletionRequest): Promise<AICompletionResponse> {
+export function createAnthropicComplete(client: Anthropic) {
+  return async function complete(request: AICompletionRequest): Promise<AICompletionResponse> {
     console.log(`[AI-ANTHROPIC] complete() called, modelId=${request.modelId || 'claude-sonnet-4-5-20250929'}, messages=${request.messages.length}, hasSystemPrompt=${!!request.systemPrompt}`);
-    // Split system prompt from messages (Anthropic uses a separate system param)
     const systemPrompt = request.systemPrompt || '';
     const messages = request.messages
       .filter(m => m.role !== 'system')
@@ -21,7 +18,7 @@ export const anthropicAdapter: AIProviderAdapter = {
       }));
 
     const response = await withTimeout(
-      anthropic.messages.create({
+      client.messages.create({
         model: request.modelId || 'claude-sonnet-4-5-20250929',
         max_tokens: request.maxTokens || 4096,
         ...(systemPrompt ? { system: systemPrompt } : {}),
@@ -43,7 +40,12 @@ export const anthropicAdapter: AIProviderAdapter = {
       model: response.model,
       provider: 'anthropic',
     };
-  },
+  };
+}
+
+export const anthropicAdapter: AIProviderAdapter = {
+  provider: 'anthropic',
+  complete: createAnthropicComplete(anthropic),
 };
 
 // Export the raw SDK client for advanced usage (file uploads, streaming, etc.)

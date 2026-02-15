@@ -124,6 +124,7 @@ export interface Database {
           onboarding_completed: boolean;
           approved: boolean;
           organization_id: string | null;
+          ai_beta_enabled: boolean;
         };
         Insert: {
           id?: string;
@@ -138,6 +139,7 @@ export interface Database {
           onboarding_completed?: boolean;
           approved?: boolean;
           organization_id?: string | null;
+          ai_beta_enabled?: boolean;
         };
         Update: {
           id?: string;
@@ -152,6 +154,43 @@ export interface Database {
           onboarding_completed?: boolean;
           approved?: boolean;
           organization_id?: string | null;
+          ai_beta_enabled?: boolean;
+        };
+        Relationships: [];
+      };
+      user_api_keys: {
+        Row: {
+          id: string;
+          user_id: string;
+          provider: string;
+          encrypted_key: string;
+          key_iv: string;
+          key_hint: string;
+          is_valid: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          provider: string;
+          encrypted_key: string;
+          key_iv: string;
+          key_hint?: string;
+          is_valid?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          provider?: string;
+          encrypted_key?: string;
+          key_iv?: string;
+          key_hint?: string;
+          is_valid?: boolean;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };

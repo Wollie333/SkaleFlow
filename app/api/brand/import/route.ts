@@ -14,10 +14,7 @@ import {
 } from '@/lib/brand-import';
 import type { Json } from '@/types/database';
 import { checkCredits, calculateCreditCost, deductCredits } from '@/lib/ai/server';
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+import { isAiBetaEnabled, getUserApiKey } from '@/lib/ai/user-keys';
 
 // Brand import stays Claude-only (PDF analysis requires it)
 const MODEL = 'claude-sonnet-4-5-20250929';
@@ -124,6 +121,21 @@ export async function POST(request: Request) {
     batchesToProcess = PHASE_BATCHES;
   }
 
+  // Check if user has their own Anthropic key (for credit bypass)
+  let usingUserKey = false;
+  let anthropic: Anthropic;
+  if (await isAiBetaEnabled(user.id)) {
+    const userKey = await getUserApiKey(user.id, 'anthropic');
+    if (userKey) {
+      usingUserKey = true;
+      anthropic = new Anthropic({ apiKey: userKey });
+    } else {
+      anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+    }
+  } else {
+    anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  }
+
   logger.info('Brand import started', {
     organizationId,
     mode,
@@ -131,6 +143,7 @@ export async function POST(request: Request) {
     fileName: file.name,
     textLength: documentText.length,
     userId: user.id,
+    usingUserKey,
   });
 
   // --- Stream SSE response for real-time progress ---
@@ -174,15 +187,17 @@ export async function POST(request: Request) {
           logger.info('Processing batch', { batchIndex, batchLabel, keyCount: keysToExtract.length });
 
           try {
-            // Pre-flight credit check per batch (super_admins bypass)
-            const batchCreditCheck = await checkCredits(organizationId, 150, user.id);
-            if (!batchCreditCheck.hasCredits) {
-              sendEvent('error', {
-                error: `Insufficient credits for ${batchLabel}. Need ~150 credits, have ${batchCreditCheck.totalRemaining}.`,
-                creditExhausted: true,
-                creditsAvailable: batchCreditCheck.totalRemaining,
-              });
-              break;
+            // Pre-flight credit check per batch (super_admins and user-key users bypass)
+            if (!usingUserKey) {
+              const batchCreditCheck = await checkCredits(organizationId, 150, user.id);
+              if (!batchCreditCheck.hasCredits) {
+                sendEvent('error', {
+                  error: `Insufficient credits for ${batchLabel}. Need ~150 credits, have ${batchCreditCheck.totalRemaining}.`,
+                  creditExhausted: true,
+                  creditsAvailable: batchCreditCheck.totalRemaining,
+                });
+                break;
+              }
             }
 
             const systemPrompt = buildExtractionPrompt(keysToExtract);
@@ -217,8 +232,8 @@ export async function POST(request: Request) {
               is_free_model: false,
             }).select('id').single();
 
-            // Deduct credits
-            if (creditsCharged > 0) {
+            // Deduct credits (skip when using user's own API key)
+            if (creditsCharged > 0 && !usingUserKey) {
               await deductCredits(
                 organizationId,
                 user.id,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { checkAuthorityAccess } from '@/lib/authority/auth';
-import { resolveModel, getProviderAdapter, requireCredits, deductCredits, isSuperAdmin, calculateCreditCost } from '@/lib/ai/server';
+import { resolveModel, getProviderAdapterForUser, requireCredits, deductCredits, isSuperAdmin, calculateCreditCost } from '@/lib/ai/server';
 import type { AIFeature } from '@/lib/ai/server';
 
 export async function POST(request: NextRequest) {
@@ -18,11 +18,13 @@ export async function POST(request: NextRequest) {
 
   // Resolve model — use client-selected model if provided
   const resolvedModel = await resolveModel(organizationId, 'content_generation' as AIFeature, modelId || null, user.id);
-  const adapter = getProviderAdapter(resolvedModel.provider);
+  const { adapter, usingUserKey } = await getProviderAdapterForUser(resolvedModel.provider, user.id);
 
-  // Check credits
-  const creditCheck = await requireCredits(organizationId, resolvedModel.id, 500, 1500, user.id);
-  if (creditCheck) return creditCheck;
+  // Check credits (skip when using user's own API key)
+  if (!usingUserKey) {
+    const creditCheck = await requireCredits(organizationId, resolvedModel.id, 500, 1500, user.id);
+    if (creditCheck) return creditCheck;
+  }
 
   // Fetch brand data for context — only the key variables needed for story angles
   const PR_RELEVANT_KEYS = [
@@ -72,12 +74,12 @@ ${existingTitles ? `EXISTING ANGLES (avoid duplicating): ${existingTitles}` : ''
 For each angle, provide:
 1. A compelling title (short, punchy)
 2. A 1-2 sentence description explaining the angle
-3. Suggested target outlets (comma-separated)
-4. Recommended format (e.g., feature_article, podcast_episode, interview, news_piece)
+3. Suggested outlets (comma-separated media outlets to target)
+4. Category/format (e.g., feature_article, podcast_episode, interview, news_piece)
 
 Respond in JSON format:
 [
-  { "title": "...", "description": "...", "target_outlets": "...", "recommended_format": "..." }
+  { "title": "...", "description": "...", "suggested_outlets": "...", "category": "..." }
 ]
 
 Return ONLY the JSON array, no additional text.`;
@@ -90,10 +92,10 @@ Return ONLY the JSON array, no additional text.`;
       modelId: resolvedModel.modelId,
     });
 
-    // Deduct credits
+    // Deduct credits (skip when using user's own API key)
     const creditCost = calculateCreditCost(resolvedModel.id, response.inputTokens, response.outputTokens);
     const superAdmin = await isSuperAdmin(user.id);
-    if (!superAdmin && creditCost > 0) {
+    if (!superAdmin && !usingUserKey && creditCost > 0) {
       await deductCredits(organizationId, user.id, creditCost, null, `AI story angle suggestions — ${resolvedModel.name}`);
     }
 

@@ -5,12 +5,13 @@ import { getPhaseTemplate } from '@/config/phases';
 import { logger } from '@/lib/logger';
 import { isPhaseAccessible } from '@/lib/phase-access';
 import type { Json } from '@/types/database';
-import { resolveModel, requireCredits, calculateCreditCost, deductCredits, getProviderAdapter } from '@/lib/ai/server';
+import { resolveModel, requireCredits, calculateCreditCost, deductCredits, getProviderAdapterForUser } from '@/lib/ai/server';
 import type { AIFeature } from '@/lib/ai/server';
 import { ARCHETYPE_PROFILES, getArchetypeProfile, formatArchetypeForPrompt, getAllArchetypesSummary } from '@/lib/brand/archetype-profiles';
 import { getAgentForQuestion, formatAgentForPrompt } from '@/config/phase-agents';
 import { hasPermission } from '@/lib/permissions';
 import { checkTeamCredits, deductTeamCredits } from '@/lib/team-credits';
+import { isAiBetaEnabled, getUserApiKey } from '@/lib/ai/user-keys';
 
 // Allow up to 60s for AI calls (Phase 8+ has large system prompts with all prior locked outputs)
 export const maxDuration = 60;
@@ -274,9 +275,24 @@ export async function POST(request: Request) {
     const resolvedModel = await resolveModel(organizationId, 'brand_chat' as AIFeature, modelOverride);
     const useDirectClaude = resolvedModel.provider === 'anthropic' && (files.length > 0 || (orgLogoUrl && phase.phase_number === '7'));
 
-    // Pre-flight credit check (skip for free models and super_admins)
-    const creditResponse = await requireCredits(organizationId, resolvedModel.id, 2000, 1000, user.id);
-    if (creditResponse) return creditResponse;
+    // Check if user has their own API key (for credit bypass)
+    let usingUserKey = false;
+    let userAnthropicClient = anthropic;
+    if (await isAiBetaEnabled(user.id)) {
+      const userKey = await getUserApiKey(user.id, resolvedModel.provider);
+      if (userKey) {
+        usingUserKey = true;
+        if (resolvedModel.provider === 'anthropic') {
+          userAnthropicClient = new Anthropic({ apiKey: userKey });
+        }
+      }
+    }
+
+    // Pre-flight credit check (skip for free models, super_admins, and user-key users)
+    if (!usingUserKey) {
+      const creditResponse = await requireCredits(organizationId, resolvedModel.id, 2000, 1000, user.id);
+      if (creditResponse) return creditResponse;
+    }
 
     let assistantMessage: string;
     let inputTokens: number;
@@ -295,7 +311,7 @@ export async function POST(request: Request) {
 
         logger.info('Calling Claude API (direct)', { model: resolvedModel.modelId, messageCount: claudeMessages.length });
 
-        const response = await anthropic.messages.create({
+        const response = await userAnthropicClient.messages.create({
           model: resolvedModel.modelId,
           max_tokens: 4096,
           system: systemPrompt,
@@ -308,7 +324,7 @@ export async function POST(request: Request) {
         outputTokens = response.usage.output_tokens;
       } else {
         // Use provider adapter (works for Claude text-only, Gemini, Groq)
-        const adapter = getProviderAdapter(resolvedModel.provider);
+        const { adapter } = await getProviderAdapterForUser(resolvedModel.provider, user.id);
         const textMessages = [
           ...previousMessages.map(m => ({
             role: m.role as 'user' | 'assistant' | 'system',
@@ -387,7 +403,7 @@ export async function POST(request: Request) {
     // Save conversation (critical — if this fails, data is lost)
     // Note: creditsCharged is computed below but we need the value here too.
     // We compute it early so we can store it alongside the conversation.
-    const creditsForThisMessage = calculateCreditCost(resolvedModel.id, inputTokens, outputTokens);
+    const creditsForThisMessage = usingUserKey ? 0 : calculateCreditCost(resolvedModel.id, inputTokens, outputTokens);
     let newCreditTotal = 0;
 
     if (conversation) {

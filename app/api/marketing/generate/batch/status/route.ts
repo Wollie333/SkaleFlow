@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
-import { resolveModel, getModelConfig, deductCredits, calculateCreditCost } from '@/lib/ai/server';
-import { getProviderAdapter } from '@/lib/ai/server';
+import { resolveModel, getModelConfig, deductCredits, calculateCreditCost, getProviderAdapterForUser } from '@/lib/ai/server';
 import {
   getHookFormulasPrompt,
   getCtaExamplesPrompt,
@@ -134,7 +133,7 @@ STRICT: Stay within character limits. Do not include markdown formatting — pur
       throw new Error(`Invalid model: ${batch.model_id}`);
     }
 
-    const adapter = getProviderAdapter(model.provider);
+    const { adapter, usingUserKey } = await getProviderAdapterForUser(model.provider, batch.user_id);
     const response = await adapter.complete({
       modelId: batch.model_id,
       messages: [
@@ -191,8 +190,8 @@ STRICT: Stay within character limits. Do not include markdown formatting — pur
       throw new Error(`Failed to save creative: ${insertError.message}`);
     }
 
-    // Deduct credits for paid models
-    if (!model.isFree) {
+    // Deduct credits for paid models (skip when using user's own API key)
+    if (!model.isFree && !usingUserKey) {
       const creditCost = calculateCreditCost(
         batch.model_id,
         response.inputTokens || 800,

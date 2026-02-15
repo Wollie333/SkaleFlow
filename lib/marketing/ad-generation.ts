@@ -24,7 +24,7 @@ import {
   calculateCreditCost,
   deductCredits,
   checkCredits,
-  getProviderAdapter,
+  getProviderAdapterForUser,
   isSuperAdmin,
 } from '@/lib/ai/server';
 import type { AIFeature } from '@/lib/ai';
@@ -145,11 +145,11 @@ export async function generateAdCreative(
 
   // 2. Resolve AI model
   const resolvedModel = await resolveModel(orgId, 'content_generation' as AIFeature, modelId);
-  const adapter = getProviderAdapter(resolvedModel.provider);
-  console.log(`[AD-GEN] Model resolved: ${resolvedModel.modelId} (${resolvedModel.provider}), free=${resolvedModel.isFree}`);
+  const { adapter, usingUserKey } = await getProviderAdapterForUser(resolvedModel.provider, userId);
+  console.log(`[AD-GEN] Model resolved: ${resolvedModel.modelId} (${resolvedModel.provider}), free=${resolvedModel.isFree}, usingUserKey=${usingUserKey}`);
 
-  // 3. Credit check for paid models
-  if (!resolvedModel.isFree) {
+  // 3. Credit check for paid models (skip when using user's own API key)
+  if (!usingUserKey && !resolvedModel.isFree) {
     const balance = await checkCredits(orgId, 100, userId);
     if (!balance.hasCredits) {
       return { success: false, error: 'Insufficient credits' };
@@ -232,7 +232,7 @@ export async function generateAdCreative(
     .select('id')
     .single();
 
-  if (creditsCharged > 0) {
+  if (creditsCharged > 0 && !usingUserKey) {
     await deductCredits(
       orgId,
       userId,

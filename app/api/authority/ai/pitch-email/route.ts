@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { checkAuthorityAccess } from '@/lib/authority/auth';
-import { resolveModel, getProviderAdapter, requireCredits, deductCredits, isSuperAdmin, calculateCreditCost } from '@/lib/ai/server';
+import { resolveModel, getProviderAdapterForUser, requireCredits, deductCredits, isSuperAdmin, calculateCreditCost } from '@/lib/ai/server';
 import type { AIFeature } from '@/lib/ai/server';
 import { buildPitchEmailPrompt } from '@/lib/authority/prompts';
 
@@ -20,10 +20,13 @@ export async function POST(request: NextRequest) {
   const db = access.queryClient;
 
   const resolvedModel = await resolveModel(organizationId, 'content_generation' as AIFeature);
-  const adapter = getProviderAdapter(resolvedModel.provider);
+  const { adapter, usingUserKey } = await getProviderAdapterForUser(resolvedModel.provider, user.id);
 
-  const creditCheck = await requireCredits(organizationId, resolvedModel.id, 800, 1000, user.id);
-  if (creditCheck) return creditCheck;
+  // Check credits (skip when using user's own API key)
+  if (!usingUserKey) {
+    const creditCheck = await requireCredits(organizationId, resolvedModel.id, 800, 1000, user.id);
+    if (creditCheck) return creditCheck;
+  }
 
   // Get org name
   const { data: org } = await db
@@ -54,18 +57,25 @@ export async function POST(request: NextRequest) {
     additionalContext,
   });
 
-  const response = await adapter.complete({
-    messages: [{ role: 'user', content: prompt }],
-    maxTokens: 1000,
-    temperature: 0.7,
-    modelId: resolvedModel.modelId,
-  });
+  try {
+    const response = await adapter.complete({
+      messages: [{ role: 'user', content: prompt }],
+      maxTokens: 1000,
+      temperature: 0.7,
+      modelId: resolvedModel.modelId,
+    });
 
-  const creditCost = calculateCreditCost(resolvedModel.id, response.inputTokens, response.outputTokens);
-  const superAdmin = await isSuperAdmin(user.id);
-  if (!superAdmin && creditCost > 0) {
-    await deductCredits(organizationId, user.id, creditCost, null, `AI pitch email — ${resolvedModel.name}`);
+    // Deduct credits (skip when using user's own API key)
+    const creditCost = calculateCreditCost(resolvedModel.id, response.inputTokens, response.outputTokens);
+    const superAdmin = await isSuperAdmin(user.id);
+    if (!superAdmin && !usingUserKey && creditCost > 0) {
+      await deductCredits(organizationId, user.id, creditCost, null, `AI pitch email — ${resolvedModel.name}`);
+    }
+
+    return NextResponse.json({ text: response.text, model: resolvedModel.name });
+  } catch (err) {
+    console.error('Pitch email AI generation failed:', err);
+    const message = err instanceof Error ? err.message : 'AI generation failed';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  return NextResponse.json({ text: response.text, model: resolvedModel.name });
 }

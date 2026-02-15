@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { checkAuthorityAccess } from '@/lib/authority/auth';
-import { resolveModel, getProviderAdapter, requireCredits, deductCredits, isSuperAdmin, calculateCreditCost } from '@/lib/ai/server';
+import { resolveModel, getProviderAdapterForUser, requireCredits, deductCredits, isSuperAdmin, calculateCreditCost } from '@/lib/ai/server';
 import type { AIFeature } from '@/lib/ai/server';
 
 export const maxDuration = 60;
@@ -58,11 +58,13 @@ export async function POST(request: NextRequest) {
 
   // Resolve model
   const resolvedModel = await resolveModel(organizationId, 'content_generation' as AIFeature, modelId || null, user.id);
-  const adapter = getProviderAdapter(resolvedModel.provider);
+  const { adapter, usingUserKey } = await getProviderAdapterForUser(resolvedModel.provider, user.id);
 
-  // Check credits
-  const creditCheck = await requireCredits(organizationId, resolvedModel.id, 300, 1000, user.id);
-  if (creditCheck) return creditCheck;
+  // Check credits (skip when using user's own API key)
+  if (!usingUserKey) {
+    const creditCheck = await requireCredits(organizationId, resolvedModel.id, 300, 1000, user.id);
+    if (creditCheck) return creditCheck;
+  }
 
   // Fetch brand data
   const PR_RELEVANT_KEYS = [
@@ -95,14 +97,20 @@ export async function POST(request: NextRequest) {
   // Get org name
   const { data: org } = await db
     .from('organizations')
-    .select('name, industry')
+    .select('name')
     .eq('id', organizationId)
     .single();
+
+  // Try to get industry from brand outputs
+  const industryOutput = (outputs || []).find((o) => o.output_key === 'industry');
+  const industryVal = industryOutput?.output_value
+    ? (typeof industryOutput.output_value === 'string' ? industryOutput.output_value : JSON.stringify(industryOutput.output_value))
+    : 'Not specified';
 
   const prompt = `${fieldConfig.instruction}
 
 COMPANY: ${org?.name || 'Unknown'}
-INDUSTRY: ${org?.industry || 'Not specified'}
+INDUSTRY: ${industryVal}
 
 BRAND PROFILE:
 ${brandContext || 'No brand data available.'}
@@ -124,10 +132,10 @@ ${fieldName === 'speaking_topics' || fieldName === 'milestones' || fieldName ===
       modelId: resolvedModel.modelId,
     });
 
-    // Deduct credits
+    // Deduct credits (skip when using user's own API key)
     const creditCost = calculateCreditCost(resolvedModel.id, response.inputTokens, response.outputTokens);
     const superAdmin = await isSuperAdmin(user.id);
-    if (!superAdmin && creditCost > 0) {
+    if (!superAdmin && !usingUserKey && creditCost > 0) {
       await deductCredits(organizationId, user.id, creditCost, null, `AI press kit field: ${fieldName} — ${resolvedModel.name}`);
     }
 

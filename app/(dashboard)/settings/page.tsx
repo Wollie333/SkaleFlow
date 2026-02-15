@@ -14,6 +14,7 @@ import { PageSelectionModal } from '@/components/integrations/page-selection-mod
 import { GoogleDriveConnectionCard } from '@/components/integrations/google-drive-connection-card';
 import { AvatarUpload } from '@/components/profile/avatar-upload';
 import type { SocialPlatform, Json } from '@/types/database';
+import { AiBetaTab } from '@/components/settings/ai-beta-tab';
 
 interface Organization {
   id: string;
@@ -41,7 +42,7 @@ interface User {
   avatar_url: string | null;
 }
 
-type SettingsTab = 'profile' | 'plan' | 'integrations' | 'workflow';
+type SettingsTab = 'profile' | 'plan' | 'integrations' | 'workflow' | 'ai-beta';
 
 export default function SettingsPage() {
   const supabase = createClient();
@@ -62,6 +63,7 @@ export default function SettingsPage() {
   const [driveConnection, setDriveConnection] = useState<{ id: string; drive_email: string | null; is_active: boolean; connected_at: string; token_expires_at: string | null } | null>(null);
   const [driveStatus, setDriveStatus] = useState<string | null>(null);
   const [orgRole, setOrgRole] = useState<string>('');
+  const [aiBetaEnabled, setAiBetaEnabled] = useState(false);
   const [googleCalendars, setGoogleCalendars] = useState<{ id: string; summary: string; primary: boolean }[]>([]);
   const [selectedCalendarId, setSelectedCalendarId] = useState('primary');
   const [isLoadingCalendars, setIsLoadingCalendars] = useState(false);
@@ -98,13 +100,14 @@ export default function SettingsPage() {
       // Get user profile
       const { data: userData } = await supabase
         .from('users')
-        .select('id, email, full_name, role, avatar_url')
+        .select('id, email, full_name, role, avatar_url, ai_beta_enabled')
         .eq('id', authUser.id)
         .single();
 
       if (userData) {
         setUser(userData);
         setUserRole(userData.role || '');
+        setAiBetaEnabled(userData.ai_beta_enabled === true);
         setFormData(prev => ({ ...prev, fullName: userData.full_name || '' }));
 
         // Check Google Calendar connection (admin only)
@@ -212,7 +215,7 @@ export default function SettingsPage() {
 
     // Sync tab from URL
     const tabParam = searchParams.get('tab') as SettingsTab | null;
-    if (tabParam && ['profile', 'plan', 'integrations', 'workflow'].includes(tabParam)) {
+    if (tabParam && ['profile', 'plan', 'integrations', 'workflow', 'ai-beta'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
 
@@ -496,6 +499,7 @@ export default function SettingsPage() {
     { key: 'plan', label: 'Plan' },
     ...(showIntegrations ? [{ key: 'integrations' as SettingsTab, label: 'Integrations' }] : []),
     ...(showWorkflow ? [{ key: 'workflow' as SettingsTab, label: 'Workflow' }] : []),
+    ...(aiBetaEnabled ? [{ key: 'ai-beta' as SettingsTab, label: 'AI Beta' }] : []),
   ];
 
   return (
@@ -1115,6 +1119,9 @@ export default function SettingsPage() {
             </Card>
           </div>
         )}
+
+        {/* ── AI Beta Tab ── */}
+        {activeTab === 'ai-beta' && <AiBetaTab />}
       </div>
 
       {/* Global Modals (rendered outside tabs so they work regardless of active tab) */}

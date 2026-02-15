@@ -23,12 +23,9 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export const googleAdapter: AIProviderAdapter = {
-  provider: 'google',
-
-  async complete(request: AICompletionRequest): Promise<AICompletionResponse> {
+export function createGoogleComplete(genAI: GoogleGenerativeAI) {
+  return async function complete(request: AICompletionRequest): Promise<AICompletionResponse> {
     console.log(`[AI-GOOGLE] complete() called, modelId=${request.modelId || 'gemini-2.0-flash'}, messages=${request.messages.length}, hasSystemPrompt=${!!request.systemPrompt}`);
-    const genAI = getClient();
     const model = genAI.getGenerativeModel({
       model: request.modelId || 'gemini-2.0-flash',
       ...(request.systemPrompt
@@ -102,5 +99,10 @@ export const googleAdapter: AIProviderAdapter = {
 
     // Should not reach here, but just in case
     throw lastError;
-  },
+  };
+}
+
+export const googleAdapter: AIProviderAdapter = {
+  provider: 'google',
+  complete: createGoogleComplete(getClient()),
 };

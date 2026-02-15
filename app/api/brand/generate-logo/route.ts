@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { checkCredits, deductCredits } from '@/lib/ai/server';
+import { isAiBetaEnabled, getUserApiKey } from '@/lib/ai/user-keys';
 
 // Fixed credit cost for DALL-E 3 logo generation (~$0.08 per image)
 const LOGO_CREDITS = 288;
@@ -32,20 +33,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
     }
 
-    // Credit check for logo generation (super_admins bypass)
-    const balance = await checkCredits(organizationId, LOGO_CREDITS, user.id);
-    if (!balance.hasCredits) {
-      return NextResponse.json(
-        {
-          error: 'Insufficient credits',
-          creditsRequired: LOGO_CREDITS,
-          creditsAvailable: balance.totalRemaining,
-        },
-        { status: 402 }
-      );
+    // Check if user has their own OpenAI key (for credit bypass)
+    let usingUserKey = false;
+    let apiKey: string | undefined | null = process.env.OPENAI_API_KEY;
+    if (await isAiBetaEnabled(user.id)) {
+      const userKey = await getUserApiKey(user.id, 'openai');
+      if (userKey) {
+        usingUserKey = true;
+        apiKey = userKey;
+      }
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    // Credit check for logo generation (super_admins and user-key users bypass)
+    if (!usingUserKey) {
+      const balance = await checkCredits(organizationId, LOGO_CREDITS, user.id);
+      if (!balance.hasCredits) {
+        return NextResponse.json(
+          {
+            error: 'Insufficient credits',
+            creditsRequired: LOGO_CREDITS,
+            creditsAvailable: balance.totalRemaining,
+          },
+          { status: 402 }
+        );
+      }
+    }
+
     if (!apiKey) {
       return NextResponse.json({ error: 'AI logo generation is not configured. Please add OPENAI_API_KEY.' }, { status: 503 });
     }
@@ -135,14 +148,16 @@ export async function POST(request: NextRequest) {
       .select('id')
       .single();
 
-    // Deduct credits
-    await deductCredits(
-      organizationId,
-      user.id,
-      LOGO_CREDITS,
-      usageRow?.id || null,
-      'Logo generation — DALL-E 3'
-    );
+    // Deduct credits (skip when using user's own API key)
+    if (!usingUserKey) {
+      await deductCredits(
+        organizationId,
+        user.id,
+        LOGO_CREDITS,
+        usageRow?.id || null,
+        'Logo generation — DALL-E 3'
+      );
+    }
 
     return NextResponse.json({
       imageUrl: permanentUrl,

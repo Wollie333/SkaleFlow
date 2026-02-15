@@ -23,12 +23,9 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export const groqAdapter: AIProviderAdapter = {
-  provider: 'groq',
-
-  async complete(request: AICompletionRequest): Promise<AICompletionResponse> {
+export function createGroqComplete(client: Groq) {
+  return async function complete(request: AICompletionRequest): Promise<AICompletionResponse> {
     console.log(`[AI-GROQ] complete() called, modelId=${request.modelId || 'llama-3.3-70b-versatile'}, messages=${request.messages.length}, hasSystemPrompt=${!!request.systemPrompt}`);
-    const groq = getClient();
 
     // Build messages array with system prompt
     const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
@@ -57,7 +54,7 @@ export const groqAdapter: AIProviderAdapter = {
 
         console.log(`[AI-GROQ] Sending request to Groq${attempt > 0 ? ` [attempt ${attempt + 1}]` : ''}...`);
         const response = await withTimeout(
-          groq.chat.completions.create({
+          client.chat.completions.create({
             model: request.modelId || 'llama-3.3-70b-versatile',
             max_tokens: request.maxTokens || 4096,
             messages,
@@ -91,5 +88,10 @@ export const groqAdapter: AIProviderAdapter = {
     }
 
     throw lastError;
-  },
+  };
+}
+
+export const groqAdapter: AIProviderAdapter = {
+  provider: 'groq',
+  complete: createGroqComplete(getClient()),
 };

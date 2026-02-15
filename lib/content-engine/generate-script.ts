@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { buildBrandContextPrompt, getFormatCategory, type ContentFormat } from '@/config/script-frameworks';
 import { buildBrandContextMap } from '@/lib/content-engine/generate-content';
-import { resolveModel, getProviderAdapter, deductCredits, calculateCreditCost } from '@/lib/ai/server';
+import { resolveModel, getProviderAdapterForUser, deductCredits, calculateCreditCost } from '@/lib/ai/server';
 import type { AIFeature } from '@/lib/ai';
 
 export interface GenerateScriptResult {
@@ -54,7 +54,7 @@ export async function generateScriptFromPost(
 
   // Resolve model
   const resolvedModel = await resolveModel(orgId, 'content_generation' as AIFeature, params.modelOverride);
-  const adapter = getProviderAdapter(resolvedModel.provider);
+  const { adapter, usingUserKey } = await getProviderAdapterForUser(resolvedModel.provider, userId);
 
   const brandPrompt = Object.keys(brandContext).length > 0
     ? buildBrandContextPrompt(brandContext, params.selectedBrandVariables || undefined)
@@ -129,8 +129,8 @@ The script should expand on the post's message — go deeper, provide more value
     modelId: resolvedModel.modelId,
   });
 
-  // Deduct credits
-  if (!resolvedModel.isFree) {
+  // Deduct credits (skip when using user's own key)
+  if (!resolvedModel.isFree && !usingUserKey) {
     const creditCost = calculateCreditCost(resolvedModel.id, response.inputTokens, response.outputTokens);
     if (creditCost > 0) {
       await deductCredits(orgId, userId, creditCost, null, 'AI assist script generation');

@@ -6,7 +6,7 @@ import {
 } from '@/config/script-frameworks';
 import { PLATFORM_CHARACTER_LIMITS } from '@/config/creative-specs';
 import type { Database, FunnelStage, StoryBrandStage, Json } from '@/types/database';
-import { resolveModel, calculateCreditCost, deductCredits, getProviderAdapter, checkCredits } from '@/lib/ai/server';
+import { resolveModel, calculateCreditCost, deductCredits, getProviderAdapterForUser, checkCredits } from '@/lib/ai/server';
 import type { AIFeature } from '@/lib/ai';
 import { MAX_VALIDATION_RETRIES } from './queue-config';
 import { getScriptFrameworkFromDB } from './template-service';
@@ -76,7 +76,7 @@ export async function generateContentForItems(
 
   // Resolve AI model
   const resolvedModel = await resolveModel(organizationId, 'content_generation' as AIFeature, modelOverride);
-  const adapter = getProviderAdapter(resolvedModel.provider);
+  const { adapter, usingUserKey } = await getProviderAdapterForUser(resolvedModel.provider, userId);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const results: GenerateContentResult['results'] = [];
@@ -99,8 +99,8 @@ export async function generateContentForItems(
   let itemIndex = 0;
 
   for (const item of items) {
-    // Per-item credit check for paid models (super_admins bypass)
-    if (!resolvedModel.isFree) {
+    // Per-item credit check for paid models (super_admins + user-key users bypass)
+    if (!resolvedModel.isFree && !usingUserKey) {
       const balance = await checkCredits(organizationId, 140, userId);
       if (!balance.hasCredits) {
         creditExhausted = true;
@@ -238,7 +238,7 @@ export async function generateContentForItems(
       .eq('id', item.id);
 
     // Calculate credits and track usage (only for validated content)
-    const creditsCharged = calculateCreditCost(resolvedModel.id, validResponse.inputTokens, validResponse.outputTokens);
+    const creditsCharged = usingUserKey ? 0 : calculateCreditCost(resolvedModel.id, validResponse.inputTokens, validResponse.outputTokens);
 
     const { data: usageRow } = await supabase
       .from('ai_usage')
@@ -251,12 +251,12 @@ export async function generateContentForItems(
         output_tokens: validResponse.outputTokens,
         credits_charged: creditsCharged,
         provider: resolvedModel.provider,
-        is_free_model: resolvedModel.isFree,
+        is_free_model: resolvedModel.isFree || usingUserKey,
       })
       .select('id')
       .single();
 
-    // Deduct credits for paid models
+    // Deduct credits for paid models (skip when using user's own key)
     if (creditsCharged > 0) {
       await deductCredits(
         organizationId,
@@ -818,10 +818,11 @@ export async function generateSingleItem(
   console.log(`[GEN-SINGLE] Resolving model for override: ${modelOverride}`);
   const resolvedModel = await resolveModel(orgId, 'content_generation' as AIFeature, modelOverride);
   console.log(`[GEN-SINGLE] Resolved model: id=${resolvedModel.id}, modelId=${resolvedModel.modelId}, provider=${resolvedModel.provider}, isFree=${resolvedModel.isFree}`);
-  const adapter = getProviderAdapter(resolvedModel.provider);
+  const { adapter, usingUserKey } = await getProviderAdapterForUser(resolvedModel.provider, userId);
+  if (usingUserKey) console.log(`[GEN-SINGLE] Using user's own API key — credits will not be deducted`);
 
-  // Credit check for paid models (super_admins bypass)
-  if (!resolvedModel.isFree) {
+  // Credit check for paid models (super_admins + user-key users bypass)
+  if (!resolvedModel.isFree && !usingUserKey) {
     console.log(`[GEN-SINGLE] Checking credits for paid model...`);
     const balance = await checkCredits(orgId, 140, userId);
     console.log(`[GEN-SINGLE] Credit check: hasCredits=${balance.hasCredits}, remaining=${balance.totalRemaining}`);
@@ -1030,7 +1031,7 @@ export async function generateSingleItem(
   }
 
   // Track AI usage + deduct credits (only for verified content)
-  const creditsCharged = calculateCreditCost(resolvedModel.id, validResponse.inputTokens, validResponse.outputTokens);
+  const creditsCharged = usingUserKey ? 0 : calculateCreditCost(resolvedModel.id, validResponse.inputTokens, validResponse.outputTokens);
 
   const { data: usageRow } = await supabase
     .from('ai_usage')
@@ -1043,7 +1044,7 @@ export async function generateSingleItem(
       output_tokens: validResponse.outputTokens,
       credits_charged: creditsCharged,
       provider: resolvedModel.provider,
-      is_free_model: resolvedModel.isFree,
+      is_free_model: resolvedModel.isFree || usingUserKey,
     })
     .select('id')
     .single();
