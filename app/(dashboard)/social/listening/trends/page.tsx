@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { TrendsClient } from './trends-client';
 
 export const metadata = {
   title: 'Trending Topics | SkaleFlow',
@@ -19,20 +20,47 @@ export default async function TrendsPage() {
 
   const { data: membership } = await supabase
     .from('org_members')
-    .select('organization_id').eq('user_id', user.id)
-    
+    .select('organization_id')
+    .eq('user_id', user.id)
     .single();
 
   if (!membership?.organization_id) {
     redirect('/dashboard');
   }
 
+  const organizationId = membership.organization_id;
+
+  // Fetch trends for all three time periods in parallel
+  const [res24h, res7d, res30d] = await Promise.all([
+    supabase
+      .from('social_listening_trends')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .eq('time_period', '24h')
+      .order('mention_count', { ascending: false })
+      .limit(50),
+    supabase
+      .from('social_listening_trends')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .eq('time_period', '7d')
+      .order('mention_count', { ascending: false })
+      .limit(50),
+    supabase
+      .from('social_listening_trends')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .eq('time_period', '30d')
+      .order('mention_count', { ascending: false })
+      .limit(50),
+  ]);
+
   return (
-    <div className="p-6 md:p-8 space-y-6">
-      <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
-        <h2 className="text-2xl font-bold text-charcoal mb-2">Trending Topics</h2>
-        <p className="text-stone mb-4">Coming soon - Track trending topics and hashtags</p>
-      </div>
-    </div>
+    <TrendsClient
+      trends24h={(res24h.data || []) as any[]}
+      trends7d={(res7d.data || []) as any[]}
+      trends30d={(res30d.data || []) as any[]}
+      organizationId={organizationId}
+    />
   );
 }
