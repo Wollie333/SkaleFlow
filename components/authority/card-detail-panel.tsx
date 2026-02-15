@@ -232,19 +232,27 @@ export function CardDetailPanel({ cardId, onClose, onUpdate, contacts }: CardDet
   const handleSaveCommercial = async () => {
     if (!cardId) return;
     setSaving(true);
-    await fetch(`/api/authority/pipeline/${cardId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        commercial: {
-          engagement_type: editEngagementType,
-          deal_value: editDealValue,
-          payment_status: editPaymentStatus,
-          payment_terms: editPaymentTerms || null,
-          invoice_number: editInvoiceNumber || null,
-        },
-      }),
-    });
+    try {
+      const res = await fetch(`/api/authority/pipeline/${cardId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          commercial: {
+            engagement_type: editEngagementType,
+            deal_value: editDealValue,
+            payment_status: editPaymentStatus,
+            payment_terms: editPaymentTerms || null,
+            invoice_number: editInvoiceNumber || null,
+          },
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error('Failed to save commercial:', err);
+      }
+    } catch (err) {
+      console.error('Commercial save error:', err);
+    }
     setSaving(false);
     fetchCard();
     onUpdate();

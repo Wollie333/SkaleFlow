@@ -93,35 +93,52 @@ export async function PATCH(
   // Separate commercial data from card fields
   const { commercial, ...cardFields } = body;
 
-  // Update card (only card-level fields)
-  const { data: card, error } = await db
-    .from('authority_pipeline_cards')
-    .update({ ...cardFields, updated_at: new Date().toISOString() })
-    .eq('id', cardId)
-    .select()
-    .single();
+  // Update card (only card-level fields, skip if no card fields to update)
+  const hasCardFields = Object.keys(cardFields).length > 0;
+  let card;
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (hasCardFields) {
+    const { data, error } = await db
+      .from('authority_pipeline_cards')
+      .update({ ...cardFields, updated_at: new Date().toISOString() })
+      .eq('id', cardId)
+      .select()
+      .single();
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    card = data;
+  } else {
+    const { data } = await db
+      .from('authority_pipeline_cards')
+      .select()
+      .eq('id', cardId)
+      .single();
+    card = data;
+  }
 
-  // Update commercial if included
+  // Update commercial if included — use service client to bypass RLS
+  // (auth already verified above via checkAuthorityAccess)
   if (commercial) {
-    const { data: existing } = await db
+    const { data: existing } = await svc
       .from('authority_commercial')
       .select('id')
       .eq('card_id', cardId)
-      .single();
+      .maybeSingle();
 
     if (existing) {
-      await db
+      const { error: comErr } = await svc
         .from('authority_commercial')
         .update({ ...commercial, updated_at: new Date().toISOString() })
         .eq('card_id', cardId);
+      if (comErr) return NextResponse.json({ error: comErr.message }, { status: 500 });
     } else {
-      await db.from('authority_commercial').insert({
-        organization_id: existingCard.organization_id,
-        card_id: cardId,
-        ...commercial,
-      });
+      const { error: comErr } = await svc
+        .from('authority_commercial')
+        .insert({
+          organization_id: existingCard.organization_id,
+          card_id: cardId,
+          ...commercial,
+        });
+      if (comErr) return NextResponse.json({ error: comErr.message }, { status: 500 });
     }
   }
 
