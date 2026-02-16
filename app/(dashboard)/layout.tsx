@@ -37,6 +37,7 @@ export default async function DashboardLayout({
   let contentStats = undefined;
   let tierName: string | undefined = undefined;
   let pipelineCount = 0;
+  let upcomingCallCount = 0;
   let contentEngineEnabled = false;
   let notificationCount = 0;
   let pendingReviewCount = 0;
@@ -89,8 +90,16 @@ export default async function DashboardLayout({
         .eq('organization_id', orgId)
         .eq('status', 'scripted');
 
+      // Upcoming calls count
+      const upcomingCallsPromise = supabase
+        .from('calls')
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', orgId)
+        .eq('call_status', 'scheduled')
+        .gte('scheduled_start', new Date().toISOString());
+
       // Run ALL queries in parallel (org-scoped + global)
-      const [orgResult, subscriptionResult, phasesResult, contentCountResult, notifResult, pipelineResult, teamPermsResult, pendingReviewResult, draftCountResult] = await Promise.all([
+      const [orgResult, subscriptionResult, phasesResult, contentCountResult, notifResult, pipelineResult, teamPermsResult, pendingReviewResult, draftCountResult, upcomingCallsResult] = await Promise.all([
         supabase
           .from('organizations')
           .select('content_engine_enabled')
@@ -117,6 +126,7 @@ export default async function DashboardLayout({
         teamPermsPromise,
         pendingReviewPromise,
         draftCountPromise,
+        upcomingCallsPromise,
       ]);
 
       contentEngineEnabled = orgResult.data?.content_engine_enabled ?? false;
@@ -142,6 +152,7 @@ export default async function DashboardLayout({
       notificationCount = notifResult.count || 0;
       pendingReviewCount = pendingReviewResult?.count || 0;
       draftCount = draftCountResult?.count || 0;
+      upcomingCallCount = upcomingCallsResult?.count || 0;
 
       // Build team permissions map for non-admin users
       if (teamPermsResult?.data) {
@@ -205,6 +216,7 @@ export default async function DashboardLayout({
         orgRole,
         tierName,
         pipelineCount,
+        upcomingCallCount,
         contentEngineEnabled,
         notificationCount: notificationCount || 0,
         pendingReviewCount,

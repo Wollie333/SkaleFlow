@@ -129,6 +129,13 @@ const socialLibraryNav: NavItem[] = [
   { name: 'Competitors', href: '/social/library/competitors', icon: UsersIcon },
 ];
 
+const callsNavigation: NavItem[] = [
+  { name: 'Dashboard', href: '/calls', icon: VideoCameraIcon },
+  { name: 'Templates', href: '/calls/templates', icon: DocumentTextIcon },
+  { name: 'Offers', href: '/calls/offers', icon: CurrencyDollarIcon },
+  { name: 'Insights', href: '/calls/insights', icon: EyeIcon },
+];
+
 const authorityNavigation: NavItem[] = [
   { name: 'Pipeline', href: '/authority', icon: NewspaperIcon },
   { name: 'Contacts', href: '/authority/contacts', icon: UsersIcon },
@@ -161,6 +168,7 @@ interface SidebarProps {
   orgRole?: string | null;
   tierName?: string;
   pipelineCount?: number;
+  upcomingCallCount?: number;
   contentEngineEnabled?: boolean;
   notificationCount?: number;
   pendingReviewCount?: number;
@@ -175,6 +183,7 @@ export function Sidebar({
   orgRole,
   tierName,
   pipelineCount,
+  upcomingCallCount,
   contentEngineEnabled,
   notificationCount,
   pendingReviewCount,
@@ -192,6 +201,7 @@ export function Sidebar({
   const [authorityExpanded, setAuthorityExpanded] = useState(false);
   const [socialEngineExpanded, setSocialEngineExpanded] = useState(false);
   const [adsEngineExpanded, setAdsEngineExpanded] = useState(false);
+  const [callsExpanded, setCallsExpanded] = useState(false);
   const [crmExpanded, setCrmExpanded] = useState(false);
   const [adminExpanded, setAdminExpanded] = useState(false);
 
@@ -693,6 +703,56 @@ export function Sidebar({
                     >
                       <item.icon className="w-4 h-4" />
                       {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Calls Section — accessible to owners/admins/super_admins */}
+        {(isOwnerOrAdmin || isSuperAdmin) && (
+          <div className="mt-6">
+            <div className="flex items-center">
+              <button
+                onClick={() => setCallsExpanded(!callsExpanded)}
+                className="flex-1 flex items-center justify-between px-3 py-1 group"
+              >
+                <h4 className="text-xs font-semibold text-teal-dark uppercase tracking-wider flex items-center gap-2">
+                  Calls
+                </h4>
+                {callsExpanded ? (
+                  <ChevronDownIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
+                ) : (
+                  <ChevronRightIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
+                )}
+              </button>
+            </div>
+            {callsExpanded && (
+              <div className="space-y-1 mt-2">
+                {callsNavigation.map((item) => {
+                  const isActive = item.href === '/calls'
+                    ? pathname === '/calls'
+                    : pathname === item.href || pathname.startsWith(item.href + '/');
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
+                        isActive
+                          ? 'bg-teal/10 text-teal'
+                          : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                      )}
+                    >
+                      <item.icon className="w-4 h-4" />
+                      {item.name}
+                      {item.href === '/calls' && upcomingCallCount !== undefined && upcomingCallCount > 0 && (
+                        <span className="ml-auto text-xs bg-teal/15 text-teal px-2 py-0.5 rounded-full font-semibold">
+                          {upcomingCallCount}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}

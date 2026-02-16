@@ -19,7 +19,7 @@ export const CLIENT_MODEL_CATALOG: ClientModelOption[] = [
     provider: 'anthropic',
     isFree: false,
     estimatedCreditsPerMessage: 75,
-    features: ['brand_chat', 'brand_import', 'content_generation', 'ad_generation'],
+    features: ['brand_chat', 'brand_import', 'content_generation', 'ad_generation', 'video_call_copilot'],
   },
   {
     id: 'claude-sonnet-4',
@@ -27,7 +27,7 @@ export const CLIENT_MODEL_CATALOG: ClientModelOption[] = [
     provider: 'anthropic',
     isFree: false,
     estimatedCreditsPerMessage: 60,
-    features: ['brand_chat', 'brand_import', 'content_generation', 'ad_generation'],
+    features: ['brand_chat', 'brand_import', 'content_generation', 'ad_generation', 'video_call_copilot'],
   },
   {
     id: 'gemini-2-flash',
@@ -35,7 +35,7 @@ export const CLIENT_MODEL_CATALOG: ClientModelOption[] = [
     provider: 'google',
     isFree: true,
     estimatedCreditsPerMessage: 0,
-    features: ['brand_chat', 'content_generation', 'ad_generation'],
+    features: ['brand_chat', 'content_generation', 'ad_generation', 'video_call_copilot'],
   },
   {
     id: 'llama-3-3-70b',
@@ -43,7 +43,7 @@ export const CLIENT_MODEL_CATALOG: ClientModelOption[] = [
     provider: 'groq',
     isFree: true,
     estimatedCreditsPerMessage: 0,
-    features: ['brand_chat', 'content_generation', 'ad_generation'],
+    features: ['brand_chat', 'content_generation', 'ad_generation', 'video_call_copilot'],
   },
 ];
 

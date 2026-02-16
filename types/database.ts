@@ -53,7 +53,7 @@ export type PlacementType =
   | 'tiktok_video' | 'tiktok_story'
   | 'youtube_video' | 'youtube_short' | 'youtube_community_post';
 export type PublishStatus = 'queued' | 'publishing' | 'published' | 'failed';
-export type NotificationType = 'content_submitted' | 'content_approved' | 'content_rejected' | 'revision_requested' | 'generation_completed' | 'change_request_submitted' | 'change_request_approved' | 'change_request_rejected' | 'change_request_revision' | 'credits_allocated' | 'credits_low';
+export type NotificationType = 'content_submitted' | 'content_approved' | 'content_rejected' | 'revision_requested' | 'generation_completed' | 'change_request_submitted' | 'change_request_approved' | 'change_request_rejected' | 'change_request_revision' | 'credits_allocated' | 'credits_low' | 'call_booked' | 'call_reminder' | 'call_completed' | 'call_summary_ready';
 export type FeatureType = 'brand_engine' | 'content_engine' | 'pipeline' | 'ad_campaigns';
 export type ChangeRequestStatus = 'pending' | 'approved' | 'rejected' | 'revision_requested';
 export type ChangeType = 'create' | 'update' | 'delete';
@@ -114,6 +114,19 @@ export type AuthorityNotificationChannel = 'in_app' | 'email' | 'push';
 export type AuthorityDeclineReason = 'not_relevant' | 'bad_timing' | 'wrong_contact' | 'full_calendar' | 'budget_constraints' | 'other';
 export type AuthorityConfirmedFormat = 'feature_article' | 'news_piece' | 'podcast_episode' | 'column' | 'interview' | 'speaking_slot';
 export type AuthorityInquiryFormat = 'article' | 'podcast' | 'video_interview' | 'written_qa' | 'other';
+
+// Video Call & AI Sales Co-Pilot types
+export type CallType = 'discovery' | 'sales' | 'onboarding' | 'meeting' | 'follow_up' | 'custom';
+export type CallStatus = 'scheduled' | 'waiting' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
+export type ParticipantRole = 'host' | 'team_member' | 'guest';
+export type ParticipantStatus = 'invited' | 'waiting' | 'admitted' | 'in_call' | 'left' | 'denied';
+export type GuidanceType = 'question' | 'objection_response' | 'offer_trigger' | 'sentiment_alert' | 'phase_transition' | 'closing' | 'opening' | 'general';
+export type InsightType = 'pain_point' | 'language_pattern' | 'objection' | 'budget_signal' | 'need' | 'competitor_mention' | 'value_perception';
+export type InsightStatus = 'pending' | 'accepted' | 'dismissed';
+export type BookingStatus = 'confirmed' | 'rescheduled' | 'cancelled' | 'completed';
+export type ActionItemStatus = 'pending' | 'in_progress' | 'completed';
+export type InviteMethod = 'link' | 'email' | 'calendar' | 'direct';
+export type OfferBillingFrequency = 'once' | 'monthly' | 'quarterly' | 'annual';
 
 export interface Database {
   public: {
@@ -6272,6 +6285,780 @@ export interface Database {
           created_at?: string;
         };
         Relationships: [];
+      };
+
+      // ===== Video Call & AI Sales Co-Pilot Tables =====
+
+      offers: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          description: string | null;
+          tier: string | null;
+          price_display: string | null;
+          price_value: number | null;
+          currency: string;
+          billing_frequency: OfferBillingFrequency | null;
+          deliverables: Json;
+          ideal_client_profile: string | null;
+          value_propositions: Json;
+          common_objections: Json;
+          roi_framing: string | null;
+          comparison_points: Json;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          description?: string | null;
+          tier?: string | null;
+          price_display?: string | null;
+          price_value?: number | null;
+          currency?: string;
+          billing_frequency?: OfferBillingFrequency | null;
+          deliverables?: Json;
+          ideal_client_profile?: string | null;
+          value_propositions?: Json;
+          common_objections?: Json;
+          roi_framing?: string | null;
+          comparison_points?: Json;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          description?: string | null;
+          tier?: string | null;
+          price_display?: string | null;
+          price_value?: number | null;
+          currency?: string;
+          billing_frequency?: OfferBillingFrequency | null;
+          deliverables?: Json;
+          ideal_client_profile?: string | null;
+          value_propositions?: Json;
+          common_objections?: Json;
+          roi_framing?: string | null;
+          comparison_points?: Json;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "offers_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
+      call_templates: {
+        Row: {
+          id: string;
+          organization_id: string | null;
+          name: string;
+          description: string | null;
+          call_type: CallType;
+          is_system: boolean;
+          is_active: boolean;
+          phases: Json;
+          opening_script: string | null;
+          closing_script: string | null;
+          objection_bank: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id?: string | null;
+          name: string;
+          description?: string | null;
+          call_type?: CallType;
+          is_system?: boolean;
+          is_active?: boolean;
+          phases?: Json;
+          opening_script?: string | null;
+          closing_script?: string | null;
+          objection_bank?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string | null;
+          name?: string;
+          description?: string | null;
+          call_type?: CallType;
+          is_system?: boolean;
+          is_active?: boolean;
+          phases?: Json;
+          opening_script?: string | null;
+          closing_script?: string | null;
+          objection_bank?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "call_templates_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
+      calls: {
+        Row: {
+          id: string;
+          organization_id: string;
+          host_user_id: string;
+          title: string;
+          call_type: CallType;
+          call_status: CallStatus;
+          template_id: string | null;
+          call_objective: string | null;
+          scheduled_start: string | null;
+          scheduled_duration_min: number;
+          actual_start: string | null;
+          actual_end: string | null;
+          recording_url: string | null;
+          recording_consent: boolean;
+          room_code: string;
+          booking_id: string | null;
+          crm_contact_id: string | null;
+          crm_deal_id: string | null;
+          call_number: number;
+          previous_call_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          host_user_id: string;
+          title: string;
+          call_type?: CallType;
+          call_status?: CallStatus;
+          template_id?: string | null;
+          call_objective?: string | null;
+          scheduled_start?: string | null;
+          scheduled_duration_min?: number;
+          actual_start?: string | null;
+          actual_end?: string | null;
+          recording_url?: string | null;
+          recording_consent?: boolean;
+          room_code: string;
+          booking_id?: string | null;
+          crm_contact_id?: string | null;
+          crm_deal_id?: string | null;
+          call_number?: number;
+          previous_call_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          host_user_id?: string;
+          title?: string;
+          call_type?: CallType;
+          call_status?: CallStatus;
+          template_id?: string | null;
+          call_objective?: string | null;
+          scheduled_start?: string | null;
+          scheduled_duration_min?: number;
+          actual_start?: string | null;
+          actual_end?: string | null;
+          recording_url?: string | null;
+          recording_consent?: boolean;
+          room_code?: string;
+          booking_id?: string | null;
+          crm_contact_id?: string | null;
+          crm_deal_id?: string | null;
+          call_number?: number;
+          previous_call_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "calls_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "calls_host_user_id_fkey";
+            columns: ["host_user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "calls_template_id_fkey";
+            columns: ["template_id"];
+            isOneToOne: false;
+            referencedRelation: "call_templates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "calls_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "call_bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "calls_crm_contact_id_fkey";
+            columns: ["crm_contact_id"];
+            isOneToOne: false;
+            referencedRelation: "crm_contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "calls_crm_deal_id_fkey";
+            columns: ["crm_deal_id"];
+            isOneToOne: false;
+            referencedRelation: "crm_deals";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "calls_previous_call_id_fkey";
+            columns: ["previous_call_id"];
+            isOneToOne: false;
+            referencedRelation: "calls";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
+      call_participants: {
+        Row: {
+          id: string;
+          call_id: string;
+          user_id: string | null;
+          guest_name: string | null;
+          guest_email: string | null;
+          role: ParticipantRole;
+          status: ParticipantStatus;
+          joined_at: string | null;
+          left_at: string | null;
+          consent_given: boolean;
+          invite_method: InviteMethod;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          call_id: string;
+          user_id?: string | null;
+          guest_name?: string | null;
+          guest_email?: string | null;
+          role?: ParticipantRole;
+          status?: ParticipantStatus;
+          joined_at?: string | null;
+          left_at?: string | null;
+          consent_given?: boolean;
+          invite_method?: InviteMethod;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          call_id?: string;
+          user_id?: string | null;
+          guest_name?: string | null;
+          guest_email?: string | null;
+          role?: ParticipantRole;
+          status?: ParticipantStatus;
+          joined_at?: string | null;
+          left_at?: string | null;
+          consent_given?: boolean;
+          invite_method?: InviteMethod;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "call_participants_call_id_fkey";
+            columns: ["call_id"];
+            isOneToOne: false;
+            referencedRelation: "calls";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "call_participants_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
+      call_transcripts: {
+        Row: {
+          id: string;
+          call_id: string;
+          participant_id: string;
+          speaker_label: string;
+          content: string;
+          timestamp_start: number;
+          timestamp_end: number | null;
+          is_flagged: boolean;
+          flag_note: string | null;
+          confidence: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          call_id: string;
+          participant_id: string;
+          speaker_label: string;
+          content: string;
+          timestamp_start?: number;
+          timestamp_end?: number | null;
+          is_flagged?: boolean;
+          flag_note?: string | null;
+          confidence?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          call_id?: string;
+          participant_id?: string;
+          speaker_label?: string;
+          content?: string;
+          timestamp_start?: number;
+          timestamp_end?: number | null;
+          is_flagged?: boolean;
+          flag_note?: string | null;
+          confidence?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "call_transcripts_call_id_fkey";
+            columns: ["call_id"];
+            isOneToOne: false;
+            referencedRelation: "calls";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "call_transcripts_participant_id_fkey";
+            columns: ["participant_id"];
+            isOneToOne: false;
+            referencedRelation: "call_participants";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
+      call_ai_guidance: {
+        Row: {
+          id: string;
+          call_id: string;
+          guidance_type: GuidanceType;
+          content: string;
+          framework_phase: string | null;
+          framework_step: string | null;
+          triggered_by_transcript_id: string | null;
+          was_used: boolean;
+          was_dismissed: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          call_id: string;
+          guidance_type?: GuidanceType;
+          content: string;
+          framework_phase?: string | null;
+          framework_step?: string | null;
+          triggered_by_transcript_id?: string | null;
+          was_used?: boolean;
+          was_dismissed?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          call_id?: string;
+          guidance_type?: GuidanceType;
+          content?: string;
+          framework_phase?: string | null;
+          framework_step?: string | null;
+          triggered_by_transcript_id?: string | null;
+          was_used?: boolean;
+          was_dismissed?: boolean;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "call_ai_guidance_call_id_fkey";
+            columns: ["call_id"];
+            isOneToOne: false;
+            referencedRelation: "calls";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "call_ai_guidance_triggered_by_transcript_id_fkey";
+            columns: ["triggered_by_transcript_id"];
+            isOneToOne: false;
+            referencedRelation: "call_transcripts";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
+      call_summaries: {
+        Row: {
+          id: string;
+          call_id: string;
+          summary_text: string | null;
+          key_points: Json;
+          decisions_made: Json;
+          objections_raised: Json;
+          sentiment_arc: Json;
+          next_steps: Json;
+          deal_stage_recommendation: string | null;
+          call_score: Json;
+          brand_engine_insights: Json;
+          follow_up_email_draft: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          call_id: string;
+          summary_text?: string | null;
+          key_points?: Json;
+          decisions_made?: Json;
+          objections_raised?: Json;
+          sentiment_arc?: Json;
+          next_steps?: Json;
+          deal_stage_recommendation?: string | null;
+          call_score?: Json;
+          brand_engine_insights?: Json;
+          follow_up_email_draft?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          call_id?: string;
+          summary_text?: string | null;
+          key_points?: Json;
+          decisions_made?: Json;
+          objections_raised?: Json;
+          sentiment_arc?: Json;
+          next_steps?: Json;
+          deal_stage_recommendation?: string | null;
+          call_score?: Json;
+          brand_engine_insights?: Json;
+          follow_up_email_draft?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "call_summaries_call_id_fkey";
+            columns: ["call_id"];
+            isOneToOne: true;
+            referencedRelation: "calls";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
+      call_action_items: {
+        Row: {
+          id: string;
+          call_id: string;
+          call_summary_id: string | null;
+          assigned_to: string | null;
+          description: string;
+          due_date: string | null;
+          status: ActionItemStatus;
+          crm_task_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          call_id: string;
+          call_summary_id?: string | null;
+          assigned_to?: string | null;
+          description: string;
+          due_date?: string | null;
+          status?: ActionItemStatus;
+          crm_task_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          call_id?: string;
+          call_summary_id?: string | null;
+          assigned_to?: string | null;
+          description?: string;
+          due_date?: string | null;
+          status?: ActionItemStatus;
+          crm_task_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "call_action_items_call_id_fkey";
+            columns: ["call_id"];
+            isOneToOne: false;
+            referencedRelation: "calls";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "call_action_items_call_summary_id_fkey";
+            columns: ["call_summary_id"];
+            isOneToOne: false;
+            referencedRelation: "call_summaries";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "call_action_items_assigned_to_fkey";
+            columns: ["assigned_to"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
+      booking_pages: {
+        Row: {
+          id: string;
+          organization_id: string;
+          slug: string;
+          title: string;
+          description: string | null;
+          available_durations: Json;
+          available_hours: Json;
+          buffer_minutes: number;
+          max_advance_days: number;
+          intake_questions: Json;
+          branding: Json;
+          default_call_type: CallType;
+          is_active: boolean;
+          calendar_integration: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          slug: string;
+          title: string;
+          description?: string | null;
+          available_durations?: Json;
+          available_hours?: Json;
+          buffer_minutes?: number;
+          max_advance_days?: number;
+          intake_questions?: Json;
+          branding?: Json;
+          default_call_type?: CallType;
+          is_active?: boolean;
+          calendar_integration?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          slug?: string;
+          title?: string;
+          description?: string | null;
+          available_durations?: Json;
+          available_hours?: Json;
+          buffer_minutes?: number;
+          max_advance_days?: number;
+          intake_questions?: Json;
+          branding?: Json;
+          default_call_type?: CallType;
+          is_active?: boolean;
+          calendar_integration?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_pages_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
+      call_bookings: {
+        Row: {
+          id: string;
+          organization_id: string;
+          booking_page_id: string;
+          guest_name: string;
+          guest_email: string;
+          guest_company: string | null;
+          guest_notes: string | null;
+          scheduled_time: string;
+          duration_min: number;
+          status: BookingStatus;
+          crm_contact_id: string | null;
+          call_id: string | null;
+          confirmation_sent: boolean;
+          reminder_sent: boolean;
+          intake_responses: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          booking_page_id: string;
+          guest_name: string;
+          guest_email: string;
+          guest_company?: string | null;
+          guest_notes?: string | null;
+          scheduled_time: string;
+          duration_min?: number;
+          status?: BookingStatus;
+          crm_contact_id?: string | null;
+          call_id?: string | null;
+          confirmation_sent?: boolean;
+          reminder_sent?: boolean;
+          intake_responses?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          booking_page_id?: string;
+          guest_name?: string;
+          guest_email?: string;
+          guest_company?: string | null;
+          guest_notes?: string | null;
+          scheduled_time?: string;
+          duration_min?: number;
+          status?: BookingStatus;
+          crm_contact_id?: string | null;
+          call_id?: string | null;
+          confirmation_sent?: boolean;
+          reminder_sent?: boolean;
+          intake_responses?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "call_bookings_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "call_bookings_booking_page_id_fkey";
+            columns: ["booking_page_id"];
+            isOneToOne: false;
+            referencedRelation: "booking_pages";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "call_bookings_crm_contact_id_fkey";
+            columns: ["crm_contact_id"];
+            isOneToOne: false;
+            referencedRelation: "crm_contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "call_bookings_call_id_fkey";
+            columns: ["call_id"];
+            isOneToOne: false;
+            referencedRelation: "calls";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
+      call_brand_insights: {
+        Row: {
+          id: string;
+          call_id: string;
+          organization_id: string;
+          insight_type: InsightType;
+          content: string;
+          source_transcript_id: string | null;
+          brand_engine_field: string | null;
+          status: InsightStatus;
+          accepted_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          call_id: string;
+          organization_id: string;
+          insight_type: InsightType;
+          content: string;
+          source_transcript_id?: string | null;
+          brand_engine_field?: string | null;
+          status?: InsightStatus;
+          accepted_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          call_id?: string;
+          organization_id?: string;
+          insight_type?: InsightType;
+          content?: string;
+          source_transcript_id?: string | null;
+          brand_engine_field?: string | null;
+          status?: InsightStatus;
+          accepted_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "call_brand_insights_call_id_fkey";
+            columns: ["call_id"];
+            isOneToOne: false;
+            referencedRelation: "calls";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "call_brand_insights_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "call_brand_insights_source_transcript_id_fkey";
+            columns: ["source_transcript_id"];
+            isOneToOne: false;
+            referencedRelation: "call_transcripts";
+            referencedColumns: ["id"];
+          }
+        ];
       };
     };
     Views: {};

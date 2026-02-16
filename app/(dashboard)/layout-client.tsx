@@ -28,6 +28,7 @@ interface DashboardLayoutClientProps {
     orgRole?: string | null;
     tierName?: string;
     pipelineCount?: number;
+    upcomingCallCount?: number;
     contentEngineEnabled?: boolean;
     notificationCount?: number;
     pendingReviewCount?: number;
