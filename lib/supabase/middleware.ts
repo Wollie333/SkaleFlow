@@ -41,7 +41,9 @@ export async function updateSession(request: NextRequest) {
   const publicRoutes = ['/login', '/register', '/auth/callback', '/invite', '/forgot-password', '/reset-password', '/api/auth/register', '/api/webhooks', '/apply', '/api/applications', '/problems', '/results', '/blog', '/about', '/skaleflow', '/homepage', '/book', '/api/bookings', '/book-a-call', '/api/book-a-call', '/call'];
   const isPublicRoute =
     request.nextUrl.pathname === '/' ||
-    publicRoutes.some(route => request.nextUrl.pathname.startsWith(route));
+    publicRoutes.some(route =>
+      request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(route + '/')
+    );
 
   if (!user && !isPublicRoute) {
     // No user and trying to access protected route, redirect to login
