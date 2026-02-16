@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/server';
-import { getModelConfig } from './providers/catalog';
+import { getModelConfig } from './providers/registry';
 
 /**
  * Re-export client-safe utility functions.
