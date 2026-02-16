@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { DashboardLayoutClient } from './layout-client';
-import { checkCredits } from '@/lib/ai/server';
+import { checkCredits } from '@/lib/ai/credits';
 import type { FeaturePermissions } from '@/lib/permissions';
 
 export default async function DashboardLayout({
