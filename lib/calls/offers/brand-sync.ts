@@ -35,7 +35,7 @@ export async function syncOfferToBrandEngine(offer: OfferData, orgId: string): P
     .from('brand_phases')
     .select('id')
     .eq('organization_id', orgId)
-    .eq('phase_number', 4)
+    .eq('phase_number', '4')
     .single();
 
   const phaseId = phase?.id || null;
@@ -55,22 +55,22 @@ export async function syncOfferToBrandEngine(offer: OfferData, orgId: string): P
       .from('brand_outputs')
       .select('id')
       .eq('organization_id', orgId)
-      .eq('variable_key', key)
+      .eq('output_key', key)
       .single();
 
     if (existing) {
       await supabase
         .from('brand_outputs')
-        .update({ value, is_locked: true, updated_at: new Date().toISOString() })
+        .update({ output_value: value, is_locked: true, updated_at: new Date().toISOString() })
         .eq('id', existing.id);
     } else {
       await supabase
         .from('brand_outputs')
         .insert({
           organization_id: orgId,
-          phase_id: phaseId,
-          variable_key: key,
-          value,
+          phase_id: phaseId || '',
+          output_key: key,
+          output_value: value,
           is_locked: true,
         });
     }

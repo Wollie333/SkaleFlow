@@ -94,7 +94,7 @@ export async function scoreCall(callId: string, orgId: string, userId: string) {
 
   await supabase
     .from('call_summaries')
-    .update({ call_score: score as unknown as Record<string, unknown>, updated_at: new Date().toISOString() })
+    .update({ call_score: score as unknown as import('@/types/database').Json, updated_at: new Date().toISOString() })
     .eq('call_id', callId);
 
   return score;

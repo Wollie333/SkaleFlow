@@ -20,6 +20,8 @@ import {
   SparklesIcon,
   CurrencyDollarIcon,
   ExclamationTriangleIcon,
+  PhoneIcon,
+  ClockIcon,
 } from '@heroicons/react/24/solid';
 import type { NotificationType } from '@/types/database';
 
@@ -49,6 +51,10 @@ const notificationIcons: Record<NotificationType, React.ComponentType<{ classNam
   change_request_revision: ArrowPathIcon,
   credits_allocated: CurrencyDollarIcon,
   credits_low: ExclamationTriangleIcon,
+  call_booked: PhoneIcon,
+  call_reminder: ClockIcon,
+  call_completed: CheckCircleIcon,
+  call_summary_ready: DocumentTextIcon,
 };
 
 const notificationColors: Record<NotificationType, { icon: string; bg: string }> = {
@@ -63,6 +69,10 @@ const notificationColors: Record<NotificationType, { icon: string; bg: string }>
   change_request_revision: { icon: 'text-amber-500', bg: 'bg-amber-50' },
   credits_allocated: { icon: 'text-teal', bg: 'bg-teal/10' },
   credits_low: { icon: 'text-amber-500', bg: 'bg-amber-50' },
+  call_booked: { icon: 'text-blue-500', bg: 'bg-blue-50' },
+  call_reminder: { icon: 'text-amber-500', bg: 'bg-amber-50' },
+  call_completed: { icon: 'text-green-600', bg: 'bg-green-50' },
+  call_summary_ready: { icon: 'text-teal', bg: 'bg-teal/10' },
 };
 
 type FilterTab = 'all' | 'unread' | 'approvals' | 'my_content';

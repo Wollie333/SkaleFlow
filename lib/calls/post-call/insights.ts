@@ -26,15 +26,11 @@ export async function extractBrandInsights(callId: string, orgId: string, userId
   const guestText = guestTranscripts.map(t => t.content).join('\n');
 
   try {
-    const { resolveModel } = await import('@/lib/ai/middleware');
+    const { resolveModel, deductCredits } = await import('@/lib/ai/server');
     const { getProviderAdapterForUser } = await import('@/lib/ai/providers/registry');
-    const { getModelConfig } = await import('@/lib/ai/providers/catalog');
-    const { deductCredits } = await import('@/lib/ai/credits');
 
     const resolved = await resolveModel(orgId, 'video_call_copilot', undefined, userId);
-    const config = getModelConfig(resolved.modelId);
-    if (!config) throw new Error('No model config');
-    const { adapter, usingUserKey } = await getProviderAdapterForUser(config.provider, userId);
+    const { adapter, usingUserKey } = await getProviderAdapterForUser(resolved.provider, userId);
 
     const response = await adapter.complete({
       systemPrompt: `Extract market intelligence insights from prospect speech during a sales call. Identify patterns valuable for brand strategy.`,
@@ -44,11 +40,13 @@ export async function extractBrandInsights(callId: string, orgId: string, userId
       }],
       maxTokens: 1000,
       temperature: 0.3,
-      modelId: config.modelId,
+      modelId: resolved.modelId,
     });
 
     if (!usingUserKey) {
-      await deductCredits(orgId, 'video_call_copilot', response.inputTokens, response.outputTokens, config.provider, resolved.modelId, userId);
+      const { calculateCreditCost } = await import('@/lib/ai/credits');
+      const credits = calculateCreditCost(resolved.id, response.inputTokens, response.outputTokens);
+      await deductCredits(orgId, userId || null, credits, null, 'Call brand insights extraction');
     }
 
     let insights;
@@ -60,10 +58,12 @@ export async function extractBrandInsights(callId: string, orgId: string, userId
 
     if (!Array.isArray(insights)) return [];
 
+    const validTypes = ['pain_point', 'language_pattern', 'objection', 'budget_signal', 'need', 'competitor_mention', 'value_perception'] as const;
+    type ValidInsightType = typeof validTypes[number];
     const inserts = insights.slice(0, 10).map((i: Record<string, string>) => ({
       call_id: callId,
       organization_id: orgId,
-      insight_type: i.insight_type || 'need',
+      insight_type: (validTypes.includes(i.insight_type as ValidInsightType) ? i.insight_type : 'need') as ValidInsightType,
       content: i.content || '',
       brand_engine_field: i.brand_engine_field || null,
       status: 'pending' as const,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { getCopilotProvider } from '@/lib/calls/copilot';
+import type { GuidanceType } from '@/types/database';
 
 export const maxDuration = 30;
 
@@ -71,7 +72,7 @@ export async function POST(
     .from('call_ai_guidance')
     .insert({
       call_id: call.id,
-      guidance_type: guidance.guidanceType,
+      guidance_type: guidance.guidanceType as GuidanceType,
       content: guidance.content,
       framework_phase: guidance.frameworkPhase || null,
       framework_step: guidance.frameworkStep || null,

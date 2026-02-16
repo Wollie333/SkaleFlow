@@ -39,7 +39,7 @@ export async function getAvailableSlots(
     end: '17:00',
     timezone: 'Africa/Johannesburg',
     days: [1, 2, 3, 4, 5],
-  }) as AvailableHours;
+  }) as unknown as AvailableHours;
   const bufferMin = page.buffer_minutes || 15;
 
   // 2. Get existing bookings in range

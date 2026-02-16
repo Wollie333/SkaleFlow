@@ -21,7 +21,7 @@ export async function generatePreCallBrief(callId: string, orgId: string, hostUs
       .single();
 
     if (contact) {
-      const company = contact.crm_companies as { name: string; industry: string; website: string } | null;
+      const company = (contact as unknown as { crm_companies: { name: string; industry: string; website: string } | null }).crm_companies;
       contactInfo = `Contact: ${contact.first_name} ${contact.last_name}\nEmail: ${contact.email}\nTitle: ${contact.job_title || 'Unknown'}\nCompany: ${company?.name || 'Unknown'} (${company?.industry || 'N/A'})\nLifecycle: ${contact.lifecycle_stage}`;
     }
   }
@@ -56,15 +56,11 @@ export async function generatePreCallBrief(callId: string, orgId: string, hostUs
   const offersText = offers?.map(o => `${o.name} (${o.price_display || 'TBD'})`).join(', ') || 'None configured';
 
   try {
-    const { resolveModel } = await import('@/lib/ai/middleware');
+    const { resolveModel, deductCredits } = await import('@/lib/ai/server');
     const { getProviderAdapterForUser } = await import('@/lib/ai/providers/registry');
-    const { getModelConfig } = await import('@/lib/ai/providers/catalog');
-    const { deductCredits } = await import('@/lib/ai/credits');
 
     const resolved = await resolveModel(orgId, 'video_call_copilot', undefined, hostUserId);
-    const config = getModelConfig(resolved.modelId);
-    if (!config) return null;
-    const { adapter, usingUserKey } = await getProviderAdapterForUser(config.provider, hostUserId);
+    const { adapter, usingUserKey } = await getProviderAdapterForUser(resolved.provider, hostUserId);
 
     const response = await adapter.complete({
       systemPrompt: 'You are a pre-call preparation assistant. Generate a concise, actionable brief to help the host prepare for their upcoming call.',
@@ -74,11 +70,13 @@ export async function generatePreCallBrief(callId: string, orgId: string, hostUs
       }],
       maxTokens: 1000,
       temperature: 0.3,
-      modelId: config.modelId,
+      modelId: resolved.modelId,
     });
 
     if (!usingUserKey) {
-      await deductCredits(orgId, 'video_call_copilot', response.inputTokens, response.outputTokens, config.provider, resolved.modelId, hostUserId);
+      const { calculateCreditCost } = await import('@/lib/ai/credits');
+      const credits = calculateCreditCost(resolved.id, response.inputTokens, response.outputTokens);
+      await deductCredits(orgId, hostUserId || null, credits, null, 'Pre-call brief generation');
     }
 
     return response.text;

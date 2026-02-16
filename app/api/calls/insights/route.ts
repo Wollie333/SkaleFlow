@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import type { InsightStatus } from '@/types/database';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
     .order('created_at', { ascending: false });
 
   if (status) {
-    query = query.eq('status', status);
+    query = query.eq('status', status as InsightStatus);
   }
 
   const { data, error } = await query.limit(100);
@@ -66,26 +67,35 @@ export async function PATCH(request: NextRequest) {
     if (insight.brand_engine_field) {
       const { data: existing } = await serviceClient
         .from('brand_outputs')
-        .select('id, value')
+        .select('id, output_value')
         .eq('organization_id', insight.organization_id)
-        .eq('variable_key', insight.brand_engine_field)
+        .eq('output_key', insight.brand_engine_field)
         .single();
 
       if (existing) {
         // Append to existing value
-        const currentValue = typeof existing.value === 'string' ? existing.value : '';
+        const currentValue = typeof existing.output_value === 'string' ? existing.output_value : '';
         const newValue = currentValue ? `${currentValue}\n[From call insight]: ${insight.content}` : insight.content;
         await serviceClient
           .from('brand_outputs')
-          .update({ value: newValue, updated_at: new Date().toISOString() })
+          .update({ output_value: newValue, updated_at: new Date().toISOString() })
           .eq('id', existing.id);
       } else {
+        // Need a phase_id for insert — find phase 4 (Growth Engine) or any phase
+        const { data: phase } = await serviceClient
+          .from('brand_phases')
+          .select('id')
+          .eq('organization_id', insight.organization_id)
+          .eq('phase_number', '4')
+          .single();
+
         await serviceClient
           .from('brand_outputs')
           .insert({
             organization_id: insight.organization_id,
-            variable_key: insight.brand_engine_field,
-            value: insight.content,
+            phase_id: phase?.id || '',
+            output_key: insight.brand_engine_field,
+            output_value: insight.content,
           });
       }
     }

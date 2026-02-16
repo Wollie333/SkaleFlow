@@ -231,7 +231,7 @@ export function CreateCardModal({
                   >
                     <option value="">Role (optional)</option>
                     {CONTACT_ROLES.map((r) => (
-                      <option key={r} value={r}>{r}</option>
+                      <option key={r.value} value={r.value}>{r.label}</option>
                     ))}
                   </select>
                 </div>

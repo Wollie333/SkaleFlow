@@ -32,7 +32,7 @@ export class BrowserTranscription {
     this.recognition.continuous = true;
     this.recognition.interimResults = true;
     this.recognition.lang = 'en-US';
-    this.recognition.maxAlternatives = 1;
+    (this.recognition as unknown as { maxAlternatives: number }).maxAlternatives = 1;
 
     this.recognition.onresult = (event: SpeechRecognitionEvent) => {
       for (let i = event.resultIndex; i < event.results.length; i++) {

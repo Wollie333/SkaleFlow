@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
             email: nc.email || null,
             outlet: nc.outlet || null,
             role: nc.role || null,
-            source: 'pipeline',
+            source: 'manual',
             created_by: user.id,
           })
           .select('id')
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
           email: null,
           outlet: nc.outlet || null,
           role: nc.role || null,
-          source: 'pipeline',
+          source: 'manual',
           created_by: user.id,
         })
         .select('id')

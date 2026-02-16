@@ -4,11 +4,11 @@ import { PlaybookClient } from '@/app/brand/playbook/playbook-client';
 import type { BrandOutput } from '@/lib/playbook/parse-brand-outputs';
 
 interface PageProps {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }
 
 export default async function PublicPlaybookPage({ params }: PageProps) {
-  const { token } = params;
+  const { token } = await params;
 
   // Validate UUID format
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

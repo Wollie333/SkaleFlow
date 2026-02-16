@@ -28,24 +28,20 @@ export async function draftFollowUpEmail(callId: string, orgId: string, userId: 
   // Get brand voice
   const { data: brandOutputs } = await supabase
     .from('brand_outputs')
-    .select('variable_key, value')
+    .select('output_key, output_value')
     .eq('organization_id', orgId)
     .eq('is_locked', true)
-    .in('variable_key', ['brand_voice', 'brand_tone', 'brand_name']);
+    .in('output_key', ['brand_voice', 'brand_tone', 'brand_name']);
 
-  const brandVoice = brandOutputs?.find(o => o.variable_key === 'brand_voice')?.value || '';
-  const brandName = brandOutputs?.find(o => o.variable_key === 'brand_name')?.value || 'Our team';
+  const brandVoice = brandOutputs?.find(o => o.output_key === 'brand_voice')?.output_value || '';
+  const brandName = brandOutputs?.find(o => o.output_key === 'brand_name')?.output_value || 'Our team';
 
   try {
-    const { resolveModel } = await import('@/lib/ai/middleware');
+    const { resolveModel, deductCredits } = await import('@/lib/ai/server');
     const { getProviderAdapterForUser } = await import('@/lib/ai/providers/registry');
-    const { getModelConfig } = await import('@/lib/ai/providers/catalog');
-    const { deductCredits } = await import('@/lib/ai/credits');
 
     const resolved = await resolveModel(orgId, 'video_call_copilot', undefined, userId);
-    const config = getModelConfig(resolved.modelId);
-    if (!config) throw new Error('No model config');
-    const { adapter, usingUserKey } = await getProviderAdapterForUser(config.provider, userId);
+    const { adapter, usingUserKey } = await getProviderAdapterForUser(resolved.provider, userId);
 
     const response = await adapter.complete({
       systemPrompt: `Draft a professional follow-up email after a business call. Use the brand voice: ${brandVoice}. Be warm but concise. Sign off as ${brandName}.`,
@@ -55,11 +51,13 @@ export async function draftFollowUpEmail(callId: string, orgId: string, userId: 
       }],
       maxTokens: 800,
       temperature: 0.4,
-      modelId: config.modelId,
+      modelId: resolved.modelId,
     });
 
     if (!usingUserKey) {
-      await deductCredits(orgId, 'video_call_copilot', response.inputTokens, response.outputTokens, config.provider, resolved.modelId, userId);
+      const { calculateCreditCost } = await import('@/lib/ai/credits');
+      const credits = calculateCreditCost(resolved.id, response.inputTokens, response.outputTokens);
+      await deductCredits(orgId, userId || null, credits, null, 'Follow-up email draft');
     }
 
     await supabase

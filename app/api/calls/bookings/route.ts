@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { generateRoomCode } from '@/lib/calls/config';
+import type { BookingStatus } from '@/types/database';
 
 // GET — list bookings for authenticated org
 export async function GET(request: NextRequest) {
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     .order('scheduled_time', { ascending: true });
 
   if (status) {
-    query = query.eq('status', status);
+    query = query.eq('status', status as BookingStatus);
   }
 
   const { data, error } = await query;

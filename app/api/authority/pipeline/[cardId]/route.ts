@@ -150,7 +150,10 @@ export async function PATCH(
         .insert({
           organization_id: existingCard.organization_id,
           card_id: cardId,
-          ...dbCommercial,
+          engagement_type: (dbCommercial.engagement_type || 'earned') as 'earned' | 'paid' | 'contra' | 'sponsored',
+          deal_value: (dbCommercial.deal_value as number) || 0,
+          currency: (dbCommercial.currency as string) || 'ZAR',
+          payment_terms: (dbCommercial.payment_terms as string) || null,
         });
       if (comErr) return NextResponse.json({ error: comErr.message }, { status: 500 });
     }

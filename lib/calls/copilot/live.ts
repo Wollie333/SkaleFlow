@@ -18,36 +18,29 @@ export class LiveCopilot implements CopilotProvider {
       const systemPrompt = buildCopilotSystemPrompt(assembled, context.currentPhase || 'discovery');
 
       // Resolve model and check credits
-      const { resolveModel } = await import('@/lib/ai/middleware');
-      const { requireCredits, deductCredits } = await import('@/lib/ai/credits');
+      const { resolveModel, deductCredits } = await import('@/lib/ai/server');
+      const { requireCredits } = await import('@/lib/ai/middleware');
       const { getProviderAdapterForUser } = await import('@/lib/ai/providers/registry');
-      const { getModelConfig } = await import('@/lib/ai/providers/catalog');
 
       const resolved = await resolveModel(orgId, 'video_call_copilot', undefined, userId);
-      const modelConfig = getModelConfig(resolved.modelId);
-
-      if (!modelConfig) {
-        console.error('[CoPilot] No model config found for', resolved.modelId);
-        return null;
-      }
 
       // Check credits (skips for free models & super admins)
       const creditCheck = await requireCredits(
         orgId,
-        'video_call_copilot',
-        modelConfig.estimatedCreditsPerMessage,
-        resolved.modelId,
+        resolved.id,
+        500,  // estimated input tokens
+        300,  // estimated output tokens
         userId
       );
 
-      if (creditCheck && 'error' in creditCheck) {
+      if (creditCheck) {
         console.warn('[CoPilot] Insufficient credits');
         return null;
       }
 
       // Get adapter
       const { adapter, usingUserKey } = await getProviderAdapterForUser(
-        modelConfig.provider,
+        resolved.provider,
         userId
       );
 
@@ -62,19 +55,19 @@ export class LiveCopilot implements CopilotProvider {
         ],
         maxTokens: 300,
         temperature: 0.3,
-        modelId: modelConfig.modelId,
+        modelId: resolved.modelId,
       });
 
       // Deduct credits (skips for free models, user keys, & super admins)
       if (!usingUserKey) {
+        const { calculateCreditCost } = await import('@/lib/ai/credits');
+        const credits = calculateCreditCost(resolved.id, response.inputTokens, response.outputTokens);
         await deductCredits(
           orgId,
-          'video_call_copilot',
-          response.inputTokens,
-          response.outputTokens,
-          modelConfig.provider,
-          resolved.modelId,
-          userId
+          userId || null,
+          credits,
+          null,
+          `Video call copilot guidance`
         );
       }
 

@@ -30,16 +30,11 @@ export async function generateCallSummary(callId: string, orgId: string, userId:
     .single();
 
   try {
-    const { resolveModel } = await import('@/lib/ai/middleware');
+    const { resolveModel, deductCredits } = await import('@/lib/ai/server');
     const { getProviderAdapterForUser } = await import('@/lib/ai/providers/registry');
-    const { getModelConfig } = await import('@/lib/ai/providers/catalog');
-    const { deductCredits } = await import('@/lib/ai/credits');
 
     const resolved = await resolveModel(orgId, 'video_call_copilot', undefined, userId);
-    const config = getModelConfig(resolved.modelId);
-    if (!config) throw new Error('No model config');
-
-    const { adapter, usingUserKey } = await getProviderAdapterForUser(config.provider, userId);
+    const { adapter, usingUserKey } = await getProviderAdapterForUser(resolved.provider, userId);
 
     const response = await adapter.complete({
       systemPrompt: `You are a post-call analyst. Analyze the transcript and produce a comprehensive JSON summary.`,
@@ -49,11 +44,13 @@ export async function generateCallSummary(callId: string, orgId: string, userId:
       }],
       maxTokens: 2000,
       temperature: 0.2,
-      modelId: config.modelId,
+      modelId: resolved.modelId,
     });
 
     if (!usingUserKey) {
-      await deductCredits(orgId, 'video_call_copilot', response.inputTokens, response.outputTokens, config.provider, resolved.modelId, userId);
+      const { calculateCreditCost } = await import('@/lib/ai/credits');
+      const credits = calculateCreditCost(resolved.id, response.inputTokens, response.outputTokens);
+      await deductCredits(orgId, userId || null, credits, null, 'Call summary generation');
     }
 
     let parsed;

@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button, Input } from '@/components/ui';
 
 interface InvitePageProps {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }
 
-export default function InvitePage({ params }: InvitePageProps) {
+export default function InvitePage({ params: paramsPromise }: InvitePageProps) {
+  const params = use(paramsPromise);
   const router = useRouter();
   const supabase = createClient();
 

@@ -26,13 +26,13 @@ export async function assembleCallContext(
   // 1. Brand Engine data (locked variables only)
   const { data: brandOutputs } = await supabase
     .from('brand_outputs')
-    .select('variable_key, value')
+    .select('output_key, output_value')
     .eq('organization_id', orgId)
     .eq('is_locked', true)
-    .not('value', 'is', null);
+    .not('output_value', 'is', null);
 
   const brandData = brandOutputs
-    ? brandOutputs.map(o => `${o.variable_key}: ${typeof o.value === 'string' ? o.value : JSON.stringify(o.value)}`).join('\n')
+    ? brandOutputs.map(o => `${o.output_key}: ${typeof o.output_value === 'string' ? o.output_value : JSON.stringify(o.output_value)}`).join('\n')
     : 'No brand data available';
 
   // 2. Active offers
@@ -65,7 +65,7 @@ export async function assembleCallContext(
       .single();
 
     if (contact) {
-      const company = contact.crm_companies as { name: string; industry: string } | null;
+      const company = (contact as unknown as { crm_companies: { name: string; industry: string } | null }).crm_companies;
       crmData = `Contact: ${contact.first_name} ${contact.last_name} (${contact.email})\nJob: ${contact.job_title || 'Unknown'}\nCompany: ${company?.name || 'Unknown'} (${company?.industry || 'Unknown industry'})\nStage: ${contact.lifecycle_stage}`;
     }
   }

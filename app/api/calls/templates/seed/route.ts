@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { ALL_DEFAULT_TEMPLATES } from '@/lib/calls/templates/defaults';
+import type { CallType, Json } from '@/types/database';
 
 // POST — seed system templates (admin only)
 export async function POST() {
@@ -32,15 +33,15 @@ export async function POST() {
   }
 
   const inserts = ALL_DEFAULT_TEMPLATES.map(t => ({
-    organization_id: null,
+    organization_id: null as string | null,
     name: t.name,
     description: t.description,
-    call_type: t.callType,
+    call_type: t.callType as CallType,
     is_system: true,
-    phases: t.phases,
-    opening_script: t.openingScript,
-    closing_script: t.closingScript,
-    objection_bank: t.objectionBank,
+    phases: t.phases as unknown as Json,
+    opening_script: t.openingScript || null,
+    closing_script: t.closingScript || null,
+    objection_bank: t.objectionBank as unknown as Json,
   }));
 
   const { data, error } = await serviceClient

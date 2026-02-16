@@ -13,6 +13,8 @@ import {
   SparklesIcon,
   CurrencyDollarIcon,
   ExclamationTriangleIcon,
+  PhoneIcon,
+  ClockIcon,
 } from '@heroicons/react/24/solid';
 import { useCreditBalance } from '@/hooks/useCreditBalance';
 import { formatCreditsToUSD } from '@/lib/ai';
@@ -45,6 +47,10 @@ const notificationIcons: Record<NotificationType, React.ComponentType<{ classNam
   change_request_revision: ArrowPathIcon,
   credits_allocated: CurrencyDollarIcon,
   credits_low: ExclamationTriangleIcon,
+  call_booked: PhoneIcon,
+  call_reminder: ClockIcon,
+  call_completed: CheckCircleIcon,
+  call_summary_ready: DocumentTextIcon,
 };
 
 const notificationColors: Record<NotificationType, string> = {
@@ -59,6 +65,10 @@ const notificationColors: Record<NotificationType, string> = {
   change_request_revision: 'text-amber-500',
   credits_allocated: 'text-teal',
   credits_low: 'text-amber-500',
+  call_booked: 'text-blue-500',
+  call_reminder: 'text-amber-500',
+  call_completed: 'text-green-500',
+  call_summary_ready: 'text-teal',
 };
 
 interface Notification {

@@ -13,11 +13,13 @@ export class MockCopilot implements CopilotProvider {
       return null;
     }
 
+    const phases = templatePhases as Record<string, unknown>[];
+
     // Find current phase
-    const phase = templatePhases.find((p: Record<string, unknown>) => p.id === currentPhase) as Record<string, unknown> | undefined;
+    const phase = phases.find(p => p.id === currentPhase);
     if (!phase) {
       // Suggest starting the first phase
-      const firstPhase = templatePhases[0] as Record<string, unknown>;
+      const firstPhase = phases[0];
       return {
         guidanceType: 'phase_transition',
         content: `Start with: ${firstPhase.name}. ${firstPhase.description || ''}`,
@@ -33,9 +35,9 @@ export class MockCopilot implements CopilotProvider {
     );
 
     if (shouldTransition) {
-      const currentIdx = templatePhases.findIndex((p: Record<string, unknown>) => p.id === currentPhase);
-      if (currentIdx < templatePhases.length - 1) {
-        const nextPhase = templatePhases[currentIdx + 1] as Record<string, unknown>;
+      const currentIdx = phases.findIndex(p => p.id === currentPhase);
+      if (currentIdx < phases.length - 1) {
+        const nextPhase = phases[currentIdx + 1];
         return {
           guidanceType: 'phase_transition',
           content: `Good progress! Move to: ${nextPhase.name}. ${nextPhase.description || ''}`,

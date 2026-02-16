@@ -3,9 +3,7 @@
  */
 export async function startScreenShare(): Promise<MediaStream> {
   const stream = await navigator.mediaDevices.getDisplayMedia({
-    video: {
-      cursor: 'always' as DisplayCaptureSurfaceType,
-    },
+    video: true,
     audio: false,
   });
   return stream;
