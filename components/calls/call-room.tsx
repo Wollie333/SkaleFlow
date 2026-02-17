@@ -104,8 +104,11 @@ export function CallRoom({
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Register self as participant on mount
+  // Register self as participant on mount (guard against double-fire from strict mode)
   useEffect(() => {
+    if (participantIdRef.current) return; // Already registered
+
+    let cancelled = false;
     const registerParticipant = async () => {
       try {
         const res = await fetch(`/api/calls/${roomCode}/participants`, {
@@ -118,7 +121,7 @@ export function CallRoom({
             role: isHost ? 'host' : (userId ? 'team_member' : 'guest'),
           }),
         });
-        if (res.ok) {
+        if (res.ok && !cancelled) {
           const data = await res.json();
           participantIdRef.current = data.id;
         }
@@ -128,6 +131,7 @@ export function CallRoom({
     };
 
     registerParticipant();
+    return () => { cancelled = true; };
   }, [roomCode, userId, guestName, guestEmail, isHost]);
 
   // Poll participants every 5s
@@ -506,7 +510,7 @@ export function CallRoom({
       {/* Main Content */}
       <div className="flex-1 flex min-h-0">
         {/* Video Panel (always visible, takes remaining space) */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 relative">
           <VideoPanel
             localStream={localStreamRef.current}
             participants={participants}
@@ -515,6 +519,20 @@ export function CallRoom({
             callActive={callActive}
             onStartMedia={startMedia}
           />
+
+          {/* Floating live caption — always visible when host is in call */}
+          {isHost && callActive && transcripts.length > 0 && (
+            <div className="absolute bottom-4 left-4 right-4 flex justify-center pointer-events-none">
+              <div className="bg-black/70 backdrop-blur-sm rounded-lg px-4 py-2.5 max-w-[80%] pointer-events-auto">
+                <p className="text-white text-sm leading-relaxed text-center">
+                  {transcripts[transcripts.length - 1].content}
+                </p>
+                <p className="text-white/40 text-[10px] text-center mt-0.5">
+                  {transcripts[transcripts.length - 1].speakerLabel} &middot; Live Caption
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Side Panel (collapsible) */}
@@ -535,6 +553,7 @@ export function CallRoom({
               <CopilotPanel
                 guidance={guidance}
                 callActive={callActive}
+                transcriptCount={transcripts.length}
               />
             )}
             {activePanel === 'transcript' && (

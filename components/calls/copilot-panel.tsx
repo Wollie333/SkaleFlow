@@ -5,6 +5,7 @@ import type { GuidanceItem } from './call-room';
 interface CopilotPanelProps {
   guidance: GuidanceItem[];
   callActive: boolean;
+  transcriptCount?: number;
 }
 
 const GUIDANCE_ICONS: Record<string, string> = {
@@ -29,7 +30,7 @@ const GUIDANCE_COLORS: Record<string, string> = {
   general: 'bg-white/10 text-white/70 border-white/20',
 };
 
-export function CopilotPanel({ guidance, callActive }: CopilotPanelProps) {
+export function CopilotPanel({ guidance, callActive, transcriptCount = 0 }: CopilotPanelProps) {
   const activeGuidance = guidance.filter(g => !g.wasDismissed);
 
   return (
@@ -53,7 +54,14 @@ export function CopilotPanel({ guidance, callActive }: CopilotPanelProps) {
             <div className="w-10 h-10 rounded-full bg-[#1E6B63]/20 flex items-center justify-center mx-auto mb-3">
               <span className="text-[#1E6B63] text-lg">&#x1F3AF;</span>
             </div>
-            <p className="text-white/40 text-sm">Listening... AI suggestions will appear as the conversation progresses.</p>
+            {transcriptCount > 0 ? (
+              <>
+                <p className="text-white/50 text-sm">Transcribing... ({transcriptCount} segments)</p>
+                <p className="text-white/30 text-xs mt-1">AI suggestions will appear as the conversation progresses.</p>
+              </>
+            ) : (
+              <p className="text-white/40 text-sm">Listening... AI suggestions will appear as the conversation progresses.</p>
+            )}
           </div>
         )}
 

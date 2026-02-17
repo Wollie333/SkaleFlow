@@ -57,7 +57,30 @@ export async function GET(
     avatar_url: userMap[p.user_id || '']?.avatar_url || null,
   }));
 
-  return NextResponse.json(enriched);
+  // Deduplicate: keep one entry per user_id (prefer in_call > waiting > invited)
+  const statusPriority: Record<string, number> = { in_call: 3, waiting: 2, invited: 1 };
+  const seen = new Map<string, typeof enriched[0]>();
+  const deduped: typeof enriched = [];
+
+  for (const p of enriched) {
+    if (p.user_id) {
+      const prev = seen.get(p.user_id);
+      if (prev) {
+        // Keep the one with higher-priority status
+        if ((statusPriority[p.status] || 0) > (statusPriority[prev.status] || 0)) {
+          seen.set(p.user_id, p);
+        }
+        continue;
+      }
+      seen.set(p.user_id, p);
+    }
+    deduped.push(p);
+  }
+
+  // Replace any swapped entries
+  const result = deduped.map(p => p.user_id && seen.has(p.user_id) ? seen.get(p.user_id)! : p);
+
+  return NextResponse.json(result);
 }
 
 // POST — register a participant (guest or authenticated user joining)
@@ -87,14 +110,17 @@ export async function POST(
     role?: string;
   };
 
-  // Check if participant already exists
+  // Check if participant already exists (use limit(1) — .single() fails on multiple rows)
   if (userId) {
-    const { data: existing } = await serviceClient
+    const { data: existingRows } = await serviceClient
       .from('call_participants')
       .select('id, status')
       .eq('call_id', call.id)
       .eq('user_id', userId)
-      .single();
+      .order('created_at', { ascending: true })
+      .limit(1);
+
+    const existing = existingRows?.[0] || null;
 
     if (existing) {
       // Update status to in_call if they were invited/left
@@ -105,18 +131,28 @@ export async function POST(
           .update({ status: newStatus === 'invited' ? 'in_call' : newStatus, joined_at: new Date().toISOString() })
           .eq('id', existing.id);
       }
+
+      // Clean up any duplicate rows for this user
+      if (existingRows && existingRows.length > 1) {
+        const dupeIds = existingRows.slice(1).map(r => r.id);
+        await serviceClient.from('call_participants').delete().in('id', dupeIds);
+      }
+
       return NextResponse.json({ ...existing, status: newStatus === 'invited' ? 'in_call' : existing.status });
     }
   }
 
   // Check for existing guest by email
   if (guestEmail) {
-    const { data: existing } = await serviceClient
+    const { data: existingRows } = await serviceClient
       .from('call_participants')
       .select('id, status')
       .eq('call_id', call.id)
       .eq('guest_email', guestEmail)
-      .single();
+      .order('created_at', { ascending: true })
+      .limit(1);
+
+    const existing = existingRows?.[0] || null;
 
     if (existing) {
       return NextResponse.json(existing);
