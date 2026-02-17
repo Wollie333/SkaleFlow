@@ -127,7 +127,7 @@ export function OffersPanel({
         <p className="text-white/40 text-xs mt-0.5">Present an offer to specific attendees</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      <div className="flex-1 overflow-y-auto scrollbar-dark p-3 space-y-3">
         {loading ? (
           <div className="text-center py-8">
             <div className="w-5 h-5 border-2 border-white/20 border-t-teal rounded-full animate-spin mx-auto" />

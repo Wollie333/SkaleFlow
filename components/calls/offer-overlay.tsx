@@ -170,7 +170,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
       <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" onClick={handleMinimize} />
 
       <div
-        className={`relative w-[60vw] min-w-[360px] max-w-3xl max-h-[90vh] overflow-y-auto bg-[#1A2F2D] border border-white/10 rounded-2xl shadow-2xl shadow-black/40 transition-all duration-300 ${
+        className={`relative w-[60vw] min-w-[360px] max-w-3xl max-h-[90vh] overflow-y-auto bg-[#1A2F2D] border border-white/10 rounded-2xl shadow-2xl shadow-black/40 transition-all duration-300 scrollbar-dark ${
           animating === 'expanding' ? 'animate-scale-in' : ''
         }`}
       >
