@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { CALL_TYPE_LABELS, CALL_STATUS_LABELS, CALL_STATUS_COLORS, formatDuration } from '@/lib/calls/helpers';
 import type { CallType, CallStatus } from '@/types/database';
+import CallsPageClient from './calls-page-client';
 
 export default async function CallsPage() {
   const supabase = await createClient();
@@ -62,12 +63,7 @@ export default async function CallsPage() {
           >
             Recordings
           </Link>
-          <Link
-            href="/calls/new"
-            className="px-4 py-2 text-sm font-medium text-dark bg-gold rounded-lg hover:bg-gold/90 transition-colors"
-          >
-            New Call
-          </Link>
+          <CallsPageClient />
         </div>
       </div>
 

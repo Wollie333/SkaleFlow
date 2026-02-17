@@ -74,6 +74,41 @@ export async function getAvailableSlots(
     conflicts.push({ start, end });
   }
 
+  // 3b. Check Google Calendar busy times for org owner
+  try {
+    const { data: ownerMember } = await supabase
+      .from('org_members')
+      .select('user_id')
+      .eq('organization_id', orgId)
+      .eq('role', 'owner')
+      .single();
+
+    if (ownerMember) {
+      const { data: googleIntegration } = await supabase
+        .from('google_integrations')
+        .select('id')
+        .eq('user_id', ownerMember.user_id)
+        .single();
+
+      if (googleIntegration) {
+        const { getAvailability } = await import('@/lib/google-calendar');
+        const busySlots = await getAvailability({
+          userId: ownerMember.user_id,
+          startDate,
+          endDate,
+        });
+        for (const slot of busySlots) {
+          conflicts.push({
+            start: new Date(slot.start),
+            end: new Date(slot.end),
+          });
+        }
+      }
+    }
+  } catch {
+    // If Google Calendar check fails, proceed with internal conflicts only
+  }
+
   // 4. Generate available slots
   const slots: TimeSlot[] = [];
   const current = new Date(startDate);

@@ -67,6 +67,7 @@ export async function GET() {
       members: members || [],
       pendingInvites: pendingInvites || [],
       userRole: membership.role,
+      organizationId: org.id,
       organizationName: org.name,
     });
   } catch (error) {

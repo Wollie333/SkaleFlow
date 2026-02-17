@@ -72,5 +72,56 @@ export async function POST(request: NextRequest) {
     invite_method: 'direct',
   });
 
+  // Add guest as participant if provided
+  if (body.guestName && body.guestEmail) {
+    await supabase.from('call_participants').insert({
+      call_id: data.id,
+      guest_name: body.guestName,
+      guest_email: body.guestEmail,
+      role: 'guest',
+      status: 'invited',
+      invite_method: 'calendar',
+    });
+  }
+
+  // Add team members as participants
+  if (body.teamMemberIds && Array.isArray(body.teamMemberIds)) {
+    for (const teamUserId of body.teamMemberIds) {
+      if (teamUserId === user.id) continue; // skip host, already added
+      await supabase.from('call_participants').insert({
+        call_id: data.id,
+        user_id: teamUserId,
+        role: 'team_member',
+        status: 'invited',
+        invite_method: 'direct',
+      });
+    }
+  }
+
+  // Create Google Calendar event if connected
+  try {
+    const { createMeetingEvent } = await import('@/lib/google-calendar');
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const gcalResult = await createMeetingEvent({
+      userId: user.id,
+      summary: data.title,
+      startTime: data.scheduled_start || new Date().toISOString(),
+      durationMinutes: data.scheduled_duration_min || 30,
+      attendeeEmail: body.guestEmail || '',
+      description: `SkaleFlow Call\nJoin: ${siteUrl}/call/${roomCode}`,
+    });
+    await supabase
+      .from('calls')
+      .update({
+        google_event_id: gcalResult.eventId,
+        meet_link: gcalResult.meetLink,
+      })
+      .eq('id', data.id);
+    data.google_event_id = gcalResult.eventId;
+    data.meet_link = gcalResult.meetLink;
+  } catch {
+    // Don't fail call creation if Google Calendar fails
+  }
+
   return NextResponse.json(data, { status: 201 });
 }

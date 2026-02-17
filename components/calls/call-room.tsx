@@ -6,6 +6,8 @@ import { AttendeesPanel } from './attendees-panel';
 import { CopilotPanel } from './copilot-panel';
 import { TranscriptPanel } from './transcript-panel';
 import { ControlsBar } from './controls-bar';
+import { OffersPanel } from './offers-panel';
+import { OfferOverlay } from './offer-overlay';
 import { CallSignaling } from '@/lib/calls/signaling';
 import { CallRecorder, uploadRecording } from '@/lib/calls/recording';
 import { TranscriptionManager } from '@/lib/calls/transcription';
@@ -22,7 +24,7 @@ interface CallRoomProps {
   showOpenInTab?: boolean;
 }
 
-export type PanelView = 'copilot' | 'transcript' | 'attendees' | 'none';
+export type PanelView = 'copilot' | 'transcript' | 'attendees' | 'offers' | 'none';
 
 export interface Participant {
   id: string;
@@ -72,6 +74,14 @@ export function CallRoom({
   const [isRecordingRemote, setIsRecordingRemote] = useState(false); // non-host: remote recording indicator
   const [callActive, setCallActive] = useState(false);
   const [callElapsed, setCallElapsed] = useState(0);
+
+  // Offer presentation state
+  const [presentedOfferId, setPresentedOfferId] = useState<string | null>(null);
+  const [presentedOffer, setPresentedOffer] = useState<{
+    id: string; name: string; description: string | null; tier: string | null;
+    price_display: string | null; price_value: number | null; currency: string;
+    billing_frequency: string | null; deliverables: string[]; value_propositions: string[];
+  } | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const participantIdRef = useRef<string | null>(null);
@@ -189,6 +199,31 @@ export function CallRoom({
     signaling.on('admit-participant', (msg) => {
       if (msg.payload.participantId === participantIdRef.current) {
         // Participant was admitted — no further action needed, polling will pick up status
+      }
+    });
+
+    // Handle offer presented (guest/team side — show overlay)
+    signaling.on('offer-presented', (msg) => {
+      if (!isHost) {
+        const offer = msg.payload.offer as typeof presentedOffer;
+        if (offer) setPresentedOffer(offer);
+      }
+    });
+
+    // Handle offer dismissed (guest/team side — hide overlay)
+    signaling.on('offer-dismissed', () => {
+      if (!isHost) {
+        setPresentedOffer(null);
+      }
+    });
+
+    // Handle offer accepted (host side — notification)
+    signaling.on('offer-accepted', (msg) => {
+      if (isHost) {
+        const name = msg.payload.guestName || 'Attendee';
+        const offerName = msg.payload.offerName || 'an offer';
+        // Show a brief flash in the UI by setting then clearing
+        console.log(`[Offers] ${name} accepted ${offerName}`);
       }
     });
 
@@ -406,6 +441,64 @@ export function CallRoom({
     }
   }, [roomCode]);
 
+  // Present offer to attendees (host side)
+  const presentOffer = useCallback((offer: Record<string, unknown>) => {
+    const offerData = {
+      id: offer.id as string,
+      name: offer.name as string,
+      description: offer.description as string | null,
+      tier: offer.tier as string | null,
+      price_display: offer.price_display as string | null,
+      price_value: offer.price_value as number | null,
+      currency: offer.currency as string,
+      billing_frequency: offer.billing_frequency as string | null,
+      deliverables: Array.isArray(offer.deliverables) ? offer.deliverables as string[] : [],
+      value_propositions: Array.isArray(offer.value_propositions) ? offer.value_propositions as string[] : [],
+    };
+    setPresentedOfferId(offerData.id);
+    signalingRef.current?.send('offer-presented', { offer: offerData });
+  }, []);
+
+  // Dismiss offer (host can dismiss, or guest can dismiss their overlay)
+  const dismissOffer = useCallback(() => {
+    if (isHost) {
+      setPresentedOfferId(null);
+      signalingRef.current?.send('offer-dismissed', {});
+    } else {
+      setPresentedOffer(null);
+    }
+  }, [isHost]);
+
+  // Accept offer (guest side)
+  const acceptOffer = useCallback(async () => {
+    if (!presentedOffer) return;
+
+    // Notify host via signaling
+    signalingRef.current?.send('offer-accepted', {
+      offerId: presentedOffer.id,
+      offerName: presentedOffer.name,
+      guestName: guestName || 'Attendee',
+      guestEmail: guestEmail || '',
+    });
+
+    // Record acceptance via API
+    try {
+      await fetch(`/api/calls/${roomCode}/offer-accepted`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          offerId: presentedOffer.id,
+          guestName: guestName || undefined,
+          guestEmail: guestEmail || undefined,
+        }),
+      });
+    } catch {
+      // Non-blocking
+    }
+
+    setPresentedOffer(null);
+  }, [presentedOffer, guestName, guestEmail, roomCode]);
+
   const endCall = useCallback(async () => {
     // Stop transcription
     if (transcriptionRef.current) {
@@ -478,7 +571,7 @@ export function CallRoom({
           )}
         </div>
         <div className="flex items-center gap-2">
-          {(isHost ? ['attendees', 'copilot', 'transcript'] : ['attendees']).map((panel) => (
+          {(isHost ? ['attendees', 'copilot', 'transcript', 'offers'] : ['attendees']).map((panel) => (
             <button
               key={panel}
               onClick={() => setActivePanel(activePanel === panel ? 'none' : panel as PanelView)}
@@ -519,6 +612,15 @@ export function CallRoom({
             callActive={callActive}
             onStartMedia={startMedia}
           />
+
+          {/* Offer overlay — shown to guests when host presents an offer */}
+          {!isHost && presentedOffer && (
+            <OfferOverlay
+              offer={presentedOffer}
+              onAccept={acceptOffer}
+              onDismiss={dismissOffer}
+            />
+          )}
 
           {/* Floating live caption — always visible when host is in call */}
           {isHost && callActive && transcripts.length > 0 && (
@@ -561,6 +663,12 @@ export function CallRoom({
                 transcripts={transcripts}
               />
             )}
+            {activePanel === 'offers' && isHost && (
+              <OffersPanel
+                onPresentOffer={presentOffer}
+                presentedOfferId={presentedOfferId}
+              />
+            )}
           </div>
         )}
       </div>
@@ -579,6 +687,8 @@ export function CallRoom({
         onToggleRecording={toggleRecording}
         onFlag={flagTranscript}
         onEndCall={endCall}
+        onToggleOffers={() => setActivePanel(activePanel === 'offers' ? 'none' : 'offers')}
+        isOffersOpen={activePanel === 'offers'}
       />
     </div>
   );

@@ -26,6 +26,24 @@ export async function PATCH(
 
   const body = await request.json();
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+
+  // Map camelCase keys from the editor to snake_case DB columns
+  const camelToSnake: Record<string, string> = {
+    priceDisplay: 'price_display',
+    priceValue: 'price_value',
+    billingFrequency: 'billing_frequency',
+    idealClientProfile: 'ideal_client_profile',
+    valuePropositions: 'value_propositions',
+    commonObjections: 'common_objections',
+    roiFraming: 'roi_framing',
+    comparisonPoints: 'comparison_points',
+    sortOrder: 'sort_order',
+    isActive: 'is_active',
+  };
+  for (const [camel, snake] of Object.entries(camelToSnake)) {
+    if (body[camel] !== undefined) body[snake] = body[camel];
+  }
+
   const allowed = ['name', 'description', 'tier', 'price_display', 'price_value', 'currency', 'billing_frequency', 'deliverables', 'ideal_client_profile', 'value_propositions', 'common_objections', 'roi_framing', 'comparison_points', 'is_active', 'sort_order', 'source'];
   for (const k of allowed) {
     if (body[k] !== undefined) updates[k] = body[k];

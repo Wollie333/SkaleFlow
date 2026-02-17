@@ -6446,6 +6446,8 @@ export interface Database {
           crm_deal_id: string | null;
           call_number: number;
           previous_call_id: string | null;
+          google_event_id: string | null;
+          meet_link: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -6470,6 +6472,8 @@ export interface Database {
           crm_deal_id?: string | null;
           call_number?: number;
           previous_call_id?: string | null;
+          google_event_id?: string | null;
+          meet_link?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -6494,6 +6498,8 @@ export interface Database {
           crm_deal_id?: string | null;
           call_number?: number;
           previous_call_id?: string | null;
+          google_event_id?: string | null;
+          meet_link?: string | null;
           created_at?: string;
           updated_at?: string;
         };

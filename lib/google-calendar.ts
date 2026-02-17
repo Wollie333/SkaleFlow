@@ -190,3 +190,47 @@ export async function createMeetingEvent({
     meetLink: meetLink || null,
   };
 }
+
+export async function deleteCalendarEvent(userId: string, eventId: string) {
+  const { oauth2Client, calendarId } = await getAuthenticatedClient(userId);
+  const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+  await calendar.events.delete({
+    calendarId,
+    eventId,
+  });
+}
+
+export async function updateCalendarEvent(
+  userId: string,
+  eventId: string,
+  { startTime, durationMinutes, summary }: {
+    startTime?: string;
+    durationMinutes?: number;
+    summary?: string;
+  }
+) {
+  const { oauth2Client, calendarId } = await getAuthenticatedClient(userId);
+  const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+  const requestBody: Record<string, unknown> = {};
+
+  if (summary) {
+    requestBody.summary = summary;
+  }
+
+  if (startTime) {
+    const start = new Date(startTime);
+    requestBody.start = { dateTime: start.toISOString() };
+    if (durationMinutes) {
+      const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
+      requestBody.end = { dateTime: end.toISOString() };
+    }
+  }
+
+  await calendar.events.patch({
+    calendarId,
+    eventId,
+    requestBody,
+  });
+}

@@ -22,10 +22,16 @@ export async function PATCH(
     .from('call_bookings')
     .update(updates)
     .eq('id', id)
-    .select()
+    .select('*, calls(google_event_id, host_user_id, scheduled_duration_min)')
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const linkedCall = data?.call_id ? (data as Record<string, unknown>).calls as {
+    google_event_id: string | null;
+    host_user_id: string;
+    scheduled_duration_min: number;
+  } | null : null;
 
   // If rescheduled, update the linked call too
   if (scheduledTime && data?.call_id) {
@@ -33,6 +39,19 @@ export async function PATCH(
       .from('calls')
       .update({ scheduled_start: scheduledTime, updated_at: new Date().toISOString() })
       .eq('id', data.call_id);
+
+    // Update Google Calendar event
+    if (linkedCall?.google_event_id) {
+      try {
+        const { updateCalendarEvent } = await import('@/lib/google-calendar');
+        await updateCalendarEvent(linkedCall.host_user_id, linkedCall.google_event_id, {
+          startTime: scheduledTime,
+          durationMinutes: linkedCall.scheduled_duration_min || 30,
+        });
+      } catch {
+        console.error('Failed to update Google Calendar event');
+      }
+    }
   }
 
   // If cancelled, cancel the linked call too
@@ -41,6 +60,16 @@ export async function PATCH(
       .from('calls')
       .update({ call_status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', data.call_id);
+
+    // Delete Google Calendar event
+    if (linkedCall?.google_event_id) {
+      try {
+        const { deleteCalendarEvent } = await import('@/lib/google-calendar');
+        await deleteCalendarEvent(linkedCall.host_user_id, linkedCall.google_event_id);
+      } catch {
+        console.error('Failed to delete Google Calendar event');
+      }
+    }
   }
 
   return NextResponse.json(data);

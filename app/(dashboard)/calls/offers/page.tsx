@@ -25,6 +25,7 @@ export default function OffersPage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Offer | null>(null);
   const [creating, setCreating] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     loadOffers();
@@ -67,12 +68,28 @@ export default function OffersPage() {
           <h1 className="text-2xl font-serif font-bold text-charcoal">Offers</h1>
           <p className="text-sm text-stone mt-1">Structured offers synced to your Brand Engine for AI sales coaching</p>
         </div>
-        <button
-          onClick={() => setCreating(true)}
-          className="px-4 py-2 text-sm font-medium text-dark bg-gold rounded-lg hover:bg-gold/90"
-        >
-          New Offer
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              setSyncing(true);
+              try {
+                await fetch('/api/calls/offers/sync', { method: 'POST' });
+                await loadOffers();
+              } catch { /* ignore */ }
+              setSyncing(false);
+            }}
+            disabled={syncing}
+            className="px-4 py-2 text-sm font-medium text-teal bg-teal/10 border border-teal/20 rounded-lg hover:bg-teal/20 disabled:opacity-50"
+          >
+            {syncing ? 'Syncing...' : 'Sync from Brand Engine'}
+          </button>
+          <button
+            onClick={() => setCreating(true)}
+            className="px-4 py-2 text-sm font-medium text-dark bg-gold rounded-lg hover:bg-gold/90"
+          >
+            New Offer
+          </button>
+        </div>
       </div>
 
       {loading ? (

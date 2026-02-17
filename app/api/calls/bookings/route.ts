@@ -167,6 +167,32 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Create Google Calendar event for org owner
+  if (call && owner?.user_id) {
+    try {
+      const { createMeetingEvent } = await import('@/lib/google-calendar');
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+      const gcalResult = await createMeetingEvent({
+        userId: owner.user_id,
+        summary: `${page.title} with ${guestName}`,
+        startTime: scheduledTime,
+        durationMinutes: durationMin || 30,
+        attendeeEmail: guestEmail,
+        description: `SkaleFlow Call\nJoin: ${siteUrl}/call/${roomCode}`,
+      });
+      await supabase
+        .from('calls')
+        .update({
+          google_event_id: gcalResult.eventId,
+          meet_link: gcalResult.meetLink,
+        })
+        .eq('id', call.id);
+    } catch {
+      // Don't fail booking if Google Calendar fails
+      console.error('Failed to create Google Calendar event for booking');
+    }
+  }
+
   // Notify org admins
   const { notifyOrgAdmins } = await import('@/lib/notifications');
   await notifyOrgAdmins(
