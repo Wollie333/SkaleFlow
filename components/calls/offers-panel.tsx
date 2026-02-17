@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Participant } from './call-room';
 
 export interface Offer {
@@ -29,6 +29,12 @@ export interface OfferResponse {
 // Map of offerId -> participantId -> response
 export type OfferResponseMap = Record<string, Record<string, OfferResponse>>;
 
+// Live price override for an offer
+interface PriceOverride {
+  price_display: string;
+  price_value: number;
+}
+
 interface OffersPanelProps {
   onPresentOffer: (offer: Offer, targetParticipantIds: string[]) => void;
   onDismissOffer: () => void;
@@ -45,6 +51,12 @@ export function OffersPanel({
   // Attendee selector state: offerId -> Set of selected participant IDs
   const [selectedTargets, setSelectedTargets] = useState<Record<string, Set<string>>>({});
   const [expandedSelector, setExpandedSelector] = useState<string | null>(null);
+  // Live price edit state
+  const [priceOverrides, setPriceOverrides] = useState<Record<string, PriceOverride>>({});
+  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
+  const [editPriceValue, setEditPriceValue] = useState('');
+  const [editPriceDisplay, setEditPriceDisplay] = useState('');
+  const priceInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch('/api/calls/offers')
@@ -55,6 +67,14 @@ export function OffersPanel({
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Focus input when price editor opens
+  useEffect(() => {
+    if (editingPriceId && priceInputRef.current) {
+      priceInputRef.current.focus();
+      priceInputRef.current.select();
+    }
+  }, [editingPriceId]);
 
   // Attendees who can receive offers (in_call, not host)
   const eligibleAttendees = participants.filter(
@@ -78,11 +98,57 @@ export function OffersPanel({
     }));
   };
 
+  // Get the effective offer with any price override applied
+  const getEffectiveOffer = (offer: Offer): Offer => {
+    const override = priceOverrides[offer.id];
+    if (!override) return offer;
+    return {
+      ...offer,
+      price_display: override.price_display,
+      price_value: override.price_value,
+    };
+  };
+
   const handlePresent = (offer: Offer) => {
+    const effective = getEffectiveOffer(offer);
     const targets = selectedTargets[offer.id];
     const ids = targets ? Array.from(targets) : eligibleAttendees.map(p => p.id);
-    onPresentOffer(offer, ids);
+    onPresentOffer(effective, ids);
     setExpandedSelector(null);
+  };
+
+  // Open price editor
+  const openPriceEditor = (offer: Offer) => {
+    const effective = getEffectiveOffer(offer);
+    setEditingPriceId(offer.id);
+    setEditPriceValue(String(effective.price_value || ''));
+    setEditPriceDisplay(effective.price_display || '');
+  };
+
+  // Save price override
+  const savePriceOverride = () => {
+    if (!editingPriceId) return;
+    const numericValue = parseFloat(editPriceValue);
+    if (isNaN(numericValue) || !editPriceDisplay.trim()) return;
+
+    setPriceOverrides(prev => ({
+      ...prev,
+      [editingPriceId]: {
+        price_display: editPriceDisplay.trim(),
+        price_value: numericValue,
+      },
+    }));
+    setEditingPriceId(null);
+  };
+
+  // Reset price to original
+  const resetPrice = (offerId: string) => {
+    setPriceOverrides(prev => {
+      const next = { ...prev };
+      delete next[offerId];
+      return next;
+    });
+    setEditingPriceId(null);
   };
 
   const deliverablesList = (offer: Offer): string[] => {
@@ -93,7 +159,6 @@ export function OffersPanel({
   // Determine the aggregate status for an offer's card color
   const getOfferCardStatus = (offerId: string): 'idle' | 'presented' | 'accepted' | 'declined' | 'minimized' => {
     if (presentedOfferId !== offerId) {
-      // Check if there are any past responses
       const responses = offerResponses[offerId];
       if (!responses) return 'idle';
       const values = Object.values(responses);
@@ -102,7 +167,6 @@ export function OffersPanel({
       if (values.some(r => r.status === 'minimized')) return 'minimized';
       return 'idle';
     }
-    // Currently presented — check responses
     const responses = offerResponses[offerId];
     if (!responses) return 'presented';
     const values = Object.values(responses);
@@ -141,11 +205,14 @@ export function OffersPanel({
           </div>
         ) : (
           offers.map(offer => {
+            const effective = getEffectiveOffer(offer);
             const status = getOfferCardStatus(offer.id);
             const isPresented = presentedOfferId === offer.id;
             const items = deliverablesList(offer);
             const responses = offerResponses[offer.id];
             const isSelectorOpen = expandedSelector === offer.id;
+            const hasOverride = !!priceOverrides[offer.id];
+            const isEditingThis = editingPriceId === offer.id;
 
             return (
               <div
@@ -170,16 +237,91 @@ export function OffersPanel({
                         </svg>
                       </span>
                     )}
-                    {offer.price_display && (
-                      <span className="text-gold text-sm font-semibold whitespace-nowrap">
-                        {offer.price_display}
-                        {offer.billing_frequency && (
-                          <span className="text-white/30 text-xs font-normal">/{offer.billing_frequency}</span>
+                    {effective.price_display && (
+                      <button
+                        onClick={() => openPriceEditor(offer)}
+                        className="group relative text-gold text-sm font-semibold whitespace-nowrap hover:bg-white/10 rounded px-1.5 py-0.5 -mr-1.5 transition-colors"
+                        title="Click to edit price"
+                      >
+                        {effective.price_display}
+                        {effective.billing_frequency && (
+                          <span className="text-white/30 text-xs font-normal">/{effective.billing_frequency}</span>
                         )}
-                      </span>
+                        {/* Edit pencil icon */}
+                        <svg className="w-2.5 h-2.5 text-white/30 group-hover:text-gold inline-block ml-1 -mt-0.5 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        {hasOverride && (
+                          <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-gold" />
+                        )}
+                      </button>
                     )}
                   </div>
                 </div>
+
+                {/* Inline price editor */}
+                {isEditingThis && (
+                  <div className="mt-2 p-3 bg-white/5 rounded-lg border border-gold/30 space-y-2.5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <svg className="w-3.5 h-3.5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                      <span className="text-gold text-xs font-medium">Edit Price</span>
+                    </div>
+                    <div>
+                      <label className="text-white/40 text-[10px] block mb-1">Display Price (e.g. R2,500)</label>
+                      <input
+                        ref={priceInputRef}
+                        type="text"
+                        value={editPriceDisplay}
+                        onChange={(e) => setEditPriceDisplay(e.target.value)}
+                        placeholder="R2,500"
+                        className="w-full px-2.5 py-1.5 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-gold/50"
+                        onKeyDown={(e) => { if (e.key === 'Enter') savePriceOverride(); if (e.key === 'Escape') setEditingPriceId(null); }}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-white/40 text-[10px] block mb-1">Numeric Value</label>
+                      <input
+                        type="number"
+                        value={editPriceValue}
+                        onChange={(e) => setEditPriceValue(e.target.value)}
+                        placeholder="2500"
+                        className="w-full px-2.5 py-1.5 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-gold/50"
+                        onKeyDown={(e) => { if (e.key === 'Enter') savePriceOverride(); if (e.key === 'Escape') setEditingPriceId(null); }}
+                      />
+                    </div>
+                    {hasOverride && offer.price_display && (
+                      <p className="text-white/30 text-[10px]">
+                        Original: <span className="line-through">{offer.price_display}</span>
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setEditingPriceId(null)}
+                        className="flex-1 py-1.5 rounded text-xs font-medium border border-white/10 text-white/50 hover:bg-white/5 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      {hasOverride && (
+                        <button
+                          onClick={() => resetPrice(offer.id)}
+                          className="py-1.5 px-2.5 rounded text-xs font-medium border border-white/10 text-white/40 hover:bg-white/5 transition-colors"
+                          title="Reset to original price"
+                        >
+                          Reset
+                        </button>
+                      )}
+                      <button
+                        onClick={savePriceOverride}
+                        disabled={!editPriceDisplay.trim() || isNaN(parseFloat(editPriceValue))}
+                        className="flex-1 py-1.5 rounded text-xs font-medium bg-gold text-dark hover:bg-gold/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Save Price
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {offer.description && (
                   <p className="text-white/50 text-xs mt-1 line-clamp-2">{offer.description}</p>
@@ -284,7 +426,7 @@ export function OffersPanel({
                 )}
 
                 {/* Action buttons */}
-                {!isSelectorOpen && (
+                {!isSelectorOpen && !isEditingThis && (
                   <>
                     {isPresented ? (
                       <div className="mt-3 flex gap-2">
