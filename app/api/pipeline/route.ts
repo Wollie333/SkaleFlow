@@ -47,6 +47,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Only owners and admins can create pipelines' }, { status: 403 });
   }
 
+  // Check 2-pipeline limit
+  const { count } = await supabase
+    .from('pipelines')
+    .select('id', { count: 'exact', head: true })
+    .eq('organization_id', organizationId);
+
+  if ((count ?? 0) >= 2) {
+    return NextResponse.json({ error: 'Pipeline limit reached. You can have a maximum of 2 pipelines.' }, { status: 400 });
+  }
+
   // Create pipeline
   const { data: pipeline, error } = await supabase
     .from('pipelines')

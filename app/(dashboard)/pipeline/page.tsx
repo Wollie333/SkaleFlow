@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
-import { PlusIcon, FunnelIcon, UsersIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, FunnelIcon, UsersIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { PageHeader } from '@/components/ui';
 import { CreatePipelineModal } from '@/components/pipeline/create-pipeline-modal';
 import type { Database } from '@/types/database';
+
+const MAX_PIPELINES = 2;
 
 interface Pipeline {
   id: string;
@@ -28,6 +30,7 @@ export default function PipelineListPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const supabase = createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -70,8 +73,33 @@ export default function PipelineListPage() {
     if (response.ok) {
       const pipeline = await response.json();
       router.push(`/pipeline/${pipeline.id}`);
+    } else {
+      const err = await response.json();
+      alert(err.error || 'Failed to create pipeline');
     }
   };
+
+  const handleDelete = async (e: React.MouseEvent, pipelineId: string, pipelineName: string) => {
+    e.stopPropagation();
+    if (!confirm(`Delete "${pipelineName}"? All contacts, stages, and automations in this pipeline will be permanently removed.`)) return;
+
+    setDeleting(pipelineId);
+    try {
+      const res = await fetch(`/api/pipeline/${pipelineId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setPipelines(prev => prev.filter(p => p.id !== pipelineId));
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Failed to delete pipeline');
+      }
+    } catch {
+      alert('Network error. Please try again.');
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  const atLimit = pipelines.length >= MAX_PIPELINES;
 
   if (loading) {
     return (
@@ -86,11 +114,13 @@ export default function PipelineListPage() {
       <PageHeader
         title="Pipelines"
         icon={FunnelIcon}
-        subtitle="Manage your sales pipelines and contacts"
+        subtitle={`Manage your sales pipelines and contacts (${pipelines.length}/${MAX_PIPELINES})`}
         action={
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-dark bg-gold hover:bg-gold/90 rounded-lg transition-colors shadow-sm"
+            disabled={atLimit}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-dark bg-gold hover:bg-gold/90 rounded-lg transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+            title={atLimit ? `Maximum of ${MAX_PIPELINES} pipelines reached` : undefined}
           >
             <PlusIcon className="w-4 h-4" />
             New Pipeline
@@ -115,20 +145,30 @@ export default function PipelineListPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {pipelines.map((pipeline) => (
-            <button
+            <div
               key={pipeline.id}
               onClick={() => router.push(`/pipeline/${pipeline.id}`)}
-              className="text-left bg-white rounded-xl border border-stone/10 p-5 hover:border-teal/20 hover:shadow-md transition-all group"
+              className="text-left bg-white rounded-xl border border-stone/10 p-5 hover:border-teal/20 hover:shadow-md transition-all group cursor-pointer relative"
             >
               <div className="flex items-start justify-between">
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="font-serif font-semibold text-charcoal group-hover:text-teal transition-colors">{pipeline.name}</h3>
                   {pipeline.description && (
                     <p className="text-sm text-stone mt-1 line-clamp-2">{pipeline.description}</p>
                   )}
                 </div>
-                <div className="w-8 h-8 rounded-lg bg-teal/10 flex items-center justify-center flex-shrink-0">
-                  <FunnelIcon className="w-4 h-4 text-teal" />
+                <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                  <button
+                    onClick={(e) => handleDelete(e, pipeline.id, pipeline.name)}
+                    disabled={deleting === pipeline.id}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 text-stone hover:text-red-500 hover:bg-red-50 transition-all disabled:opacity-50"
+                    title="Delete pipeline"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+                  <div className="w-8 h-8 rounded-lg bg-teal/10 flex items-center justify-center">
+                    <FunnelIcon className="w-4 h-4 text-teal" />
+                  </div>
                 </div>
               </div>
 
@@ -156,7 +196,7 @@ export default function PipelineListPage() {
                     ))}
                 </div>
               )}
-            </button>
+            </div>
           ))}
         </div>
       )}
