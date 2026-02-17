@@ -15,12 +15,16 @@ interface ControlsBarProps {
   onEndCall: () => void;
   onToggleOffers?: () => void;
   isOffersOpen?: boolean;
+  onOpenSettings?: () => void;
+  onToggleCaptions?: () => void;
+  isCaptionsOn?: boolean;
 }
 
 export function ControlsBar({
   isMuted, isCameraOff, isScreenSharing, isRecording, callActive,
   isHost, onToggleMute, onToggleCamera, onToggleScreenShare,
-  onToggleRecording, onFlag, onEndCall, onToggleOffers, isOffersOpen,
+  onToggleRecording, onFlag, onEndCall, onToggleOffers, isOffersOpen, onOpenSettings,
+  onToggleCaptions, isCaptionsOn,
 }: ControlsBarProps) {
   if (!callActive) return null;
 
@@ -77,6 +81,36 @@ export function ControlsBar({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
         </svg>
       </button>
+
+      {/* Captions toggle */}
+      {onToggleCaptions && (
+        <button
+          onClick={onToggleCaptions}
+          className={`p-3 rounded-full transition-colors ${
+            isCaptionsOn ? 'bg-[#1E6B63] text-white' : 'bg-white/10 text-white/50 hover:bg-white/20'
+          }`}
+          title={isCaptionsOn ? 'Hide captions' : 'Show captions'}
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="2" y="4" width="20" height="16" rx="2" strokeWidth={2} />
+            <text x="12" y="15" textAnchor="middle" fontSize="8" fontWeight="bold" fill="currentColor" stroke="none">CC</text>
+          </svg>
+        </button>
+      )}
+
+      {/* Settings */}
+      {onOpenSettings && (
+        <button
+          onClick={onOpenSettings}
+          className="p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+          title="Device settings"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+      )}
 
       {/* Record (host only) */}
       {isHost && (

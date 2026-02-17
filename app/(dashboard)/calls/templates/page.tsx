@@ -23,9 +23,16 @@ export default async function TemplatesPage() {
 
   const isAdmin = member?.role === 'owner' || member?.role === 'admin';
 
+  // Coerce Json fields to arrays for the client component
+  const safeTemplates = (templates || []).map(t => ({
+    ...t,
+    phases: Array.isArray(t.phases) ? t.phases : [],
+    objection_bank: Array.isArray(t.objection_bank) ? t.objection_bank : [],
+  }));
+
   return (
     <TemplatesListClient
-      templates={templates || []}
+      templates={safeTemplates}
       isAdmin={isAdmin}
     />
   );

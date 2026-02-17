@@ -6,8 +6,9 @@ import { AttendeesPanel } from './attendees-panel';
 import { CopilotPanel } from './copilot-panel';
 import { TranscriptPanel } from './transcript-panel';
 import { ControlsBar } from './controls-bar';
-import { OffersPanel } from './offers-panel';
+import { OffersPanel, type Offer } from './offers-panel';
 import { OfferOverlay } from './offer-overlay';
+import { DeviceSettings } from './device-settings';
 import { CallSignaling } from '@/lib/calls/signaling';
 import { CallRecorder, uploadRecording } from '@/lib/calls/recording';
 import { TranscriptionManager } from '@/lib/calls/transcription';
@@ -24,7 +25,7 @@ interface CallRoomProps {
   showOpenInTab?: boolean;
 }
 
-export type PanelView = 'copilot' | 'transcript' | 'attendees' | 'offers' | 'none';
+export type PanelView = 'copilot' | 'transcript' | 'attendees' | 'offers' | 'insights' | 'none';
 
 export interface Participant {
   id: string;
@@ -63,7 +64,7 @@ export type RecordingState = 'idle' | 'recording' | 'stopping';
 export function CallRoom({
   roomCode, callId, callTitle, organizationId, userId, isHost, guestName, guestEmail, showOpenInTab
 }: CallRoomProps) {
-  const [activePanel, setActivePanel] = useState<PanelView>(isHost ? 'copilot' : 'attendees');
+  const [activePanel, setActivePanel] = useState<PanelView>(isHost ? 'insights' : 'attendees');
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [transcripts, setTranscripts] = useState<TranscriptChunk[]>([]);
   const [guidance, setGuidance] = useState<GuidanceItem[]>([]);
@@ -74,6 +75,9 @@ export function CallRoom({
   const [isRecordingRemote, setIsRecordingRemote] = useState(false); // non-host: remote recording indicator
   const [callActive, setCallActive] = useState(false);
   const [callElapsed, setCallElapsed] = useState(0);
+
+  const [showDeviceSettings, setShowDeviceSettings] = useState(false);
+  const [showCaptions, setShowCaptions] = useState(true);
 
   // Offer presentation state
   const [presentedOfferId, setPresentedOfferId] = useState<string | null>(null);
@@ -238,6 +242,26 @@ export function CallRoom({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomCode, isHost, participantIdRef.current]);
 
+  // Save a final transcript chunk to the database
+  const saveTranscriptToDb = useCallback(async (speakerLabel: string, content: string, timestampStart: number) => {
+    if (!participantIdRef.current) return;
+    try {
+      await fetch(`/api/calls/${roomCode}/transcripts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          participantId: participantIdRef.current,
+          speakerLabel,
+          content,
+          timestampStart,
+          confidence: 1.0,
+        }),
+      });
+    } catch {
+      // Non-blocking — don't fail the call if transcript save fails
+    }
+  }, [roomCode]);
+
   // Start transcription when call is active (host only)
   useEffect(() => {
     if (!callActive || !isHost) return;
@@ -253,26 +277,34 @@ export function CallRoom({
 
       if (result.isFinal) {
         const finalId = `t-${++transcriptCounterRef.current}`;
+        const finalText = result.text;
         setTranscripts(prev => {
-          // Remove any interim entry, add final
+          // Remove interim entry
           const cleaned = interimId ? prev.filter(t => t.id !== interimId) : prev;
+          // Deduplicate: skip if the last entry has identical content
+          const last = cleaned[cleaned.length - 1];
+          if (last && last.content === finalText && last.speakerLabel === result.speakerLabel) {
+            return cleaned;
+          }
           return [...cleaned, {
             id: finalId,
             speakerLabel: result.speakerLabel,
-            content: result.text,
+            content: finalText,
             timestampStart: callElapsed,
             isFlagged: false,
           }];
         });
         interimId = null;
+
+        // Persist final transcript to database
+        saveTranscriptToDb(result.speakerLabel, finalText, callElapsed);
       } else {
-        // Interim result — update or append
+        // Interim result — update in-place (single interim slot)
         if (!interimId) {
           interimId = `t-interim-${++transcriptCounterRef.current}`;
         }
         const currentInterimId = interimId;
         setTranscripts(prev => {
-          const idx = prev.findIndex(t => t.id === currentInterimId);
           const chunk: TranscriptChunk = {
             id: currentInterimId,
             speakerLabel: result.speakerLabel,
@@ -280,6 +312,7 @@ export function CallRoom({
             timestampStart: callElapsed,
             isFlagged: false,
           };
+          const idx = prev.findIndex(t => t.id === currentInterimId);
           if (idx >= 0) {
             const updated = [...prev];
             updated[idx] = chunk;
@@ -347,6 +380,31 @@ export function CallRoom({
     }
   }, [isScreenSharing]);
 
+  // Switch media devices
+  const handleDeviceChange = useCallback(async (audioDeviceId: string | null, videoDeviceId: string | null) => {
+    try {
+      const constraints: MediaStreamConstraints = {};
+      if (audioDeviceId) constraints.audio = { deviceId: { exact: audioDeviceId } };
+      else constraints.audio = true;
+      if (videoDeviceId) constraints.video = { deviceId: { exact: videoDeviceId } };
+      else constraints.video = true;
+
+      const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      // Stop old tracks
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach(t => t.stop());
+      }
+
+      localStreamRef.current = newStream;
+      // Force re-render by toggling a state
+      setIsCameraOff(false);
+      setIsMuted(false);
+    } catch (err) {
+      console.error('Failed to switch devices:', err);
+    }
+  }, []);
+
   // Recording: admin clicks → starts immediately, broadcasts indicator
   const toggleRecording = useCallback(async () => {
     if (!isHost) return;
@@ -393,6 +451,8 @@ export function CallRoom({
       updated[updated.length - 1] = last;
       return updated;
     });
+    // Also flag the most recent transcript in the database
+    // (the flag will be picked up by the post-call summary pipeline)
   }, []);
 
   // Admit / Deny handlers
@@ -442,16 +502,16 @@ export function CallRoom({
   }, [roomCode]);
 
   // Present offer to attendees (host side)
-  const presentOffer = useCallback((offer: Record<string, unknown>) => {
+  const presentOffer = useCallback((offer: Offer) => {
     const offerData = {
-      id: offer.id as string,
-      name: offer.name as string,
-      description: offer.description as string | null,
-      tier: offer.tier as string | null,
-      price_display: offer.price_display as string | null,
-      price_value: offer.price_value as number | null,
-      currency: offer.currency as string,
-      billing_frequency: offer.billing_frequency as string | null,
+      id: offer.id,
+      name: offer.name,
+      description: offer.description,
+      tier: offer.tier,
+      price_display: offer.price_display,
+      price_value: offer.price_value,
+      currency: offer.currency,
+      billing_frequency: offer.billing_frequency,
       deliverables: Array.isArray(offer.deliverables) ? offer.deliverables as string[] : [],
       value_propositions: Array.isArray(offer.value_propositions) ? offer.value_propositions as string[] : [],
     };
@@ -551,8 +611,8 @@ export function CallRoom({
         <div className="flex items-center gap-3">
           <span className="text-white/80 text-sm font-medium">{displayName}</span>
           {callActive && (
-            <span className="flex items-center gap-1.5 text-red-400 text-sm">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="flex items-center gap-1.5 text-emerald-400 text-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               {formatTime(callElapsed)}
             </span>
           )}
@@ -571,7 +631,7 @@ export function CallRoom({
           )}
         </div>
         <div className="flex items-center gap-2">
-          {(isHost ? ['attendees', 'copilot', 'transcript', 'offers'] : ['attendees']).map((panel) => (
+          {(isHost ? ['attendees', 'insights', 'offers'] : ['attendees']).map((panel) => (
             <button
               key={panel}
               onClick={() => setActivePanel(activePanel === panel ? 'none' : panel as PanelView)}
@@ -607,6 +667,7 @@ export function CallRoom({
           <VideoPanel
             localStream={localStreamRef.current}
             participants={participants}
+            localUserId={userId || participantIdRef.current}
             isCameraOff={isCameraOff}
             isScreenSharing={isScreenSharing}
             callActive={callActive}
@@ -622,8 +683,8 @@ export function CallRoom({
             />
           )}
 
-          {/* Floating live caption — always visible when host is in call */}
-          {isHost && callActive && transcripts.length > 0 && (
+          {/* Floating live caption — visible when captions enabled */}
+          {callActive && showCaptions && transcripts.length > 0 && (
             <div className="absolute bottom-4 left-4 right-4 flex justify-center pointer-events-none">
               <div className="bg-black/70 backdrop-blur-sm rounded-lg px-4 py-2.5 max-w-[80%] pointer-events-auto">
                 <p className="text-white text-sm leading-relaxed text-center">
@@ -663,6 +724,22 @@ export function CallRoom({
                 transcripts={transcripts}
               />
             )}
+            {activePanel === 'insights' && (
+              <div className="flex flex-col h-full">
+                {/* Transcript — top half */}
+                <div className="flex-1 min-h-0 border-b border-white/10">
+                  <TranscriptPanel transcripts={transcripts} />
+                </div>
+                {/* Copilot — bottom half */}
+                <div className="flex-1 min-h-0">
+                  <CopilotPanel
+                    guidance={guidance}
+                    callActive={callActive}
+                    transcriptCount={transcripts.length}
+                  />
+                </div>
+              </div>
+            )}
             {activePanel === 'offers' && isHost && (
               <OffersPanel
                 onPresentOffer={presentOffer}
@@ -689,6 +766,17 @@ export function CallRoom({
         onEndCall={endCall}
         onToggleOffers={() => setActivePanel(activePanel === 'offers' ? 'none' : 'offers')}
         isOffersOpen={activePanel === 'offers'}
+        onOpenSettings={() => setShowDeviceSettings(true)}
+        onToggleCaptions={() => setShowCaptions(prev => !prev)}
+        isCaptionsOn={showCaptions}
+      />
+
+      {/* Device Settings Modal */}
+      <DeviceSettings
+        open={showDeviceSettings}
+        onClose={() => setShowDeviceSettings(false)}
+        onDeviceChange={handleDeviceChange}
+        currentStream={localStreamRef.current}
       />
     </div>
   );

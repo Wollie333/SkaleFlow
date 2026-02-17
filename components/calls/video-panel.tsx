@@ -6,13 +6,14 @@ import type { Participant } from './call-room';
 interface VideoPanelProps {
   localStream: MediaStream | null;
   participants: Participant[];
+  localUserId: string | null;
   isCameraOff: boolean;
   isScreenSharing: boolean;
   callActive: boolean;
   onStartMedia: () => void;
 }
 
-export function VideoPanel({ localStream, participants, isCameraOff, callActive, onStartMedia }: VideoPanelProps) {
+export function VideoPanel({ localStream, participants, localUserId, isCameraOff, callActive, onStartMedia }: VideoPanelProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -21,7 +22,10 @@ export function VideoPanel({ localStream, participants, isCameraOff, callActive,
     }
   }, [localStream]);
 
-  const activeParticipants = participants.filter(p => p.status === 'in_call');
+  // Exclude the local user from remote participant tiles to prevent duplicate
+  const activeParticipants = participants.filter(
+    p => p.status === 'in_call' && p.userId !== localUserId
+  );
 
   if (!callActive) {
     return (

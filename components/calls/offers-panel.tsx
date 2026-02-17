@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-interface Offer {
+export interface Offer {
   id: string;
   name: string;
   description: string | null;

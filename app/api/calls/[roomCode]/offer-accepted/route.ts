@@ -47,13 +47,17 @@ export async function POST(
 
   // If there's a CRM contact, log activity
   if (call.crm_contact_id) {
-    await supabase.from('crm_activities').insert({
-      organization_id: call.organization_id,
-      contact_id: call.crm_contact_id,
-      activity_type: 'note',
-      title: `Accepted offer: ${offer.name}`,
-      description: `${guestName || 'Guest'} (${guestEmail || 'unknown'}) accepted the "${offer.name}" offer during a call.`,
-    }).then(() => {}).catch(() => {});
+    try {
+      await supabase.from('crm_activity').insert({
+        organization_id: call.organization_id,
+        contact_id: call.crm_contact_id,
+        activity_type: 'note',
+        title: `Accepted offer: ${offer.name}`,
+        description: `${guestName || 'Guest'} (${guestEmail || 'unknown'}) accepted the "${offer.name}" offer during a call.`,
+      });
+    } catch {
+      // Non-blocking
+    }
   }
 
   // Notify org admins
