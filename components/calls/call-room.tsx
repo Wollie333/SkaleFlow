@@ -674,14 +674,7 @@ export function CallRoom({
             onStartMedia={startMedia}
           />
 
-          {/* Offer overlay — shown to guests when host presents an offer */}
-          {!isHost && presentedOffer && (
-            <OfferOverlay
-              offer={presentedOffer}
-              onAccept={acceptOffer}
-              onDismiss={dismissOffer}
-            />
-          )}
+          {/* Offer overlay moved to fixed position outside video panel */}
 
           {/* Floating live caption — visible when captions enabled */}
           {callActive && showCaptions && transcripts.length > 0 && (
@@ -743,6 +736,7 @@ export function CallRoom({
             {activePanel === 'offers' && isHost && (
               <OffersPanel
                 onPresentOffer={presentOffer}
+                onDismissOffer={dismissOffer}
                 presentedOfferId={presentedOfferId}
               />
             )}
@@ -778,6 +772,15 @@ export function CallRoom({
         onDeviceChange={handleDeviceChange}
         currentStream={localStreamRef.current}
       />
+
+      {/* Offer overlay — shown to guests/team when host presents an offer */}
+      {!isHost && presentedOffer && (
+        <OfferOverlay
+          offer={presentedOffer}
+          onAccept={acceptOffer}
+          onDismiss={dismissOffer}
+        />
+      )}
     </div>
   );
 }

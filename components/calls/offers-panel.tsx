@@ -18,10 +18,11 @@ export interface Offer {
 
 interface OffersPanelProps {
   onPresentOffer: (offer: Offer) => void;
+  onDismissOffer: () => void;
   presentedOfferId: string | null;
 }
 
-export function OffersPanel({ onPresentOffer, presentedOfferId }: OffersPanelProps) {
+export function OffersPanel({ onPresentOffer, onDismissOffer, presentedOfferId }: OffersPanelProps) {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -108,16 +109,29 @@ export function OffersPanel({ onPresentOffer, presentedOfferId }: OffersPanelPro
                   </ul>
                 )}
 
-                <button
-                  onClick={() => onPresentOffer(offer)}
-                  className={`mt-3 w-full py-1.5 rounded text-xs font-medium transition-colors ${
-                    isPresented
-                      ? 'bg-gold/20 text-gold border border-gold/30'
-                      : 'bg-teal/20 text-teal hover:bg-teal/30 border border-teal/30'
-                  }`}
-                >
-                  {isPresented ? 'Currently Presenting' : 'Present to Attendees'}
-                </button>
+                {isPresented ? (
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => onPresentOffer(offer)}
+                      className="flex-1 py-1.5 rounded text-xs font-medium bg-gold/20 text-gold border border-gold/30 transition-colors"
+                    >
+                      Re-present
+                    </button>
+                    <button
+                      onClick={onDismissOffer}
+                      className="flex-1 py-1.5 rounded text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors"
+                    >
+                      Hide from All
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => onPresentOffer(offer)}
+                    className="mt-3 w-full py-1.5 rounded text-xs font-medium bg-teal/20 text-teal hover:bg-teal/30 border border-teal/30 transition-colors"
+                  >
+                    Present to Attendees
+                  </button>
+                )}
               </div>
             );
           })

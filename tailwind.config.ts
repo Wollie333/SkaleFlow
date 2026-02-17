@@ -46,6 +46,8 @@ const config: Config = {
         'fade-up': 'fadeUp 0.8s ease forwards',
         'bounce-slow': 'bounce 1.5s infinite',
         'slide-in-right': 'slideInRight 250ms ease-out forwards',
+        'fade-in': 'fadeIn 0.3s ease-out forwards',
+        'scale-in': 'scaleIn 0.3s ease-out forwards',
       },
       keyframes: {
         fadeUp: {
@@ -55,6 +57,14 @@ const config: Config = {
         slideInRight: {
           '0%': { opacity: '0', transform: 'translateX(30px)' },
           '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        scaleIn: {
+          '0%': { opacity: '0', transform: 'scale(0.9)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
         },
       },
     },
