@@ -26,7 +26,7 @@ export async function PATCH(
 
   const body = await request.json();
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  const allowed = ['name', 'description', 'tier', 'price_display', 'price_value', 'currency', 'billing_frequency', 'deliverables', 'ideal_client_profile', 'value_propositions', 'common_objections', 'roi_framing', 'comparison_points', 'is_active', 'sort_order'];
+  const allowed = ['name', 'description', 'tier', 'price_display', 'price_value', 'currency', 'billing_frequency', 'deliverables', 'ideal_client_profile', 'value_propositions', 'common_objections', 'roi_framing', 'comparison_points', 'is_active', 'sort_order', 'source'];
   for (const k of allowed) {
     if (body[k] !== undefined) updates[k] = body[k];
   }

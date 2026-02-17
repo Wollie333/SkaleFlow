@@ -14,6 +14,7 @@ interface Offer {
   deliverables: string[];
   value_propositions: string[];
   common_objections: Array<{ objection: string; response: string }>;
+  source?: string;
 }
 
 export function OfferEditor({ offer, onSave }: { offer?: Offer; onSave: () => void }) {
@@ -68,6 +69,12 @@ export function OfferEditor({ offer, onSave }: { offer?: Offer; onSave: () => vo
   return (
     <div className="bg-white rounded-xl border border-stone/10 p-6 space-y-6">
       <h2 className="text-lg font-serif font-bold text-charcoal">{offer?.id ? 'Edit Offer' : 'New Offer'}</h2>
+
+      {offer?.source === 'brand_engine' && (
+        <div className="bg-teal/5 border border-teal/20 rounded-lg px-4 py-3 text-sm text-teal">
+          This offer was synced from Brand Engine Phase 4. Re-locking Phase 4 will update synced fields.
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2">

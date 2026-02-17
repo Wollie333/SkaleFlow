@@ -46,6 +46,10 @@ export const VARIABLE_DESCRIPTIONS: Record<string, { label: string; description:
   lead_magnet_title: { label: 'Lead Magnet Title', description: 'The compelling title that promises a specific quick win.' },
   lead_magnet_promise: { label: 'Lead Magnet Promise', description: 'The specific result someone gets from consuming the lead magnet.' },
   lead_magnet_content_outline: { label: 'Lead Magnet Outline', description: 'Sections, key takeaways, and how it connects to the main offer.' },
+  offer_price_display: { label: 'Price Display', description: 'The displayed price for the primary offer (e.g. "R5,000/month").' },
+  offer_billing_frequency: { label: 'Billing Frequency', description: 'How the offer is billed — once-off, monthly, quarterly, or annual.' },
+  offer_tier: { label: 'Offer Tier', description: 'The tier name for the primary offer (e.g. "Premium", "Growth").' },
+  offer_objections: { label: 'Objection Handling', description: 'Top 3 prospect objections with ideal responses for each.' },
 
   // Phase 5: Market Positioning
   positioning_statement: { label: 'Positioning Statement', description: 'For [ICP] who [need], [Brand] is the [category] that [differentiates] because [proof].' },

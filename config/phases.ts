@@ -164,6 +164,8 @@ Ask the user to name this enemy. If they need help, offer 2-3 name ideas based o
       'What is the transformation? Name the offer and create a tagline.',
       'What type of lead magnet best fits? (Checklist, guide, quiz, template, mini-course) What does it promise?',
       'Outline the lead magnet content — sections, key takeaways, and how it connects to the main offer.',
+      'What is the pricing structure? (Tier name, displayed price, billing frequency — once-off, monthly, quarterly, annual)',
+      'What are the top 3 objections prospects raise, and what is your ideal response to each?',
     ],
     outputVariables: [
       'offer_problem',
@@ -178,6 +180,10 @@ Ask the user to name this enemy. If they need help, offer 2-3 name ideas based o
       'lead_magnet_title',
       'lead_magnet_promise',
       'lead_magnet_content_outline',
+      'offer_price_display',
+      'offer_billing_frequency',
+      'offer_tier',
+      'offer_objections',
     ],
     questionOutputMap: {
       0: ['offer_problem'],
@@ -186,6 +192,8 @@ Ask the user to name this enemy. If they need help, offer 2-3 name ideas based o
       3: ['offer_transformation_before', 'offer_transformation_after', 'offer_name', 'offer_tagline'],
       4: ['lead_magnet_type', 'lead_magnet_title', 'lead_magnet_promise'],
       5: ['lead_magnet_content_outline'],
+      6: ['offer_price_display', 'offer_billing_frequency', 'offer_tier'],
+      7: ['offer_objections'],
     },
     instructions: `Guide the user through designing their offer and lead magnet. The user knows their business — help them articulate and structure what they already know.
 
@@ -205,7 +213,13 @@ QUESTION 4 — LEAD MAGNET TYPE & PROMISE:
 Ask the user what type of lead magnet they want. If they already know (e.g., "video mini-course"), that IS the answer — help them refine the title and promise for THAT format. Only suggest alternatives if they explicitly ask for options.
 
 QUESTION 5 — LEAD MAGNET CONTENT:
-The lead magnet type was already decided in Question 4 — check the "DECISIONS ALREADY MADE IN THIS PHASE" section. Build the content outline for THAT specific format. Ask the user about sections and key takeaways, then help them structure it.`,
+The lead magnet type was already decided in Question 4 — check the "DECISIONS ALREADY MADE IN THIS PHASE" section. Build the content outline for THAT specific format. Ask the user about sections and key takeaways, then help them structure it.
+
+QUESTION 6 — PRICING:
+Ask the user about pricing. Help them define: (1) tier name (e.g. "Premium", "Starter", "Growth"), (2) the displayed price (e.g. "R5,000/month", "$997 once-off"), (3) billing frequency (once-off, monthly, quarterly, or annual). If they have multiple tiers, focus on their PRIMARY offer tier — the one they'd present on a sales call. Output as offer_tier, offer_price_display, and offer_billing_frequency.
+
+QUESTION 7 — OBJECTION HANDLING:
+Ask the user for the top 3 objections they hear from prospects and their ideal response to each. Use their REAL sales experience — the objections they actually encounter. For each, capture the objection and the response as a pair. Output as offer_objections — a structured list of {objection, response} pairs.`,
   },
   '5': {
     number: '5',

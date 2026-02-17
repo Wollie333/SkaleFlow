@@ -17,6 +17,7 @@ interface Offer {
   common_objections: Array<{ objection: string; response: string }>;
   is_active: boolean;
   sort_order: number;
+  source: string;
 }
 
 export default function OffersPage() {
@@ -89,6 +90,9 @@ export default function OffersPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium text-charcoal">{offer.name}</h3>
+                    {offer.source === 'brand_engine' && (
+                      <span className="px-2 py-0.5 text-xs bg-teal/10 text-teal rounded-full">Brand Engine</span>
+                    )}
                     {offer.tier && (
                       <span className="px-2 py-0.5 text-xs bg-gold/10 text-gold rounded-full">{offer.tier}</span>
                     )}

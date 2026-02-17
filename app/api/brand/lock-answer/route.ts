@@ -198,6 +198,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to update phase' }, { status: 500 });
     }
 
+    // Sync Phase 4 brand outputs → offers table when phase completes
+    if (isLastQuestion && phase.phase_number === '4') {
+      try {
+        const { syncBrandToOffers } = await import('@/lib/calls/offers/brand-to-offers-sync');
+        await syncBrandToOffers(organizationId);
+      } catch (err) {
+        console.error('[LockAnswer] Brand-to-offers sync failed:', err);
+      }
+    }
+
     // Clear conversation messages for fresh thread on the next question
     // Locked outputs provide all needed context via buildSystemPrompt()
     if (!isLastQuestion) {

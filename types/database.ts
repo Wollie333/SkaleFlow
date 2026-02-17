@@ -6308,6 +6308,7 @@ export interface Database {
           comparison_points: Json;
           is_active: boolean;
           sort_order: number;
+          source: string;
           created_at: string;
           updated_at: string;
         };
@@ -6329,6 +6330,7 @@ export interface Database {
           comparison_points?: Json;
           is_active?: boolean;
           sort_order?: number;
+          source?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -6350,6 +6352,7 @@ export interface Database {
           comparison_points?: Json;
           is_active?: boolean;
           sort_order?: number;
+          source?: string;
           created_at?: string;
           updated_at?: string;
         };
