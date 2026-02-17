@@ -14,7 +14,9 @@ export type SignalType =
   | 'admit-participant'
   | 'offer-presented'
   | 'offer-dismissed'
-  | 'offer-accepted';
+  | 'offer-accepted'
+  | 'offer-declined'
+  | 'offer-minimized';
 
 export interface SignalMessage {
   type: SignalType;

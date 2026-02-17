@@ -19,17 +19,29 @@ interface OfferOverlayProps {
   offer: PresentedOffer;
   onAccept: () => void;
   onDismiss: () => void;
+  onDecline: (reason: string) => void;
+  onMinimize: () => void;
 }
 
-export function OfferOverlay({ offer, onAccept, onDismiss }: OfferOverlayProps) {
-  const [viewMode, setViewMode] = useState<'expanded' | 'minimized'>('expanded');
-  // Animation state: 'idle' | 'minimizing' | 'expanding'
+const DECLINE_REASONS = [
+  'Not the right time',
+  'Price is too high',
+  'Need to think about it',
+  'Not what I need right now',
+];
+
+export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize }: OfferOverlayProps) {
+  const [viewMode, setViewMode] = useState<'expanded' | 'minimized' | 'declining'>('expanded');
   const [animating, setAnimating] = useState<string>('idle');
+  const [declineReason, setDeclineReason] = useState('');
+  const [customReason, setCustomReason] = useState('');
 
   // When a new offer arrives, always show expanded
   useEffect(() => {
     setViewMode('expanded');
     setAnimating('idle');
+    setDeclineReason('');
+    setCustomReason('');
   }, [offer.id]);
 
   const handleMinimize = () => {
@@ -37,6 +49,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss }: OfferOverlayProps) 
     setTimeout(() => {
       setViewMode('minimized');
       setAnimating('idle');
+      onMinimize();
     }, 300);
   };
 
@@ -46,12 +59,23 @@ export function OfferOverlay({ offer, onAccept, onDismiss }: OfferOverlayProps) 
     setTimeout(() => setAnimating('idle'), 300);
   };
 
-  // Minimized — sidebar tab pinned to the right
+  const handleStartDecline = () => {
+    setViewMode('declining');
+    setDeclineReason('');
+    setCustomReason('');
+  };
+
+  const handleSubmitDecline = () => {
+    const reason = declineReason === 'custom' ? customReason.trim() : declineReason;
+    onDecline(reason || 'No reason given');
+  };
+
+  // Minimized — floating tab pinned top-right
   if (viewMode === 'minimized') {
     return (
       <button
         onClick={handleExpand}
-        className="absolute top-4 right-4 z-40 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#1E6B63] to-[#C9A84C] rounded-xl shadow-lg shadow-black/30 hover:shadow-xl hover:scale-105 transition-all duration-300 animate-[slideInRight_0.3s_ease-out]"
+        className="absolute top-4 right-4 z-40 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#1E6B63] to-[#C9A84C] rounded-xl shadow-lg shadow-black/30 hover:shadow-xl hover:scale-105 transition-all duration-300 animate-slide-in-right"
         title="View offer"
       >
         <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -63,27 +87,94 @@ export function OfferOverlay({ offer, onAccept, onDismiss }: OfferOverlayProps) 
     );
   }
 
+  // Decline reason screen
+  if (viewMode === 'declining') {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 animate-fade-in">
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" />
+        <div className="relative w-full max-w-md bg-[#1A2F2D] border border-white/10 rounded-2xl shadow-2xl shadow-black/40 animate-scale-in">
+          <div className="px-6 py-5 border-b border-white/10">
+            <h3 className="text-white text-lg font-semibold">Quick feedback</h3>
+            <p className="text-white/50 text-sm mt-1">
+              We&apos;d love to understand — what held you back?
+            </p>
+          </div>
+
+          <div className="px-6 py-5 space-y-2.5">
+            {DECLINE_REASONS.map((reason) => (
+              <button
+                key={reason}
+                onClick={() => setDeclineReason(reason)}
+                className={`w-full text-left px-4 py-3 rounded-xl border text-sm transition-all ${
+                  declineReason === reason
+                    ? 'border-teal/50 bg-teal/10 text-white'
+                    : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20'
+                }`}
+              >
+                {reason}
+              </button>
+            ))}
+            <button
+              onClick={() => setDeclineReason('custom')}
+              className={`w-full text-left px-4 py-3 rounded-xl border text-sm transition-all ${
+                declineReason === 'custom'
+                  ? 'border-teal/50 bg-teal/10 text-white'
+                  : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20'
+              }`}
+            >
+              Other reason...
+            </button>
+            {declineReason === 'custom' && (
+              <textarea
+                value={customReason}
+                onChange={(e) => setCustomReason(e.target.value)}
+                placeholder="Tell us more..."
+                rows={2}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-teal/40 resize-none"
+                autoFocus
+              />
+            )}
+          </div>
+
+          <div className="px-6 pb-5 flex gap-3">
+            <button
+              onClick={() => setViewMode('expanded')}
+              className="flex-1 py-3 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-white/5 transition-colors"
+            >
+              Go Back
+            </button>
+            <button
+              onClick={handleSubmitDecline}
+              disabled={!declineReason || (declineReason === 'custom' && !customReason.trim())}
+              className="flex-1 py-3 rounded-xl bg-white/10 text-white text-sm font-semibold hover:bg-white/15 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Expanded — full-page modal overlay
   return (
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 transition-all duration-300 ${
         animating === 'expanding'
-          ? 'animate-[fadeIn_0.3s_ease-out]'
+          ? 'animate-fade-in'
           : animating === 'minimizing'
           ? 'opacity-0 scale-95 pointer-events-none'
           : ''
       }`}
     >
-      {/* Backdrop — semi-transparent so video is still visible */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" onClick={handleMinimize} />
 
-      {/* Modal card */}
       <div
-        className={`relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[#1A2F2D] border border-white/10 rounded-2xl shadow-2xl shadow-black/40 transition-all duration-300 ${
-          animating === 'expanding' ? 'animate-[scaleIn_0.3s_ease-out]' : ''
+        className={`relative w-[60vw] min-w-[360px] max-w-3xl max-h-[90vh] overflow-y-auto bg-[#1A2F2D] border border-white/10 rounded-2xl shadow-2xl shadow-black/40 transition-all duration-300 ${
+          animating === 'expanding' ? 'animate-scale-in' : ''
         }`}
       >
-        {/* Header with gradient */}
+        {/* Header */}
         <div className="sticky top-0 z-10 bg-gradient-to-r from-[#1E6B63]/90 to-[#C9A84C]/30 backdrop-blur-md px-6 py-5 border-b border-white/10">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0 pr-4">
@@ -95,17 +186,15 @@ export function OfferOverlay({ offer, onAccept, onDismiss }: OfferOverlayProps) 
               <h2 className="text-white text-xl font-bold leading-tight">{offer.name}</h2>
             </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
-              {/* Minimize button */}
               <button
                 onClick={handleMinimize}
                 className="p-2 rounded-lg bg-white/10 text-white/60 hover:text-white hover:bg-white/20 transition-colors"
-                title="Minimize to sidebar"
+                title="Minimize"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              {/* Dismiss button */}
               <button
                 onClick={onDismiss}
                 className="p-2 rounded-lg bg-white/10 text-white/60 hover:text-white hover:bg-white/20 transition-colors"
@@ -119,9 +208,8 @@ export function OfferOverlay({ offer, onAccept, onDismiss }: OfferOverlayProps) 
           </div>
         </div>
 
-        {/* Body — all content visible */}
+        {/* Body */}
         <div className="px-6 py-6 space-y-6">
-          {/* Price block */}
           {offer.price_display && (
             <div className="text-center py-4 bg-white/5 rounded-xl border border-white/5">
               <span className="text-gold text-4xl font-bold tracking-tight">{offer.price_display}</span>
@@ -131,12 +219,10 @@ export function OfferOverlay({ offer, onAccept, onDismiss }: OfferOverlayProps) 
             </div>
           )}
 
-          {/* Description */}
           {offer.description && (
             <p className="text-white/70 text-sm leading-relaxed">{offer.description}</p>
           )}
 
-          {/* Deliverables */}
           {offer.deliverables.length > 0 && (
             <div>
               <h4 className="text-white text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -147,7 +233,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss }: OfferOverlayProps) 
               </h4>
               <ul className="space-y-2.5">
                 {offer.deliverables.map((d, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm group">
+                  <li key={i} className="flex items-start gap-3 text-sm">
                     <span className="w-5 h-5 rounded-full bg-teal/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <svg className="w-3 h-3 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -160,7 +246,6 @@ export function OfferOverlay({ offer, onAccept, onDismiss }: OfferOverlayProps) 
             </div>
           )}
 
-          {/* Value propositions */}
           {offer.value_propositions.length > 0 && (
             <div className="bg-gradient-to-br from-gold/10 to-teal/5 rounded-xl p-4 border border-gold/10">
               <h4 className="text-gold text-xs font-semibold uppercase tracking-wider mb-3">Why This Works</h4>
@@ -176,9 +261,15 @@ export function OfferOverlay({ offer, onAccept, onDismiss }: OfferOverlayProps) 
           )}
         </div>
 
-        {/* Sticky action buttons */}
+        {/* Sticky actions */}
         <div className="sticky bottom-0 px-6 py-4 bg-[#1A2F2D]/95 backdrop-blur-md border-t border-white/10">
           <div className="flex gap-3">
+            <button
+              onClick={handleStartDecline}
+              className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 text-sm font-medium hover:bg-white/5 hover:text-white/70 transition-colors"
+            >
+              Not Interested
+            </button>
             <button
               onClick={handleMinimize}
               className="flex-1 py-3 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-white/5 transition-colors"

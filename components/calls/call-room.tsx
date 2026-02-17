@@ -6,7 +6,7 @@ import { AttendeesPanel } from './attendees-panel';
 import { CopilotPanel } from './copilot-panel';
 import { TranscriptPanel } from './transcript-panel';
 import { ControlsBar } from './controls-bar';
-import { OffersPanel, type Offer } from './offers-panel';
+import { OffersPanel, type Offer, type OfferResponseMap } from './offers-panel';
 import { OfferOverlay } from './offer-overlay';
 import { DeviceSettings } from './device-settings';
 import { CallSignaling } from '@/lib/calls/signaling';
@@ -86,6 +86,7 @@ export function CallRoom({
     price_display: string | null; price_value: number | null; currency: string;
     billing_frequency: string | null; deliverables: string[]; value_propositions: string[];
   } | null>(null);
+  const [offerResponses, setOfferResponses] = useState<OfferResponseMap>({});
   const localStreamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const participantIdRef = useRef<string | null>(null);
@@ -221,13 +222,49 @@ export function CallRoom({
       }
     });
 
-    // Handle offer accepted (host side — notification)
+    // Handle offer accepted (host side — update response map)
     signaling.on('offer-accepted', (msg) => {
       if (isHost) {
-        const name = msg.payload.guestName || 'Attendee';
-        const offerName = msg.payload.offerName || 'an offer';
-        // Show a brief flash in the UI by setting then clearing
-        console.log(`[Offers] ${name} accepted ${offerName}`);
+        const offerId = msg.payload.offerId as string;
+        const pName = (msg.payload.guestName as string) || 'Attendee';
+        setOfferResponses(prev => ({
+          ...prev,
+          [offerId]: {
+            ...(prev[offerId] || {}),
+            [msg.senderId]: { participantName: pName, status: 'accepted' },
+          },
+        }));
+      }
+    });
+
+    // Handle offer declined (host side — update response map with reason)
+    signaling.on('offer-declined', (msg) => {
+      if (isHost) {
+        const offerId = msg.payload.offerId as string;
+        const pName = (msg.payload.guestName as string) || 'Attendee';
+        const reason = (msg.payload.reason as string) || '';
+        setOfferResponses(prev => ({
+          ...prev,
+          [offerId]: {
+            ...(prev[offerId] || {}),
+            [msg.senderId]: { participantName: pName, status: 'declined', reason },
+          },
+        }));
+      }
+    });
+
+    // Handle offer minimized (host side — update response map)
+    signaling.on('offer-minimized', (msg) => {
+      if (isHost) {
+        const offerId = msg.payload.offerId as string;
+        const pName = (msg.payload.guestName as string) || 'Attendee';
+        setOfferResponses(prev => ({
+          ...prev,
+          [offerId]: {
+            ...(prev[offerId] || {}),
+            [msg.senderId]: { participantName: pName, status: 'minimized' },
+          },
+        }));
       }
     });
 
@@ -501,8 +538,8 @@ export function CallRoom({
     }
   }, [roomCode]);
 
-  // Present offer to attendees (host side)
-  const presentOffer = useCallback((offer: Offer) => {
+  // Present offer to selected attendees (host side)
+  const presentOffer = useCallback((offer: Offer, targetParticipantIds: string[]) => {
     const offerData = {
       id: offer.id,
       name: offer.name,
@@ -516,7 +553,10 @@ export function CallRoom({
       value_propositions: Array.isArray(offer.value_propositions) ? offer.value_propositions as string[] : [],
     };
     setPresentedOfferId(offerData.id);
-    signalingRef.current?.send('offer-presented', { offer: offerData });
+    // Send targeted signals to each selected participant
+    for (const targetId of targetParticipantIds) {
+      signalingRef.current?.send('offer-presented', { offer: offerData }, targetId);
+    }
   }, []);
 
   // Dismiss offer (host can dismiss, or guest can dismiss their overlay)
@@ -533,7 +573,6 @@ export function CallRoom({
   const acceptOffer = useCallback(async () => {
     if (!presentedOffer) return;
 
-    // Notify host via signaling
     signalingRef.current?.send('offer-accepted', {
       offerId: presentedOffer.id,
       offerName: presentedOffer.name,
@@ -541,7 +580,6 @@ export function CallRoom({
       guestEmail: guestEmail || '',
     });
 
-    // Record acceptance via API
     try {
       await fetch(`/api/calls/${roomCode}/offer-accepted`, {
         method: 'POST',
@@ -558,6 +596,30 @@ export function CallRoom({
 
     setPresentedOffer(null);
   }, [presentedOffer, guestName, guestEmail, roomCode]);
+
+  // Decline offer (guest side — sends reason to host)
+  const declineOffer = useCallback((reason: string) => {
+    if (!presentedOffer) return;
+
+    signalingRef.current?.send('offer-declined', {
+      offerId: presentedOffer.id,
+      offerName: presentedOffer.name,
+      guestName: guestName || 'Attendee',
+      reason,
+    });
+
+    setPresentedOffer(null);
+  }, [presentedOffer, guestName]);
+
+  // Minimize offer (guest side — notifies host)
+  const minimizeOffer = useCallback(() => {
+    if (!presentedOffer) return;
+
+    signalingRef.current?.send('offer-minimized', {
+      offerId: presentedOffer.id,
+      guestName: guestName || 'Attendee',
+    });
+  }, [presentedOffer, guestName]);
 
   const endCall = useCallback(async () => {
     // Stop transcription
@@ -738,6 +800,8 @@ export function CallRoom({
                 onPresentOffer={presentOffer}
                 onDismissOffer={dismissOffer}
                 presentedOfferId={presentedOfferId}
+                offerResponses={offerResponses}
+                participants={participants}
               />
             )}
           </div>
@@ -779,6 +843,8 @@ export function CallRoom({
           offer={presentedOffer}
           onAccept={acceptOffer}
           onDismiss={dismissOffer}
+          onDecline={declineOffer}
+          onMinimize={minimizeOffer}
         />
       )}
     </div>
