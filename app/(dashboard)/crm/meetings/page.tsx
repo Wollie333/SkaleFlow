@@ -98,7 +98,7 @@ export default function MeetingsPage() {
       params.set('filter', newFilter);
     }
     const queryString = params.toString();
-    router.push(queryString ? `/admin/meetings?${queryString}` : '/admin/meetings', { scroll: false });
+    router.push(queryString ? `/crm/meetings?${queryString}` : '/crm/meetings', { scroll: false });
   };
 
   const handleViewModeChange = (newView: ViewMode) => {
@@ -110,12 +110,12 @@ export default function MeetingsPage() {
       params.set('view', newView);
     }
     const queryString = params.toString();
-    router.push(queryString ? `/admin/meetings?${queryString}` : '/admin/meetings', { scroll: false });
+    router.push(queryString ? `/crm/meetings?${queryString}` : '/crm/meetings', { scroll: false });
   };
 
   const fetchMeetings = async () => {
     try {
-      const res = await fetch('/api/admin/meetings');
+      const res = await fetch('/api/crm/meetings');
       const data = await res.json();
       if (data.meetings) setMeetings(data.meetings);
     } catch (error) {
@@ -128,7 +128,7 @@ export default function MeetingsPage() {
   const updateStatus = async (meetingId: string, status: string) => {
     setActionLoading(meetingId);
     try {
-      const res = await fetch('/api/admin/meetings', {
+      const res = await fetch('/api/crm/meetings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ meetingId, status }),
@@ -214,7 +214,7 @@ export default function MeetingsPage() {
         icon={CalendarDaysIcon}
         title="Meetings"
         subtitle="Manage onboarding calls with approved applicants"
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Meetings' }]}
+        breadcrumbs={[{ label: 'CRM' }, { label: 'Meetings' }]}
         action={
           <div className="flex gap-1 bg-cream-warm rounded-lg p-1 w-fit">
             <button

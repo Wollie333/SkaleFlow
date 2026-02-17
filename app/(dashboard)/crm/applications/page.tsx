@@ -24,7 +24,7 @@ const STAGES: { key: PipelineStage; label: string; color: string; bgColor: strin
   { key: 'won', label: 'Won', color: 'text-teal', bgColor: 'bg-teal/5 border-teal/20' },
 ];
 
-export default function PipelinePage() {
+export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,7 +34,7 @@ export default function PipelinePage() {
 
   const fetchApplications = async () => {
     try {
-      const res = await fetch('/api/admin/pipeline');
+      const res = await fetch('/api/crm/applications');
       const data = await res.json();
       if (data.applications) {
         setApplications(data.applications);
@@ -68,7 +68,7 @@ export default function PipelinePage() {
         icon={ClipboardDocumentListIcon}
         title="Applications"
         subtitle={`${applications.length} total application${applications.length !== 1 ? 's' : ''}`}
-        breadcrumbs={[{ label: 'Admin' }, { label: 'Applications' }]}
+        breadcrumbs={[{ label: 'CRM' }, { label: 'Applications' }]}
         className="mb-8"
       />
 
@@ -90,7 +90,7 @@ export default function PipelinePage() {
                 {stageApps.map((app) => (
                   <Link
                     key={app.id}
-                    href={`/admin/pipeline/${app.id}`}
+                    href={`/crm/applications/${app.id}`}
                     className="block p-4 bg-white rounded-lg border border-stone/10 hover:border-teal/20 hover:shadow-sm transition-all group"
                   >
                     <div className="font-semibold text-sm text-charcoal group-hover:text-teal transition-colors">

@@ -126,7 +126,7 @@ export default function ApplicationDetailPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch(`/api/admin/pipeline/${id}`);
+      const res = await fetch(`/api/crm/applications/${id}`);
       const data = await res.json();
       if (data.application) {
         setApplication(data.application);
@@ -149,7 +149,7 @@ export default function ApplicationDetailPage() {
   const moveStage = async (newStage: PipelineStage) => {
     setActionLoading(newStage);
     try {
-      const res = await fetch('/api/admin/pipeline', {
+      const res = await fetch('/api/crm/applications', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ applicationId: id, pipeline_stage: newStage }),
@@ -167,7 +167,7 @@ export default function ApplicationDetailPage() {
   const saveNotes = async () => {
     setSavingNotes(true);
     try {
-      const res = await fetch('/api/admin/pipeline', {
+      const res = await fetch('/api/crm/applications', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ applicationId: id, admin_notes: notes }),
@@ -186,7 +186,7 @@ export default function ApplicationDetailPage() {
     if (!confirm('This will create a user account and send a password reset email. Continue?')) return;
     setActionLoading('activate');
     try {
-      const res = await fetch('/api/admin/pipeline', {
+      const res = await fetch('/api/crm/applications', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ applicationId: id, action: 'activate' }),
@@ -213,7 +213,7 @@ export default function ApplicationDetailPage() {
     setBookingLoading(true);
 
     try {
-      const res = await fetch('/api/admin/pipeline', {
+      const res = await fetch('/api/crm/applications', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ applicationId: id, action: 'create_booking' }),
@@ -236,7 +236,7 @@ export default function ApplicationDetailPage() {
     setEmailSending(true);
     setBookingError('');
     try {
-      const res = await fetch('/api/admin/pipeline', {
+      const res = await fetch('/api/crm/applications', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ applicationId: id, action: 'send_booking_email' }),
@@ -321,8 +321,8 @@ export default function ApplicationDetailPage() {
     return (
       <div className="text-center py-20">
         <p className="text-stone">Application not found.</p>
-        <Link href="/admin/pipeline" className="text-teal text-sm mt-2 inline-block hover:underline">
-          Back to Pipeline
+        <Link href="/crm/applications" className="text-teal text-sm mt-2 inline-block hover:underline">
+          Back to Applications
         </Link>
       </div>
     );
@@ -339,8 +339,8 @@ export default function ApplicationDetailPage() {
         title={application.full_name}
         subtitle={application.business_name}
         breadcrumbs={[
-          { label: 'Admin' },
-          { label: 'Applications', href: '/admin/pipeline' },
+          { label: 'CRM' },
+          { label: 'Applications', href: '/crm/applications' },
           { label: application.full_name },
         ]}
         action={

@@ -86,6 +86,11 @@ const crmNavigation: NavItem[] = [
   { name: 'Invoices', href: '/crm/invoices', icon: DocumentTextIcon },
 ];
 
+const crmAdminNavigation: NavItem[] = [
+  { name: 'Applications', href: '/crm/applications', icon: ClipboardDocumentCheckIcon },
+  { name: 'Meetings', href: '/crm/meetings', icon: CalendarDaysIcon },
+];
+
 const contentNavigation: NavItem[] = [
   { name: 'Content Calendar', href: '/calendar', icon: CalendarDaysIcon },
   { name: 'Content Machine', href: '/content/machine', icon: BoltIcon },
@@ -147,8 +152,6 @@ const authorityNavigation: NavItem[] = [
 ];
 
 const adminNavigation: NavItem[] = [
-  { name: 'Applications', href: '/admin/pipeline', icon: FunnelIcon },
-  { name: 'Meetings', href: '/admin/meetings', icon: VideoCameraIcon },
   { name: 'Users', href: '/admin/users', icon: UsersIcon },
   { name: 'AI Models', href: '/admin/models', icon: SparklesIcon },
   { name: 'Costs', href: '/admin/costs', icon: CurrencyDollarIcon },
@@ -706,6 +709,29 @@ export function Sidebar({
                     </Link>
                   );
                 })}
+                {isSuperAdmin && crmAdminNavigation.map((item) => {
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
+                        isActive
+                          ? 'bg-teal/10 text-teal'
+                          : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                      )}
+                    >
+                      <item.icon className="w-4 h-4" />
+                      {item.name}
+                      {item.href === '/crm/applications' && pipelineCount !== undefined && pipelineCount > 0 && (
+                        <span className="ml-auto text-xs bg-teal/15 text-teal px-2 py-0.5 rounded-full font-semibold">
+                          {pipelineCount}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -783,7 +809,6 @@ export function Sidebar({
               <div className="space-y-1 mt-2">
                 {adminNavigation.map((item) => {
                   const isActive = pathname.startsWith(item.href);
-                  const showBadge = item.href === '/admin/pipeline' && pipelineCount !== undefined && pipelineCount > 0;
                   return (
                     <Link
                       key={item.name}
@@ -797,11 +822,6 @@ export function Sidebar({
                     >
                       <item.icon className="w-4 h-4" />
                       {item.name}
-                      {showBadge && (
-                        <span className="ml-auto text-xs bg-teal/15 text-teal px-2 py-0.5 rounded-full font-semibold">
-                          {pipelineCount}
-                        </span>
-                      )}
                     </Link>
                   );
                 })}
