@@ -642,11 +642,20 @@ export function CallRoom({
       transcriptionRef.current = null;
     }
 
-    // Stop recording if active
+    // Stop recording if active — upload directly (don't rely on onStop callback)
     if (recorderRef.current) {
-      await recorderRef.current.stop();
+      const blob = await recorderRef.current.stop();
       recorderRef.current = null;
       setRecordingState('idle');
+
+      // Upload recording and wait for it to finish before redirecting
+      if (organizationId && callId && blob.size > 0) {
+        try {
+          await uploadRecording(organizationId, callId, blob);
+        } catch {
+          console.error('Failed to upload recording on end call');
+        }
+      }
     }
 
     if (localStreamRef.current) {

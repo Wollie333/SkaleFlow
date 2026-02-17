@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 
 // GET — fetch call summary
 export async function GET(
@@ -18,6 +18,21 @@ export async function GET(
     .single();
 
   if (!call) return NextResponse.json({ error: 'Call not found' }, { status: 404 });
+
+  // Generate signed URL for recording if it exists (stored as storage path, not public URL)
+  let recordingSignedUrl: string | null = null;
+  if (call.recording_url) {
+    try {
+      const serviceClient = createServiceClient();
+      const { data: signedData } = await serviceClient.storage
+        .from('call-recordings')
+        .createSignedUrl(call.recording_url, 3600); // 1 hour expiry
+      recordingSignedUrl = signedData?.signedUrl || null;
+    } catch {
+      // If signing fails, try using the stored URL as-is (might be a legacy public URL)
+      recordingSignedUrl = call.recording_url;
+    }
+  }
 
   const { data: summary } = await supabase
     .from('call_summaries')
@@ -38,7 +53,7 @@ export async function GET(
     .order('created_at');
 
   return NextResponse.json({
-    call,
+    call: { ...call, recording_url: recordingSignedUrl },
     summary,
     actionItems: actionItems || [],
     insights: insights || [],

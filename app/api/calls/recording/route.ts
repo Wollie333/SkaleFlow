@@ -26,15 +26,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: uploadError.message }, { status: 500 });
   }
 
-  const { data: urlData } = serviceClient.storage
-    .from('call-recordings')
-    .getPublicUrl(path);
-
-  // Update call record with recording URL
+  // Store the storage path (not a public URL) — signed URLs generated on demand
   await serviceClient
     .from('calls')
-    .update({ recording_url: urlData.publicUrl, updated_at: new Date().toISOString() })
+    .update({ recording_url: path, updated_at: new Date().toISOString() })
     .eq('id', callId);
 
-  return NextResponse.json({ url: urlData.publicUrl });
+  return NextResponse.json({ url: path, uploaded: true });
 }
