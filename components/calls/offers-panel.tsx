@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import type { Participant } from './call-room';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import type { Participant, TranscriptChunk } from './call-room';
 
 export interface Offer {
   id: string;
@@ -41,13 +41,91 @@ interface OffersPanelProps {
   presentedOfferId: string | null;
   offerResponses: OfferResponseMap;
   participants: Participant[];
+  transcripts?: TranscriptChunk[];
+}
+
+// ── Sale Likelihood Scoring ──────────────────────────────────────────
+const BUYING_SIGNALS = [
+  'interested', 'sounds good', 'tell me more', 'love it', 'perfect', 'great idea',
+  'how much', 'when can we start', 'sign up', "let's do it", "let's go",
+  'makes sense', 'exactly', 'absolutely', 'agree', 'excited', 'amazing',
+  'impressive', 'count me in', 'definitely', 'yes please',
+  "what's included", 'pricing', 'proposal', 'budget', 'invest',
+  'i need', 'we need', 'looking for', 'solution', 'help us',
+  'ready', 'next step', 'move forward', 'timeline', 'onboard',
+  'recommend', 'referral', 'send me', 'sign me up', 'where do i sign',
+];
+
+const OBJECTION_SIGNALS = [
+  'too expensive', 'not sure', 'maybe later', 'no thanks', "can't afford",
+  'not interested', "don't need", 'already have', 'not right now',
+  'think about it', 'get back to you', 'not ready', 'too much',
+  'competitor', 'free option', 'concerned', 'worried', 'risky',
+  'complicated', 'difficult', 'unfortunately', 'however', 'hesitant',
+  'uncertain', 'doubt', 'out of budget', 'no budget', 'not convinced',
+];
+
+function computeSaleLikelihood(transcripts: TranscriptChunk[]): number {
+  if (transcripts.length < 2) return 50;
+
+  const fullText = transcripts.map(t => t.content.toLowerCase()).join(' ');
+  let positiveCount = 0;
+  let negativeCount = 0;
+
+  for (const signal of BUYING_SIGNALS) {
+    const escaped = signal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const matches = fullText.match(new RegExp(`\\b${escaped}`, 'g'));
+    if (matches) positiveCount += matches.length;
+  }
+
+  for (const signal of OBJECTION_SIGNALS) {
+    const escaped = signal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const matches = fullText.match(new RegExp(`\\b${escaped}`, 'g'));
+    if (matches) negativeCount += matches.length;
+  }
+
+  let score = 50;
+  score += positiveCount * 2.5;
+  score -= negativeCount * 3.5;
+  // Engagement bonus — more conversation is slightly positive
+  score += Math.min(transcripts.length * 0.3, 8);
+
+  return Math.max(5, Math.min(95, Math.round(score)));
+}
+
+function getLikelihoodLabel(score: number): string {
+  if (score < 25) return 'Cold';
+  if (score < 45) return 'Warming Up';
+  if (score < 60) return 'Engaged';
+  if (score < 75) return 'Warm';
+  if (score < 88) return 'Hot';
+  return 'Ready to Close';
+}
+
+function getLikelihoodColor(score: number): string {
+  if (score < 25) return 'from-red-600 to-red-400';
+  if (score < 45) return 'from-orange-500 to-amber-400';
+  if (score < 60) return 'from-amber-500 to-yellow-400';
+  if (score < 75) return 'from-yellow-400 to-emerald-400';
+  return 'from-emerald-500 to-emerald-400';
+}
+
+function getLikelihoodDotColor(score: number): string {
+  if (score < 25) return 'bg-red-500';
+  if (score < 45) return 'bg-orange-400';
+  if (score < 60) return 'bg-amber-400';
+  if (score < 75) return 'bg-yellow-400';
+  return 'bg-emerald-400';
 }
 
 export function OffersPanel({
-  onPresentOffer, onDismissOffer, presentedOfferId, offerResponses, participants,
+  onPresentOffer, onDismissOffer, presentedOfferId, offerResponses, participants, transcripts = [],
 }: OffersPanelProps) {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Sale likelihood score — memoized on transcript changes
+  const saleLikelihood = useMemo(() => computeSaleLikelihood(transcripts), [transcripts]);
   // Attendee selector state: offerId -> Set of selected participant IDs
   const [selectedTargets, setSelectedTargets] = useState<Record<string, Set<string>>>({});
   const [expandedSelector, setExpandedSelector] = useState<string | null>(null);
@@ -189,6 +267,34 @@ export function OffersPanel({
       <div className="px-4 py-3 border-b border-white/10">
         <h3 className="text-white font-medium text-sm">Offers</h3>
         <p className="text-white/40 text-xs mt-0.5">Present an offer to specific attendees</p>
+
+        {/* Sale Likelihood Bar */}
+        <div className="mt-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full ${getLikelihoodDotColor(saleLikelihood)} ${saleLikelihood >= 60 ? 'animate-pulse' : ''}`} />
+              <span className="text-white/50 text-[10px] font-medium uppercase tracking-wider">Sale Likelihood</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-white/70 text-xs font-semibold">{saleLikelihood}%</span>
+              <span className={`text-[10px] font-medium ${
+                saleLikelihood < 25 ? 'text-red-400' :
+                saleLikelihood < 45 ? 'text-orange-400' :
+                saleLikelihood < 60 ? 'text-amber-400' :
+                saleLikelihood < 75 ? 'text-yellow-400' :
+                'text-emerald-400'
+              }`}>
+                {getLikelihoodLabel(saleLikelihood)}
+              </span>
+            </div>
+          </div>
+          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full bg-gradient-to-r ${getLikelihoodColor(saleLikelihood)} transition-all duration-1000 ease-out`}
+              style={{ width: `${saleLikelihood}%` }}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto scrollbar-dark p-3 space-y-3">

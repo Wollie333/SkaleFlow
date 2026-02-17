@@ -260,6 +260,13 @@ export function CallRoom({
             [msg.senderId]: { participantName: pName, status: 'declined', reason },
           },
         }));
+
+        // Update CRM deal to lost (non-blocking)
+        fetch(`/api/calls/${roomCode}/offer-declined`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ offerId, guestName: pName, reason }),
+        }).catch(() => {});
       }
     });
 
@@ -567,7 +574,20 @@ export function CallRoom({
     for (const targetId of targetParticipantIds) {
       signalingRef.current?.send('offer-presented', { offer: offerData }, targetId);
     }
-  }, []);
+
+    // Create CRM deal (non-blocking)
+    fetch(`/api/calls/${roomCode}/offer-presented`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        offerId: offer.id,
+        offerName: offer.name,
+        priceValue: offerData.price_value,
+        priceDisplay: offerData.price_display,
+        currency: offerData.currency,
+      }),
+    }).catch(() => {});
+  }, [roomCode]);
 
   // Dismiss offer (host can dismiss, or guest can dismiss their overlay)
   const dismissOffer = useCallback(() => {
@@ -835,6 +855,7 @@ export function CallRoom({
                 presentedOfferId={presentedOfferId}
                 offerResponses={offerResponses}
                 participants={participants}
+                transcripts={transcripts}
               />
             )}
           </div>

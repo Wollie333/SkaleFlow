@@ -91,10 +91,10 @@ export async function POST(
   const { roomCode } = await params;
   const serviceClient = createServiceClient();
 
-  // Find call by room code
+  // Find call by room code (include org_id for CRM contact creation)
   const { data: call } = await serviceClient
     .from('calls')
-    .select('id, host_user_id')
+    .select('id, host_user_id, organization_id, crm_contact_id')
     .eq('room_code', roomCode)
     .single();
 
@@ -184,5 +184,87 @@ export async function POST(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Auto-create CRM contact for guests with email (non-blocking)
+  if (participantRole === 'guest' && guestEmail && call.organization_id) {
+    try {
+      await ensureCrmContact(serviceClient, call, guestName || 'Unknown', guestEmail, roomCode);
+    } catch {
+      // Non-blocking — don't fail participant registration
+    }
+  }
+
   return NextResponse.json(participant, { status: 201 });
+}
+
+/**
+ * Find or create a CRM contact for the guest, and link it to the call.
+ */
+async function ensureCrmContact(
+  supabase: ReturnType<typeof createServiceClient>,
+  call: { id: string; organization_id: string; crm_contact_id: string | null },
+  guestName: string,
+  guestEmail: string,
+  roomCode: string
+) {
+  const normalizedEmail = guestEmail.toLowerCase().trim();
+
+  // Check if contact already exists by normalised email
+  const { data: existing } = await supabase
+    .from('crm_contacts')
+    .select('id')
+    .eq('organization_id', call.organization_id)
+    .eq('email_normalised', normalizedEmail)
+    .limit(1);
+
+  let contactId: string;
+
+  if (existing && existing.length > 0) {
+    contactId = existing[0].id;
+    // Update last_contacted_at
+    await supabase
+      .from('crm_contacts')
+      .update({ last_contacted_at: new Date().toISOString() })
+      .eq('id', contactId);
+  } else {
+    // Parse name into first/last
+    const nameParts = guestName.trim().split(/\s+/);
+    const firstName = nameParts[0] || 'Unknown';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    const { data: newContact } = await supabase
+      .from('crm_contacts')
+      .insert({
+        organization_id: call.organization_id,
+        first_name: firstName,
+        last_name: lastName || firstName,
+        email: guestEmail,
+        email_normalised: normalizedEmail,
+        source: 'other',
+        lifecycle_stage: 'lead',
+        last_contacted_at: new Date().toISOString(),
+        custom_fields: { source_detail: 'video_call' },
+      })
+      .select('id')
+      .single();
+
+    if (!newContact) return;
+    contactId = newContact.id;
+
+    // Log activity for new contact creation
+    await supabase.from('crm_activity').insert({
+      organization_id: call.organization_id,
+      contact_id: contactId,
+      activity_type: 'contact_created',
+      title: 'Contact created from video call',
+      description: `${guestName} joined call room ${roomCode} and was automatically added as a CRM contact.`,
+    });
+  }
+
+  // Link contact to call if not already linked
+  if (!call.crm_contact_id) {
+    await supabase
+      .from('calls')
+      .update({ crm_contact_id: contactId, updated_at: new Date().toISOString() })
+      .eq('id', call.id);
+  }
 }

@@ -39,21 +39,43 @@ export async function POST(
     return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
   }
 
-  // Log acceptance in call activity (use call_metadata or a simple approach)
-  // Update the call with the accepted offer info
+  // Update the call timestamp
   await supabase.from('calls').update({
     updated_at: new Date().toISOString(),
   }).eq('id', call.id);
 
-  // If there's a CRM contact, log activity
+  // Find and update CRM deal to 'won'
   if (call.crm_contact_id) {
     try {
+      const { data: deals } = await supabase
+        .from('crm_deals')
+        .select('id, products')
+        .eq('organization_id', call.organization_id)
+        .eq('contact_id', call.crm_contact_id)
+        .eq('status', 'open')
+        .order('created_at', { ascending: false });
+
+      const matchingDeal = deals?.find(d => {
+        const products = d.products as unknown as Array<{ offer_id?: string }>;
+        return Array.isArray(products) && products.some(p => p.offer_id === offerId);
+      });
+
+      if (matchingDeal) {
+        await supabase.from('crm_deals').update({
+          status: 'won',
+          probability: 100,
+          updated_at: new Date().toISOString(),
+        }).eq('id', matchingDeal.id);
+      }
+
+      // Log CRM activity
       await supabase.from('crm_activity').insert({
         organization_id: call.organization_id,
         contact_id: call.crm_contact_id,
+        deal_id: matchingDeal?.id || null,
         activity_type: 'note',
         title: `Accepted offer: ${offer.name}`,
-        description: `${guestName || 'Guest'} (${guestEmail || 'unknown'}) accepted the "${offer.name}" offer during a call.`,
+        description: `${guestName || 'Guest'} (${guestEmail || 'unknown'}) accepted the "${offer.name}" offer during a call. Deal marked as won.`,
       });
     } catch {
       // Non-blocking
