@@ -138,6 +138,7 @@ const callsNavigation: NavItem[] = [
   { name: 'Dashboard', href: '/calls', icon: VideoCameraIcon },
   { name: 'Templates', href: '/calls/templates', icon: DocumentTextIcon },
   { name: 'Offers', href: '/calls/offers', icon: CurrencyDollarIcon },
+  { name: 'Recordings', href: '/calls/recordings', icon: MicrophoneIcon },
   { name: 'Insights', href: '/calls/insights', icon: EyeIcon },
 ];
 
