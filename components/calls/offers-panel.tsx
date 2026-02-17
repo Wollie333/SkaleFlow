@@ -199,33 +199,38 @@ export function OffersPanel({
                   </ul>
                 )}
 
-                {/* Response badges */}
+                {/* Response badges + decline reasons */}
                 {responses && Object.keys(responses).length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
+                  <div className="mt-2 space-y-1.5">
                     {Object.values(responses).map((r, i) => (
-                      <span
-                        key={i}
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                          r.status === 'accepted'
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : r.status === 'declined'
-                            ? 'bg-red-500/20 text-red-400'
-                            : r.status === 'minimized'
-                            ? 'bg-gold/20 text-gold'
-                            : 'bg-white/10 text-white/50'
-                        }`}
-                        title={r.reason ? `${r.participantName}: ${r.reason}` : r.participantName}
-                      >
-                        {r.status === 'accepted' && '✓'}
-                        {r.status === 'declined' && '✗'}
-                        {r.status === 'minimized' && (
-                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
+                      <div key={i}>
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                            r.status === 'accepted'
+                              ? 'bg-emerald-500/20 text-emerald-400'
+                              : r.status === 'declined'
+                              ? 'bg-red-500/20 text-red-400'
+                              : r.status === 'minimized'
+                              ? 'bg-gold/20 text-gold'
+                              : 'bg-white/10 text-white/50'
+                          }`}
+                        >
+                          {r.status === 'accepted' && '✓'}
+                          {r.status === 'declined' && '✗'}
+                          {r.status === 'minimized' && (
+                            <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          )}
+                          {r.participantName}
+                        </span>
+                        {r.status === 'declined' && r.reason && (
+                          <p className="text-red-400/70 text-[10px] mt-0.5 ml-2 italic leading-tight">
+                            &ldquo;{r.reason}&rdquo;
+                          </p>
                         )}
-                        {r.participantName}
-                      </span>
+                      </div>
                     ))}
                   </div>
                 )}
