@@ -26,6 +26,7 @@ export default function OffersPage() {
   const [editing, setEditing] = useState<Offer | null>(null);
   const [creating, setCreating] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<{ text: string; success: boolean } | null>(null);
 
   useEffect(() => {
     loadOffers();
@@ -72,10 +73,19 @@ export default function OffersPage() {
           <button
             onClick={async () => {
               setSyncing(true);
+              setSyncMessage(null);
               try {
-                await fetch('/api/calls/offers/sync', { method: 'POST' });
-                await loadOffers();
-              } catch { /* ignore */ }
+                const res = await fetch('/api/calls/offers/sync', { method: 'POST' });
+                const result = await res.json();
+                if (result.synced) {
+                  setSyncMessage({ text: `Synced "${result.offerName}" from Brand Engine`, success: true });
+                  await loadOffers();
+                } else {
+                  setSyncMessage({ text: result.reason || 'Sync returned no data', success: false });
+                }
+              } catch {
+                setSyncMessage({ text: 'Sync request failed', success: false });
+              }
               setSyncing(false);
             }}
             disabled={syncing}
@@ -91,6 +101,16 @@ export default function OffersPage() {
           </button>
         </div>
       </div>
+
+      {syncMessage && (
+        <div className={`mb-4 px-4 py-3 rounded-lg text-sm ${
+          syncMessage.success
+            ? 'bg-teal/10 border border-teal/20 text-teal'
+            : 'bg-red-50 border border-red-200 text-red-700'
+        }`}>
+          {syncMessage.text}
+        </div>
+      )}
 
       {loading ? (
         <div className="text-stone text-sm animate-pulse">Loading offers...</div>

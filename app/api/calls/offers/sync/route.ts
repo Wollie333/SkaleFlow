@@ -16,10 +16,10 @@ export async function POST() {
 
   try {
     const { syncBrandToOffers } = await import('@/lib/calls/offers/brand-to-offers-sync');
-    await syncBrandToOffers(member.organization_id);
-    return NextResponse.json({ success: true });
+    const result = await syncBrandToOffers(member.organization_id);
+    return NextResponse.json(result);
   } catch (err) {
     console.error('[OffersSync] Failed:', err);
-    return NextResponse.json({ error: 'Sync failed' }, { status: 500 });
+    return NextResponse.json({ synced: false, reason: 'Unexpected error during sync' }, { status: 500 });
   }
 }

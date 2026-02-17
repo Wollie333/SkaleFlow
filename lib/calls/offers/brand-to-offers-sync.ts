@@ -1,37 +1,51 @@
 import { createServiceClient } from '@/lib/supabase/server';
-import type { Json } from '@/types/database';
+
+export interface SyncResult {
+  synced: boolean;
+  reason?: string;
+  offerName?: string;
+}
 
 /**
  * Sync Phase 4 brand outputs → offers table.
  * Called when Phase 4 is locked (last question saved).
  * Uses service client directly (NOT the API route) to prevent sync loops.
  */
-export async function syncBrandToOffers(organizationId: string): Promise<void> {
+export async function syncBrandToOffers(organizationId: string): Promise<SyncResult> {
   const supabase = createServiceClient();
 
   // Fetch all Phase 4 offer_* brand outputs for this org
-  const { data: outputs } = await supabase
+  const { data: outputs, error: fetchError } = await supabase
     .from('brand_outputs')
     .select('output_key, output_value')
     .eq('organization_id', organizationId)
     .like('output_key', 'offer_%');
 
-  if (!outputs || outputs.length === 0) {
-    console.log('[BrandToOffers] No offer brand outputs found, skipping sync');
-    return;
+  if (fetchError) {
+    console.error('[BrandToOffers] Fetch error:', fetchError.message);
+    return { synced: false, reason: `Database error: ${fetchError.message}` };
   }
 
-  // Build a lookup map
+  if (!outputs || outputs.length === 0) {
+    console.log('[BrandToOffers] No offer brand outputs found, skipping sync');
+    return { synced: false, reason: 'No offer variables found in Brand Engine Phase 4. Complete Phase 4 first.' };
+  }
+
+  // Build a lookup map — output_value is Json type, cast to string
   const vars: Record<string, string> = {};
   for (const o of outputs) {
-    vars[o.output_key] = o.output_value || '';
+    const val = o.output_value;
+    vars[o.output_key] = typeof val === 'string' ? val : (val != null ? String(val) : '');
   }
+
+  console.log('[BrandToOffers] Found keys:', Object.keys(vars).join(', '));
 
   // Required field — skip sync if offer has no name
   const offerName = vars['offer_name'];
   if (!offerName) {
-    console.log('[BrandToOffers] No offer_name found, skipping sync');
-    return;
+    const availableKeys = Object.keys(vars).join(', ');
+    console.log('[BrandToOffers] No offer_name found, skipping sync. Available:', availableKeys);
+    return { synced: false, reason: `offer_name not set yet. Found: ${availableKeys}. Complete Phase 4 Question 4 to set the offer name.` };
   }
 
   // Build description from tagline + problem + outcome
@@ -65,9 +79,9 @@ export async function syncBrandToOffers(organizationId: string): Promise<void> {
     tier: vars['offer_tier'] || null,
     price_display: vars['offer_price_display'] || null,
     billing_frequency: vars['offer_billing_frequency'] || null,
-    deliverables: deliverables as unknown as Json,
-    value_propositions: valueProps as unknown as Json,
-    common_objections: objections as unknown as Json,
+    deliverables: deliverables,
+    value_propositions: valueProps,
+    common_objections: objections,
     source: 'brand_engine',
     is_active: true,
     updated_at: new Date().toISOString(),
@@ -90,20 +104,22 @@ export async function syncBrandToOffers(organizationId: string): Promise<void> {
 
     if (error) {
       console.error('[BrandToOffers] Update failed:', error.message);
-      throw error;
+      return { synced: false, reason: `Update failed: ${error.message}` };
     }
     console.log(`[BrandToOffers] Updated existing offer "${offerName}" (${existing.id})`);
+    return { synced: true, offerName };
   } else {
     // Create new
     const { error } = await supabase
       .from('offers')
-      .insert(offerData);
+      .insert(offerData as never);
 
     if (error) {
       console.error('[BrandToOffers] Insert failed:', error.message);
-      throw error;
+      return { synced: false, reason: `Insert failed: ${error.message}` };
     }
     console.log(`[BrandToOffers] Created new brand-synced offer "${offerName}"`);
+    return { synced: true, offerName };
   }
 }
 

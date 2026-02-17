@@ -42,6 +42,43 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const roomCode = generateRoomCode();
 
+  // Find or create CRM contact if guest info provided and no crmContactId given
+  let crmContactId: string | null = body.crmContactId || null;
+  if (!crmContactId && body.guestEmail) {
+    const normalizedEmail = body.guestEmail.toLowerCase().trim();
+
+    const { data: existingContact } = await supabase
+      .from('crm_contacts')
+      .select('id')
+      .eq('organization_id', member.organization_id)
+      .eq('email_normalised', normalizedEmail)
+      .single();
+
+    if (existingContact) {
+      crmContactId = existingContact.id;
+    } else {
+      const nameParts = (body.guestName || '').trim().split(/\s+/);
+      const firstName = nameParts[0] || body.guestName || 'Unknown';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      const { data: newContact } = await supabase
+        .from('crm_contacts')
+        .insert({
+          organization_id: member.organization_id,
+          first_name: firstName,
+          last_name: lastName || '(Unknown)',
+          email: body.guestEmail,
+          email_normalised: normalizedEmail,
+          source: 'call',
+          lifecycle_stage: 'lead',
+        })
+        .select('id')
+        .single();
+
+      if (newContact) crmContactId = newContact.id;
+    }
+  }
+
   const { data, error } = await supabase
     .from('calls')
     .insert({
@@ -55,7 +92,7 @@ export async function POST(request: NextRequest) {
       scheduled_start: body.scheduledStart || new Date().toISOString(),
       scheduled_duration_min: body.durationMin || 30,
       room_code: roomCode,
-      crm_contact_id: body.crmContactId || null,
+      crm_contact_id: crmContactId,
       crm_deal_id: body.crmDealId || null,
     })
     .select()
