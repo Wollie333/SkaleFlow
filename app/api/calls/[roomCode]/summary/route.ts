@@ -13,7 +13,7 @@ export async function GET(
 
   const { data: call } = await supabase
     .from('calls')
-    .select('id, title, call_type, actual_start, actual_end, room_code, crm_contact_id')
+    .select('id, title, call_type, actual_start, actual_end, room_code, crm_contact_id, recording_url')
     .eq('room_code', roomCode)
     .single();
 

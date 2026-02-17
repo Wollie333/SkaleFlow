@@ -37,10 +37,10 @@ export async function generateCallSummary(callId: string, orgId: string, userId:
     const { adapter, usingUserKey } = await getProviderAdapterForUser(resolved.provider, userId);
 
     const response = await adapter.complete({
-      systemPrompt: `You are a post-call analyst. Analyze the transcript and produce a comprehensive JSON summary.`,
+      systemPrompt: `You are a professional post-call analyst. Analyze the transcript and produce a structured JSON response. IMPORTANT: The "summary_text" field MUST be plain, readable prose — 2-3 paragraphs written as a human would read them. Do NOT include JSON, code formatting, or escape characters in the summary_text. Write naturally as if you were writing a meeting report for a business executive.`,
       messages: [{
         role: 'user',
-        content: `Call: ${call?.title || 'Untitled'} (${call?.call_type || 'unknown'})\nObjective: ${call?.call_objective || 'Not set'}\n\nFull Transcript:\n${fullTranscript}\n\nProduce a JSON response:\n{\n  "summary_text": "2-3 paragraph narrative summary",\n  "key_points": ["point 1", "point 2"],\n  "decisions_made": ["decision 1"],\n  "objections_raised": [{"objection": "...", "response": "...", "resolved": true}],\n  "sentiment_arc": [{"phase": "opening", "sentiment": "positive"}, ...],\n  "next_steps": [{"action": "...", "owner": "host|guest", "deadline": "..."}],\n  "deal_stage_recommendation": "lead|prospect|opportunity|customer"\n}`,
+        content: `Call: ${call?.title || 'Untitled'} (${call?.call_type || 'unknown'})\nObjective: ${call?.call_objective || 'Not set'}\n\nFull Transcript:\n${fullTranscript}\n\nProduce a JSON response with these fields:\n{\n  "summary_text": "Write 2-3 paragraphs of natural, readable prose summarizing the call. Include who participated, what was discussed, key outcomes, and any notable moments. Write this as a human-readable meeting summary, NOT as JSON or a list.",\n  "key_points": ["Clear, complete sentence for each key point"],\n  "decisions_made": ["Each decision as a clear sentence"],\n  "objections_raised": [{"objection": "The objection raised", "response": "How it was addressed", "resolved": true}],\n  "sentiment_arc": [{"phase": "opening", "sentiment": "positive"}, {"phase": "discussion", "sentiment": "neutral"}, {"phase": "closing", "sentiment": "positive"}],\n  "next_steps": [{"action": "Specific action to take", "owner": "host or guest name", "deadline": "timeframe or date"}],\n  "deal_stage_recommendation": "lead|prospect|opportunity|customer"\n}\n\nRespond with ONLY the JSON object, no markdown code blocks.`,
       }],
       maxTokens: 2000,
       temperature: 0.2,
@@ -55,9 +55,25 @@ export async function generateCallSummary(callId: string, orgId: string, userId:
 
     let parsed;
     try {
-      parsed = JSON.parse(response.text);
+      // Strip markdown code blocks if AI wrapped in ```json...```
+      let cleaned = response.text.trim();
+      if (cleaned.startsWith('```')) {
+        cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+      }
+      parsed = JSON.parse(cleaned);
     } catch {
-      parsed = { summary_text: response.text };
+      // If JSON parse fails, use the raw text as summary
+      parsed = { summary_text: response.text.replace(/```(?:json)?|```/g, '').trim() };
+    }
+
+    // Ensure summary_text is clean readable prose (not JSON-like)
+    if (parsed.summary_text && (parsed.summary_text.startsWith('{') || parsed.summary_text.startsWith('['))) {
+      try {
+        const inner = JSON.parse(parsed.summary_text);
+        parsed.summary_text = inner.summary_text || inner.summary || JSON.stringify(inner, null, 2);
+      } catch {
+        // Already text, keep as is
+      }
     }
 
     const { data } = await supabase

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CallRoom } from '@/components/calls/call-room';
 
 interface GuestJoinFormProps {
@@ -9,11 +9,46 @@ interface GuestJoinFormProps {
   callTitle: string;
 }
 
+const STORAGE_KEY_PREFIX = 'sf-guest-';
+
 export function GuestJoinForm({ roomCode, callId, callTitle }: GuestJoinFormProps) {
   const [joined, setJoined] = useState(false);
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
   const [consent, setConsent] = useState(false);
+
+  // Restore guest info from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem(`${STORAGE_KEY_PREFIX}${roomCode}`);
+      if (stored) {
+        const { name, email } = JSON.parse(stored);
+        if (name && email) {
+          setGuestName(name);
+          setGuestEmail(email);
+          setConsent(true);
+          setJoined(true);
+        }
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }, [roomCode]);
+
+  const handleJoin = () => {
+    if (guestName && guestEmail && consent) {
+      // Persist to sessionStorage so refresh doesn't lose info
+      try {
+        sessionStorage.setItem(
+          `${STORAGE_KEY_PREFIX}${roomCode}`,
+          JSON.stringify({ name: guestName, email: guestEmail })
+        );
+      } catch {
+        // sessionStorage might be full/disabled
+      }
+      setJoined(true);
+    }
+  };
 
   if (!joined) {
     return (
@@ -61,9 +96,7 @@ export function GuestJoinForm({ roomCode, callId, callTitle }: GuestJoinFormProp
             </label>
 
             <button
-              onClick={() => {
-                if (guestName && guestEmail && consent) setJoined(true);
-              }}
+              onClick={handleJoin}
               disabled={!guestName || !guestEmail || !consent}
               className="w-full py-3 rounded-lg bg-[#1E6B63] text-white font-medium text-sm hover:bg-[#1E6B63]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >

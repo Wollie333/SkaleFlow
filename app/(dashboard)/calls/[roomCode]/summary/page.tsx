@@ -3,7 +3,6 @@
 import { useState, useEffect, use } from 'react';
 import { CallSummary } from '@/components/calls/call-summary';
 import { ActionItemsList } from '@/components/calls/action-items-list';
-import { FollowUpEditor } from '@/components/calls/follow-up-editor';
 import { CallScoreCard } from '@/components/calls/call-score-card';
 
 interface SummaryData {
@@ -15,6 +14,7 @@ interface SummaryData {
     actual_end: string | null;
     room_code: string;
     crm_contact_id: string | null;
+    recording_url: string | null;
   };
   summary: {
     id: string;
@@ -48,7 +48,7 @@ export default function PostCallSummaryPage({ params }: { params: Promise<{ room
   const { roomCode } = use(params);
   const [data, setData] = useState<SummaryData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'summary' | 'actions' | 'followup' | 'score' | 'insights'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'recording' | 'actions' | 'score' | 'insights'>('summary');
 
   useEffect(() => {
     fetch(`/api/calls/${roomCode}/summary`)
@@ -62,8 +62,8 @@ export default function PostCallSummaryPage({ params }: { params: Promise<{ room
 
   const tabs = [
     { id: 'summary', label: 'Summary' },
+    { id: 'recording', label: 'Recording' },
     { id: 'actions', label: `Actions (${data.actionItems.length})` },
-    { id: 'followup', label: 'Follow-up' },
     { id: 'score', label: 'Score' },
     { id: 'insights', label: `Insights (${data.insights.length})` },
   ];
@@ -112,14 +112,50 @@ export default function PostCallSummaryPage({ params }: { params: Promise<{ room
       {activeTab === 'summary' && data.summary && (
         <CallSummary summary={data.summary} />
       )}
+      {activeTab === 'recording' && (
+        <div className="bg-white rounded-xl border border-stone/10 p-5">
+          {data.call.recording_url ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-5 h-5 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <h3 className="text-sm font-semibold text-charcoal">Call Recording</h3>
+              </div>
+              <video
+                src={data.call.recording_url}
+                controls
+                className="w-full rounded-lg bg-black"
+                preload="metadata"
+              >
+                Your browser does not support the video element.
+              </video>
+              <div className="flex items-center gap-3 pt-2">
+                <a
+                  href={data.call.recording_url}
+                  download={`${data.call.title || 'recording'}.webm`}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-teal bg-teal/10 rounded-lg hover:bg-teal/20 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download Recording
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <svg className="w-12 h-12 mx-auto text-stone/30 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              <p className="text-stone text-sm">No recording available for this call.</p>
+              <p className="text-stone/60 text-xs mt-1">Recording must be started during the call to be saved here.</p>
+            </div>
+          )}
+        </div>
+      )}
       {activeTab === 'actions' && (
         <ActionItemsList items={data.actionItems} roomCode={roomCode} />
-      )}
-      {activeTab === 'followup' && data.summary && (
-        <FollowUpEditor
-          draft={data.summary.follow_up_email_draft}
-          roomCode={roomCode}
-        />
       )}
       {activeTab === 'score' && data.summary?.call_score && (
         <CallScoreCard score={data.summary.call_score} />

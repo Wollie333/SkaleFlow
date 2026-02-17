@@ -75,7 +75,9 @@ export function CallRoom({
   const [isRecordingRemote, setIsRecordingRemote] = useState(false); // non-host: remote recording indicator
   const [callActive, setCallActive] = useState(false);
   const [callElapsed, setCallElapsed] = useState(0);
+  const [localStatus, setLocalStatus] = useState<string>(isHost ? 'in_call' : 'waiting');
 
+  const [isSaving, setIsSaving] = useState(false);
   const [showDeviceSettings, setShowDeviceSettings] = useState(false);
   const [showCaptions, setShowCaptions] = useState(true);
 
@@ -168,6 +170,14 @@ export function CallRoom({
           isCameraOff: false,
         }));
         setParticipants(mapped);
+
+        // Update local user status from server (for waiting room tracking)
+        if (participantIdRef.current) {
+          const me = mapped.find(p => p.id === participantIdRef.current);
+          if (me && me.status === 'in_call') {
+            setLocalStatus('in_call');
+          }
+        }
       } catch {
         // Ignore polling errors
       }
@@ -200,10 +210,10 @@ export function CallRoom({
       }
     });
 
-    // Handle admit signal (guest side — refresh status)
+    // Handle admit signal (guest side — transition from waiting to in_call)
     signaling.on('admit-participant', (msg) => {
       if (msg.payload.participantId === participantIdRef.current) {
-        // Participant was admitted — no further action needed, polling will pick up status
+        setLocalStatus('in_call');
       }
     });
 
@@ -622,6 +632,10 @@ export function CallRoom({
   }, [presentedOffer, guestName]);
 
   const endCall = useCallback(async () => {
+    // Show saving modal immediately
+    setIsSaving(true);
+    const startTime = Date.now();
+
     // Stop transcription
     if (transcriptionRef.current) {
       transcriptionRef.current.stop();
@@ -656,11 +670,18 @@ export function CallRoom({
       }
     }
 
-    // Update call status
+    // Update call status + trigger post-call pipeline
     try {
       await fetch(`/api/calls/${roomCode}/end`, { method: 'POST' });
     } catch {
       // Ignore - we're leaving anyway
+    }
+
+    // Ensure at least 4 seconds of saving screen
+    const elapsed = Date.now() - startTime;
+    const remaining = Math.max(4000 - elapsed, 0);
+    if (remaining > 0) {
+      await new Promise(resolve => setTimeout(resolve, remaining));
     }
 
     window.location.href = `/calls/${roomCode}/summary`;
@@ -729,10 +750,13 @@ export function CallRoom({
           <VideoPanel
             localStream={localStreamRef.current}
             participants={participants}
-            localUserId={userId || participantIdRef.current}
+            localUserId={userId || null}
+            localParticipantId={participantIdRef.current}
             isCameraOff={isCameraOff}
             isScreenSharing={isScreenSharing}
             callActive={callActive}
+            isWaiting={!isHost && localStatus === 'waiting'}
+            displayName={displayName}
             onStartMedia={startMedia}
           />
 
@@ -846,6 +870,25 @@ export function CallRoom({
           onDecline={declineOffer}
           onMinimize={minimizeOffer}
         />
+      )}
+
+      {/* Saving modal — shown when host ends call */}
+      {isSaving && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0F1F1D]/95 backdrop-blur-sm">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto mb-6 relative">
+              <div className="absolute inset-0 rounded-full border-4 border-white/10" />
+              <div className="absolute inset-0 rounded-full border-4 border-t-teal border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+            </div>
+            <h2 className="text-white text-xl font-semibold mb-2">Saving your meeting data...</h2>
+            <p className="text-white/50 text-sm">Please wait while we process your call transcript, generate summaries, and save action items.</p>
+            <div className="mt-6 flex justify-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-teal animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-2 h-2 rounded-full bg-teal animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-2 h-2 rounded-full bg-teal animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
