@@ -51,6 +51,18 @@ export default async function CallsPage() {
             Templates
           </Link>
           <Link
+            href="/calls/offers"
+            className="px-4 py-2 text-sm font-medium text-charcoal bg-cream border border-stone/20 rounded-lg hover:bg-stone/10 transition-colors"
+          >
+            Offers
+          </Link>
+          <Link
+            href="/calls/recordings"
+            className="px-4 py-2 text-sm font-medium text-charcoal bg-cream border border-stone/20 rounded-lg hover:bg-stone/10 transition-colors"
+          >
+            Recordings
+          </Link>
+          <Link
             href="/calls/new"
             className="px-4 py-2 text-sm font-medium text-dark bg-gold rounded-lg hover:bg-gold/90 transition-colors"
           >

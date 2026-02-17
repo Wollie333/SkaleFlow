@@ -8,6 +8,7 @@ import { TranscriptPanel } from './transcript-panel';
 import { ControlsBar } from './controls-bar';
 import { CallSignaling } from '@/lib/calls/signaling';
 import { CallRecorder, uploadRecording } from '@/lib/calls/recording';
+import { TranscriptionManager } from '@/lib/calls/transcription';
 
 interface CallRoomProps {
   roomCode: string;
@@ -28,6 +29,7 @@ export interface Participant {
   userId: string | null;
   name: string;
   email: string | null;
+  avatarUrl: string | null;
   role: 'host' | 'team_member' | 'guest';
   status: 'invited' | 'waiting' | 'admitted' | 'in_call' | 'left' | 'denied';
   stream?: MediaStream;
@@ -59,7 +61,7 @@ export type RecordingState = 'idle' | 'recording' | 'stopping';
 export function CallRoom({
   roomCode, callId, callTitle, organizationId, userId, isHost, guestName, guestEmail, showOpenInTab
 }: CallRoomProps) {
-  const [activePanel, setActivePanel] = useState<PanelView>('copilot');
+  const [activePanel, setActivePanel] = useState<PanelView>(isHost ? 'copilot' : 'attendees');
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [transcripts, setTranscripts] = useState<TranscriptChunk[]>([]);
   const [guidance, setGuidance] = useState<GuidanceItem[]>([]);
@@ -76,6 +78,8 @@ export function CallRoom({
   const signalingRef = useRef<CallSignaling | null>(null);
   const recorderRef = useRef<CallRecorder | null>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const transcriptionRef = useRef<TranscriptionManager | null>(null);
+  const transcriptCounterRef = useRef(0);
 
   const displayName = callTitle || `Room: ${roomCode}`;
   const isRecording = recordingState === 'recording' || isRecordingRemote;
@@ -138,6 +142,7 @@ export function CallRoom({
           userId: p.user_id as string | null,
           name: (p.name as string) || (p.guest_name as string) || 'Unknown',
           email: (p.email as string | null) || (p.guest_email as string | null),
+          avatarUrl: (p.avatar_url as string | null) || null,
           role: p.role as Participant['role'],
           status: p.status as Participant['status'],
           isMuted: false,
@@ -193,6 +198,66 @@ export function CallRoom({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomCode, isHost, participantIdRef.current]);
+
+  // Start transcription when call is active (host only)
+  useEffect(() => {
+    if (!callActive || !isHost) return;
+
+    const manager = new TranscriptionManager('Host');
+    transcriptionRef.current = manager;
+
+    // Track interim transcript ID so we can update in-place
+    let interimId: string | null = null;
+
+    manager.start((result) => {
+      if (!result.text.trim()) return;
+
+      if (result.isFinal) {
+        const finalId = `t-${++transcriptCounterRef.current}`;
+        setTranscripts(prev => {
+          // Remove any interim entry, add final
+          const cleaned = interimId ? prev.filter(t => t.id !== interimId) : prev;
+          return [...cleaned, {
+            id: finalId,
+            speakerLabel: result.speakerLabel,
+            content: result.text,
+            timestampStart: callElapsed,
+            isFlagged: false,
+          }];
+        });
+        interimId = null;
+      } else {
+        // Interim result — update or append
+        if (!interimId) {
+          interimId = `t-interim-${++transcriptCounterRef.current}`;
+        }
+        const currentInterimId = interimId;
+        setTranscripts(prev => {
+          const idx = prev.findIndex(t => t.id === currentInterimId);
+          const chunk: TranscriptChunk = {
+            id: currentInterimId,
+            speakerLabel: result.speakerLabel,
+            content: result.text,
+            timestampStart: callElapsed,
+            isFlagged: false,
+          };
+          if (idx >= 0) {
+            const updated = [...prev];
+            updated[idx] = chunk;
+            return updated;
+          }
+          return [...prev, chunk];
+        });
+      }
+    }, localStreamRef.current || undefined);
+
+    return () => {
+      manager.stop();
+      transcriptionRef.current = null;
+    };
+    // Only re-run when callActive or isHost change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callActive, isHost]);
 
   // Initialize local media
   const startMedia = useCallback(async () => {
@@ -317,15 +382,33 @@ export function CallRoom({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'denied' }),
       });
-      setParticipants(prev =>
-        prev.map(p => p.id === pId ? { ...p, status: 'denied' } : p)
-      );
+      setParticipants(prev => prev.filter(p => p.id !== pId));
     } catch (err) {
       console.error('Failed to deny participant:', err);
     }
   }, [roomCode]);
 
+  const kickParticipant = useCallback(async (pId: string) => {
+    try {
+      await fetch(`/api/calls/${roomCode}/participants/${pId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'denied' }),
+      });
+      // Remove from local state immediately
+      setParticipants(prev => prev.filter(p => p.id !== pId));
+    } catch (err) {
+      console.error('Failed to kick participant:', err);
+    }
+  }, [roomCode]);
+
   const endCall = useCallback(async () => {
+    // Stop transcription
+    if (transcriptionRef.current) {
+      transcriptionRef.current.stop();
+      transcriptionRef.current = null;
+    }
+
     // Stop recording if active
     if (recorderRef.current) {
       await recorderRef.current.stop();
@@ -391,7 +474,7 @@ export function CallRoom({
           )}
         </div>
         <div className="flex items-center gap-2">
-          {['attendees', 'copilot', 'transcript'].map((panel) => (
+          {(isHost ? ['attendees', 'copilot', 'transcript'] : ['attendees']).map((panel) => (
             <button
               key={panel}
               onClick={() => setActivePanel(activePanel === panel ? 'none' : panel as PanelView)}
@@ -441,9 +524,11 @@ export function CallRoom({
               <AttendeesPanel
                 participants={participants}
                 isHost={isHost}
+                hostUserId={userId}
                 roomCode={roomCode}
                 onAdmit={admitParticipant}
                 onDeny={denyParticipant}
+                onKick={kickParticipant}
               />
             )}
             {activePanel === 'copilot' && (

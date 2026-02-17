@@ -21,10 +21,12 @@ export async function GET(
     return NextResponse.json({ error: 'Call not found' }, { status: 404 });
   }
 
+  // Exclude left/denied/kicked — only show active or pending participants
   const { data: participants, error } = await serviceClient
     .from('call_participants')
     .select('id, call_id, user_id, guest_name, guest_email, role, status, joined_at, left_at, consent_given, invite_method, created_at')
     .eq('call_id', call.id)
+    .not('status', 'in', '("left","denied")')
     .order('created_at', { ascending: true });
 
   if (error) {
@@ -36,15 +38,15 @@ export async function GET(
     .filter(p => p.user_id)
     .map(p => p.user_id as string);
 
-  let userMap: Record<string, { full_name: string; email: string }> = {};
+  let userMap: Record<string, { full_name: string; email: string; avatar_url: string | null }> = {};
   if (userIds.length > 0) {
     const { data: users } = await serviceClient
       .from('users')
-      .select('id, full_name, email')
+      .select('id, full_name, email, avatar_url')
       .in('id', userIds);
 
     if (users) {
-      userMap = Object.fromEntries(users.map(u => [u.id, { full_name: u.full_name || 'Unknown', email: u.email }]));
+      userMap = Object.fromEntries(users.map(u => [u.id, { full_name: u.full_name || 'Unknown', email: u.email, avatar_url: u.avatar_url }]));
     }
   }
 
@@ -52,6 +54,7 @@ export async function GET(
     ...p,
     name: p.guest_name || userMap[p.user_id || '']?.full_name || 'Unknown',
     email: p.guest_email || userMap[p.user_id || '']?.email || null,
+    avatar_url: userMap[p.user_id || '']?.avatar_url || null,
   }));
 
   return NextResponse.json(enriched);
