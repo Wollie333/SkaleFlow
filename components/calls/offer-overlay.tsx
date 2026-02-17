@@ -35,6 +35,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
   const [animating, setAnimating] = useState<string>('idle');
   const [declineReason, setDeclineReason] = useState('');
   const [customReason, setCustomReason] = useState('');
+  const [additionalMessage, setAdditionalMessage] = useState('');
 
   // When a new offer arrives, always show expanded
   useEffect(() => {
@@ -42,6 +43,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
     setAnimating('idle');
     setDeclineReason('');
     setCustomReason('');
+    setAdditionalMessage('');
   }, [offer.id]);
 
   const handleMinimize = () => {
@@ -63,11 +65,15 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
     setViewMode('declining');
     setDeclineReason('');
     setCustomReason('');
+    setAdditionalMessage('');
   };
 
   const handleSubmitDecline = () => {
-    const reason = declineReason === 'custom' ? customReason.trim() : declineReason;
-    onDecline(reason || 'No reason given');
+    const mainReason = declineReason === 'custom' ? customReason.trim() : declineReason;
+    const fullReason = additionalMessage.trim()
+      ? `${mainReason}. Additional: ${additionalMessage.trim()}`
+      : mainReason;
+    onDecline(fullReason || 'No reason given');
   };
 
   // Minimized — floating tab pinned top-right
@@ -107,7 +113,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
                 onClick={() => setDeclineReason(reason)}
                 className={`w-full text-left px-4 py-3 rounded-xl border text-sm transition-all ${
                   declineReason === reason
-                    ? 'border-teal/50 bg-teal/10 text-white'
+                    ? 'border-gold/50 bg-gold/10 text-white'
                     : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20'
                 }`}
               >
@@ -118,7 +124,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
               onClick={() => setDeclineReason('custom')}
               className={`w-full text-left px-4 py-3 rounded-xl border text-sm transition-all ${
                 declineReason === 'custom'
-                  ? 'border-teal/50 bg-teal/10 text-white'
+                  ? 'border-gold/50 bg-gold/10 text-white'
                   : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20'
               }`}
             >
@@ -130,10 +136,22 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
                 onChange={(e) => setCustomReason(e.target.value)}
                 placeholder="Tell us more..."
                 rows={2}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-teal/40 resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-gold/40 resize-none"
                 autoFocus
               />
             )}
+
+            {/* Additional message textarea — always visible */}
+            <div className="pt-1">
+              <label className="text-white/40 text-xs mb-1.5 block">Anything else you&apos;d like to share? (optional)</label>
+              <textarea
+                value={additionalMessage}
+                onChange={(e) => setAdditionalMessage(e.target.value)}
+                placeholder="Type your message here..."
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-gold/40 resize-none scrollbar-dark"
+              />
+            </div>
           </div>
 
           <div className="px-6 pb-5 flex gap-3">
@@ -146,9 +164,13 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
             <button
               onClick={handleSubmitDecline}
               disabled={!declineReason || (declineReason === 'custom' && !customReason.trim())}
-              className="flex-1 py-3 rounded-xl bg-white/10 text-white text-sm font-semibold hover:bg-white/15 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-colors ${
+                declineReason && (declineReason !== 'custom' || customReason.trim())
+                  ? 'bg-gold text-dark hover:bg-gold/90 shadow-lg shadow-gold/20'
+                  : 'bg-white/10 text-white/40 cursor-not-allowed opacity-40'
+              }`}
             >
-              Submit
+              Submit Feedback
             </button>
           </div>
         </div>
