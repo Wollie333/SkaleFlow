@@ -31,6 +31,7 @@ export default function TemplateEditorPage({ params }: { params: Promise<{ id: s
   const [template, setTemplate] = useState<Template | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [cloning, setCloning] = useState(false);
 
   useEffect(() => {
     fetch(`/api/calls/templates/${id}`)
@@ -58,6 +59,25 @@ export default function TemplateEditorPage({ params }: { params: Promise<{ id: s
     setSaving(false);
   }
 
+  async function handleClone() {
+    if (!template) return;
+    setCloning(true);
+    try {
+      const res = await fetch(`/api/calls/templates/${id}/clone`, { method: 'POST' });
+      if (res.ok) {
+        const clone = await res.json();
+        router.push(`/calls/templates/${clone.id}`);
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Failed to clone template');
+      }
+    } catch {
+      alert('Network error');
+    } finally {
+      setCloning(false);
+    }
+  }
+
   if (loading) return <div className="p-8 text-stone">Loading...</div>;
   if (!template) return <div className="p-8 text-stone">Template not found</div>;
 
@@ -69,15 +89,26 @@ export default function TemplateEditorPage({ params }: { params: Promise<{ id: s
         <button onClick={() => router.back()} className="text-sm text-teal hover:underline">
           &larr; Back to Templates
         </button>
-        {!isReadOnly && (
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-4 py-2 text-sm font-medium text-dark bg-gold rounded-lg hover:bg-gold/90 disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {isReadOnly && (
+            <button
+              onClick={handleClone}
+              disabled={cloning}
+              className="px-4 py-2 text-sm font-medium text-white bg-teal rounded-lg hover:bg-teal/90 disabled:opacity-50"
+            >
+              {cloning ? 'Cloning...' : 'Clone Template'}
+            </button>
+          )}
+          {!isReadOnly && (
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 text-sm font-medium text-dark bg-gold rounded-lg hover:bg-gold/90 disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-stone/10 p-6 space-y-6">

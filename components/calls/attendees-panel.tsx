@@ -7,9 +7,11 @@ interface AttendeesPanelProps {
   participants: Participant[];
   isHost: boolean;
   roomCode: string;
+  onAdmit?: (participantId: string) => void;
+  onDeny?: (participantId: string) => void;
 }
 
-export function AttendeesPanel({ participants, isHost, roomCode }: AttendeesPanelProps) {
+export function AttendeesPanel({ participants, isHost, roomCode, onAdmit, onDeny }: AttendeesPanelProps) {
   const [copied, setCopied] = useState(false);
 
   const inCall = participants.filter(p => p.status === 'in_call');
@@ -41,10 +43,16 @@ export function AttendeesPanel({ participants, isHost, roomCode }: AttendeesPane
                   <span className="text-white text-sm">{p.name}</span>
                   {isHost && (
                     <div className="flex gap-1">
-                      <button className="px-2 py-1 text-xs rounded bg-[#1E6B63] text-white hover:bg-[#1E6B63]/80">
+                      <button
+                        onClick={() => onAdmit?.(p.id)}
+                        className="px-2 py-1 text-xs rounded bg-[#1E6B63] text-white hover:bg-[#1E6B63]/80"
+                      >
                         Admit
                       </button>
-                      <button className="px-2 py-1 text-xs rounded bg-red-500/20 text-red-400 hover:bg-red-500/30">
+                      <button
+                        onClick={() => onDeny?.(p.id)}
+                        className="px-2 py-1 text-xs rounded bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                      >
                         Deny
                       </button>
                     </div>

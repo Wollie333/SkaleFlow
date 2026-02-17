@@ -29,6 +29,17 @@ export async function PATCH(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  // Block editing system templates
+  const { data: template } = await supabase
+    .from('call_templates')
+    .select('is_system')
+    .eq('id', id)
+    .single();
+
+  if (template?.is_system) {
+    return NextResponse.json({ error: 'System templates cannot be edited. Clone it to create your own version.' }, { status: 403 });
+  }
+
   const body = await request.json();
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   const allowed = ['name', 'description', 'call_type', 'phases', 'opening_script', 'closing_script', 'objection_bank', 'is_active'];
@@ -55,6 +66,17 @@ export async function DELETE(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  // Block deleting system templates
+  const { data: template } = await supabase
+    .from('call_templates')
+    .select('is_system')
+    .eq('id', id)
+    .single();
+
+  if (template?.is_system) {
+    return NextResponse.json({ error: 'System templates cannot be deleted.' }, { status: 403 });
+  }
 
   const { error } = await supabase
     .from('call_templates')

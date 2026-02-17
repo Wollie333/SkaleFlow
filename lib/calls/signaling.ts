@@ -10,7 +10,8 @@ export type SignalType =
   | 'recording-started'
   | 'recording-stopped'
   | 'mute-changed'
-  | 'camera-changed';
+  | 'camera-changed'
+  | 'admit-participant';
 
 export interface SignalMessage {
   type: SignalType;

@@ -6,14 +6,19 @@ import { AttendeesPanel } from './attendees-panel';
 import { CopilotPanel } from './copilot-panel';
 import { TranscriptPanel } from './transcript-panel';
 import { ControlsBar } from './controls-bar';
+import { CallSignaling } from '@/lib/calls/signaling';
+import { CallRecorder, uploadRecording } from '@/lib/calls/recording';
 
 interface CallRoomProps {
   roomCode: string;
   callId: string;
+  callTitle?: string;
+  organizationId?: string;
   userId?: string; // null for guests
   isHost: boolean;
   guestName?: string;
   guestEmail?: string;
+  showOpenInTab?: boolean;
 }
 
 export type PanelView = 'copilot' | 'transcript' | 'attendees' | 'none';
@@ -49,7 +54,11 @@ export interface GuidanceItem {
   wasDismissed: boolean;
 }
 
-export function CallRoom({ roomCode, callId, userId, isHost, guestName, guestEmail }: CallRoomProps) {
+export type RecordingState = 'idle' | 'recording' | 'stopping';
+
+export function CallRoom({
+  roomCode, callId, callTitle, organizationId, userId, isHost, guestName, guestEmail, showOpenInTab
+}: CallRoomProps) {
   const [activePanel, setActivePanel] = useState<PanelView>('copilot');
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [transcripts, setTranscripts] = useState<TranscriptChunk[]>([]);
@@ -57,11 +66,19 @@ export function CallRoom({ roomCode, callId, userId, isHost, guestName, guestEma
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
+  const [recordingState, setRecordingState] = useState<RecordingState>('idle');
+  const [isRecordingRemote, setIsRecordingRemote] = useState(false); // non-host: remote recording indicator
   const [callActive, setCallActive] = useState(false);
   const [callElapsed, setCallElapsed] = useState(0);
   const localStreamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const participantIdRef = useRef<string | null>(null);
+  const signalingRef = useRef<CallSignaling | null>(null);
+  const recorderRef = useRef<CallRecorder | null>(null);
+  const pollRef = useRef<NodeJS.Timeout | null>(null);
+
+  const displayName = callTitle || `Room: ${roomCode}`;
+  const isRecording = recordingState === 'recording' || isRecordingRemote;
 
   // Call timer
   useEffect(() => {
@@ -83,6 +100,100 @@ export function CallRoom({ roomCode, callId, userId, isHost, guestName, guestEma
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  // Register self as participant on mount
+  useEffect(() => {
+    const registerParticipant = async () => {
+      try {
+        const res = await fetch(`/api/calls/${roomCode}/participants`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: userId || undefined,
+            guestName: guestName || undefined,
+            guestEmail: guestEmail || undefined,
+            role: isHost ? 'host' : (userId ? 'team_member' : 'guest'),
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          participantIdRef.current = data.id;
+        }
+      } catch (err) {
+        console.error('Failed to register participant:', err);
+      }
+    };
+
+    registerParticipant();
+  }, [roomCode, userId, guestName, guestEmail, isHost]);
+
+  // Poll participants every 5s
+  useEffect(() => {
+    const fetchParticipants = async () => {
+      try {
+        const res = await fetch(`/api/calls/${roomCode}/participants`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const mapped: Participant[] = data.map((p: Record<string, unknown>) => ({
+          id: p.id as string,
+          userId: p.user_id as string | null,
+          name: (p.name as string) || (p.guest_name as string) || 'Unknown',
+          email: (p.email as string | null) || (p.guest_email as string | null),
+          role: p.role as Participant['role'],
+          status: p.status as Participant['status'],
+          isMuted: false,
+          isCameraOff: false,
+        }));
+        setParticipants(mapped);
+      } catch {
+        // Ignore polling errors
+      }
+    };
+
+    fetchParticipants();
+    pollRef.current = setInterval(fetchParticipants, 5000);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [roomCode]);
+
+  // Signaling connection
+  useEffect(() => {
+    if (!participantIdRef.current) return;
+
+    const signaling = new CallSignaling(roomCode, participantIdRef.current);
+    signalingRef.current = signaling;
+
+    // Handle recording signals (non-host side)
+    signaling.on('recording-started', () => {
+      if (!isHost) {
+        setIsRecordingRemote(true);
+      }
+    });
+
+    signaling.on('recording-stopped', () => {
+      if (!isHost) {
+        setIsRecordingRemote(false);
+      }
+    });
+
+    // Handle admit signal (guest side — refresh status)
+    signaling.on('admit-participant', (msg) => {
+      if (msg.payload.participantId === participantIdRef.current) {
+        // Participant was admitted — no further action needed, polling will pick up status
+      }
+    });
+
+    signaling.connect().catch(err => {
+      console.error('Signaling connection failed:', err);
+    });
+
+    return () => {
+      signaling.disconnect();
+      signalingRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomCode, isHost, participantIdRef.current]);
+
   // Initialize local media
   const startMedia = useCallback(async () => {
     try {
@@ -94,7 +205,6 @@ export function CallRoom({ roomCode, callId, userId, isHost, guestName, guestEma
       setCallActive(true);
     } catch (err) {
       console.error('Failed to access media devices:', err);
-      // Try audio-only
       try {
         const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         localStreamRef.current = audioStream;
@@ -133,12 +243,45 @@ export function CallRoom({ roomCode, callId, userId, isHost, guestName, guestEma
     }
   }, [isScreenSharing]);
 
-  const toggleRecording = useCallback(() => {
-    setIsRecording(prev => !prev);
-  }, []);
+  // Recording: admin clicks → starts immediately, broadcasts indicator
+  const toggleRecording = useCallback(async () => {
+    if (!isHost) return;
+
+    if (recordingState === 'idle') {
+      // Start recording
+      const stream = localStreamRef.current;
+      if (!stream) return;
+
+      const recorder = new CallRecorder({
+        onStop: async (blob) => {
+          // Upload recording
+          if (organizationId && callId) {
+            await uploadRecording(organizationId, callId, blob);
+          }
+        },
+      });
+      recorderRef.current = recorder;
+      recorder.start(stream);
+      setRecordingState('recording');
+
+      // Broadcast recording started to all participants
+      signalingRef.current?.send('recording-started', {});
+    } else if (recordingState === 'recording') {
+      // Stop recording
+      setRecordingState('stopping');
+      const recorder = recorderRef.current;
+      if (recorder) {
+        await recorder.stop();
+        recorderRef.current = null;
+      }
+      setRecordingState('idle');
+
+      // Broadcast recording stopped
+      signalingRef.current?.send('recording-stopped', {});
+    }
+  }, [isHost, recordingState, organizationId, callId]);
 
   const flagTranscript = useCallback(() => {
-    // Flag the most recent transcript
     setTranscripts(prev => {
       if (prev.length === 0) return prev;
       const updated = [...prev];
@@ -148,12 +291,68 @@ export function CallRoom({ roomCode, callId, userId, isHost, guestName, guestEma
     });
   }, []);
 
+  // Admit / Deny handlers
+  const admitParticipant = useCallback(async (pId: string) => {
+    try {
+      await fetch(`/api/calls/${roomCode}/participants/${pId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'in_call' }),
+      });
+      // Signal the admitted participant
+      signalingRef.current?.send('admit-participant', { participantId: pId });
+      // Update local state immediately
+      setParticipants(prev =>
+        prev.map(p => p.id === pId ? { ...p, status: 'in_call' } : p)
+      );
+    } catch (err) {
+      console.error('Failed to admit participant:', err);
+    }
+  }, [roomCode]);
+
+  const denyParticipant = useCallback(async (pId: string) => {
+    try {
+      await fetch(`/api/calls/${roomCode}/participants/${pId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'denied' }),
+      });
+      setParticipants(prev =>
+        prev.map(p => p.id === pId ? { ...p, status: 'denied' } : p)
+      );
+    } catch (err) {
+      console.error('Failed to deny participant:', err);
+    }
+  }, [roomCode]);
+
   const endCall = useCallback(async () => {
+    // Stop recording if active
+    if (recorderRef.current) {
+      await recorderRef.current.stop();
+      recorderRef.current = null;
+      setRecordingState('idle');
+    }
+
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(t => t.stop());
     }
     if (timerRef.current) clearInterval(timerRef.current);
+    if (pollRef.current) clearInterval(pollRef.current);
+    signalingRef.current?.disconnect();
     setCallActive(false);
+
+    // Mark self as left
+    if (participantIdRef.current) {
+      try {
+        await fetch(`/api/calls/${roomCode}/participants/${participantIdRef.current}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'left' }),
+        });
+      } catch {
+        // Ignore
+      }
+    }
 
     // Update call status
     try {
@@ -170,11 +369,24 @@ export function CallRoom({ roomCode, callId, userId, isHost, guestName, guestEma
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-2 bg-[#0F1F1D] border-b border-white/10">
         <div className="flex items-center gap-3">
-          <span className="text-white/80 text-sm font-medium">Room: {roomCode}</span>
+          <span className="text-white/80 text-sm font-medium">{displayName}</span>
           {callActive && (
             <span className="flex items-center gap-1.5 text-red-400 text-sm">
               <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
               {formatTime(callElapsed)}
+            </span>
+          )}
+          {/* Recording indicator — visible to all participants */}
+          {isRecording && (
+            <span className="flex items-center gap-1.5 text-red-400 text-xs font-medium ml-2">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              Recording
+            </span>
+          )}
+          {recordingState === 'stopping' && isHost && (
+            <span className="flex items-center gap-1.5 text-yellow-400 text-xs font-medium ml-2">
+              <span className="w-2 h-2 rounded-full bg-yellow-500" />
+              Saving...
             </span>
           )}
         </div>
@@ -192,6 +404,19 @@ export function CallRoom({ roomCode, callId, userId, isHost, guestName, guestEma
               {panel.charAt(0).toUpperCase() + panel.slice(1)}
             </button>
           ))}
+
+          {/* Open in new tab button — only in dashboard layout */}
+          {showOpenInTab && (
+            <button
+              onClick={() => window.open(`/call-room/${roomCode}`, '_blank')}
+              className="px-2 py-1.5 rounded text-white/50 hover:text-white/80 transition-colors"
+              title="Open in new tab (full screen)"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
@@ -217,6 +442,8 @@ export function CallRoom({ roomCode, callId, userId, isHost, guestName, guestEma
                 participants={participants}
                 isHost={isHost}
                 roomCode={roomCode}
+                onAdmit={admitParticipant}
+                onDeny={denyParticipant}
               />
             )}
             {activePanel === 'copilot' && (

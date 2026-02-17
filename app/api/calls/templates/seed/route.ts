@@ -3,7 +3,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { ALL_DEFAULT_TEMPLATES } from '@/lib/calls/templates/defaults';
 import type { CallType, Json } from '@/types/database';
 
-// POST — seed system templates (admin only)
+// POST — seed system templates (admin only, idempotent by name)
 export async function POST() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -22,17 +22,22 @@ export async function POST() {
 
   const serviceClient = createServiceClient();
 
-  // Check if system templates already exist
+  // Get existing system template names
   const { data: existing } = await serviceClient
     .from('call_templates')
-    .select('id')
+    .select('name')
     .eq('is_system', true);
 
-  if (existing && existing.length > 0) {
-    return NextResponse.json({ message: 'System templates already exist', count: existing.length });
+  const existingNames = new Set((existing || []).map(t => t.name));
+
+  // Only insert templates that don't already exist (by name)
+  const newTemplates = ALL_DEFAULT_TEMPLATES.filter(t => !existingNames.has(t.name));
+
+  if (newTemplates.length === 0) {
+    return NextResponse.json({ message: 'All system templates already exist', count: existingNames.size });
   }
 
-  const inserts = ALL_DEFAULT_TEMPLATES.map(t => ({
+  const inserts = newTemplates.map(t => ({
     organization_id: null as string | null,
     name: t.name,
     description: t.description,
@@ -50,5 +55,5 @@ export async function POST() {
     .select();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ seeded: data?.length || 0 }, { status: 201 });
+  return NextResponse.json({ seeded: data?.length || 0, total: existingNames.size + (data?.length || 0) }, { status: 201 });
 }

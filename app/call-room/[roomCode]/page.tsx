@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { CallRoom } from '@/components/calls/call-room';
 
-export default async function AuthenticatedCallRoomPage({ params }: { params: Promise<{ roomCode: string }> }) {
+export default async function FullPageCallRoomPage({ params }: { params: Promise<{ roomCode: string }> }) {
   const { roomCode } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -36,7 +36,7 @@ export default async function AuthenticatedCallRoomPage({ params }: { params: Pr
       organizationId={call.organization_id}
       userId={user.id}
       isHost={isHost}
-      showOpenInTab={true}
+      showOpenInTab={false}
     />
   );
 }
