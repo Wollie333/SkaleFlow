@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { BellIcon, CheckIcon, InboxIcon, BoltIcon, Bars3Icon } from '@heroicons/react/24/outline';
+import { BellIcon, CheckIcon, InboxIcon, BoltIcon, Bars3Icon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
+import { useTheme } from '@/components/theme-provider';
 import {
   DocumentTextIcon,
   CheckCircleIcon,
@@ -96,6 +97,7 @@ interface HeaderProps {
 export function Header({ user, initialUnreadCount = 0, organizationId, draftCount = 0, onMenuClick }: HeaderProps) {
   const router = useRouter();
   const supabase = createClient();
+  const { theme, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
@@ -227,6 +229,19 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
             </Link>
           )}
 
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg text-stone hover:text-cream hover:bg-teal/10 transition-colors"
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? (
+              <SunIcon className="w-5 h-5" />
+            ) : (
+              <MoonIcon className="w-5 h-5" />
+            )}
+          </button>
+
           {/* Notifications */}
           <div ref={dropdownRef} className="relative">
             <button
@@ -242,7 +257,7 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
             </button>
 
             {isOpen && (
-              <div className="absolute right-0 top-full mt-2 w-screen max-w-sm sm:w-96 bg-white border border-stone/15 rounded-xl shadow-2xl overflow-hidden z-[60]">
+              <div className="absolute right-0 top-full mt-2 w-screen max-w-sm sm:w-96 bg-white dark:bg-dark-light border border-stone/15 rounded-xl shadow-2xl overflow-hidden z-[60]">
                 {/* Header */}
                 <div className="px-4 py-3 border-b border-stone/10 flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-charcoal">Notifications</h3>

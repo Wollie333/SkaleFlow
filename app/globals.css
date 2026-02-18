@@ -6,6 +6,13 @@
 
 @layer base {
   :root {
+    /* Swappable tokens — RGB triplets for Tailwind alpha support */
+    --color-cream: 240 236 228;
+    --color-cream-warm: 245 241 234;
+    --color-charcoal: 44 44 44;
+    --color-stone: 122 117 109;
+
+    /* Static reference vars */
     --teal: #1E6B63;
     --teal-lt: #267D74;
     --teal-dk: #175650;
@@ -13,10 +20,13 @@
     --gold-lt: #D4B97E;
     --dark: #0F1F1D;
     --dark-lt: #162A27;
-    --cream: #F0ECE4;
-    --cream-w: #F5F1EA;
-    --charcoal: #2C2C2C;
-    --stone: #7A756D;
+  }
+
+  html.dark {
+    --color-cream: 15 31 29;
+    --color-cream-warm: 22 42 39;
+    --color-charcoal: 240 236 228;
+    --color-stone: 168 163 155;
   }
 }
 
@@ -109,15 +119,28 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-cream;
+  background: #F0ECE4;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-stone/30 rounded-full;
+  background: rgba(122, 117, 109, 0.3);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-stone/50;
+  background: rgba(122, 117, 109, 0.5);
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: #0F1F1D;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Sidebar scrollbar */
@@ -174,4 +197,8 @@ html {
 /* Selection color */
 ::selection {
   @apply bg-teal/20;
+}
+
+html.dark ::selection {
+  background: rgba(30, 107, 99, 0.35);
 }

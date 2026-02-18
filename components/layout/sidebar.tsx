@@ -245,7 +245,7 @@ export function Sidebar({
   const totalPendingReviews = (pendingReviewCount || 0);
 
   return (
-    <aside className={cn("fixed left-0 top-16 bottom-0 w-60 bg-white border-r border-stone/10 flex flex-col", className)}>
+    <aside className={cn("fixed left-0 top-16 bottom-0 w-60 bg-white dark:bg-dark-light border-r border-stone/10 dark:border-white/10 flex flex-col", className)}>
       <nav className="flex-1 p-4 overflow-y-auto sidebar-scroll">
         {/* User Role / Tier Badge */}
         {userRole && (
@@ -280,7 +280,7 @@ export function Sidebar({
                   'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                   isActive
                     ? 'bg-teal/10 text-teal'
-                    : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
+                    : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
                 )}
               >
                 <item.icon className="w-5 h-5" />
@@ -300,7 +300,7 @@ export function Sidebar({
                   'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                   pathname.startsWith('/reviews')
                     ? 'bg-teal/10 text-teal'
-                    : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
+                    : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
                 )}
               >
                 <EyeIcon className="w-5 h-5" />
@@ -339,7 +339,7 @@ export function Sidebar({
                             'flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                             isActive
                               ? 'bg-teal/10 text-teal'
-                              : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
+                              : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
                           )}
                         >
                           <item.icon className="w-5 h-5" />
@@ -370,7 +370,7 @@ export function Sidebar({
                                   'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
                                   subActive
                                     ? 'bg-teal/10 text-teal'
-                                    : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                                    : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                                 )}
                               >
                                 <sub.icon className="w-4 h-4" />
@@ -392,7 +392,7 @@ export function Sidebar({
                       'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                       isActive
                         ? 'bg-teal/10 text-teal'
-                        : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
+                        : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
                     )}
                   >
                     <item.icon className="w-5 h-5" />
@@ -449,7 +449,7 @@ export function Sidebar({
                             'flex items-center gap-3 px-3 py-2 ml-8 rounded-lg text-sm font-medium transition-colors',
                             navActive
                               ? 'bg-teal/10 text-teal'
-                              : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                              : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                           )}
                         >
                           <navItem.icon className="w-4 h-4" />
@@ -487,7 +487,7 @@ export function Sidebar({
                             'flex items-center gap-3 px-3 py-2 ml-8 rounded-lg text-sm font-medium transition-colors',
                             navActive
                               ? 'bg-teal/10 text-teal'
-                              : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                              : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                           )}
                         >
                           <navItem.icon className="w-4 h-4" />
@@ -525,7 +525,7 @@ export function Sidebar({
                             'flex items-center gap-3 px-3 py-2 ml-8 rounded-lg text-sm font-medium transition-colors',
                             navActive
                               ? 'bg-teal/10 text-teal'
-                              : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                              : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                           )}
                         >
                           <navItem.icon className="w-4 h-4" />
@@ -563,7 +563,7 @@ export function Sidebar({
                             'flex items-center gap-3 px-3 py-2 ml-8 rounded-lg text-sm font-medium transition-colors',
                             navActive
                               ? 'bg-teal/10 text-teal'
-                              : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                              : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                           )}
                         >
                           <navItem.icon className="w-4 h-4" />
@@ -601,7 +601,7 @@ export function Sidebar({
                             'flex items-center gap-3 px-3 py-2 ml-8 rounded-lg text-sm font-medium transition-colors',
                             navActive
                               ? 'bg-teal/10 text-teal'
-                              : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                              : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                           )}
                         >
                           <navItem.icon className="w-4 h-4" />
@@ -647,7 +647,7 @@ export function Sidebar({
                         'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
                         isActive
                           ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                          : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                       )}
                     >
                       <item.icon className="w-4 h-4" />
@@ -702,7 +702,7 @@ export function Sidebar({
                         'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
                         isActive
                           ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                          : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                       )}
                     >
                       <item.icon className="w-4 h-4" />
@@ -720,7 +720,7 @@ export function Sidebar({
                         'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
                         isActive
                           ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                          : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                       )}
                     >
                       <item.icon className="w-4 h-4" />
@@ -770,7 +770,7 @@ export function Sidebar({
                         'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
                         isActive
                           ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                          : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                       )}
                     >
                       <item.icon className="w-4 h-4" />
@@ -818,7 +818,7 @@ export function Sidebar({
                         'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
                         isActive
                           ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                          : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                       )}
                     >
                       <item.icon className="w-4 h-4" />
@@ -834,7 +834,7 @@ export function Sidebar({
       </nav>
 
       {/* Bottom navigation */}
-      <div className="p-4 border-t border-stone/10">
+      <div className="p-4 border-t border-stone/10 dark:border-white/10">
         <div className="space-y-1">
           {canAccessBilling && (
             <Link
@@ -843,7 +843,7 @@ export function Sidebar({
                 'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                 pathname === '/billing'
                   ? 'bg-teal/10 text-teal'
-                  : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                  : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
               )}
             >
               <CreditCardIcon className="w-5 h-5" />
@@ -856,7 +856,7 @@ export function Sidebar({
               'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
               pathname === '/settings'
                 ? 'bg-teal/10 text-teal'
-                : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
             )}
           >
             <Cog6ToothIcon className="w-5 h-5" />
@@ -868,7 +868,7 @@ export function Sidebar({
               'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
               pathname === '/help'
                 ? 'bg-teal/10 text-teal'
-                : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
             )}
           >
             <QuestionMarkCircleIcon className="w-5 h-5" />

@@ -278,16 +278,16 @@ export function MobileSidebar({
       {/* Drawer */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-[70] w-60 bg-white border-r border-stone/10 flex flex-col transition-transform duration-300 ease-in-out lg:hidden",
+          "fixed inset-y-0 left-0 z-[70] w-60 bg-white dark:bg-dark-light border-r border-stone/10 dark:border-white/10 flex flex-col transition-transform duration-300 ease-in-out lg:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Close button */}
-        <div className="flex items-center justify-between p-4 border-b border-stone/10">
+        <div className="flex items-center justify-between p-4 border-b border-stone/10 dark:border-white/10">
           <span className="font-serif font-bold text-xl text-charcoal">Menu</span>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-stone hover:bg-cream-warm hover:text-charcoal transition-colors"
+            className="p-2 rounded-lg text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal transition-colors"
           >
             <XMarkIcon className="w-5 h-5" />
           </button>
@@ -328,7 +328,7 @@ export function MobileSidebar({
                     'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                     isActive
                       ? 'bg-teal/10 text-teal'
-                      : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
+                      : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
                   )}
                 >
                   <item.icon className="w-5 h-5" />
@@ -348,7 +348,7 @@ export function MobileSidebar({
                     'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                     pathname.startsWith('/reviews')
                       ? 'bg-teal/10 text-teal'
-                      : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
+                      : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
                   )}
                 >
                   <EyeIcon className="w-5 h-5" />
@@ -390,7 +390,7 @@ export function MobileSidebar({
                               'flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                               isActive
                                 ? 'bg-teal/10 text-teal'
-                                : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
+                                : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
                             )}
                           >
                             <item.icon className="w-5 h-5" />
@@ -422,7 +422,7 @@ export function MobileSidebar({
                                     'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
                                     subActive
                                       ? 'bg-teal/10 text-teal'
-                                      : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                                      : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                                   )}
                                 >
                                   <sub.icon className="w-4 h-4" />
@@ -446,7 +446,7 @@ export function MobileSidebar({
                               'flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                               isActive
                                 ? 'bg-teal/10 text-teal'
-                                : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
+                                : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
                             )}
                           >
                             <item.icon className="w-5 h-5" />
@@ -487,7 +487,7 @@ export function MobileSidebar({
                                           'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
                                           navActive
                                             ? 'bg-teal/10 text-teal'
-                                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                                            : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                                         )}
                                       >
                                         <navItem.icon className="w-4 h-4" />
@@ -526,7 +526,7 @@ export function MobileSidebar({
                                           'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
                                           navActive
                                             ? 'bg-teal/10 text-teal'
-                                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                                            : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                                         )}
                                       >
                                         <navItem.icon className="w-4 h-4" />
@@ -565,7 +565,7 @@ export function MobileSidebar({
                                           'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
                                           navActive
                                             ? 'bg-teal/10 text-teal'
-                                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                                            : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                                         )}
                                       >
                                         <navItem.icon className="w-4 h-4" />
@@ -604,7 +604,7 @@ export function MobileSidebar({
                                           'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
                                           navActive
                                             ? 'bg-teal/10 text-teal'
-                                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                                            : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                                         )}
                                       >
                                         <navItem.icon className="w-4 h-4" />
@@ -643,7 +643,7 @@ export function MobileSidebar({
                                           'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
                                           navActive
                                             ? 'bg-teal/10 text-teal'
-                                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                                            : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                                         )}
                                       >
                                         <navItem.icon className="w-4 h-4" />
@@ -669,7 +669,7 @@ export function MobileSidebar({
                         'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                         isActive
                           ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream-warm hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
+                          : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
                       )}
                     >
                       <item.icon className="w-5 h-5" />
@@ -713,7 +713,7 @@ export function MobileSidebar({
                           'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
                           isActive
                             ? 'bg-teal/10 text-teal'
-                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                            : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                         )}
                       >
                         <item.icon className="w-4 h-4" />
@@ -769,7 +769,7 @@ export function MobileSidebar({
                           'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
                           isActive
                             ? 'bg-teal/10 text-teal'
-                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                            : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                         )}
                       >
                         <item.icon className="w-4 h-4" />
@@ -788,7 +788,7 @@ export function MobileSidebar({
                           'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
                           isActive
                             ? 'bg-teal/10 text-teal'
-                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                            : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                         )}
                       >
                         <item.icon className="w-4 h-4" />
@@ -839,7 +839,7 @@ export function MobileSidebar({
                           'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
                           isActive
                             ? 'bg-teal/10 text-teal'
-                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                            : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                         )}
                       >
                         <item.icon className="w-4 h-4" />
@@ -874,7 +874,7 @@ export function MobileSidebar({
                         'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                         isActive
                           ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                          : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                       )}
                     >
                       <item.icon className="w-5 h-5" />
@@ -888,7 +888,7 @@ export function MobileSidebar({
         </nav>
 
         {/* Bottom navigation */}
-        <div className="p-4 border-t border-stone/10">
+        <div className="p-4 border-t border-stone/10 dark:border-white/10">
           <div className="space-y-1">
             {canAccessBilling && (
               <Link
@@ -897,7 +897,7 @@ export function MobileSidebar({
                   'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                   pathname === '/billing'
                     ? 'bg-teal/10 text-teal'
-                    : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                    : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
                 )}
               >
                 <CreditCardIcon className="w-5 h-5" />
@@ -910,7 +910,7 @@ export function MobileSidebar({
                 'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                 pathname === '/settings'
                   ? 'bg-teal/10 text-teal'
-                  : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                  : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
               )}
             >
               <Cog6ToothIcon className="w-5 h-5" />
@@ -922,7 +922,7 @@ export function MobileSidebar({
                 'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                 pathname === '/help'
                   ? 'bg-teal/10 text-teal'
-                  : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                  : 'text-stone hover:bg-cream-warm dark:hover:bg-white/5 hover:text-charcoal'
               )}
             >
               <QuestionMarkCircleIcon className="w-5 h-5" />

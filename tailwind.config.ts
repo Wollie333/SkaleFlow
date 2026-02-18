@@ -1,6 +1,7 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
+  darkMode: 'class',
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -9,30 +10,29 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Primary - Teal (Mana Marketing)
+        // Primary - Teal (Mana Marketing) — fixed accent
         teal: {
           DEFAULT: '#1E6B63',
           light: '#267D74',
           dark: '#175650',
         },
-        // Secondary - Gold (Premium accent)
+        // Secondary - Gold (Premium accent) — fixed accent
         gold: {
           DEFAULT: '#C8A86E',
           light: '#D4B97E',
         },
-        // Dark backgrounds
+        // Dark backgrounds — fixed
         dark: {
           DEFAULT: '#0F1F1D',
           light: '#162A27',
         },
-        // Light backgrounds
+        // Swappable colors (light ↔ dark via CSS variables)
         cream: {
-          DEFAULT: '#F0ECE4',
-          warm: '#F5F1EA',
+          DEFAULT: 'rgb(var(--color-cream) / <alpha-value>)',
+          warm: 'rgb(var(--color-cream-warm) / <alpha-value>)',
         },
-        // Text colors
-        charcoal: '#2C2C2C',
-        stone: '#7A756D',
+        charcoal: 'rgb(var(--color-charcoal) / <alpha-value>)',
+        stone: 'rgb(var(--color-stone) / <alpha-value>)',
       },
       fontFamily: {
         serif: ['Playfair Display', 'Georgia', 'serif'],
