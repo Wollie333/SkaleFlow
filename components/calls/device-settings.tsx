@@ -120,8 +120,8 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-[#1A2F2D] border border-white/10 rounded-2xl shadow-xl max-w-md w-full mx-4">
-        <div className="p-6">
+      <div className="relative bg-[#1A2F2D] border border-white/10 rounded-2xl shadow-xl max-w-sm md:max-w-md w-full mx-2 md:mx-4">
+        <div className="p-4 md:p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-white font-semibold text-lg">Device Settings</h3>
@@ -133,7 +133,7 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
           </div>
 
           {/* Camera preview */}
-          <div className="relative bg-black rounded-xl overflow-hidden mb-5 aspect-video">
+          <div className="relative bg-black rounded-xl overflow-hidden mb-3 md:mb-5 aspect-video">
             <video
               ref={previewRef}
               autoPlay

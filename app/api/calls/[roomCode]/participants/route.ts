@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
+
+// Force dynamic — never cache participant list
+export const dynamic = 'force-dynamic';
 
 // GET — list participants for a call by room code
 export async function GET(
@@ -7,7 +10,6 @@ export async function GET(
   { params }: { params: Promise<{ roomCode: string }> }
 ) {
   const { roomCode } = await params;
-  const supabase = await createClient();
   const serviceClient = createServiceClient();
 
   // Find call by room code
@@ -155,6 +157,14 @@ export async function POST(
     const existing = existingRows?.[0] || null;
 
     if (existing) {
+      // Reset to waiting if they previously left or were denied (so host can re-admit)
+      if (existing.status === 'left' || existing.status === 'denied') {
+        await serviceClient
+          .from('call_participants')
+          .update({ status: 'waiting', left_at: null })
+          .eq('id', existing.id);
+        return NextResponse.json({ ...existing, status: 'waiting' });
+      }
       return NextResponse.json(existing);
     }
   }

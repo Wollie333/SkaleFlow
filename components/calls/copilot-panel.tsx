@@ -68,7 +68,7 @@ export function CopilotPanel({ guidance, callActive, transcriptCount = 0 }: Copi
         {activeGuidance.map((item) => (
           <div
             key={item.id}
-            className={`p-3 rounded-lg border ${GUIDANCE_COLORS[item.guidanceType] || GUIDANCE_COLORS.general}`}
+            className={`p-2 md:p-3 rounded-lg border ${GUIDANCE_COLORS[item.guidanceType] || GUIDANCE_COLORS.general}`}
           >
             <div className="flex items-start gap-2">
               <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">

@@ -41,7 +41,7 @@ export function TranscriptPanel({ transcripts }: TranscriptPanelProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-white/10">
+      <div className="px-3 md:px-4 py-3 border-b border-white/10">
         <h3 className="text-white text-sm font-semibold mb-2">Transcript</h3>
         <input
           type="text"
@@ -76,7 +76,7 @@ export function TranscriptPanel({ transcripts }: TranscriptPanelProps) {
               className={`group ${chunk.isFlagged ? 'pl-2 border-l-2 border-[#C9A84C]' : ''}`}
             >
               <div className="flex items-baseline gap-2 mb-0.5">
-                <span className={`text-xs font-semibold ${color}`}>{chunk.speakerLabel}</span>
+                <span className={`text-[10px] md:text-xs font-semibold ${color}`}>{chunk.speakerLabel}</span>
                 <span className="text-white/30 text-xs">{formatTimestamp(chunk.timestampStart)}</span>
                 {chunk.isFlagged && (
                   <span className="text-[#C9A84C] text-xs">&#x2691;</span>

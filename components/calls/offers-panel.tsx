@@ -323,7 +323,7 @@ export function OffersPanel({
             return (
               <div
                 key={offer.id}
-                className={`rounded-lg border p-3 transition-all duration-300 ${cardStyles[status]}`}
+                className={`rounded-lg border p-2 md:p-3 transition-all duration-300 ${cardStyles[status]}`}
               >
                 {/* Header row */}
                 <div className="flex items-start justify-between gap-2 mb-1">
@@ -367,7 +367,7 @@ export function OffersPanel({
 
                 {/* Inline price editor */}
                 {isEditingThis && (
-                  <div className="mt-2 p-3 bg-white/5 rounded-lg border border-gold/30 space-y-2.5">
+                  <div className="mt-2 p-2 md:p-3 bg-white/5 rounded-lg border border-gold/30 space-y-2.5">
                     <div className="flex items-center gap-2 mb-1">
                       <svg className="w-3.5 h-3.5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -402,7 +402,7 @@ export function OffersPanel({
                         Original: <span className="line-through">{offer.price_display}</span>
                       </p>
                     )}
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-1.5 md:flex-row md:gap-2">
                       <button
                         onClick={() => setEditingPriceId(null)}
                         className="flex-1 py-1.5 rounded text-xs font-medium border border-white/10 text-white/50 hover:bg-white/5 transition-colors"
@@ -515,7 +515,7 @@ export function OffersPanel({
                                 </svg>
                               )}
                             </div>
-                            <span className="text-white/70 text-xs">{p.name}</span>
+                            <span className="text-white/70 text-[10px] md:text-xs">{p.name}</span>
                             <span className="text-white/30 text-[10px] capitalize">({p.role.replace('_', ' ')})</span>
                           </label>
                         );

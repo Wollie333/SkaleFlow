@@ -55,7 +55,7 @@ export function AttendeesPanel({ participants, isHost, hostUserId, roomCode, onA
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-white/10">
+      <div className="px-3 md:px-4 py-3 border-b border-white/10">
         <h3 className="text-white text-sm font-semibold">Attendees ({inCall.length})</h3>
       </div>
 

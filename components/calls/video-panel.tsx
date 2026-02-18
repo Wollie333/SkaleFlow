@@ -36,13 +36,13 @@ export function VideoPanel({ localStream, participants, localUserId, localPartic
     return (
       <div className="h-full flex flex-col items-center justify-center">
         <div className="text-center">
-          <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-6">
-            <svg className="w-12 h-12 text-teal/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4 md:mb-6">
+            <svg className="w-8 h-8 md:w-12 md:h-12 text-teal/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <h2 className="text-white text-lg font-medium mb-2">Waiting Room</h2>
-          <p className="text-white/50 text-sm mb-2">
+          <p className="text-white/50 text-xs md:text-sm mb-2">
             You&apos;re in the waiting room for <strong className="text-white/70">{displayName || 'this call'}</strong>.
           </p>
           <p className="text-white/40 text-xs">The host will let you in shortly...</p>
@@ -71,7 +71,7 @@ export function VideoPanel({ localStream, participants, localUserId, localPartic
           <p className="text-white/50 text-sm mb-6">Click below to enable your camera and microphone</p>
           <button
             onClick={onStartMedia}
-            className="px-6 py-3 rounded-lg bg-[#1E6B63] hover:bg-[#1E6B63]/80 text-white font-medium transition-colors"
+            className="px-4 py-2 md:px-6 md:py-3 rounded-lg bg-[#1E6B63] hover:bg-[#1E6B63]/80 text-white font-medium text-sm md:text-base transition-colors"
           >
             Join Call
           </button>
@@ -85,13 +85,13 @@ export function VideoPanel({ localStream, participants, localUserId, localPartic
   const gridClass = totalStreams <= 1
     ? 'grid-cols-1'
     : totalStreams <= 2
-    ? 'grid-cols-2'
+    ? 'grid-cols-1 md:grid-cols-2'
     : totalStreams <= 4
     ? 'grid-cols-2 grid-rows-2'
-    : 'grid-cols-3 grid-rows-2';
+    : 'grid-cols-2 md:grid-cols-3 grid-rows-2';
 
   return (
-    <div className={`h-full p-3 grid gap-3 ${gridClass}`}>
+    <div className={`h-full p-2 md:p-3 grid gap-2 md:gap-3 ${gridClass}`}>
       {/* Local video */}
       <div className="relative bg-[#1a1a2e] rounded-xl overflow-hidden">
         {isCameraOff ? (
@@ -109,7 +109,7 @@ export function VideoPanel({ localStream, participants, localUserId, localPartic
             className="w-full h-full object-cover"
           />
         )}
-        <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/50 rounded text-white text-xs">
+        <div className="absolute bottom-2 left-2 md:bottom-3 md:left-3 px-2 py-1 bg-black/50 rounded text-white text-[10px] md:text-xs">
           You
         </div>
       </div>
@@ -135,7 +135,7 @@ export function VideoPanel({ localStream, participants, localUserId, localPartic
               }}
             />
           )}
-          <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/50 rounded text-white text-xs flex items-center gap-1.5">
+          <div className="absolute bottom-2 left-2 md:bottom-3 md:left-3 px-2 py-1 bg-black/50 rounded text-white text-[10px] md:text-xs flex items-center gap-1.5">
             {p.name}
             {p.isMuted && (
               <svg className="w-3 h-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -742,12 +742,12 @@ export function CallRoom({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 md:gap-2">
           {(isHost ? ['attendees', 'insights', 'offers'] : ['attendees']).map((panel) => (
             <button
               key={panel}
               onClick={() => setActivePanel(activePanel === panel ? 'none' : panel as PanelView)}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+              className={`px-2 md:px-3 py-1.5 rounded text-[10px] md:text-xs font-medium transition-colors ${
                 activePanel === panel
                   ? 'bg-white/20 text-white'
                   : 'text-white/50 hover:text-white/80'
@@ -793,7 +793,7 @@ export function CallRoom({
 
           {/* Floating live caption — visible when captions enabled */}
           {callActive && showCaptions && transcripts.length > 0 && (
-            <div className="absolute bottom-4 left-4 right-4 flex justify-center pointer-events-none">
+            <div className="absolute bottom-2 left-2 right-2 md:bottom-4 md:left-4 md:right-4 flex justify-center pointer-events-none">
               <div className="bg-black/70 backdrop-blur-sm rounded-lg px-4 py-2.5 max-w-[80%] pointer-events-auto">
                 <p className="text-white text-sm leading-relaxed text-center">
                   {transcripts[transcripts.length - 1].content}
@@ -806,9 +806,18 @@ export function CallRoom({
           )}
         </div>
 
-        {/* Side Panel (collapsible) */}
+        {/* Side Panel (collapsible) — full-screen overlay on mobile, sidebar on desktop */}
         {activePanel !== 'none' && (
-          <div className="w-80 border-l border-white/10 flex flex-col bg-[#0F1F1D]">
+          <div className="fixed inset-0 z-40 md:relative md:inset-auto md:z-auto md:w-80 border-l border-white/10 flex flex-col bg-[#0F1F1D]">
+            {/* Mobile close button */}
+            <button
+              onClick={() => setActivePanel('none')}
+              className="absolute top-3 right-3 z-10 p-1.5 rounded-lg bg-white/10 text-white/60 hover:text-white hover:bg-white/20 transition-colors md:hidden"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
             {activePanel === 'attendees' && (
               <AttendeesPanel
                 participants={participants}

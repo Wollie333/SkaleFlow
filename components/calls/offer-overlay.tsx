@@ -111,7 +111,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
               <button
                 key={reason}
                 onClick={() => setDeclineReason(reason)}
-                className={`w-full text-left px-4 py-3 rounded-xl border text-sm transition-all ${
+                className={`w-full text-left px-4 py-3 rounded-xl border text-xs md:text-sm transition-all ${
                   declineReason === reason
                     ? 'border-gold/50 bg-gold/10 text-white'
                     : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20'
@@ -122,7 +122,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
             ))}
             <button
               onClick={() => setDeclineReason('custom')}
-              className={`w-full text-left px-4 py-3 rounded-xl border text-sm transition-all ${
+              className={`w-full text-left px-4 py-3 rounded-xl border text-xs md:text-sm transition-all ${
                 declineReason === 'custom'
                   ? 'border-gold/50 bg-gold/10 text-white'
                   : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20'
@@ -192,7 +192,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
       <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" onClick={handleMinimize} />
 
       <div
-        className={`relative w-[60vw] min-w-[360px] max-w-3xl max-h-[90vh] overflow-y-auto bg-[#1A2F2D] border border-white/10 rounded-2xl shadow-2xl shadow-black/40 transition-all duration-300 scrollbar-dark ${
+        className={`relative w-full md:w-[60vw] max-w-3xl max-h-[90vh] overflow-y-auto bg-[#1A2F2D] border border-white/10 rounded-2xl shadow-2xl shadow-black/40 transition-all duration-300 scrollbar-dark ${
           animating === 'expanding' ? 'animate-scale-in' : ''
         }`}
       >
@@ -225,7 +225,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
         <div className="px-6 py-6 space-y-6">
           {offer.price_display && (
             <div className="text-center py-4 bg-white/5 rounded-xl border border-white/5">
-              <span className="text-gold text-4xl font-bold tracking-tight">{offer.price_display}</span>
+              <span className="text-gold text-2xl md:text-4xl font-bold tracking-tight">{offer.price_display}</span>
               {offer.billing_frequency && (
                 <span className="text-white/40 text-base ml-1.5">/{offer.billing_frequency}</span>
               )}
@@ -244,9 +244,9 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
                 </svg>
                 What&apos;s Included
               </h4>
-              <ul className="space-y-2.5">
+              <ul className="space-y-2 md:space-y-2.5">
                 {offer.deliverables.map((d, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm">
+                  <li key={i} className="flex items-start gap-3 text-xs md:text-sm">
                     <span className="w-5 h-5 rounded-full bg-teal/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <svg className="w-3 h-3 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -276,12 +276,12 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
 
         {/* Sticky actions */}
         <div className="sticky bottom-0 px-6 py-4 bg-[#1A2F2D]/95 backdrop-blur-md border-t border-white/10">
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-2 md:flex-row md:gap-3">
             <button
-              onClick={handleStartDecline}
-              className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 text-sm font-medium hover:bg-white/5 hover:text-white/70 transition-colors"
+              onClick={onAccept}
+              className="flex-[2] py-3 rounded-xl bg-gradient-to-r from-gold to-gold/80 text-dark text-sm font-bold hover:from-gold/90 hover:to-gold/70 transition-all shadow-lg shadow-gold/20 order-first md:order-last"
             >
-              Not Interested
+              Accept Offer
             </button>
             <button
               onClick={handleMinimize}
@@ -290,10 +290,10 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
               View Later
             </button>
             <button
-              onClick={onAccept}
-              className="flex-[2] py-3 rounded-xl bg-gradient-to-r from-gold to-gold/80 text-dark text-sm font-bold hover:from-gold/90 hover:to-gold/70 transition-all shadow-lg shadow-gold/20"
+              onClick={handleStartDecline}
+              className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 text-sm font-medium hover:bg-white/5 hover:text-white/70 transition-colors"
             >
-              Accept Offer
+              Not Interested
             </button>
           </div>
         </div>
