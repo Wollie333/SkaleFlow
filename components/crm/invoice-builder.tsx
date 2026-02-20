@@ -309,13 +309,13 @@ export function InvoiceBuilder({
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-stone-500">Loading invoice...</div>;
+    return <div className="text-center py-12 text-stone">Loading invoice...</div>;
   }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg border border-stone-200 p-6">
+      <div className="bg-cream-warm rounded-lg border border-stone/10 p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-dark">
@@ -325,7 +325,7 @@ export function InvoiceBuilder({
               variant="default"
               className={
                 status === 'draft'
-                  ? 'bg-stone-100 text-stone-700'
+                  ? 'bg-cream text-stone-700'
                   : status === 'sent'
                   ? 'bg-blue-100 text-blue-700'
                   : status === 'paid'
@@ -534,7 +534,7 @@ export function InvoiceBuilder({
       </div>
 
       {/* Line Items */}
-      <div className="bg-white rounded-lg border border-stone-200 p-6">
+      <div className="bg-cream-warm rounded-lg border border-stone/10 p-6">
         <h3 className="text-lg font-semibold text-dark mb-4">Line Items</h3>
         <div className="space-y-2">
           {lineItems.map((item, index) => (
@@ -584,7 +584,7 @@ export function InvoiceBuilder({
             </div>
             <span className="font-medium">{formatCurrency(calculateTaxAmount())}</span>
           </div>
-          <div className="flex justify-between text-lg font-bold text-dark border-t border-stone-200 pt-3">
+          <div className="flex justify-between text-lg font-bold text-dark border-t border-stone/10 pt-3">
             <span>Total:</span>
             <span>{formatCurrency(calculateTotal())}</span>
           </div>
@@ -592,7 +592,7 @@ export function InvoiceBuilder({
       </div>
 
       {/* Additional Info */}
-      <div className="bg-white rounded-lg border border-stone-200 p-6">
+      <div className="bg-cream-warm rounded-lg border border-stone/10 p-6">
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-charcoal mb-1">Due Date</label>
@@ -615,7 +615,7 @@ export function InvoiceBuilder({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               disabled={isReadOnly}
-              className="w-full min-h-24 px-3 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-teal focus:border-transparent"
+              className="w-full min-h-24 px-3 py-2 border border-stone/20 rounded-md focus:ring-2 focus:ring-teal focus:border-transparent"
               placeholder="Internal notes or payment instructions..."
             />
           </div>
@@ -625,7 +625,7 @@ export function InvoiceBuilder({
               value={footerText}
               onChange={(e) => setFooterText(e.target.value)}
               disabled={isReadOnly}
-              className="w-full min-h-20 px-3 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-teal focus:border-transparent"
+              className="w-full min-h-20 px-3 py-2 border border-stone/20 rounded-md focus:ring-2 focus:ring-teal focus:border-transparent"
               placeholder="Thank you message or terms..."
             />
           </div>
@@ -633,7 +633,7 @@ export function InvoiceBuilder({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-between bg-white rounded-lg border border-stone-200 p-6">
+      <div className="flex items-center justify-between bg-cream-warm rounded-lg border border-stone/10 p-6">
         {!isReadOnly && (
           <Button
             onClick={handleSave}

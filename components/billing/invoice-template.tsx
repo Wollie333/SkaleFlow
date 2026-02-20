@@ -34,9 +34,9 @@ export function InvoiceTemplate({ invoice, orgName }: { invoice: InvoiceData; or
   });
 
   return (
-    <div className="max-w-2xl mx-auto bg-white p-8" style={{ fontFamily: 'system-ui, sans-serif' }}>
+    <div className="max-w-2xl mx-auto bg-cream-warm p-8" style={{ fontFamily: 'system-ui, sans-serif' }}>
       {/* Header */}
-      <div className="flex justify-between items-start mb-8 pb-6 border-b border-gray-200">
+      <div className="flex justify-between items-start mb-8 pb-6 border-b border-stone/10">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Mana Marketing</h1>
           <p className="text-sm text-gray-500 mt-1">26 Knoppiesdoring, Sabie</p>
@@ -61,7 +61,7 @@ export function InvoiceTemplate({ invoice, orgName }: { invoice: InvoiceData; or
       {/* Line Items */}
       <table className="w-full mb-8">
         <thead>
-          <tr className="border-b border-gray-200">
+          <tr className="border-b border-stone/10">
             <th className="text-left py-3 text-sm font-semibold text-gray-500 uppercase tracking-wider">Description</th>
             <th className="text-center py-3 text-sm font-semibold text-gray-500 uppercase tracking-wider">Qty</th>
             <th className="text-right py-3 text-sm font-semibold text-gray-500 uppercase tracking-wider">Unit Price</th>
@@ -70,7 +70,7 @@ export function InvoiceTemplate({ invoice, orgName }: { invoice: InvoiceData; or
         </thead>
         <tbody>
           {(invoice.line_items || []).map((item, i) => (
-            <tr key={i} className="border-b border-gray-100">
+            <tr key={i} className="border-b border-stone/10">
               <td className="py-3 text-gray-900">{item.description}</td>
               <td className="py-3 text-center text-gray-600">{item.quantity}</td>
               <td className="py-3 text-right text-gray-600">{formatZAR(item.unit_price_cents)}</td>
@@ -91,7 +91,7 @@ export function InvoiceTemplate({ invoice, orgName }: { invoice: InvoiceData; or
             <span className="text-gray-500">VAT (15%)</span>
             <span className="text-gray-900">{formatZAR(invoice.vat_cents)}</span>
           </div>
-          <div className="flex justify-between py-3 border-t border-gray-300 text-base font-semibold">
+          <div className="flex justify-between py-3 border-t border-stone/20 text-base font-semibold">
             <span className="text-gray-900">Total</span>
             <span className="text-gray-900">{formatZAR(invoice.total_cents)}</span>
           </div>

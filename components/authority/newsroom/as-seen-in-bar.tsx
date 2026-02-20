@@ -8,7 +8,7 @@ export function AsSeenInBar({ outlets }: AsSeenInBarProps) {
   if (outlets.length === 0) return null;
 
   return (
-    <section className="py-8 px-6 bg-cream border-y border-gray-100">
+    <section className="py-8 px-6 bg-cream border-y border-stone/10">
       <div className="max-w-5xl mx-auto">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider text-center mb-4">
           As Featured In

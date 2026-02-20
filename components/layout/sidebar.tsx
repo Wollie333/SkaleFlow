@@ -87,7 +87,6 @@ const crmNavigation: NavItem[] = [
 ];
 
 const crmAdminNavigation: NavItem[] = [
-  { name: 'Applications', href: '/crm/applications', icon: ClipboardDocumentCheckIcon },
   { name: 'Meetings', href: '/crm/meetings', icon: CalendarDaysIcon },
 ];
 
@@ -177,6 +176,7 @@ interface SidebarProps {
   notificationCount?: number;
   pendingReviewCount?: number;
   teamPermissions?: Record<string, FeaturePermissions>;
+  canAccessApplicationPipeline?: boolean;
   className?: string;
 }
 
@@ -192,6 +192,7 @@ export function Sidebar({
   notificationCount,
   pendingReviewCount,
   teamPermissions = {},
+  canAccessApplicationPipeline,
   className,
 }: SidebarProps) {
   const pathname = usePathname();
@@ -318,7 +319,7 @@ export function Sidebar({
         {/* SkaleFlow Engines */}
         {engineItems.length > 0 && (
           <div className="mt-6">
-            <h4 className="px-3 text-xs font-semibold text-teal-dark uppercase tracking-wider mb-2">
+            <h4 className="px-3 text-xs font-semibold text-gold uppercase tracking-wider mb-2">
               SkaleFlow Engines
             </h4>
             <div className="space-y-1">
@@ -411,7 +412,7 @@ export function Sidebar({
               onClick={() => setSocialEngineExpanded(!socialEngineExpanded)}
               className="flex-1 flex items-center justify-between px-3 py-1 group"
             >
-              <h4 className="text-xs font-semibold text-teal-dark uppercase tracking-wider flex items-center gap-2">
+              <h4 className="text-xs font-semibold text-gold uppercase tracking-wider flex items-center gap-2">
                 Social Engine
               </h4>
               {socialEngineExpanded ? (
@@ -623,7 +624,7 @@ export function Sidebar({
               onClick={() => setAdsEngineExpanded(!adsEngineExpanded)}
               className="flex-1 flex items-center justify-between px-3 py-1 group"
             >
-              <h4 className="text-xs font-semibold text-teal-dark uppercase tracking-wider flex items-center gap-2">
+              <h4 className="text-xs font-semibold text-gold uppercase tracking-wider flex items-center gap-2">
                 Ads Engine
                 {!isSuperAdmin && <LockClosedIcon className="w-3 h-3 text-stone/40" />}
               </h4>
@@ -678,7 +679,7 @@ export function Sidebar({
                 onClick={() => setCrmExpanded(!crmExpanded)}
                 className="flex-1 flex items-center justify-between px-3 py-1 group"
               >
-                <h4 className="text-xs font-semibold text-teal-dark uppercase tracking-wider flex items-center gap-2">
+                <h4 className="text-xs font-semibold text-gold uppercase tracking-wider flex items-center gap-2">
                   CRM
                 </h4>
                 {crmExpanded ? (
@@ -695,19 +696,40 @@ export function Sidebar({
                     ? pathname === '/crm'
                     : pathname === item.href || pathname.startsWith(item.href + '/');
                   return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
-                        isActive
-                          ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                    <div key={item.name}>
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
+                          isActive
+                            ? 'bg-teal/10 text-teal'
+                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                        )}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        {item.name}
+                      </Link>
+                      {/* Application Pipeline — right after Pipeline link */}
+                      {item.href === '/pipeline' && canAccessApplicationPipeline && (
+                        <Link
+                          href="/crm/applications"
+                          className={cn(
+                            'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
+                            pathname.startsWith('/crm/applications')
+                              ? 'bg-teal/10 text-teal'
+                              : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                          )}
+                        >
+                          <ClipboardDocumentCheckIcon className="w-4 h-4" />
+                          Application Pipeline
+                          {pipelineCount !== undefined && pipelineCount > 0 && (
+                            <span className="ml-auto text-xs bg-teal/15 text-teal px-2 py-0.5 rounded-full font-semibold">
+                              {pipelineCount}
+                            </span>
+                          )}
+                        </Link>
                       )}
-                    >
-                      <item.icon className="w-4 h-4" />
-                      {item.name}
-                    </Link>
+                    </div>
                   );
                 })}
                 {isSuperAdmin && crmAdminNavigation.map((item) => {
@@ -725,11 +747,6 @@ export function Sidebar({
                     >
                       <item.icon className="w-4 h-4" />
                       {item.name}
-                      {item.href === '/crm/applications' && pipelineCount !== undefined && pipelineCount > 0 && (
-                        <span className="ml-auto text-xs bg-teal/15 text-teal px-2 py-0.5 rounded-full font-semibold">
-                          {pipelineCount}
-                        </span>
-                      )}
                     </Link>
                   );
                 })}
@@ -746,7 +763,7 @@ export function Sidebar({
                 onClick={() => setCallsExpanded(!callsExpanded)}
                 className="flex-1 flex items-center justify-between px-3 py-1 group"
               >
-                <h4 className="text-xs font-semibold text-teal-dark uppercase tracking-wider flex items-center gap-2">
+                <h4 className="text-xs font-semibold text-gold uppercase tracking-wider flex items-center gap-2">
                   Calls
                 </h4>
                 {callsExpanded ? (
@@ -796,7 +813,7 @@ export function Sidebar({
                 onClick={() => setAdminExpanded(!adminExpanded)}
                 className="flex-1 flex items-center justify-between px-3 py-1 group"
               >
-                <h4 className="text-xs font-semibold text-teal-dark uppercase tracking-wider flex items-center gap-2">
+                <h4 className="text-xs font-semibold text-gold uppercase tracking-wider flex items-center gap-2">
                   Admin
                 </h4>
                 {adminExpanded ? (
@@ -834,7 +851,7 @@ export function Sidebar({
       </nav>
 
       {/* Bottom navigation */}
-      <div className="p-4 border-t border-stone/10 dark:border-white/10">
+      <div className="p-4 border-t border-stone/10">
         <div className="space-y-1">
           {canAccessBilling && (
             <Link

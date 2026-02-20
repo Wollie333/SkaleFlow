@@ -153,7 +153,7 @@ export default function BrandGuidePage() {
             <section>
               <SectionHeader num="01" title="Logo" primary={primary} headingFont={headingFont} />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex items-center justify-center p-12 rounded-xl border border-gray-100 bg-white">
+                <div className="flex items-center justify-center p-12 rounded-xl border border-stone/10 bg-white">
                   <img src={logoUrl} alt="Logo on light" className="max-h-24 object-contain" />
                 </div>
                 <div
@@ -189,7 +189,7 @@ export default function BrandGuidePage() {
                 {dsColorEntries.map((c) => (
                   <div key={c.name} className="space-y-2">
                     <div
-                      className="w-full h-20 rounded-lg border border-gray-100"
+                      className="w-full h-20 rounded-lg border border-stone/10"
                       style={{ backgroundColor: c.hex }}
                     />
                     <p className="text-xs font-semibold text-gray-900 capitalize">{c.name.replace(/_/g, ' ')}</p>
@@ -213,7 +213,7 @@ export default function BrandGuidePage() {
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {typography.heading_font && (
-                  <div className="p-6 rounded-xl border border-gray-100">
+                  <div className="p-6 rounded-xl border border-stone/10">
                     <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-3">Heading Font</p>
                     <p className="text-3xl font-bold mb-2" style={{ fontFamily: headingFont }}>
                       {typography.heading_font}
@@ -230,7 +230,7 @@ export default function BrandGuidePage() {
                   </div>
                 )}
                 {typography.body_font && (
-                  <div className="p-6 rounded-xl border border-gray-100">
+                  <div className="p-6 rounded-xl border border-stone/10">
                     <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-3">Body Font</p>
                     <p className="text-3xl font-bold mb-2" style={{ fontFamily: bodyFont }}>
                       {typography.body_font}
@@ -288,7 +288,7 @@ export default function BrandGuidePage() {
               />
               <div className="space-y-6">
                 {brand.visual_mood && (
-                  <div className="p-5 rounded-xl border border-gray-100">
+                  <div className="p-5 rounded-xl border border-stone/10">
                     <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-2">Visual Mood</p>
                     <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
                       {typeof brand.visual_mood === 'string' ? brand.visual_mood : JSON.stringify(brand.visual_mood)}
@@ -296,7 +296,7 @@ export default function BrandGuidePage() {
                   </div>
                 )}
                 {brand.imagery_direction && (
-                  <div className="p-5 rounded-xl border border-gray-100">
+                  <div className="p-5 rounded-xl border border-stone/10">
                     <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-2">Imagery Direction</p>
                     <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
                       {typeof brand.imagery_direction === 'string' ? brand.imagery_direction : JSON.stringify(brand.imagery_direction)}
@@ -304,7 +304,7 @@ export default function BrandGuidePage() {
                   </div>
                 )}
                 {brand.brand_elements && (
-                  <div className="p-5 rounded-xl border border-gray-100">
+                  <div className="p-5 rounded-xl border border-stone/10">
                     <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-2">Brand Elements</p>
                     <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
                       {typeof brand.brand_elements === 'string' ? brand.brand_elements : JSON.stringify(brand.brand_elements)}
@@ -317,7 +317,7 @@ export default function BrandGuidePage() {
         </div>
 
         {/* Footer */}
-        <footer className="py-8 px-6 text-center border-t border-gray-100">
+        <footer className="py-8 px-6 text-center border-t border-stone/10">
           <p className="text-xs text-gray-400">
             Powered by <span className="font-semibold">SkaleFlow</span>
           </p>
@@ -329,7 +329,7 @@ export default function BrandGuidePage() {
 
 function SectionHeader({ num, title, primary, headingFont }: { num: string; title: string; primary: string; headingFont: string }) {
   return (
-    <div className="mb-8 pb-4 border-b border-gray-100">
+    <div className="mb-8 pb-4 border-b border-stone/10">
       <span className="text-xs font-mono font-medium tracking-wider" style={{ color: primary }}>{num}</span>
       <h2 className="text-2xl font-bold mt-1" style={{ fontFamily: headingFont }}>{title}</h2>
     </div>
@@ -342,7 +342,7 @@ function ColorSwatch({ name, hex }: { name: string; hex: string }) {
   return (
     <div className="space-y-2">
       <div
-        className="w-full h-24 rounded-xl border border-gray-100 flex items-end p-3"
+        className="w-full h-24 rounded-xl border border-stone/10 flex items-end p-3"
         style={{ backgroundColor: hex }}
       >
         <span

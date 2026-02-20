@@ -34,13 +34,13 @@ const variantConfig = {
   },
   error: {
     icon: ExclamationTriangleIcon,
-    iconBg: 'bg-red-50',
+    iconBg: 'bg-red-500/10',
     iconColor: 'text-red-500',
     ring: 'ring-red-500/20',
   },
   info: {
     icon: InformationCircleIcon,
-    iconBg: 'bg-blue-50',
+    iconBg: 'bg-blue-500/10',
     iconColor: 'text-blue-500',
     ring: 'ring-blue-500/20',
   },

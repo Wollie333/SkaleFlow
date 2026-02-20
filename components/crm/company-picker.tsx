@@ -65,7 +65,7 @@ export function CompanyPicker({ organizationId, value, onChange, label = 'Compan
     <div ref={wrapperRef} className={className}>
       {label && <label className="block text-sm font-medium text-charcoal mb-1">{label}</label>}
       {selected ? (
-        <div className="flex items-center justify-between bg-cream-warm rounded-lg px-3 py-2 border border-gray-200">
+        <div className="flex items-center justify-between bg-cream-warm rounded-lg px-3 py-2 border border-stone/10">
           <span className="text-sm text-charcoal">
             {selected.name}
             {selected.industry && <span className="text-stone ml-1">({selected.industry})</span>}
@@ -88,11 +88,11 @@ export function CompanyPicker({ organizationId, value, onChange, label = 'Compan
               onChange={(e) => { setSearch(e.target.value); doSearch(e.target.value); setIsOpen(true); }}
               onFocus={() => setIsOpen(true)}
               placeholder="Search companies..."
-              className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+              className="w-full pl-9 pr-3 py-2 border border-stone/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
             />
           </div>
           {isOpen && (search.trim() || results.length > 0) && (
-            <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            <div className="absolute z-10 mt-1 w-full bg-cream-warm border border-stone/10 rounded-lg shadow-lg max-h-48 overflow-y-auto">
               {loading ? (
                 <div className="px-3 py-2 text-sm text-stone">Searching...</div>
               ) : results.length === 0 ? (

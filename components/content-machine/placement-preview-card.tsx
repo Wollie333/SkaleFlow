@@ -103,9 +103,9 @@ export function PlacementPreviewCard({
         {isGenerating ? (
           // Generating state
           <div className="space-y-2">
-            <div className="h-3 bg-stone-200 rounded animate-pulse w-full" />
-            <div className="h-3 bg-stone-200 rounded animate-pulse w-4/5" />
-            <div className="h-3 bg-stone-200 rounded animate-pulse w-3/5" />
+            <div className="h-3 bg-cream-warm rounded animate-pulse w-full" />
+            <div className="h-3 bg-cream-warm rounded animate-pulse w-4/5" />
+            <div className="h-3 bg-cream-warm rounded animate-pulse w-3/5" />
             <div className="flex items-center justify-center pt-2">
               <div className="w-5 h-5 border-2 border-teal border-t-transparent rounded-full animate-spin" />
             </div>

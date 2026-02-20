@@ -51,7 +51,7 @@ export function LatestNews({ placements, pressReleases, primaryColor = '#14b8a6'
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Press Releases</h3>
             <div className="space-y-4">
               {pressReleases.map((pr) => (
-                <article key={pr.id} className="p-5 bg-cream-warm border border-gray-100 rounded-xl hover:border-stone/10 transition-colors">
+                <article key={pr.id} className="p-5 bg-cream-warm border border-stone/10 rounded-xl hover:border-stone/10 transition-colors">
                   <h4 className="text-lg font-semibold text-charcoal mb-1">{pr.headline}</h4>
                   {pr.subtitle && <p className="text-sm text-stone mb-2">{pr.subtitle}</p>}
                   <p className="text-sm text-stone line-clamp-3">{pr.body_content}</p>
@@ -70,7 +70,7 @@ export function LatestNews({ placements, pressReleases, primaryColor = '#14b8a6'
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Media Coverage</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {placements.map((p) => (
-                <article key={p.id} className="p-4 bg-cream-warm border border-gray-100 rounded-xl hover:border-stone/10 transition-colors">
+                <article key={p.id} className="p-4 bg-cream-warm border border-stone/10 rounded-xl hover:border-stone/10 transition-colors">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <h4 className="text-sm font-semibold text-charcoal truncate">{p.opportunity_name}</h4>

@@ -86,7 +86,7 @@ export function CrmDashboard({ organizationId }: CrmDashboardProps) {
       label: 'Companies',
       value: stats.total_companies.toString(),
       icon: BuildingOfficeIcon,
-      color: 'text-blue-600 bg-blue-50',
+      color: 'text-blue-400 bg-blue-500/10',
     },
     {
       label: 'Open Pipeline',
@@ -100,7 +100,7 @@ export function CrmDashboard({ organizationId }: CrmDashboardProps) {
       value: formatZAR(stats.won_deals_value_this_month),
       subtitle: `${stats.won_deals_this_month} deals`,
       icon: CurrencyDollarIcon,
-      color: 'text-green-600 bg-green-50',
+      color: 'text-green-400 bg-green-500/10',
     },
   ];
 

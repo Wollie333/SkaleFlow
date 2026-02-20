@@ -355,7 +355,7 @@ export default function ApplicationDetailPage() {
         {/* Left column - main content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Application Info Card */}
-          <div className="bg-white rounded-xl border border-stone/10 p-6">
+          <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
             <h2 className="font-serif text-lg font-bold text-charcoal mb-4">Application Details</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -404,7 +404,7 @@ export default function ApplicationDetailPage() {
           </div>
 
           {/* Admin Notes */}
-          <div className="bg-white rounded-xl border border-stone/10 p-6">
+          <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
             <h2 className="font-serif text-lg font-bold text-charcoal mb-4">Admin Notes</h2>
             <textarea
               value={notes}
@@ -424,7 +424,7 @@ export default function ApplicationDetailPage() {
           </div>
 
           {/* Activity Log */}
-          <div className="bg-white rounded-xl border border-stone/10 p-6">
+          <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
             <h2 className="font-serif text-lg font-bold text-charcoal mb-4">Activity Log</h2>
             {activity.length === 0 ? (
               <p className="text-sm text-stone">No activity yet.</p>
@@ -456,7 +456,7 @@ export default function ApplicationDetailPage() {
         {/* Right column - sidebar */}
         <div className="space-y-6">
           {/* Current Stage */}
-          <div className="bg-white rounded-xl border border-stone/10 p-6">
+          <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
             <h3 className="text-xs font-semibold text-stone uppercase tracking-wider mb-3">Current Stage</h3>
             <span className={`inline-block px-4 py-1.5 rounded-full text-sm font-semibold ${stageConfig.color} ${stageConfig.bg}`}>
               {stageConfig.label}
@@ -464,7 +464,7 @@ export default function ApplicationDetailPage() {
           </div>
 
           {/* Stage Actions */}
-          <div className="bg-white rounded-xl border border-stone/10 p-6">
+          <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
             <h3 className="text-xs font-semibold text-stone uppercase tracking-wider mb-3">Actions</h3>
             <div className="space-y-2">
               {actions.map((action) => (
@@ -525,7 +525,7 @@ export default function ApplicationDetailPage() {
 
           {/* Meeting Details */}
           {meeting && (
-            <div className="bg-white rounded-xl border border-stone/10 p-6">
+            <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
               <h3 className="text-xs font-semibold text-stone uppercase tracking-wider mb-3">Meeting Details</h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm">
@@ -571,7 +571,7 @@ export default function ApplicationDetailPage() {
           )}
 
           {/* Quick Info */}
-          <div className="bg-white rounded-xl border border-stone/10 p-6">
+          <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
             <h3 className="text-xs font-semibold text-stone uppercase tracking-wider mb-3">Quick Info</h3>
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm">
@@ -616,7 +616,7 @@ export default function ApplicationDetailPage() {
       {/* Booking Link Modal */}
       {bookingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-dark/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+          <div className="bg-cream-warm rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 pt-6 pb-0">
               <h3 className="font-serif text-lg font-bold text-charcoal">Booking Link</h3>

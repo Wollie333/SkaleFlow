@@ -28,7 +28,7 @@ export function StoryAnglesSection({ storyAngles, primaryColor = '#14b8a6' }: St
           {storyAngles.map((angle) => (
             <div
               key={angle.id}
-              className="p-5 bg-cream-warm border border-gray-100 rounded-xl hover:border-stone/10 transition-colors"
+              className="p-5 bg-cream-warm border border-stone/10 rounded-xl hover:border-stone/10 transition-colors"
             >
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-cream text-stone">

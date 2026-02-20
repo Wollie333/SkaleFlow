@@ -152,8 +152,8 @@ export default function DealFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-stone-200">
+      <div className="bg-cream-warm rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-stone/10">
           <h2 className="text-2xl font-bold text-dark">
             {isEdit ? 'Edit Deal' : 'Create Deal'}
           </h2>
@@ -235,9 +235,9 @@ export default function DealFormModal({
               step="5"
               value={probability}
               onChange={(e) => setProbability(parseInt(e.target.value))}
-              className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-teal"
+              className="w-full h-2 bg-cream-warm rounded-lg appearance-none cursor-pointer accent-teal"
             />
-            <div className="flex justify-between text-xs text-stone-500 mt-1">
+            <div className="flex justify-between text-xs text-stone mt-1">
               <span>0%</span>
               <span>50%</span>
               <span>100%</span>
@@ -271,7 +271,7 @@ export default function DealFormModal({
                 id="status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as 'open' | 'won' | 'lost')}
-                className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal focus:border-transparent"
+                className="w-full px-3 py-2 border border-stone/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal focus:border-transparent"
               >
                 <option value="open">Open</option>
                 <option value="won">Won</option>
@@ -292,13 +292,13 @@ export default function DealFormModal({
                 onChange={(e) => setLostReason(e.target.value)}
                 placeholder="Why was this deal lost?"
                 rows={3}
-                className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal focus:border-transparent"
+                className="w-full px-3 py-2 border border-stone/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal focus:border-transparent"
               />
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-200">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone/10">
             <Button
               type="button"
               onClick={onClose}

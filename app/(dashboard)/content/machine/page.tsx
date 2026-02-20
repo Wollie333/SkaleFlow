@@ -1054,7 +1054,7 @@ export default function ContentEnginePage() {
                             isSelected
                               ? 'bg-teal text-white border-teal'
                               : atMax
-                                ? 'bg-cream text-stone-300 border-stone-100 cursor-not-allowed'
+                                ? 'bg-cream text-stone border-stone/10 cursor-not-allowed'
                                 : 'bg-cream text-stone border-stone/10 hover:border-stone/10'
                           )}
                         >
@@ -1067,7 +1067,7 @@ export default function ContentEnginePage() {
               ))}
 
               {/* Divider */}
-              {allSelectedPlacements.length > 0 && <div className="border-t border-stone-100 my-3" />}
+              {allSelectedPlacements.length > 0 && <div className="border-t border-stone/10 my-3" />}
 
               {/* Placement Preview Cards */}
               {allSelectedPlacements.length > 0 ? (

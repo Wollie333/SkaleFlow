@@ -53,7 +53,7 @@ export function GuestJoinForm({ roomCode, callId, callTitle }: GuestJoinFormProp
   if (!joined) {
     return (
       <div className="min-h-screen bg-[#0F1F1D] flex items-center justify-center px-4">
-        <div className="bg-white rounded-xl p-4 md:p-8 w-full max-w-md shadow-xl">
+        <div className="bg-cream-warm rounded-xl p-4 md:p-8 w-full max-w-md shadow-xl">
           <h1 className="text-lg md:text-xl font-serif font-bold text-[#2A2A28] mb-2">Join Call</h1>
           <p className="text-sm text-[#8A8A7A] mb-6">
             Enter your details to join <strong>{callTitle}</strong>.
@@ -66,7 +66,7 @@ export function GuestJoinForm({ roomCode, callId, callTitle }: GuestJoinFormProp
                 type="text"
                 value={guestName}
                 onChange={(e) => setGuestName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
+                className="w-full px-3 py-2 border border-stone/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
                 placeholder="Full Name"
                 required
               />
@@ -77,7 +77,7 @@ export function GuestJoinForm({ roomCode, callId, callTitle }: GuestJoinFormProp
                 type="email"
                 value={guestEmail}
                 onChange={(e) => setGuestEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
+                className="w-full px-3 py-2 border border-stone/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
                 placeholder="your@email.com"
                 required
               />
@@ -88,7 +88,7 @@ export function GuestJoinForm({ roomCode, callId, callTitle }: GuestJoinFormProp
                 type="checkbox"
                 checked={consent}
                 onChange={(e) => setConsent(e.target.checked)}
-                className="mt-0.5 rounded border-gray-300 text-[#1E6B63] focus:ring-[#1E6B63]"
+                className="mt-0.5 rounded border-stone/20 text-[#1E6B63] focus:ring-[#1E6B63]"
               />
               <span className="text-xs text-[#8A8A7A]">
                 I consent to this call being recorded and transcribed for quality and coaching purposes.

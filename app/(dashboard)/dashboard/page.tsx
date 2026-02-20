@@ -274,11 +274,11 @@ export default async function DashboardPage() {
         </Link>
 
         <Link href="/billing">
-          <Card className={`hover:border-teal/30 transition-colors cursor-pointer ${creditsTotal > 0 && creditsRemaining < creditsTotal * 0.1 ? 'border-yellow-200 bg-yellow-50/50' : 'bg-cream-warm border-stone/10'}`}>
+          <Card className={`hover:border-teal/30 transition-colors cursor-pointer ${creditsTotal > 0 && creditsRemaining < creditsTotal * 0.1 ? 'border-gold/30 bg-gold/5' : 'bg-cream-warm border-stone/10'}`}>
             <div className="flex items-center justify-between mb-3">
               <CreditCardIcon className="w-5 h-5 text-teal" />
               {creditsTotal > 0 && creditsRemaining < creditsTotal * 0.1 && (
-                <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-semibold">Low</span>
+                <span className="text-xs bg-gold/15 text-gold px-2 py-0.5 rounded-full font-semibold">Low</span>
               )}
             </div>
             <p className="text-3xl font-bold text-charcoal">
@@ -318,8 +318,8 @@ export default async function DashboardPage() {
                     >
                       <div className="flex-shrink-0">
                         {item.status === 'revision_requested' ? (
-                          <div className="w-9 h-9 rounded-lg bg-yellow-100 flex items-center justify-center">
-                            <ExclamationCircleIcon className="w-5 h-5 text-yellow-600" />
+                          <div className="w-9 h-9 rounded-lg bg-gold/10 flex items-center justify-center">
+                            <ExclamationCircleIcon className="w-5 h-5 text-gold" />
                           </div>
                         ) : (
                           <div className="w-9 h-9 rounded-lg bg-teal/10 flex items-center justify-center">

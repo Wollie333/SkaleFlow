@@ -42,12 +42,12 @@ export default function DealCard({ deal }: DealCardProps) {
       case 'lost':
         return 'bg-red-100 text-red-800 border-red-200';
       default:
-        return 'bg-stone-100 text-stone-800 border-stone-200';
+        return 'bg-cream text-charcoal border-stone/10';
     }
   }
 
   return (
-    <div className="bg-white border border-stone-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 space-y-3">
+    <div className="bg-cream-warm border border-stone/10 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 space-y-3">
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-semibold text-dark text-sm line-clamp-2 flex-1">{deal.title}</h3>
@@ -65,18 +65,18 @@ export default function DealCard({ deal }: DealCardProps) {
 
       {/* Contact */}
       {deal.crm_contacts && (
-        <div className="text-sm text-stone-600">
+        <div className="text-sm text-charcoal">
           {deal.crm_contacts.first_name} {deal.crm_contacts.last_name}
         </div>
       )}
 
       {/* Probability Bar */}
       <div className="space-y-1">
-        <div className="flex items-center justify-between text-xs text-stone-600">
+        <div className="flex items-center justify-between text-xs text-charcoal">
           <span>Probability</span>
           <span className="font-medium">{deal.probability}%</span>
         </div>
-        <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
+        <div className="h-2 bg-cream-warm rounded-full overflow-hidden">
           <div
             className={`h-full ${getStatusColor(deal.status)} transition-all duration-300`}
             style={{ width: `${deal.probability}%` }}
@@ -86,7 +86,7 @@ export default function DealCard({ deal }: DealCardProps) {
 
       {/* Expected Close Date */}
       {deal.expected_close_date && (
-        <div className="text-xs text-stone-500 pt-1 border-t border-stone-100">
+        <div className="text-xs text-stone pt-1 border-t border-stone/10">
           Expected close:{' '}
           {new Date(deal.expected_close_date).toLocaleDateString('en-ZA', {
             year: 'numeric',

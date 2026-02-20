@@ -283,7 +283,7 @@ export function MobileSidebar({
         )}
       >
         {/* Close button */}
-        <div className="flex items-center justify-between p-4 border-b border-stone/10 dark:border-white/10">
+        <div className="flex items-center justify-between p-4 border-b border-stone/10 ">
           <span className="font-serif font-bold text-xl text-charcoal">Menu</span>
           <button
             onClick={onClose}
@@ -366,7 +366,7 @@ export function MobileSidebar({
           {/* SkaleFlow Engines */}
           {engineItems.length > 0 && (
             <div className="mt-6">
-              <h4 className="px-3 text-xs font-semibold text-teal-dark uppercase tracking-wider mb-2">
+              <h4 className="px-3 text-xs font-semibold text-gold uppercase tracking-wider mb-2">
                 SkaleFlow Engines
               </h4>
               <div className="space-y-1">
@@ -688,7 +688,7 @@ export function MobileSidebar({
                 onClick={() => setAdsEngineExpanded(!adsEngineExpanded)}
                 className="flex-1 flex items-center justify-between px-3 py-1 group"
               >
-                <h4 className="text-xs font-semibold text-teal-dark uppercase tracking-wider flex items-center gap-2">
+                <h4 className="text-xs font-semibold text-gold uppercase tracking-wider flex items-center gap-2">
                   Ads Engine
                   {!isSuperAdmin && <LockClosedIcon className="w-3 h-3 text-stone/40" />}
                 </h4>
@@ -744,7 +744,7 @@ export function MobileSidebar({
                   onClick={() => setCrmExpanded(!crmExpanded)}
                   className="flex-1 flex items-center justify-between px-3 py-1 group"
                 >
-                  <h4 className="text-xs font-semibold text-teal-dark uppercase tracking-wider flex items-center gap-2">
+                  <h4 className="text-xs font-semibold text-gold uppercase tracking-wider flex items-center gap-2">
                     CRM
                   </h4>
                   {crmExpanded ? (
@@ -814,7 +814,7 @@ export function MobileSidebar({
                   onClick={() => setCallsExpanded(!callsExpanded)}
                   className="flex-1 flex items-center justify-between px-3 py-1 group"
                 >
-                  <h4 className="text-xs font-semibold text-teal-dark uppercase tracking-wider flex items-center gap-2">
+                  <h4 className="text-xs font-semibold text-gold uppercase tracking-wider flex items-center gap-2">
                     Calls
                   </h4>
                   {callsExpanded ? (
@@ -860,7 +860,7 @@ export function MobileSidebar({
           {/* Admin Navigation */}
           {isSuperAdmin && (
             <div className="mt-6">
-              <h4 className="px-3 text-xs font-semibold text-teal-dark uppercase tracking-wider mb-2">
+              <h4 className="px-3 text-xs font-semibold text-gold uppercase tracking-wider mb-2">
                 Admin
               </h4>
               <div className="space-y-1">
@@ -888,7 +888,7 @@ export function MobileSidebar({
         </nav>
 
         {/* Bottom navigation */}
-        <div className="p-4 border-t border-stone/10 dark:border-white/10">
+        <div className="p-4 border-t border-stone/10 ">
           <div className="space-y-1">
             {canAccessBilling && (
               <Link

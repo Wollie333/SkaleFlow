@@ -101,7 +101,7 @@ export function TagManager({ organizationId, contactId, assignedTags, onTagsChan
       </div>
 
       {showPicker && (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 max-w-xs">
+        <div className="bg-cream-warm border border-stone/10 rounded-lg shadow-lg p-3 max-w-xs">
           {availableTags.length > 0 && (
             <div className="space-y-1 mb-3">
               <p className="text-xs font-medium text-stone mb-1">Existing tags</p>
@@ -118,7 +118,7 @@ export function TagManager({ organizationId, contactId, assignedTags, onTagsChan
               ))}
             </div>
           )}
-          <div className="border-t border-gray-100 pt-2">
+          <div className="border-t border-stone/10 pt-2">
             <p className="text-xs font-medium text-stone mb-1">Create new tag</p>
             <div className="flex gap-2">
               <input
@@ -132,7 +132,7 @@ export function TagManager({ organizationId, contactId, assignedTags, onTagsChan
                 value={newTagName}
                 onChange={(e) => setNewTagName(e.target.value)}
                 placeholder="Tag name"
-                className="flex-1 px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal"
+                className="flex-1 px-2 py-1 border border-stone/10 rounded text-sm focus:outline-none focus:ring-1 focus:ring-teal"
                 onKeyDown={(e) => { if (e.key === 'Enter') createTag(); }}
               />
               <button

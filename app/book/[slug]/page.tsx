@@ -171,7 +171,7 @@ export default function PublicBookingPage({ params }: { params: Promise<{ slug: 
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="bg-white rounded-xl border border-[#1E6B63]/10 shadow-sm overflow-hidden">
           {/* Title */}
-          <div className="px-6 py-5 border-b border-gray-100">
+          <div className="px-6 py-5 border-b border-stone/10">
             <h2 className="text-lg font-semibold text-[#2A2A28]">{page.title}</h2>
             {page.description && (
               <p className="text-sm text-[#8A8A7A] mt-1">{page.description}</p>
@@ -261,7 +261,7 @@ export default function PublicBookingPage({ params }: { params: Promise<{ slug: 
                               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                                 isSelected
                                   ? 'text-white'
-                                  : 'border border-gray-200 text-[#555] hover:border-[#1E6B63]/30'
+                                  : 'border border-stone/10 text-[#555] hover:border-[#1E6B63]/30'
                               }`}
                               style={isSelected ? { backgroundColor: primaryColor } : {}}
                             >
@@ -302,7 +302,7 @@ export default function PublicBookingPage({ params }: { params: Promise<{ slug: 
                       type="text"
                       value={guestName}
                       onChange={(e) => setGuestName(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
+                      className="w-full px-3 py-2 border border-stone/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
                       required
                     />
                   </div>
@@ -312,7 +312,7 @@ export default function PublicBookingPage({ params }: { params: Promise<{ slug: 
                       type="email"
                       value={guestEmail}
                       onChange={(e) => setGuestEmail(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
+                      className="w-full px-3 py-2 border border-stone/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
                       required
                     />
                   </div>
@@ -322,7 +322,7 @@ export default function PublicBookingPage({ params }: { params: Promise<{ slug: 
                       type="text"
                       value={guestCompany}
                       onChange={(e) => setGuestCompany(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
+                      className="w-full px-3 py-2 border border-stone/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
                     />
                   </div>
 
@@ -336,7 +336,7 @@ export default function PublicBookingPage({ params }: { params: Promise<{ slug: 
                         <textarea
                           value={intakeResponses[q.id] || ''}
                           onChange={(e) => setIntakeResponses(prev => ({ ...prev, [q.id]: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
+                          className="w-full px-3 py-2 border border-stone/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
                           rows={3}
                           required={q.required}
                         />
@@ -345,7 +345,7 @@ export default function PublicBookingPage({ params }: { params: Promise<{ slug: 
                           type="text"
                           value={intakeResponses[q.id] || ''}
                           onChange={(e) => setIntakeResponses(prev => ({ ...prev, [q.id]: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
+                          className="w-full px-3 py-2 border border-stone/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
                           required={q.required}
                         />
                       )}
@@ -357,7 +357,7 @@ export default function PublicBookingPage({ params }: { params: Promise<{ slug: 
                     <textarea
                       value={guestNotes}
                       onChange={(e) => setGuestNotes(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
+                      className="w-full px-3 py-2 border border-stone/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
                       rows={3}
                       placeholder="Anything you'd like us to know before the call..."
                     />

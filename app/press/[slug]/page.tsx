@@ -138,7 +138,7 @@ export default function PressPage() {
       />
 
       {/* Footer */}
-      <footer className="py-8 px-6 text-center border-t border-gray-100">
+      <footer className="py-8 px-6 text-center border-t border-stone/10">
         <p className="text-xs text-gray-400">
           Powered by <span className="font-semibold">SkaleFlow</span>
         </p>

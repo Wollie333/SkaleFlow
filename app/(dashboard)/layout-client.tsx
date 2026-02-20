@@ -33,6 +33,7 @@ interface DashboardLayoutClientProps {
     notificationCount?: number;
     pendingReviewCount?: number;
     teamPermissions?: Record<string, FeaturePermissions>;
+    canAccessApplicationPipeline?: boolean;
   };
   creditBalance?: {
     totalRemaining: number;

@@ -75,16 +75,16 @@ export function InvoiceLineItemRow({
   };
 
   return (
-    <div className="flex items-start gap-2 p-3 bg-stone-50 rounded-lg border border-stone-200">
+    <div className="flex items-start gap-2 p-3 bg-cream rounded-lg border border-stone/10">
       <div className="flex-1 grid grid-cols-12 gap-2 items-start">
         {/* Product Selector */}
         <div className="col-span-3">
-          <label className="text-xs text-stone-500 mb-1 block">Product</label>
+          <label className="text-xs text-stone mb-1 block">Product</label>
           <select
             value={item.productId || ''}
             onChange={(e) => handleProductSelect(e.target.value)}
             disabled={disabled}
-            className="w-full px-3 py-2 text-sm border border-stone-300 rounded-md focus:ring-2 focus:ring-teal focus:border-transparent disabled:bg-stone-100 disabled:cursor-not-allowed"
+            className="w-full px-3 py-2 text-sm border border-stone/20 rounded-md focus:ring-2 focus:ring-teal focus:border-transparent disabled:bg-cream disabled:cursor-not-allowed"
           >
             <option value="">Custom item...</option>
             {products.map((product) => (
@@ -97,7 +97,7 @@ export function InvoiceLineItemRow({
 
         {/* Description */}
         <div className="col-span-4">
-          <label className="text-xs text-stone-500 mb-1 block">Description</label>
+          <label className="text-xs text-stone mb-1 block">Description</label>
           <Input
             value={item.description}
             onChange={(e) => handleDescriptionChange(e.target.value)}
@@ -109,7 +109,7 @@ export function InvoiceLineItemRow({
 
         {/* Quantity */}
         <div className="col-span-1">
-          <label className="text-xs text-stone-500 mb-1 block">Qty</label>
+          <label className="text-xs text-stone mb-1 block">Qty</label>
           <Input
             type="number"
             value={item.quantity}
@@ -123,9 +123,9 @@ export function InvoiceLineItemRow({
 
         {/* Unit Price */}
         <div className="col-span-2">
-          <label className="text-xs text-stone-500 mb-1 block">Unit Price</label>
+          <label className="text-xs text-stone mb-1 block">Unit Price</label>
           <div className="relative">
-            <span className="absolute left-3 top-2 text-sm text-stone-600">R</span>
+            <span className="absolute left-3 top-2 text-sm text-charcoal">R</span>
             <Input
               type="number"
               value={formatCurrency(item.unitPriceCents)}
@@ -140,8 +140,8 @@ export function InvoiceLineItemRow({
 
         {/* Total */}
         <div className="col-span-2">
-          <label className="text-xs text-stone-500 mb-1 block">Total</label>
-          <div className="px-3 py-2 bg-stone-100 border border-stone-200 rounded-md text-sm font-medium text-dark">
+          <label className="text-xs text-stone mb-1 block">Total</label>
+          <div className="px-3 py-2 bg-cream border border-stone/10 rounded-md text-sm font-medium text-dark">
             R{formatCurrency(item.totalCents)}
           </div>
         </div>

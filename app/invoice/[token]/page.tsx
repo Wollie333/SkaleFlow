@@ -154,7 +154,7 @@ export default function PublicInvoicePage() {
           <div className="mb-8">
             <table className="w-full">
               <thead>
-                <tr className="border-b-2 border-gray-200">
+                <tr className="border-b-2 border-stone/10">
                   <th className="text-left py-3 text-sm font-semibold text-gray-700">Description</th>
                   <th className="text-right py-3 text-sm font-semibold text-gray-700">Quantity</th>
                   <th className="text-right py-3 text-sm font-semibold text-gray-700">Unit Price</th>
@@ -163,7 +163,7 @@ export default function PublicInvoicePage() {
               </thead>
               <tbody>
                 {invoice.line_items.map((item) => (
-                  <tr key={item.id} className="border-b border-gray-100">
+                  <tr key={item.id} className="border-b border-stone/10">
                     <td className="py-4 text-gray-900">{item.description}</td>
                     <td className="py-4 text-right text-gray-900">{item.quantity}</td>
                     <td className="py-4 text-right text-gray-900">{formatCurrency(item.unit_price)}</td>
@@ -185,7 +185,7 @@ export default function PublicInvoicePage() {
                 <span className="text-gray-600">Tax</span>
                 <span className="text-gray-900">{formatCurrency(invoice.tax)}</span>
               </div>
-              <div className="flex justify-between py-3 border-t-2 border-gray-200">
+              <div className="flex justify-between py-3 border-t-2 border-stone/10">
                 <span className="text-lg font-bold text-gray-900">Total</span>
                 <span className="text-lg font-bold text-gray-900">{formatCurrency(invoice.total)}</span>
               </div>

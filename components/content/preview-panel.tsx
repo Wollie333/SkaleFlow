@@ -253,7 +253,7 @@ export function PreviewPanel({
       )}
 
       {/* ── Divider ──────────────────────────────────────────────── */}
-      <div className="border-t border-stone-100" />
+      <div className="border-t border-stone/10" />
 
       {/* ── Multi-Card Preview Grid ────────────────────────────── */}
       {allSelectedPlacements.length > 0 ? (

@@ -43,6 +43,18 @@ export default async function DashboardLayout({
   let draftCount = 0;
   const orgRole = (membership?.role || null) as string | null;
   let teamPermissions: Record<string, FeaturePermissions> = {};
+  let canAccessApplicationPipeline = userData?.role === 'super_admin';
+
+  // Check if user is in an org that has a super_admin member (for application pipeline access)
+  if (!canAccessApplicationPipeline && membership?.organization_id) {
+    const serviceClient = createServiceClient();
+    const { count } = await serviceClient
+      .from('org_members')
+      .select('user_id, users!inner(role)', { count: 'exact', head: true })
+      .eq('organization_id', membership.organization_id)
+      .eq('users.role', 'super_admin');
+    canAccessApplicationPipeline = (count || 0) > 0;
+  }
 
   // Prepare promises that run regardless of org membership
   const notificationPromise = supabase
@@ -51,7 +63,7 @@ export default async function DashboardLayout({
     .eq('user_id', user.id)
     .eq('is_read', false);
 
-  const pipelinePromise = userData?.role === 'super_admin'
+  const pipelinePromise = canAccessApplicationPipeline
     ? supabase
         .from('applications')
         .select('*', { count: 'exact', head: true })
@@ -209,6 +221,7 @@ export default async function DashboardLayout({
         notificationCount: notificationCount || 0,
         pendingReviewCount,
         teamPermissions,
+        canAccessApplicationPipeline,
       }}
       creditBalance={creditBalance}
     >

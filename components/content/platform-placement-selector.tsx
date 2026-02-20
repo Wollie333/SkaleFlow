@@ -94,7 +94,7 @@ export default function PlatformPlacementSelector({
                     className={`w-3 h-3 rounded-sm border-2 flex items-center justify-center ${
                       platformState.enabled
                         ? 'border-teal-600 bg-teal-600'
-                        : 'border-stone-400'
+                        : 'border-stone/30'
                     }`}
                   >
                     {platformState.enabled && (
