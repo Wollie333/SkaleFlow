@@ -413,90 +413,44 @@ export function CallRoom({
   const [isJoining, setIsJoining] = useState(false);
   const [joinStep, setJoinStep] = useState('');
 
+  // Restored to exact working pattern: single getUserMedia({video,audio}) + audio fallback
   const startMedia = useCallback(async () => {
     setMediaError(null);
     setIsJoining(true);
+    setJoinStep('Requesting camera & microphone...');
 
-    // Check if mediaDevices API is available (requires HTTPS)
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setMediaError('Media devices not available. Make sure you are on HTTPS and using a supported browser.');
-      setIsCameraOff(true);
-      setIsMuted(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+      localStreamRef.current = stream;
       setCallActive(true);
       setIsJoining(false);
-      return;
-    }
-
-    // Request audio and video SEPARATELY so a stuck camera doesn't kill audio.
-    // On Windows, "AbortError: Timeout starting video source" kills the entire
-    // combined {video,audio} request — requesting them individually avoids this.
-    setJoinStep('Setting up microphone...');
-    let audioStream: MediaStream | null = null;
-    let videoStream: MediaStream | null = null;
-
-    // Step 1: Get audio (most reliable — always try first)
-    try {
-      audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      console.log('Audio: OK');
-    } catch (err: any) {
-      console.warn('Audio failed:', err?.name, err?.message);
-    }
-
-    // Step 2: Get video (separate request — camera issues won't affect audio)
-    setJoinStep(audioStream ? 'Microphone ready. Setting up camera...' : 'Setting up camera...');
-    try {
-      videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
-      console.log('Video: OK');
-    } catch (err: any) {
-      console.warn('Video failed:', err?.name, err?.message);
-    }
-
-    // Combine whatever we got into a single stream
-    const combined = new MediaStream();
-    if (audioStream) {
-      audioStream.getAudioTracks().forEach(t => combined.addTrack(t));
-    }
-    if (videoStream) {
-      videoStream.getVideoTracks().forEach(t => combined.addTrack(t));
-    }
-
-    if (combined.getTracks().length > 0) {
-      localStreamRef.current = combined;
-      if (!audioStream) setIsMuted(true);
-      if (!videoStream) setIsCameraOff(true);
-
-      // Show what connected
-      if (audioStream && videoStream) {
-        setJoinStep('Camera & microphone ready! Entering room...');
-      } else if (audioStream) {
-        setMediaError('Camera unavailable — joined with audio only. Close other video apps and retry.');
-        setJoinStep('Audio ready. Entering room...');
-      } else {
-        setMediaError('Microphone unavailable — joined with video only.');
-        setJoinStep('Video ready. Entering room...');
+    } catch (err) {
+      console.error('Failed to access media devices:', err);
+      setJoinStep('Trying audio only...');
+      try {
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        localStreamRef.current = audioStream;
+        setIsCameraOff(true);
+        setCallActive(true);
+        setIsJoining(false);
+      } catch (err2) {
+        console.error('Failed to access any media devices:', err2);
+        setMediaError('Could not access camera or microphone. Check browser permissions and close other video apps.');
+        setIsCameraOff(true);
+        setIsMuted(true);
+        setCallActive(true);
+        setIsJoining(false);
       }
-
-      await new Promise(r => setTimeout(r, 500));
-      setCallActive(true);
-      setIsJoining(false);
-      return;
     }
-
-    // Nothing worked — join without media
-    setMediaError('Could not access camera or microphone. Close other video apps (Teams, Zoom), check browser permissions (click lock icon in address bar), and retry.');
-    setIsCameraOff(true);
-    setIsMuted(true);
-    setCallActive(true);
-    setIsJoining(false);
   }, []);
 
-  // Auto-join when opened via "Open in new tab" or autoJoin prop
-  useEffect(() => {
-    if (autoJoin && !callActive && !isJoining) {
-      startMedia();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoJoin]);
+  // Auto-join: DON'T auto-call getUserMedia — require a click for user gesture
+  // Some browsers block getUserMedia without user interaction in new windows
+  // autoJoin just shows the join screen (no extra action needed)
+
 
   const toggleMute = useCallback(() => {
     if (localStreamRef.current) {
