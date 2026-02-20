@@ -319,7 +319,7 @@ export function Sidebar({
         {/* SkaleFlow Engines */}
         {engineItems.length > 0 && (
           <div className="mt-6">
-            <h4 className="px-3 text-xs font-semibold text-gold uppercase tracking-wider mb-2">
+            <h4 className="px-3 text-xs font-semibold text-teal-dark dark:text-gold uppercase tracking-wider mb-2">
               SkaleFlow Engines
             </h4>
             <div className="space-y-1">
@@ -412,7 +412,7 @@ export function Sidebar({
               onClick={() => setSocialEngineExpanded(!socialEngineExpanded)}
               className="flex-1 flex items-center justify-between px-3 py-1 group"
             >
-              <h4 className="text-xs font-semibold text-gold uppercase tracking-wider flex items-center gap-2">
+              <h4 className="text-xs font-semibold text-teal-dark dark:text-gold uppercase tracking-wider flex items-center gap-2">
                 Social Engine
               </h4>
               {socialEngineExpanded ? (
@@ -624,7 +624,7 @@ export function Sidebar({
               onClick={() => setAdsEngineExpanded(!adsEngineExpanded)}
               className="flex-1 flex items-center justify-between px-3 py-1 group"
             >
-              <h4 className="text-xs font-semibold text-gold uppercase tracking-wider flex items-center gap-2">
+              <h4 className="text-xs font-semibold text-teal-dark dark:text-gold uppercase tracking-wider flex items-center gap-2">
                 Ads Engine
                 {!isSuperAdmin && <LockClosedIcon className="w-3 h-3 text-stone/40" />}
               </h4>
@@ -679,7 +679,7 @@ export function Sidebar({
                 onClick={() => setCrmExpanded(!crmExpanded)}
                 className="flex-1 flex items-center justify-between px-3 py-1 group"
               >
-                <h4 className="text-xs font-semibold text-gold uppercase tracking-wider flex items-center gap-2">
+                <h4 className="text-xs font-semibold text-teal-dark dark:text-gold uppercase tracking-wider flex items-center gap-2">
                   CRM
                 </h4>
                 {crmExpanded ? (
@@ -763,7 +763,7 @@ export function Sidebar({
                 onClick={() => setCallsExpanded(!callsExpanded)}
                 className="flex-1 flex items-center justify-between px-3 py-1 group"
               >
-                <h4 className="text-xs font-semibold text-gold uppercase tracking-wider flex items-center gap-2">
+                <h4 className="text-xs font-semibold text-teal-dark dark:text-gold uppercase tracking-wider flex items-center gap-2">
                   Calls
                 </h4>
                 {callsExpanded ? (
@@ -813,7 +813,7 @@ export function Sidebar({
                 onClick={() => setAdminExpanded(!adminExpanded)}
                 className="flex-1 flex items-center justify-between px-3 py-1 group"
               >
-                <h4 className="text-xs font-semibold text-gold uppercase tracking-wider flex items-center gap-2">
+                <h4 className="text-xs font-semibold text-teal-dark dark:text-gold uppercase tracking-wider flex items-center gap-2">
                   Admin
                 </h4>
                 {adminExpanded ? (
