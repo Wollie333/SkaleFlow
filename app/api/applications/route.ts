@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
     const serviceSupabase = createServiceClient();
 
-    // Insert application
+    // Insert application (backward compat)
     const { data: application, error: appError } = await serviceSupabase
       .from('applications')
       .insert({
@@ -69,6 +69,89 @@ export async function POST(request: Request) {
       to_stage: 'application',
       description: `Application submitted by ${full_name.trim()}`,
     });
+
+    // Dual-write: also create a pipeline_contact in the application pipeline
+    try {
+      // Find super_admin user
+      const { data: superAdmin } = await serviceSupabase
+        .from('users')
+        .select('id')
+        .eq('role', 'super_admin')
+        .limit(1)
+        .single();
+
+      if (superAdmin) {
+        // Find super_admin's org
+        const { data: adminMembership } = await serviceSupabase
+          .from('org_members')
+          .select('organization_id')
+          .eq('user_id', superAdmin.id)
+          .limit(1)
+          .single();
+
+        if (adminMembership) {
+          // Find application pipeline for that org
+          const { data: appPipeline } = await serviceSupabase
+            .from('pipelines')
+            .select('id')
+            .eq('organization_id', adminMembership.organization_id)
+            .eq('pipeline_type', 'application')
+            .limit(1)
+            .single();
+
+          if (appPipeline) {
+            // Find first stage (sort_order 0)
+            const { data: firstStage } = await serviceSupabase
+              .from('pipeline_stages')
+              .select('id')
+              .eq('pipeline_id', appPipeline.id)
+              .order('sort_order', { ascending: true })
+              .limit(1)
+              .single();
+
+            if (firstStage) {
+              const { data: pipelineContact } = await serviceSupabase
+                .from('pipeline_contacts')
+                .insert({
+                  pipeline_id: appPipeline.id,
+                  stage_id: firstStage.id,
+                  full_name: full_name.trim(),
+                  email: email.trim().toLowerCase(),
+                  phone: phone.trim(),
+                  company: business_name.trim(),
+                  custom_fields: {
+                    website_url: website_url?.trim() || '',
+                    team_size,
+                    annual_revenue,
+                    biggest_challenge: biggest_challenge.trim(),
+                    what_tried: what_tried?.trim() || '',
+                    why_applying: why_applying.trim(),
+                    application_id: application.id,
+                  },
+                })
+                .select('id')
+                .single();
+
+              if (pipelineContact) {
+                // Log activity
+                await serviceSupabase.from('pipeline_activity').insert({
+                  pipeline_id: appPipeline.id,
+                  contact_id: pipelineContact.id,
+                  event_type: 'contact_created',
+                  metadata: {
+                    source: 'public_application_form',
+                    application_id: application.id,
+                  },
+                });
+              }
+            }
+          }
+        }
+      }
+    } catch (dualWriteError) {
+      // Fail gracefully — the legacy application was still created
+      console.error('Failed to dual-write to pipeline_contacts:', dualWriteError);
+    }
 
     return NextResponse.json({
       success: true,

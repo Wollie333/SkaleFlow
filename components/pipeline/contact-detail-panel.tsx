@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { XMarkIcon, PaperAirplaneIcon, TagIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PaperAirplaneIcon, TagIcon, ClockIcon, UserPlusIcon, LinkIcon, CheckBadgeIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 
 interface Activity {
@@ -29,6 +29,7 @@ interface Contact {
   stage_id: string;
   notes: string | null;
   assigned_to: string | null;
+  custom_fields?: Record<string, unknown>;
   pipeline_contact_tags?: ContactTag[];
   created_at: string;
   activity?: Activity[];
@@ -38,6 +39,8 @@ interface Stage {
   id: string;
   name: string;
   color: string;
+  is_win_stage?: boolean;
+  is_loss_stage?: boolean;
 }
 
 interface Tag {
@@ -51,11 +54,15 @@ interface ContactDetailPanelProps {
   stages: Stage[];
   availableTags: Tag[];
   pipelineId: string;
+  pipelineType?: string;
   onClose: () => void;
   onUpdate: (contactId: string, data: Record<string, unknown>) => Promise<void>;
   onAddTag: (contactId: string, tagId: string) => Promise<void>;
   onRemoveTag: (contactId: string, tagId: string) => Promise<void>;
   onSendEmail: (contactId: string) => void;
+  onActivateUser?: (contactId: string) => void;
+  onCreateBooking?: (contactId: string) => void;
+  onSendBookingEmail?: (contactId: string) => void;
 }
 
 export function ContactDetailPanel({
@@ -63,11 +70,15 @@ export function ContactDetailPanel({
   stages,
   availableTags,
   pipelineId,
+  pipelineType,
   onClose,
   onUpdate,
   onAddTag,
   onRemoveTag,
   onSendEmail,
+  onActivateUser,
+  onCreateBooking,
+  onSendBookingEmail,
 }: ContactDetailPanelProps) {
   const [activeTab, setActiveTab] = useState<'details' | 'activity' | 'tags'>('details');
   const [notes, setNotes] = useState(contact?.notes || '');
@@ -78,6 +89,10 @@ export function ContactDetailPanel({
   }, [contact]);
 
   if (!contact) return null;
+
+  const isApplication = pipelineType === 'application';
+  const customFields = (contact.custom_fields || {}) as Record<string, unknown>;
+  const isActivated = !!customFields.activated_user_id;
 
   const contactTags = (contact.pipeline_contact_tags || [])
     .map((t) => t.pipeline_tags)
@@ -96,6 +111,8 @@ export function ContactDetailPanel({
   };
 
   const currentStage = stages.find((s) => s.id === contact.stage_id);
+  const isOnWinStage = currentStage?.is_win_stage === true;
+  const isOnApprovedStage = currentStage?.name === 'Approved';
 
   const formatEventType = (type: string) => {
     const map: Record<string, string> = {
@@ -106,6 +123,9 @@ export function ContactDetailPanel({
       email_sent: 'Email sent',
       contact_updated: 'Contact updated',
       note_added: 'Note added',
+      user_activated: 'User activated',
+      booking_created: 'Booking link created',
+      booking_email_sent: 'Booking email sent',
     };
     return map[type] || type;
   };
@@ -115,6 +135,15 @@ export function ContactDetailPanel({
     { id: 'activity' as const, label: 'Activity' },
     { id: 'tags' as const, label: 'Tags' },
   ];
+
+  const CUSTOM_FIELD_LABELS: Record<string, string> = {
+    website_url: 'Website',
+    team_size: 'Team Size',
+    annual_revenue: 'Annual Revenue',
+    biggest_challenge: 'Biggest Challenge',
+    what_tried: 'What They Tried',
+    why_applying: 'Why Applying',
+  };
 
   return (
     <div className="fixed inset-y-0 right-0 w-96 bg-cream-warm shadow-xl border-l border-stone/10 z-50 flex flex-col">
@@ -140,6 +169,54 @@ export function ContactDetailPanel({
             <PaperAirplaneIcon className="w-3.5 h-3.5" />
             Send Email
           </button>
+        )}
+
+        {/* Application action buttons */}
+        {isApplication && (
+          <div className="mt-3 space-y-2">
+            {/* User Activated badge */}
+            {isActivated && (
+              <div className="flex items-center gap-1.5 text-xs font-medium text-green-600 bg-green-50 px-2.5 py-1.5 rounded-lg">
+                <CheckBadgeIcon className="w-4 h-4" />
+                User Activated
+              </div>
+            )}
+
+            {/* Activate User — shown on win stage when not yet activated */}
+            {isOnWinStage && !isActivated && onActivateUser && (
+              <button
+                onClick={() => onActivateUser(contact.id)}
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-teal hover:bg-teal/90 rounded-lg transition-colors"
+              >
+                <UserPlusIcon className="w-4 h-4" />
+                Activate User
+              </button>
+            )}
+
+            {/* Send Booking Link — shown on Approved stage */}
+            {isOnApprovedStage && (
+              <div className="flex gap-2">
+                {onCreateBooking && (
+                  <button
+                    onClick={() => onCreateBooking(contact.id)}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-charcoal bg-gold/20 hover:bg-gold/30 rounded-lg transition-colors"
+                  >
+                    <LinkIcon className="w-4 h-4" />
+                    Create Booking
+                  </button>
+                )}
+                {onSendBookingEmail && (
+                  <button
+                    onClick={() => onSendBookingEmail(contact.id)}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-charcoal bg-gold/20 hover:bg-gold/30 rounded-lg transition-colors"
+                  >
+                    <PaperAirplaneIcon className="w-4 h-4" />
+                    Send Invite
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -177,14 +254,44 @@ export function ContactDetailPanel({
               <label className="text-xs font-medium text-stone uppercase">Company</label>
               <p className="text-sm text-charcoal mt-0.5">{contact.company || '—'}</p>
             </div>
-            <div>
-              <label className="text-xs font-medium text-stone uppercase">Deal Value</label>
-              <p className="text-sm text-charcoal mt-0.5">
-                {contact.value_cents > 0
-                  ? `R ${(contact.value_cents / 100).toLocaleString('en-ZA')}`
-                  : '—'}
-              </p>
-            </div>
+            {!isApplication && (
+              <div>
+                <label className="text-xs font-medium text-stone uppercase">Deal Value</label>
+                <p className="text-sm text-charcoal mt-0.5">
+                  {contact.value_cents > 0
+                    ? `R ${(contact.value_cents / 100).toLocaleString('en-ZA')}`
+                    : '—'}
+                </p>
+              </div>
+            )}
+
+            {/* Application custom fields */}
+            {isApplication && Object.keys(customFields).length > 0 && (
+              <div className="pt-2 border-t border-stone/10">
+                <h4 className="text-xs font-semibold text-teal uppercase mb-3">Application Details</h4>
+                <div className="space-y-3">
+                  {Object.entries(CUSTOM_FIELD_LABELS).map(([key, label]) => {
+                    const val = customFields[key];
+                    if (!val) return null;
+                    return (
+                      <div key={key}>
+                        <label className="text-xs font-medium text-stone uppercase">{label}</label>
+                        <p className="text-sm text-charcoal mt-0.5 whitespace-pre-wrap">
+                          {key === 'website_url' ? (
+                            <a href={String(val)} target="_blank" rel="noopener noreferrer" className="text-teal hover:underline">
+                              {String(val)}
+                            </a>
+                          ) : (
+                            String(val)
+                          )}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="text-xs font-medium text-stone uppercase mb-1 block">Notes</label>
               <textarea

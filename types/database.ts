@@ -98,6 +98,9 @@ export type AuthorityReachTier = 'local' | 'regional' | 'national' | 'internatio
 export type AuthorityEngagementType = 'earned' | 'paid' | 'contra' | 'sponsored';
 export type AuthorityPaymentStatus = 'not_invoiced' | 'invoiced' | 'paid' | 'overdue';
 export type AuthorityPaymentTerms = 'upfront' | '50_50' | 'on_publication' | 'net_30' | 'custom';
+export type PipelineType = 'custom' | 'application';
+export type FormFieldType = 'text' | 'email' | 'phone' | 'number' | 'textarea' | 'select' | 'checkbox';
+export type FormFieldMapping = 'full_name' | 'email' | 'phone' | 'company' | string;
 export type AuthorityContactRole = 'journalist' | 'editor' | 'podcast_host' | 'event_organiser' | 'pr_agent' | 'other';
 export type AuthorityContactWarmth = 'cold' | 'warm' | 'hot' | 'active' | 'published';
 export type AuthorityContactSource = 'manual' | 'press_page_inquiry' | 'email_capture' | 'csv_import' | 'referral';
@@ -1211,8 +1214,9 @@ export interface Database {
       meetings: {
         Row: {
           id: string;
-          application_id: string;
+          application_id: string | null;
           host_user_id: string;
+          pipeline_contact_id: string | null;
           google_event_id: string | null;
           meet_link: string | null;
           scheduled_at: string | null;
@@ -1228,8 +1232,9 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          application_id: string;
+          application_id?: string | null;
           host_user_id: string;
+          pipeline_contact_id?: string | null;
           google_event_id?: string | null;
           meet_link?: string | null;
           scheduled_at?: string | null;
@@ -1245,8 +1250,9 @@ export interface Database {
         };
         Update: {
           id?: string;
-          application_id?: string;
+          application_id?: string | null;
           host_user_id?: string;
+          pipeline_contact_id?: string | null;
           google_event_id?: string | null;
           meet_link?: string | null;
           scheduled_at?: string | null;
@@ -1273,6 +1279,13 @@ export interface Database {
             columns: ["host_user_id"];
             isOneToOne: false;
             referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "meetings_pipeline_contact_id_fkey";
+            columns: ["pipeline_contact_id"];
+            isOneToOne: false;
+            referencedRelation: "pipeline_contacts";
             referencedColumns: ["id"];
           },
         ];
@@ -2129,6 +2142,7 @@ export interface Database {
           name: string;
           description: string | null;
           is_default: boolean;
+          pipeline_type: string;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -2139,6 +2153,7 @@ export interface Database {
           name: string;
           description?: string | null;
           is_default?: boolean;
+          pipeline_type?: string;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -2149,6 +2164,7 @@ export interface Database {
           name?: string;
           description?: string | null;
           is_default?: boolean;
+          pipeline_type?: string;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -7065,6 +7081,126 @@ export interface Database {
             columns: ["source_transcript_id"];
             isOneToOne: false;
             referencedRelation: "call_transcripts";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      pipeline_forms: {
+        Row: {
+          id: string;
+          organization_id: string;
+          pipeline_id: string;
+          stage_id: string;
+          name: string;
+          description: string | null;
+          submit_button_text: string;
+          success_message: string;
+          is_published: boolean;
+          slug: string;
+          settings: Json;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          pipeline_id: string;
+          stage_id: string;
+          name: string;
+          description?: string | null;
+          submit_button_text?: string;
+          success_message?: string;
+          is_published?: boolean;
+          slug: string;
+          settings?: Json;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          pipeline_id?: string;
+          stage_id?: string;
+          name?: string;
+          description?: string | null;
+          submit_button_text?: string;
+          success_message?: string;
+          is_published?: boolean;
+          slug?: string;
+          settings?: Json;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_forms_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pipeline_forms_pipeline_id_fkey";
+            columns: ["pipeline_id"];
+            isOneToOne: false;
+            referencedRelation: "pipelines";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pipeline_forms_stage_id_fkey";
+            columns: ["stage_id"];
+            isOneToOne: false;
+            referencedRelation: "pipeline_stages";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      pipeline_form_fields: {
+        Row: {
+          id: string;
+          form_id: string;
+          label: string;
+          field_type: string;
+          placeholder: string | null;
+          is_required: boolean;
+          options: Json | null;
+          mapping: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          form_id: string;
+          label: string;
+          field_type: string;
+          placeholder?: string | null;
+          is_required?: boolean;
+          options?: Json | null;
+          mapping: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          form_id?: string;
+          label?: string;
+          field_type?: string;
+          placeholder?: string | null;
+          is_required?: boolean;
+          options?: Json | null;
+          mapping?: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_form_fields_form_id_fkey";
+            columns: ["form_id"];
+            isOneToOne: false;
+            referencedRelation: "pipeline_forms";
             referencedColumns: ["id"];
           }
         ];

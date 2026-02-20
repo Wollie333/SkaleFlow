@@ -8,6 +8,7 @@ import {
   BoltIcon,
   ChartBarIcon,
   ViewColumnsIcon,
+  DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
 import { PageHeader } from '@/components/ui';
 import { PipelineBoard } from '@/components/pipeline/pipeline-board';
@@ -39,6 +40,7 @@ interface Contact {
   stage_id: string;
   assigned_to: string | null;
   notes: string | null;
+  custom_fields?: Record<string, unknown>;
   pipeline_contact_tags?: ContactTag[];
   created_at: string;
   activity?: Array<{
@@ -63,6 +65,7 @@ interface PipelineData {
   name: string;
   description: string | null;
   organization_id: string;
+  pipeline_type: string;
   pipeline_stages: Stage[];
 }
 
@@ -78,6 +81,7 @@ export default function PipelineBoardPage() {
   const [showCreateContact, setShowCreateContact] = useState(false);
   const [createStageId, setCreateStageId] = useState('');
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const supabase = createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -160,6 +164,7 @@ export default function PipelineBoardPage() {
     company: string;
     value_cents: number;
     stage_id: string;
+    custom_fields?: Record<string, string>;
   }) => {
     const response = await fetch(`/api/pipeline/${pipelineId}/contacts`, {
       method: 'POST',
@@ -208,6 +213,76 @@ export default function PipelineBoardPage() {
     router.push(`/pipeline/templates?contactId=${contactId}&pipelineId=${pipelineId}`);
   };
 
+  // Application pipeline action handlers
+  const handleActivateUser = async (contactId: string) => {
+    if (!confirm('Activate this user? This will create their account, organization, and send a password reset email.')) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/pipeline/${pipelineId}/contacts/${contactId}/activate`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || 'User activated successfully');
+        // Refresh contact to show updated custom_fields
+        if (selectedContact?.id === contactId) {
+          handleContactClick(selectedContact);
+        }
+        await loadContacts();
+      } else {
+        alert(data.error || 'Failed to activate user');
+      }
+    } catch {
+      alert('Network error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCreateBooking = async (contactId: string) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/pipeline/${pipelineId}/contacts/${contactId}/booking`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const msg = data.isExisting
+          ? `Existing booking link: ${data.bookingUrl}`
+          : `New booking link created: ${data.bookingUrl}`;
+        // Copy to clipboard
+        try { await navigator.clipboard.writeText(data.bookingUrl); } catch { /* ignore */ }
+        alert(`${msg}\n\nLink copied to clipboard.`);
+      } else {
+        alert(data.error || 'Failed to create booking');
+      }
+    } catch {
+      alert('Network error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSendBookingEmail = async (contactId: string) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/pipeline/${pipelineId}/contacts/${contactId}/booking-email`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || 'Booking email sent');
+      } else {
+        alert(data.error || 'Failed to send booking email');
+      }
+    } catch {
+      alert('Network error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const pipelineType = pipeline?.pipeline_type;
   const createStageName = pipeline?.pipeline_stages?.find((s) => s.id === createStageId)?.name || '';
 
   if (loading) {
@@ -243,6 +318,13 @@ export default function PipelineBoardPage() {
         subtitle={pipeline.description || undefined}
         action={
           <div className="flex items-center gap-1 bg-cream-warm rounded-lg p-1">
+            <button
+              onClick={() => router.push(`/pipeline/${pipelineId}/forms`)}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-stone hover:text-teal hover:bg-cream-warm rounded-md transition-all"
+            >
+              <DocumentDuplicateIcon className="w-4 h-4" />
+              Forms
+            </button>
             <button
               onClick={() => router.push(`/pipeline/${pipelineId}/automations`)}
               className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-stone hover:text-teal hover:bg-cream-warm rounded-md transition-all"
@@ -284,6 +366,7 @@ export default function PipelineBoardPage() {
         isOpen={showCreateContact}
         stageId={createStageId}
         stageName={createStageName}
+        pipelineType={pipelineType}
         onClose={() => setShowCreateContact(false)}
         onCreate={handleCreateContact}
       />
@@ -294,11 +377,15 @@ export default function PipelineBoardPage() {
         stages={stages}
         availableTags={tags}
         pipelineId={pipelineId}
+        pipelineType={pipelineType}
         onClose={() => setSelectedContact(null)}
         onUpdate={handleUpdateContact}
         onAddTag={handleAddTag}
         onRemoveTag={handleRemoveTag}
         onSendEmail={handleSendEmail}
+        onActivateUser={pipelineType === 'application' ? handleActivateUser : undefined}
+        onCreateBooking={pipelineType === 'application' ? handleCreateBooking : undefined}
+        onSendBookingEmail={pipelineType === 'application' ? handleSendBookingEmail : undefined}
       />
     </div>
   );

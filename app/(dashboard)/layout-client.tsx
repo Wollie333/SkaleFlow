@@ -27,13 +27,11 @@ interface DashboardLayoutClientProps {
     userRole?: string;
     orgRole?: string | null;
     tierName?: string;
-    pipelineCount?: number;
     upcomingCallCount?: number;
     contentEngineEnabled?: boolean;
     notificationCount?: number;
     pendingReviewCount?: number;
     teamPermissions?: Record<string, FeaturePermissions>;
-    canAccessApplicationPipeline?: boolean;
   };
   creditBalance?: {
     totalRemaining: number;

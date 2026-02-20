@@ -171,13 +171,11 @@ interface MobileSidebarProps {
   userRole?: string;
   orgRole?: string | null;
   tierName?: string;
-  pipelineCount?: number;
   upcomingCallCount?: number;
   contentEngineEnabled?: boolean;
   notificationCount?: number;
   pendingReviewCount?: number;
   teamPermissions?: Record<string, FeaturePermissions>;
-  canAccessApplicationPipeline?: boolean;
 }
 
 export function MobileSidebar({
@@ -188,13 +186,11 @@ export function MobileSidebar({
   userRole,
   orgRole,
   tierName,
-  pipelineCount,
   upcomingCallCount,
   contentEngineEnabled,
   notificationCount,
   pendingReviewCount,
   teamPermissions = {},
-  canAccessApplicationPipeline,
 }: MobileSidebarProps) {
   const pathname = usePathname();
 
@@ -762,41 +758,20 @@ export function MobileSidebar({
                       ? pathname === '/crm'
                       : pathname === item.href || pathname.startsWith(item.href + '/');
                     return (
-                      <div key={item.name}>
-                        <Link
-                          href={item.href}
-                          onClick={onClose}
-                          className={cn(
-                            'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
-                            isActive
-                              ? 'bg-teal/10 text-teal'
-                              : 'text-stone hover:bg-cream-warm hover:text-charcoal'
-                          )}
-                        >
-                          <item.icon className="w-4 h-4" />
-                          {item.name}
-                        </Link>
-                        {item.href === '/pipeline' && canAccessApplicationPipeline && (
-                          <Link
-                            href="/crm/applications"
-                            onClick={onClose}
-                            className={cn(
-                              'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
-                              pathname.startsWith('/crm/applications')
-                                ? 'bg-teal/10 text-teal'
-                                : 'text-stone hover:bg-cream-warm hover:text-charcoal'
-                            )}
-                          >
-                            <ClipboardDocumentCheckIcon className="w-4 h-4" />
-                            Application Pipeline
-                            {pipelineCount !== undefined && pipelineCount > 0 && (
-                              <span className="ml-auto text-xs bg-teal/15 text-teal px-2 py-0.5 rounded-full font-semibold">
-                                {pipelineCount}
-                              </span>
-                            )}
-                          </Link>
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={onClose}
+                        className={cn(
+                          'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
+                          isActive
+                            ? 'bg-teal/10 text-teal'
+                            : 'text-stone hover:bg-cream-warm hover:text-charcoal'
                         )}
-                      </div>
+                      >
+                        <item.icon className="w-4 h-4" />
+                        {item.name}
+                      </Link>
                     );
                   })}
                   {isSuperAdmin && crmAdminNavigation.map((item) => {

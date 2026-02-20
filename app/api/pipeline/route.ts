@@ -47,20 +47,48 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Only owners and admins can create pipelines' }, { status: 403 });
   }
 
-  // Check 2-pipeline limit
+  const isApplicationTemplate = template === 'application';
+
+  // Application template requires super_admin role
+  if (isApplicationTemplate) {
+    const { data: userData } = await supabase.from('users').select('role').eq('id', user.id).single();
+    if (userData?.role !== 'super_admin') {
+      return NextResponse.json({ error: 'Only super admins can create application pipelines' }, { status: 403 });
+    }
+
+    // Max 1 application pipeline per org
+    const { count: appPipelineCount } = await supabase
+      .from('pipelines')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', organizationId)
+      .eq('pipeline_type', 'application');
+
+    if ((appPipelineCount ?? 0) >= 1) {
+      return NextResponse.json({ error: 'Only one application pipeline per organization is allowed.' }, { status: 400 });
+    }
+  }
+
+  // Check 2-pipeline limit (exclude application pipelines from count)
   const { count } = await supabase
     .from('pipelines')
     .select('id', { count: 'exact', head: true })
-    .eq('organization_id', organizationId);
+    .eq('organization_id', organizationId)
+    .neq('pipeline_type', 'application');
 
-  if ((count ?? 0) >= 2) {
+  if (!isApplicationTemplate && (count ?? 0) >= 2) {
     return NextResponse.json({ error: 'Pipeline limit reached. You can have a maximum of 2 pipelines.' }, { status: 400 });
   }
 
   // Create pipeline
   const { data: pipeline, error } = await supabase
     .from('pipelines')
-    .insert({ organization_id: organizationId, name, description: description || null, created_by: user.id })
+    .insert({
+      organization_id: organizationId,
+      name,
+      description: description || null,
+      created_by: user.id,
+      pipeline_type: isApplicationTemplate ? 'application' : 'custom',
+    })
     .select()
     .single();
 
@@ -88,6 +116,14 @@ export async function POST(request: NextRequest) {
       { name: 'New', color: '#6B7280', sort_order: 0 },
       { name: 'In Progress', color: '#3B82F6', sort_order: 1 },
       { name: 'Done', color: '#10B981', sort_order: 2, is_win_stage: true },
+    ],
+    application: [
+      { name: 'Application', color: '#3B82F6', sort_order: 0 },
+      { name: 'Approved', color: '#8B5CF6', sort_order: 1 },
+      { name: 'Booking Made', color: '#6366F1', sort_order: 2 },
+      { name: 'Won', color: '#10B981', sort_order: 3, is_win_stage: true },
+      { name: 'Lost', color: '#EF4444', sort_order: 4, is_loss_stage: true },
+      { name: 'Declined', color: '#EF4444', sort_order: 5, is_loss_stage: true },
     ],
   };
 

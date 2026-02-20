@@ -7,9 +7,10 @@ interface CreatePipelineModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (data: { name: string; description: string; template: string }) => Promise<void>;
+  isSuperAdmin?: boolean;
 }
 
-export function CreatePipelineModal({ isOpen, onClose, onCreate }: CreatePipelineModalProps) {
+export function CreatePipelineModal({ isOpen, onClose, onCreate, isSuperAdmin }: CreatePipelineModalProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [template, setTemplate] = useState('sales');
@@ -36,6 +37,7 @@ export function CreatePipelineModal({ isOpen, onClose, onCreate }: CreatePipelin
     { id: 'sales', name: 'Sales Pipeline', desc: 'New Lead → Contacted → Qualified → Proposal → Negotiation → Won/Lost' },
     { id: 'onboarding', name: 'Customer Onboarding', desc: 'Signed Up → Welcome → Onboarding Call → Complete → Active' },
     { id: 'blank', name: 'Blank Pipeline', desc: 'Start with basic stages: New → In Progress → Done' },
+    ...(isSuperAdmin ? [{ id: 'application', name: 'Application Pipeline', desc: 'Application → Approved → Booking Made → Won → Lost / Declined — manage applicant intake' }] : []),
   ];
 
   return (

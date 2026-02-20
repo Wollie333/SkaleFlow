@@ -14,6 +14,7 @@ interface Pipeline {
   id: string;
   name: string;
   description: string | null;
+  pipeline_type: string;
   created_at: string;
   contact_count: number;
   pipeline_stages: Array<{
@@ -31,6 +32,7 @@ export default function PipelineListPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   const supabase = createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,14 +47,22 @@ export default function PipelineListPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { data: membership } = await supabase
-      .from('org_members')
-      .select('organization_id')
-      .eq('user_id', user.id)
-      .single();
+    const [{ data: membership }, { data: userData }] = await Promise.all([
+      supabase
+        .from('org_members')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .single(),
+      supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single(),
+    ]);
 
     if (!membership) return;
     setOrganizationId(membership.organization_id);
+    setIsSuperAdmin(userData?.role === 'super_admin');
 
     const response = await fetch(`/api/pipeline?organizationId=${membership.organization_id}`);
     if (response.ok) {
@@ -99,7 +109,9 @@ export default function PipelineListPage() {
     }
   };
 
-  const atLimit = pipelines.length >= MAX_PIPELINES;
+  // Only count custom pipelines toward the limit
+  const customPipelineCount = pipelines.filter(p => p.pipeline_type !== 'application').length;
+  const atLimit = customPipelineCount >= MAX_PIPELINES;
 
   if (loading) {
     return (
@@ -114,13 +126,13 @@ export default function PipelineListPage() {
       <PageHeader
         title="Pipelines"
         icon={FunnelIcon}
-        subtitle={`Manage your sales pipelines and contacts (${pipelines.length}/${MAX_PIPELINES})`}
+        subtitle={`Manage your sales pipelines and contacts (${customPipelineCount}/${MAX_PIPELINES})`}
         action={
           <button
             onClick={() => setShowCreate(true)}
-            disabled={atLimit}
+            disabled={atLimit && !isSuperAdmin}
             className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-dark bg-gold hover:bg-gold/90 rounded-lg transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
-            title={atLimit ? `Maximum of ${MAX_PIPELINES} pipelines reached` : undefined}
+            title={atLimit && !isSuperAdmin ? `Maximum of ${MAX_PIPELINES} pipelines reached` : undefined}
           >
             <PlusIcon className="w-4 h-4" />
             New Pipeline
@@ -152,7 +164,14 @@ export default function PipelineListPage() {
             >
               <div className="flex items-start justify-between">
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-serif font-semibold text-charcoal group-hover:text-teal transition-colors">{pipeline.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-serif font-semibold text-charcoal group-hover:text-teal transition-colors">{pipeline.name}</h3>
+                    {pipeline.pipeline_type === 'application' && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-gold/15 text-gold">
+                        Application
+                      </span>
+                    )}
+                  </div>
                   {pipeline.description && (
                     <p className="text-sm text-stone mt-1 line-clamp-2">{pipeline.description}</p>
                   )}
@@ -205,6 +224,7 @@ export default function PipelineListPage() {
         isOpen={showCreate}
         onClose={() => setShowCreate(false)}
         onCreate={handleCreate}
+        isSuperAdmin={isSuperAdmin}
       />
     </div>
   );

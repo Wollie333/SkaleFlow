@@ -36,25 +36,12 @@ export default async function DashboardLayout({
   let brandProgress = undefined;
   let contentStats = undefined;
   let tierName: string | undefined = undefined;
-  let pipelineCount = 0;
   let contentEngineEnabled = false;
   let notificationCount = 0;
   let pendingReviewCount = 0;
   let draftCount = 0;
   const orgRole = (membership?.role || null) as string | null;
   let teamPermissions: Record<string, FeaturePermissions> = {};
-  let canAccessApplicationPipeline = userData?.role === 'super_admin';
-
-  // Check if user is in an org that has a super_admin member (for application pipeline access)
-  if (!canAccessApplicationPipeline && membership?.organization_id) {
-    const serviceClient = createServiceClient();
-    const { count } = await serviceClient
-      .from('org_members')
-      .select('user_id, users!inner(role)', { count: 'exact', head: true })
-      .eq('organization_id', membership.organization_id)
-      .eq('users.role', 'super_admin');
-    canAccessApplicationPipeline = (count || 0) > 0;
-  }
 
   // Prepare promises that run regardless of org membership
   const notificationPromise = supabase
@@ -62,13 +49,6 @@ export default async function DashboardLayout({
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user.id)
     .eq('is_read', false);
-
-  const pipelinePromise = canAccessApplicationPipeline
-    ? supabase
-        .from('applications')
-        .select('*', { count: 'exact', head: true })
-        .eq('pipeline_stage', 'application')
-    : null;
 
   if (membership?.organization_id) {
     const orgId = membership.organization_id;
@@ -102,7 +82,7 @@ export default async function DashboardLayout({
         .eq('status', 'scripted');
 
       // Run ALL queries in parallel (org-scoped + global)
-      const [orgResult, subscriptionResult, phasesResult, contentCountResult, notifResult, pipelineResult, teamPermsResult, pendingReviewResult, draftCountResult] = await Promise.all([
+      const [orgResult, subscriptionResult, phasesResult, contentCountResult, notifResult, teamPermsResult, pendingReviewResult, draftCountResult] = await Promise.all([
         supabase
           .from('organizations')
           .select('content_engine_enabled')
@@ -125,7 +105,6 @@ export default async function DashboardLayout({
           .eq('organization_id', orgId)
           .in('status', ['idea', 'scripted']),
         notificationPromise,
-        pipelinePromise,
         teamPermsPromise,
         pendingReviewPromise,
         draftCountPromise,
@@ -150,7 +129,6 @@ export default async function DashboardLayout({
       }
 
       contentStats = { pending: contentCountResult.count || 0 };
-      pipelineCount = pipelineResult?.count || 0;
       notificationCount = notifResult.count || 0;
       pendingReviewCount = pendingReviewResult?.count || 0;
       draftCount = draftCountResult?.count || 0;
@@ -163,24 +141,16 @@ export default async function DashboardLayout({
       }
     } catch (layoutError) {
       console.error('Dashboard layout query error:', layoutError);
-      // Fallback: run only the essential queries (notifications + pipeline)
+      // Fallback: run only the essential queries (notifications)
       try {
-        const [notifResult, pipelineResult] = await Promise.all([
-          notificationPromise,
-          pipelinePromise,
-        ]);
-        pipelineCount = pipelineResult?.count || 0;
+        const notifResult = await notificationPromise;
         notificationCount = notifResult.count || 0;
       } catch (fallbackError) {
         console.error('Dashboard layout fallback query error:', fallbackError);
       }
     }
   } else {
-    const [notifResult, pipelineResult] = await Promise.all([
-      notificationPromise,
-      pipelinePromise,
-    ]);
-    pipelineCount = pipelineResult?.count || 0;
+    const notifResult = await notificationPromise;
     notificationCount = notifResult.count || 0;
   }
 
@@ -216,12 +186,10 @@ export default async function DashboardLayout({
         userRole: userData?.role,
         orgRole,
         tierName,
-        pipelineCount,
         contentEngineEnabled,
         notificationCount: notificationCount || 0,
         pendingReviewCount,
         teamPermissions,
-        canAccessApplicationPipeline,
       }}
       creditBalance={creditBalance}
     >
