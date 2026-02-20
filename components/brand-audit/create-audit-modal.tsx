@@ -30,6 +30,51 @@ export function CreateAuditModal({ organizationId, preselectedContactId, onClose
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Inline contact creation
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [creatingContact, setCreatingContact] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [newContact, setNewContact] = useState({ firstName: '', lastName: '', email: '', phone: '', companyName: '' });
+
+  const handleCreateContact = async () => {
+    if (!newContact.firstName || !newContact.email) {
+      setCreateError('First name and email are required');
+      return;
+    }
+    setCreatingContact(true);
+    setCreateError(null);
+    try {
+      const res = await fetch('/api/crm/contacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organizationId,
+          firstName: newContact.firstName,
+          lastName: newContact.lastName,
+          email: newContact.email,
+          phone: newContact.phone || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to create contact');
+      }
+      const created = await res.json();
+      setSelectedContact({
+        id: created.id,
+        first_name: created.first_name || newContact.firstName,
+        last_name: created.last_name || newContact.lastName,
+        email: created.email || newContact.email,
+      });
+      setShowCreateForm(false);
+      setNewContact({ firstName: '', lastName: '', email: '', phone: '', companyName: '' });
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : 'Failed to create contact');
+    } finally {
+      setCreatingContact(false);
+    }
+  };
+
   // Search contacts
   useEffect(() => {
     if (!contactSearch || contactSearch.length < 2) { setContacts([]); return; }
@@ -151,30 +196,82 @@ export function CreateAuditModal({ organizationId, preselectedContactId, onClose
                   <XMarkIcon className="w-4 h-4" />
                 </button>
               </div>
-            ) : (
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone" />
+            ) : showCreateForm ? (
+              <div className="border border-teal/20 rounded-lg p-4 space-y-3 bg-cream-warm/50">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-teal">New Contact</span>
+                  <button onClick={() => { setShowCreateForm(false); setCreateError(null); }} className="text-stone hover:text-charcoal text-xs">
+                    Cancel
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    placeholder="First Name *"
+                    value={newContact.firstName}
+                    onChange={(e) => setNewContact(p => ({ ...p, firstName: e.target.value }))}
+                  />
+                  <Input
+                    placeholder="Last Name"
+                    value={newContact.lastName}
+                    onChange={(e) => setNewContact(p => ({ ...p, lastName: e.target.value }))}
+                  />
+                </div>
                 <Input
-                  placeholder="Search contacts..."
-                  value={contactSearch}
-                  onChange={(e) => setContactSearch(e.target.value)}
-                  className="pl-10"
+                  placeholder="Email *"
+                  type="email"
+                  value={newContact.email}
+                  onChange={(e) => setNewContact(p => ({ ...p, email: e.target.value }))}
                 />
-                {contacts.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-stone/20 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    {contacts.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => { setSelectedContact(c); setContactSearch(''); setContacts([]); }}
-                        className="w-full text-left px-4 py-2 hover:bg-cream-warm text-sm"
-                      >
-                        <div className="font-medium text-charcoal">{c.first_name} {c.last_name}</div>
-                        <div className="text-xs text-stone">{c.email} {c.crm_companies?.name ? `• ${c.crm_companies.name}` : ''}</div>
-                      </button>
-                    ))}
-                  </div>
+                <Input
+                  placeholder="Phone"
+                  value={newContact.phone}
+                  onChange={(e) => setNewContact(p => ({ ...p, phone: e.target.value }))}
+                />
+                {createError && (
+                  <p className="text-xs text-red-600">{createError}</p>
                 )}
-                {searching && <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-stone">Searching...</div>}
+                <Button
+                  onClick={handleCreateContact}
+                  disabled={creatingContact || !newContact.firstName || !newContact.email}
+                  className="w-full bg-teal hover:bg-teal-dark text-white text-sm"
+                  size="sm"
+                >
+                  {creatingContact ? 'Creating...' : 'Create Contact'}
+                </Button>
+              </div>
+            ) : (
+              <div>
+                <div className="relative">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone" />
+                  <Input
+                    placeholder="Search contacts..."
+                    value={contactSearch}
+                    onChange={(e) => setContactSearch(e.target.value)}
+                    className="pl-10"
+                  />
+                  {contacts.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-stone/20 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {contacts.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => { setSelectedContact(c); setContactSearch(''); setContacts([]); }}
+                          className="w-full text-left px-4 py-2 hover:bg-cream-warm text-sm"
+                        >
+                          <div className="font-medium text-charcoal">{c.first_name} {c.last_name}</div>
+                          <div className="text-xs text-stone">{c.email} {c.crm_companies?.name ? `• ${c.crm_companies.name}` : ''}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {searching && <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-stone">Searching...</div>}
+                </div>
+                <button
+                  onClick={() => setShowCreateForm(true)}
+                  className="mt-2 flex items-center gap-1.5 text-sm text-teal hover:text-teal-dark transition-colors"
+                >
+                  <UserPlusIcon className="w-4 h-4" />
+                  Create New Contact
+                </button>
               </div>
             )}
 

@@ -4,10 +4,11 @@
 
 import type { CopilotProvider, CopilotContext, CopilotGuidance } from './index';
 import { assembleCallContext } from './context';
-import { buildCopilotSystemPrompt } from './prompts';
+import { buildCopilotSystemPrompt, buildAuditCopilotContext } from './prompts';
+import type { AuditCopilotContext } from './prompts';
 
 export class LiveCopilot implements CopilotProvider {
-  async processTranscriptTurn(context: CopilotContext): Promise<CopilotGuidance | null> {
+  async processTranscriptTurn(context: CopilotContext & { auditContext?: AuditCopilotContext }): Promise<CopilotGuidance | null> {
     const { callId, orgId, userId, transcriptTurn, speakerLabel } = context;
 
     try {
@@ -15,7 +16,12 @@ export class LiveCopilot implements CopilotProvider {
       const assembled = await assembleCallContext(callId, orgId);
 
       // Build system prompt
-      const systemPrompt = buildCopilotSystemPrompt(assembled, context.currentPhase || 'discovery');
+      let systemPrompt = buildCopilotSystemPrompt(assembled, context.currentPhase || 'discovery');
+
+      // Append audit context if in brand audit mode
+      if (context.auditContext) {
+        systemPrompt += '\n\n' + buildAuditCopilotContext(context.auditContext);
+      }
 
       // Resolve model and check credits
       const { resolveModel, deductCredits } = await import('@/lib/ai/server');

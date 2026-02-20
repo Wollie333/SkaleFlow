@@ -11,3 +11,5 @@ export { findMatchingOffers, generateRoadmap } from './offer-matching';
 export { extractBrandAuditData } from './call-extraction';
 export { generateComparison } from './comparison';
 export { analyzeWebsite } from './website-analysis';
+export { AUDIT_FIELD_REGISTRY, getFieldsForSection, getAllFieldKeys, getProgressForAudit, getUnfilledFields, findSectionForField } from './field-registry';
+export type { AuditFieldDef } from './field-registry';

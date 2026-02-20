@@ -6,6 +6,10 @@ interface CopilotPanelProps {
   guidance: GuidanceItem[];
   callActive: boolean;
   transcriptCount?: number;
+  /** When true, shows brand audit guidance alongside regular copilot items */
+  brandAuditMode?: boolean;
+  /** Next audit question/field to ask about */
+  auditNextQuestion?: string;
 }
 
 const GUIDANCE_ICONS: Record<string, string> = {
@@ -30,7 +34,7 @@ const GUIDANCE_COLORS: Record<string, string> = {
   general: 'bg-cream-warm/10 text-white/70 border-white/20',
 };
 
-export function CopilotPanel({ guidance, callActive, transcriptCount = 0 }: CopilotPanelProps) {
+export function CopilotPanel({ guidance, callActive, transcriptCount = 0, brandAuditMode, auditNextQuestion }: CopilotPanelProps) {
   const activeGuidance = guidance.filter(g => !g.wasDismissed);
 
   return (
@@ -39,10 +43,32 @@ export function CopilotPanel({ guidance, callActive, transcriptCount = 0 }: Copi
         <h3 className="text-white text-sm font-semibold flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-[#C9A84C] animate-pulse" />
           AI Co-Pilot
+          {brandAuditMode && (
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-teal/20 text-teal border border-teal/30">
+              Audit Mode
+            </span>
+          )}
         </h3>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {/* Brand audit guidance prompt */}
+        {brandAuditMode && auditNextQuestion && callActive && (
+          <div className="p-3 rounded-lg border bg-teal/10 text-teal border-teal/20">
+            <div className="flex items-start gap-2">
+              <span className="w-6 h-6 rounded-full bg-teal/20 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                ?
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs opacity-60 mb-1 uppercase tracking-wider">
+                  Audit &middot; Next Question
+                </div>
+                <p className="text-sm leading-relaxed">{auditNextQuestion}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {!callActive && (
           <div className="text-center py-8">
             <p className="text-white/40 text-sm">AI guidance will appear here once the call starts.</p>

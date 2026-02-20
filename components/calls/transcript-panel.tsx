@@ -1,13 +1,16 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
+import { SparklesIcon } from '@heroicons/react/24/outline';
 import type { TranscriptChunk } from './call-room';
 
 interface TranscriptPanelProps {
   transcripts: TranscriptChunk[];
+  /** When provided, shows an Extract button on each transcript segment for brand audit extraction */
+  onExtract?: (chunk: TranscriptChunk) => void;
 }
 
-export function TranscriptPanel({ transcripts }: TranscriptPanelProps) {
+export function TranscriptPanel({ transcripts, onExtract }: TranscriptPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [search, setSearch] = useState('');
   const [autoScroll, setAutoScroll] = useState(true);
@@ -80,6 +83,16 @@ export function TranscriptPanel({ transcripts }: TranscriptPanelProps) {
                 <span className="text-white/30 text-xs">{formatTimestamp(chunk.timestampStart)}</span>
                 {chunk.isFlagged && (
                   <span className="text-[#C9A84C] text-xs">&#x2691;</span>
+                )}
+                {onExtract && (
+                  <button
+                    onClick={() => onExtract(chunk)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity ml-auto inline-flex items-center gap-1 text-[10px] text-teal hover:text-teal/80 font-medium"
+                    title="Extract audit data from this segment"
+                  >
+                    <SparklesIcon className="w-3 h-3" />
+                    Extract
+                  </button>
                 )}
               </div>
               <p className="text-white/80 text-sm leading-relaxed">{chunk.content}</p>

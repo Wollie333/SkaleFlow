@@ -13,6 +13,10 @@ import { DeviceSettings } from './device-settings';
 import { CallSignaling } from '@/lib/calls/signaling';
 import { CallRecorder, uploadRecording } from '@/lib/calls/recording';
 import { TranscriptionManager } from '@/lib/calls/transcription';
+import { CopilotAuditPanel, type AuditExtraction } from '@/components/brand-audit/copilot-audit-panel';
+import { getProgressForAudit, getUnfilledFields } from '@/lib/brand-audit/field-registry';
+import { SECTION_ORDER, SECTION_LABELS } from '@/lib/brand-audit/types';
+import type { BrandAuditSectionKey } from '@/types/database';
 
 interface CallRoomProps {
   roomCode: string;
@@ -77,6 +81,8 @@ export function CallRoom({
   const [callActive, setCallActive] = useState(false);
   const [callElapsed, setCallElapsed] = useState(0);
   const [localStatus, setLocalStatus] = useState<string>(isHost ? 'in_call' : 'waiting');
+  // Track the local stream as state so React re-renders when it changes
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
   const [isSaving, setIsSaving] = useState(false);
   const [showDeviceSettings, setShowDeviceSettings] = useState(false);
@@ -107,6 +113,13 @@ export function CallRoom({
   // Waiting room visibility
   const prevWaitingCountRef = useRef(0);
 
+  // Brand audit mode state
+  const [brandAuditId, setBrandAuditId] = useState<string | null>(null);
+  const [brandAuditSections, setBrandAuditSections] = useState<Array<{ section_key: BrandAuditSectionKey; data: Record<string, unknown> }>>([]);
+  const [auditExtractions, setAuditExtractions] = useState<AuditExtraction[]>([]);
+  const [auditCurrentSection, setAuditCurrentSection] = useState<BrandAuditSectionKey | undefined>();
+  const auditExtractionCounter = useRef(0);
+
   const displayName = callTitle || `Room: ${roomCode}`;
   const isRecording = recordingState === 'recording' || isRecordingRemote;
 
@@ -129,6 +142,128 @@ export function CallRoom({
     if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
+
+  // Detect brand audit mode — check if call has a linked brand audit
+  useEffect(() => {
+    if (!callId || !isHost) return;
+    (async () => {
+      try {
+        const res = await fetch(`/api/calls/${roomCode}`);
+        if (!res.ok) return;
+        const callData = await res.json();
+        // Check if call has a linked brand_audit_id or template is Brand Audit Discovery
+        const auditId = callData.brand_audit_id || callData.metadata?.brand_audit_id;
+        if (auditId) {
+          setBrandAuditId(auditId);
+          // Load audit sections
+          const auditRes = await fetch(`/api/brand-audits/${auditId}`);
+          if (auditRes.ok) {
+            const audit = await auditRes.json();
+            setBrandAuditSections(
+              (audit.sections || []).map((s: { section_key: BrandAuditSectionKey; data: Record<string, unknown> }) => ({
+                section_key: s.section_key,
+                data: (s.data || {}) as Record<string, unknown>,
+              }))
+            );
+          }
+        }
+      } catch { /* ignore */ }
+    })();
+  }, [callId, roomCode, isHost]);
+
+  // Handle transcript extraction for brand audit
+  const handleAuditExtract = useCallback(async (chunk: TranscriptChunk) => {
+    if (!brandAuditId) return;
+
+    try {
+      const res = await fetch(`/api/brand-audits/${brandAuditId}/extract`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transcriptText: chunk.content,
+          sectionKey: auditCurrentSection,
+          context: `Speaker: ${chunk.speakerLabel}`,
+        }),
+      });
+
+      if (!res.ok) {
+        console.error('Extraction failed:', await res.text());
+        return;
+      }
+
+      const data = await res.json();
+      if (data.extractions && data.extractions.length > 0) {
+        const newExtractions: AuditExtraction[] = data.extractions.map((ext: { key: string; value: unknown; section: string; confidence: number; label?: string }) => ({
+          id: `ext-${++auditExtractionCounter.current}`,
+          key: ext.key,
+          value: ext.value,
+          section: ext.section as BrandAuditSectionKey,
+          confidence: ext.confidence,
+          label: ext.label || ext.key,
+          status: 'pending' as const,
+        }));
+        setAuditExtractions(prev => [...prev, ...newExtractions]);
+      }
+    } catch (err) {
+      console.error('Error extracting audit data:', err);
+    }
+  }, [brandAuditId, auditCurrentSection]);
+
+  // Handle accept/reject extraction
+  const handleAcceptExtraction = useCallback(async (extraction: AuditExtraction) => {
+    if (!brandAuditId) return;
+
+    // Save to audit section
+    try {
+      const sectionKey = extraction.section;
+      const currentSection = brandAuditSections.find(s => s.section_key === sectionKey);
+      const currentData = currentSection?.data || {};
+      const updatedData = { ...currentData, [extraction.key]: extraction.value };
+
+      const res = await fetch(`/api/brand-audits/${brandAuditId}/sections/${sectionKey}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: updatedData }),
+      });
+
+      if (res.ok) {
+        // Update local state
+        setAuditExtractions(prev =>
+          prev.map(e => e.id === extraction.id ? { ...e, status: 'accepted' as const } : e)
+        );
+        setBrandAuditSections(prev =>
+          prev.map(s => s.section_key === sectionKey ? { ...s, data: updatedData } : s)
+        );
+      }
+    } catch (err) {
+      console.error('Error accepting extraction:', err);
+    }
+  }, [brandAuditId, brandAuditSections]);
+
+  const handleRejectExtraction = useCallback((extraction: AuditExtraction) => {
+    setAuditExtractions(prev =>
+      prev.map(e => e.id === extraction.id ? { ...e, status: 'rejected' as const } : e)
+    );
+  }, []);
+
+  // Compute audit progress
+  const auditProgress = brandAuditId
+    ? getProgressForAudit(brandAuditSections)
+    : { filled: 0, total: 0, bySection: {} as Record<BrandAuditSectionKey, { filled: number; total: number }> };
+
+  // Compute next audit question for copilot
+  const auditNextQuestion = (() => {
+    if (!brandAuditId) return undefined;
+    // Find first incomplete section and first unfilled field
+    for (const sectionKey of SECTION_ORDER) {
+      const sec = brandAuditSections.find(s => s.section_key === sectionKey);
+      const unfilled = getUnfilledFields(sectionKey, sec?.data || {});
+      if (unfilled.length > 0) {
+        return `Ask about their ${unfilled[0].label.toLowerCase()} (${SECTION_LABELS[sectionKey]})`;
+      }
+    }
+    return undefined;
+  })();
 
   // Register self as participant on mount (guard against double-fire from strict mode)
   useEffect(() => {
@@ -453,12 +588,14 @@ export function CallRoom({
         audio: true
       });
       localStreamRef.current = stream;
+      setLocalStream(stream);
       setCallActive(true);
     } catch (err) {
       console.error('Failed to access media devices:', err);
       try {
         const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         localStreamRef.current = audioStream;
+        setLocalStream(audioStream);
         setIsCameraOff(true);
         setCallActive(true);
       } catch {
@@ -511,7 +648,7 @@ export function CallRoom({
       }
 
       localStreamRef.current = newStream;
-      // Force re-render by toggling a state
+      setLocalStream(newStream);
       setIsCameraOff(false);
       setIsMuted(false);
     } catch (err) {
@@ -847,7 +984,7 @@ export function CallRoom({
         {/* Video Panel (always visible, takes remaining space) */}
         <div className="flex-1 min-w-0 relative">
           <VideoPanel
-            localStream={localStreamRef.current}
+            localStream={localStream}
             participants={participants}
             localUserId={userId || null}
             localParticipantId={participantIdRef.current}
@@ -922,25 +1059,46 @@ export function CallRoom({
                 guidance={guidance}
                 callActive={callActive}
                 transcriptCount={transcripts.length}
+                brandAuditMode={!!brandAuditId}
+                auditNextQuestion={auditNextQuestion}
               />
             )}
             {activePanel === 'transcript' && (
               <TranscriptPanel
                 transcripts={transcripts}
+                onExtract={brandAuditId ? handleAuditExtract : undefined}
               />
             )}
             {activePanel === 'insights' && (
               <div className="flex flex-col h-full">
-                {/* Transcript — top half */}
-                <div className="flex-1 min-h-0 border-b border-white/10">
-                  <TranscriptPanel transcripts={transcripts} />
+                {/* Transcript — top section */}
+                <div className={brandAuditId ? 'h-[35%] min-h-0 border-b border-white/10' : 'flex-1 min-h-0 border-b border-white/10'}>
+                  <TranscriptPanel
+                    transcripts={transcripts}
+                    onExtract={brandAuditId ? handleAuditExtract : undefined}
+                  />
                 </div>
-                {/* Copilot — bottom half */}
-                <div className="flex-1 min-h-0">
+                {/* Brand Audit extraction panel (shown when audit mode) */}
+                {brandAuditId && (
+                  <div className="h-[35%] min-h-0 border-b border-white/10">
+                    <CopilotAuditPanel
+                      auditId={brandAuditId}
+                      extractions={auditExtractions.filter(e => e.status !== 'rejected')}
+                      progress={auditProgress}
+                      currentSection={auditCurrentSection}
+                      onAccept={handleAcceptExtraction}
+                      onReject={handleRejectExtraction}
+                    />
+                  </div>
+                )}
+                {/* Copilot — bottom section */}
+                <div className={brandAuditId ? 'h-[30%] min-h-0' : 'flex-1 min-h-0'}>
                   <CopilotPanel
                     guidance={guidance}
                     callActive={callActive}
                     transcriptCount={transcripts.length}
+                    brandAuditMode={!!brandAuditId}
+                    auditNextQuestion={auditNextQuestion}
                   />
                 </div>
               </div>
@@ -992,7 +1150,7 @@ export function CallRoom({
         open={showDeviceSettings}
         onClose={() => setShowDeviceSettings(false)}
         onDeviceChange={handleDeviceChange}
-        currentStream={localStreamRef.current}
+        currentStream={localStream}
       />
 
       {/* Offer overlay — shown to guests/team when host presents an offer */}

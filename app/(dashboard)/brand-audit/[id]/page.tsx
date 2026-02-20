@@ -2,19 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { WizardSidebar } from '@/components/brand-audit/wizard-sidebar';
-import { SectionForm } from '@/components/brand-audit/section-forms';
+import { AuditVariablePanel } from '@/components/brand-audit/audit-variable-panel';
+import { AuditSectionForm } from '@/components/brand-audit/audit-section-form';
 import { AuditStatusBadge } from '@/components/brand-audit/audit-status-badge';
 import { ResultsDashboard } from '@/components/brand-audit/results-dashboard';
-import { SECTION_ORDER, SECTION_LABELS } from '@/lib/brand-audit/types';
+import { SECTION_ORDER } from '@/lib/brand-audit/types';
 import type { BrandAuditSectionKey } from '@/types/database';
 import {
   ArrowLeftIcon,
-  ArrowRightIcon,
-  CheckIcon,
   SparklesIcon,
 } from '@heroicons/react/24/outline';
 
@@ -79,7 +75,6 @@ export default function BrandAuditWizardPage() {
       if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
       setAudit(data);
-      // Set initial section data
       const currentSection = data.sections?.find((s: AuditSection) => s.section_key === activeSection);
       if (currentSection) {
         setSectionData(currentSection.data || {});
@@ -126,7 +121,6 @@ export default function BrandAuditWizardPage() {
   const handleGenerate = async () => {
     if (!audit) return;
 
-    // First transition to review if needed
     if (audit.status === 'in_progress' || audit.status === 'call_complete') {
       await fetch(`/api/brand-audits/${auditId}`, {
         method: 'PATCH',
@@ -151,16 +145,26 @@ export default function BrandAuditWizardPage() {
     }
   };
 
-  const goToSection = (direction: 'prev' | 'next') => {
+  const handleSectionChange = (key: BrandAuditSectionKey) => {
+    if (hasUnsavedChanges) handleSave();
+    setActiveSection(key);
+  };
+
+  const goToNextSection = () => {
     const currentIdx = SECTION_ORDER.indexOf(activeSection);
-    const newIdx = direction === 'prev' ? currentIdx - 1 : currentIdx + 1;
-    if (newIdx >= 0 && newIdx < SECTION_ORDER.length) {
-      if (hasUnsavedChanges) handleSave();
-      setActiveSection(SECTION_ORDER[newIdx]);
+    if (currentIdx < SECTION_ORDER.length - 1) {
+      setActiveSection(SECTION_ORDER[currentIdx + 1]);
     }
   };
 
+  const handleFieldUpdate = (key: string, value: unknown) => {
+    setSectionData(prev => ({ ...prev, [key]: value }));
+    setHasUnsavedChanges(true);
+  };
+
   const isResultsView = audit && ['complete', 'report_generated', 'delivered'].includes(audit.status);
+  const currentSectionObj = audit?.sections?.find(s => s.section_key === activeSection);
+  const isLastSection = SECTION_ORDER.indexOf(activeSection) === SECTION_ORDER.length - 1;
 
   if (loading) {
     return (
@@ -225,81 +229,39 @@ export default function BrandAuditWizardPage() {
           />
         </div>
       ) : (
-        <div className="flex h-[calc(100%-3.5rem)]">
-          {/* Wizard sidebar */}
-          <WizardSidebar
-            sections={audit.sections}
-            activeSection={activeSection}
-            onSectionClick={(key) => {
-              if (hasUnsavedChanges) handleSave();
-              setActiveSection(key);
-            }}
-            sectionsCompleted={audit.sections_completed}
-            totalSections={audit.total_sections}
-          />
+        <div className="flex flex-col lg:flex-row h-[calc(100%-3.5rem)]">
+          {/* Left panel — Variables */}
+          <div className="lg:w-[42%] border-b lg:border-b-0 lg:border-r border-stone/10 bg-white p-4 overflow-y-auto">
+            <AuditVariablePanel
+              sections={audit.sections.map(s => ({
+                section_key: s.section_key,
+                is_complete: s.is_complete,
+                data: (s.data || {}) as Record<string, unknown>,
+              }))}
+              activeSection={activeSection}
+              onSectionChange={handleSectionChange}
+              sectionData={sectionData}
+              onFieldUpdate={handleFieldUpdate}
+            />
+          </div>
 
-          {/* Form area */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="max-w-3xl mx-auto p-6">
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold text-charcoal">
-                  {SECTION_LABELS[activeSection]}
-                </h2>
-                <p className="text-sm text-stone mt-1">
-                  Fill in the details for this section. Press Enter to add items to lists.
-                </p>
-              </div>
-
-              <Card className="p-6 border border-stone/10">
-                <SectionForm
-                  sectionKey={activeSection}
-                  data={sectionData}
-                  onChange={(newData) => {
-                    setSectionData(newData);
-                    setHasUnsavedChanges(true);
-                  }}
-                />
-              </Card>
-
-              {/* Navigation + Save */}
-              <div className="flex items-center justify-between mt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => goToSection('prev')}
-                  disabled={SECTION_ORDER.indexOf(activeSection) === 0}
-                >
-                  <ArrowLeftIcon className="w-4 h-4 mr-2" />
-                  Previous
-                </Button>
-
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleSave(false)}
-                    disabled={saving || !hasUnsavedChanges}
-                  >
-                    {saving ? 'Saving...' : 'Save Draft'}
-                  </Button>
-                  <Button
-                    onClick={() => handleSave(true)}
-                    disabled={saving}
-                    className="bg-teal hover:bg-teal-dark text-white"
-                  >
-                    <CheckIcon className="w-4 h-4 mr-2" />
-                    {saving ? 'Saving...' : 'Mark Complete'}
-                  </Button>
-                </div>
-
-                <Button
-                  variant="outline"
-                  onClick={() => goToSection('next')}
-                  disabled={SECTION_ORDER.indexOf(activeSection) === SECTION_ORDER.length - 1}
-                >
-                  Next
-                  <ArrowRightIcon className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </div>
+          {/* Right panel — Section form */}
+          <div className="lg:flex-1 flex flex-col min-h-0">
+            <AuditSectionForm
+              auditId={auditId}
+              sectionKey={activeSection}
+              data={sectionData}
+              onChange={(newData) => {
+                setSectionData(newData);
+                setHasUnsavedChanges(true);
+              }}
+              onSave={handleSave}
+              onNext={goToNextSection}
+              saving={saving}
+              hasUnsavedChanges={hasUnsavedChanges}
+              isLastSection={isLastSection}
+              isSectionComplete={currentSectionObj?.is_complete || false}
+            />
           </div>
         </div>
       )}

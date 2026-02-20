@@ -4,13 +4,10 @@ import { CallRoom } from '@/components/calls/call-room';
 
 export default async function FullPageCallRoomPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ roomCode: string }>;
-  searchParams: Promise<{ autoJoin?: string }>;
 }) {
   const { roomCode } = await params;
-  const { autoJoin } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -44,7 +41,6 @@ export default async function FullPageCallRoomPage({
       userId={user.id}
       isHost={isHost}
       showOpenInTab={false}
-      autoJoin={autoJoin === 'true'}
     />
   );
 }
