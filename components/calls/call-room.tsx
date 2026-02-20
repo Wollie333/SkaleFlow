@@ -408,26 +408,56 @@ export function CallRoom({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callActive, isHost]);
 
-  // Initialize local media
+  // Initialize local media — with explicit constraint fallbacks
+  const [mediaError, setMediaError] = useState<string | null>(null);
+
   const startMedia = useCallback(async () => {
+    setMediaError(null);
+
+    // Try video + audio first
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true
+        video: { facingMode: 'user' },
+        audio: { echoCancellation: true, noiseSuppression: true },
       });
       localStreamRef.current = stream;
       setCallActive(true);
+      return;
     } catch (err) {
-      console.error('Failed to access media devices:', err);
-      try {
-        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        localStreamRef.current = audioStream;
-        setIsCameraOff(true);
-        setCallActive(true);
-      } catch {
-        console.error('Failed to access any media devices');
-      }
+      console.warn('Video+audio failed, trying audio only:', err);
     }
+
+    // Fallback: audio only
+    try {
+      const audioStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+      });
+      localStreamRef.current = audioStream;
+      setIsCameraOff(true);
+      setCallActive(true);
+      return;
+    } catch (err) {
+      console.warn('Audio only failed, trying video only:', err);
+    }
+
+    // Fallback: video only
+    try {
+      const videoStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user' },
+      });
+      localStreamRef.current = videoStream;
+      setIsMuted(true);
+      setCallActive(true);
+      return;
+    } catch (err) {
+      console.error('All media attempts failed:', err);
+    }
+
+    // All failed — join anyway without media
+    setMediaError('Could not access camera or microphone. Check browser permissions and try again.');
+    setIsCameraOff(true);
+    setIsMuted(true);
+    setCallActive(true);
   }, []);
 
   // Auto-join when opened via "Open in new tab" or autoJoin prop
@@ -892,6 +922,24 @@ export function CallRoom({
                 </span>
                 <span className="text-white/80 text-[10px] md:text-xs hidden md:inline">— Tap to admit</span>
               </button>
+            </div>
+          )}
+
+          {/* Media error banner */}
+          {mediaError && (
+            <div className="absolute top-2 left-2 right-2 md:top-4 md:left-4 md:right-4 flex justify-center z-10">
+              <div className="flex items-center gap-2 bg-red-500/90 backdrop-blur-sm rounded-lg px-3 py-2 md:px-4 md:py-2.5 shadow-lg">
+                <svg className="w-4 h-4 text-white flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span className="text-white text-xs md:text-sm">{mediaError}</span>
+                <button
+                  onClick={() => { setMediaError(null); startMedia(); }}
+                  className="text-white/80 text-xs underline hover:text-white flex-shrink-0 ml-1"
+                >
+                  Retry
+                </button>
+              </div>
             </div>
           )}
 

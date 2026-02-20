@@ -172,8 +172,9 @@ export default function CreateCallModal({ open, onClose }: { open: boolean; onCl
         // Stay on calls page — refresh to show new scheduled call
         router.refresh();
       } else {
-        // Enter the call room immediately
-        router.push(`/calls/${data.room_code}`);
+        // Open the call room in a full-screen window with autoJoin
+        window.open(`/call-room/${data.room_code}?autoJoin=true`, '_blank');
+        router.refresh();
       }
     } catch {
       setCreating(false);

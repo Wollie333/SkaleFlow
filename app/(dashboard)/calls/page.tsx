@@ -5,6 +5,7 @@ import { CALL_TYPE_LABELS, CALL_STATUS_LABELS, CALL_STATUS_COLORS, formatDuratio
 import type { CallType, CallStatus } from '@/types/database';
 import CallsPageClient from './calls-page-client';
 import { DeleteCallButton } from '@/components/calls/delete-call-button';
+import { CallCardLink } from '@/components/calls/call-card-link';
 
 export default async function CallsPage() {
   const supabase = await createClient();
@@ -94,9 +95,9 @@ export default async function CallsPage() {
                 .filter((p) => p.role === 'guest');
               return (
                 <div key={call.id} className="flex items-center gap-2 bg-cream-warm rounded-xl border border-stone/10 hover:border-teal/20 transition-colors">
-                  <Link
-                    href={`/calls/${call.room_code}`}
-                    className="flex-1 p-4"
+                  <CallCardLink
+                    roomCode={call.room_code}
+                    className="flex-1 p-4 text-left"
                   >
                     <div className="flex items-center justify-between">
                       <div>
@@ -114,7 +115,7 @@ export default async function CallsPage() {
                         {CALL_STATUS_LABELS[call.call_status as CallStatus]}
                       </span>
                     </div>
-                  </Link>
+                  </CallCardLink>
                   {isSuperAdmin && (
                     <div className="pr-3">
                       <DeleteCallButton callId={call.id} callTitle={call.title} />
