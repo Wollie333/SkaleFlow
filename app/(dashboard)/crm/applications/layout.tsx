@@ -1,5 +1,10 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+
+export const metadata: Metadata = {
+  title: 'Applications',
+};
 
 export default async function CrmApplicationsLayout({
   children,

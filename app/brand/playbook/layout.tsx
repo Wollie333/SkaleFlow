@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './playbook.css';
 
 export const metadata: Metadata = {
-  title: 'Brand Playbook — SkaleFlow',
+  title: 'Brand Playbook',
 };
 
 export default function PlaybookLayout({ children }: { children: React.ReactNode }) {

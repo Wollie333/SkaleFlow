@@ -5,7 +5,10 @@ import { ThemeProvider } from '@/components/theme-provider';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'SkaleFlow - Brand & Content Engine',
+  title: {
+    default: 'SkaleFlow',
+    template: '%s | SkaleFlow',
+  },
   description: 'Build your brand strategy and generate content at scale with AI-powered automation.',
 };
 

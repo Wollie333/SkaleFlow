@@ -1,5 +1,10 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+
+export const metadata: Metadata = {
+  title: 'CRM',
+};
 
 export default async function CrmLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
