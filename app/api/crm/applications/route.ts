@@ -12,6 +12,35 @@ const STAGE_LABELS: Record<PipelineStage, string> = {
   won: 'Won',
 };
 
+/** Check if user is super_admin or in an org with a super_admin */
+async function canAccessApplicationPipeline(userId: string) {
+  const supabase = await createClient();
+  const serviceClient = createServiceClient();
+
+  const [{ data: userData }, { data: membership }] = await Promise.all([
+    supabase.from('users').select('role, full_name').eq('id', userId).single(),
+    supabase.from('org_members').select('organization_id').eq('user_id', userId).single(),
+  ]);
+
+  if (userData?.role === 'super_admin') {
+    return { allowed: true, userData };
+  }
+
+  if (membership?.organization_id) {
+    const { count } = await serviceClient
+      .from('org_members')
+      .select('user_id, users!inner(role)', { count: 'exact', head: true })
+      .eq('organization_id', membership.organization_id)
+      .eq('users.role', 'super_admin');
+
+    if ((count || 0) > 0) {
+      return { allowed: true, userData };
+    }
+  }
+
+  return { allowed: false, userData };
+}
+
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
@@ -21,14 +50,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check admin role
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (userData?.role !== 'super_admin') {
+    const { allowed } = await canAccessApplicationPipeline(user.id);
+    if (!allowed) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -68,14 +91,8 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check admin role
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role, full_name')
-      .eq('id', user.id)
-      .single();
-
-    if (userData?.role !== 'super_admin') {
+    const { allowed, userData } = await canAccessApplicationPipeline(user.id);
+    if (!allowed) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

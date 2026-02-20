@@ -322,7 +322,7 @@ export default function ApplicationDetailPage() {
       <div className="text-center py-20">
         <p className="text-stone">Application not found.</p>
         <Link href="/crm/applications" className="text-teal text-sm mt-2 inline-block hover:underline">
-          Back to Applications
+          Back to Application Pipeline
         </Link>
       </div>
     );
@@ -340,7 +340,7 @@ export default function ApplicationDetailPage() {
         subtitle={application.business_name}
         breadcrumbs={[
           { label: 'CRM' },
-          { label: 'Applications', href: '/crm/applications' },
+          { label: 'Application Pipeline', href: '/crm/applications' },
           { label: application.full_name },
         ]}
         action={

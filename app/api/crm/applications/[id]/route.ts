@@ -1,6 +1,30 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 
+/** Check if user is super_admin or in an org with a super_admin */
+async function canAccessApplicationPipeline(userId: string) {
+  const supabase = await createClient();
+  const serviceClient = createServiceClient();
+
+  const [{ data: userData }, { data: membership }] = await Promise.all([
+    supabase.from('users').select('role').eq('id', userId).single(),
+    supabase.from('org_members').select('organization_id').eq('user_id', userId).single(),
+  ]);
+
+  if (userData?.role === 'super_admin') return true;
+
+  if (membership?.organization_id) {
+    const { count } = await serviceClient
+      .from('org_members')
+      .select('user_id, users!inner(role)', { count: 'exact', head: true })
+      .eq('organization_id', membership.organization_id)
+      .eq('users.role', 'super_admin');
+    return (count || 0) > 0;
+  }
+
+  return false;
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -14,14 +38,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check admin role
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (userData?.role !== 'super_admin') {
+    const allowed = await canAccessApplicationPipeline(user.id);
+    if (!allowed) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

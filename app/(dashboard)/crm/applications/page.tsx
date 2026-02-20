@@ -66,9 +66,9 @@ export default function ApplicationsPage() {
     <div>
       <PageHeader
         icon={ClipboardDocumentListIcon}
-        title="Applications"
+        title="Application Pipeline"
         subtitle={`${applications.length} total application${applications.length !== 1 ? 's' : ''}`}
-        breadcrumbs={[{ label: 'CRM' }, { label: 'Applications' }]}
+        breadcrumbs={[{ label: 'CRM' }, { label: 'Pipeline' }, { label: 'Application Pipeline' }]}
         className="mb-8"
       />
 
