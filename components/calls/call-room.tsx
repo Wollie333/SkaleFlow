@@ -410,59 +410,87 @@ export function CallRoom({
 
   // Initialize local media — with explicit constraint fallbacks
   const [mediaError, setMediaError] = useState<string | null>(null);
+  const [isJoining, setIsJoining] = useState(false);
+  const [joinStep, setJoinStep] = useState('');
 
   const startMedia = useCallback(async () => {
     setMediaError(null);
+    setIsJoining(true);
+    setJoinStep('Requesting camera & microphone...');
+
+    // Helper: getUserMedia with a 5-second timeout to prevent long hangs
+    const getMediaWithTimeout = (constraints: MediaStreamConstraints, timeoutMs = 5000) => {
+      return Promise.race([
+        navigator.mediaDevices.getUserMedia(constraints),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Media request timed out')), timeoutMs)
+        ),
+      ]);
+    };
 
     // Try video + audio first
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const stream = await getMediaWithTimeout({
         video: { facingMode: 'user' },
         audio: { echoCancellation: true, noiseSuppression: true },
       });
       localStreamRef.current = stream;
+      setJoinStep('Connected! Entering room...');
+      await new Promise(r => setTimeout(r, 300));
       setCallActive(true);
+      setIsJoining(false);
       return;
     } catch (err) {
       console.warn('Video+audio failed, trying audio only:', err);
     }
 
     // Fallback: audio only
+    setJoinStep('Trying audio only...');
     try {
-      const audioStream = await navigator.mediaDevices.getUserMedia({
+      const audioStream = await getMediaWithTimeout({
         audio: { echoCancellation: true, noiseSuppression: true },
       });
       localStreamRef.current = audioStream;
       setIsCameraOff(true);
+      setJoinStep('Audio connected! Entering room...');
+      await new Promise(r => setTimeout(r, 300));
       setCallActive(true);
+      setIsJoining(false);
       return;
     } catch (err) {
       console.warn('Audio only failed, trying video only:', err);
     }
 
     // Fallback: video only
+    setJoinStep('Trying video only...');
     try {
-      const videoStream = await navigator.mediaDevices.getUserMedia({
+      const videoStream = await getMediaWithTimeout({
         video: { facingMode: 'user' },
       });
       localStreamRef.current = videoStream;
       setIsMuted(true);
+      setJoinStep('Video connected! Entering room...');
+      await new Promise(r => setTimeout(r, 300));
       setCallActive(true);
+      setIsJoining(false);
       return;
     } catch (err) {
       console.error('All media attempts failed:', err);
     }
 
     // All failed — join anyway without media
+    setJoinStep('Joining without media...');
     setMediaError('Could not access camera or microphone. Check browser permissions and try again.');
     setIsCameraOff(true);
     setIsMuted(true);
+    await new Promise(r => setTimeout(r, 300));
     setCallActive(true);
+    setIsJoining(false);
   }, []);
 
   // Auto-join when opened via "Open in new tab" or autoJoin prop
   useEffect(() => {
-    if (autoJoin && !callActive) {
+    if (autoJoin && !callActive && !isJoining) {
       startMedia();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -903,6 +931,8 @@ export function CallRoom({
             isScreenSharing={isScreenSharing}
             callActive={callActive}
             isWaiting={!isHost && localStatus === 'waiting'}
+            isJoining={isJoining}
+            isHost={isHost}
             displayName={displayName}
             onStartMedia={startMedia}
           />
@@ -1068,6 +1098,30 @@ export function CallRoom({
           onDecline={declineOffer}
           onMinimize={minimizeOffer}
         />
+      )}
+
+      {/* Joining modal — shown while media devices are initializing */}
+      {isJoining && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0F1F1D]/95 backdrop-blur-sm">
+          <div className="text-center max-w-sm mx-4">
+            <div className="w-16 h-16 mx-auto mb-6 relative">
+              <div className="absolute inset-0 rounded-full border-4 border-white/10" />
+              <div className="absolute inset-0 rounded-full border-4 border-t-teal border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+            </div>
+            <h2 className="text-white text-xl font-semibold mb-2">Setting up your room...</h2>
+            <p className="text-white/50 text-sm mb-4">
+              {joinStep || 'Preparing your call experience'}
+            </p>
+            <p className="text-white/30 text-xs">
+              If prompted, please allow camera &amp; microphone access in your browser.
+            </p>
+            <div className="mt-6 flex justify-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-teal animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-2 h-2 rounded-full bg-teal animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-2 h-2 rounded-full bg-teal animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Saving modal — shown when host ends call */}

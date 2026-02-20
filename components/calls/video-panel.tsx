@@ -12,11 +12,13 @@ interface VideoPanelProps {
   isScreenSharing: boolean;
   callActive: boolean;
   isWaiting?: boolean;
+  isJoining?: boolean;
+  isHost?: boolean;
   displayName?: string;
   onStartMedia: () => void;
 }
 
-export function VideoPanel({ localStream, participants, localUserId, localParticipantId, isCameraOff, callActive, isWaiting, displayName, onStartMedia }: VideoPanelProps) {
+export function VideoPanel({ localStream, participants, localUserId, localParticipantId, isCameraOff, callActive, isWaiting, isJoining, isHost, displayName, onStartMedia }: VideoPanelProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -71,9 +73,10 @@ export function VideoPanel({ localStream, participants, localUserId, localPartic
           <p className="text-white/50 text-xs md:text-sm mb-6">Tap below to enable your camera and microphone</p>
           <button
             onClick={onStartMedia}
-            className="px-6 py-3 md:px-8 md:py-3.5 rounded-lg bg-[#1E6B63] hover:bg-[#1E6B63]/80 active:bg-[#1E6B63]/70 text-white font-medium text-base transition-colors"
+            disabled={isJoining}
+            className="px-6 py-3 md:px-8 md:py-3.5 rounded-lg bg-[#1E6B63] hover:bg-[#1E6B63]/80 active:bg-[#1E6B63]/70 text-white font-medium text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Join Call
+            {isJoining ? 'Joining...' : isHost ? 'Join as Host' : 'Join Call'}
           </button>
         </div>
       </div>

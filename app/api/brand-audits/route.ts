@@ -21,29 +21,41 @@ export async function GET(request: NextRequest) {
       .single();
     if (!membership) return NextResponse.json({ error: 'Access denied' }, { status: 403 });
 
-    // Build query
-    let query = supabase
-      .from('brand_audits')
-      .select(`
-        *,
-        crm_contacts (id, first_name, last_name, email, company_id, crm_companies (id, name)),
-        users!brand_audits_created_by_fkey (id, full_name, email)
-      `)
-      .eq('organization_id', organizationId)
-      .order('created_at', { ascending: false });
-
-    // Filters
+    // Build base filters
     const status = searchParams.get('status');
-    if (status) query = query.eq('status', status as any);
-
     const contactId = searchParams.get('contactId');
-    if (contactId) query = query.eq('contact_id', contactId);
-
     const source = searchParams.get('source');
-    if (source) query = query.eq('source', source as any);
 
-    const { data: audits, error } = await query;
-    if (error) throw error;
+    const buildQuery = (selectStr: string) => {
+      let q = supabase
+        .from('brand_audits')
+        .select(selectStr)
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false });
+      if (status) q = q.eq('status', status as any);
+      if (contactId) q = q.eq('contact_id', contactId);
+      if (source) q = q.eq('source', source as any);
+      return q;
+    };
+
+    // Try with user join, fall back without if FK not resolved
+    let audits: Record<string, unknown>[] | null = null;
+    const { data: d1, error: e1 } = await buildQuery(`
+      *,
+      crm_contacts (id, first_name, last_name, email, company_id, crm_companies (id, name)),
+      users!brand_audits_created_by_fkey (id, full_name, email)
+    `);
+
+    if (!e1) {
+      audits = d1;
+    } else {
+      const { data: d2, error: e2 } = await buildQuery(`
+        *,
+        crm_contacts (id, first_name, last_name, email, company_id, crm_companies (id, name))
+      `);
+      if (e2) throw e2;
+      audits = d2;
+    }
 
     // Normalize joins
     const normalized = (audits || []).map((a: Record<string, unknown>) => ({

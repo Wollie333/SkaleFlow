@@ -22,7 +22,9 @@ export async function POST(
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     // Load full audit
-    const { data: audit } = await supabase
+    // Try with user join, fall back without
+    let audit: Record<string, unknown> | null = null;
+    const { data: a1, error: e1 } = await supabase
       .from('brand_audits')
       .select(`
         *,
@@ -33,6 +35,22 @@ export async function POST(
       `)
       .eq('id', id)
       .single();
+
+    if (!e1) {
+      audit = a1;
+    } else {
+      const { data: a2 } = await supabase
+        .from('brand_audits')
+        .select(`
+          *,
+          crm_contacts (id, first_name, last_name, email, company_id, crm_companies (id, name)),
+          brand_audit_scores (category, score, rating, analysis, key_finding, actionable_insight),
+          brand_audit_offer_matches (audit_category, priority, relevance_description, offer_id, offers (name))
+        `)
+        .eq('id', id)
+        .single();
+      audit = a2;
+    }
 
     if (!audit) return NextResponse.json({ error: 'Audit not found' }, { status: 404 });
 

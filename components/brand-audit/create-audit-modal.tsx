@@ -28,6 +28,7 @@ export function CreateAuditModal({ organizationId, preselectedContactId, onClose
   const [existingAudits, setExistingAudits] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Search contacts
   useEffect(() => {

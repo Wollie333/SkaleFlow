@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowDownTrayIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
+import { ArrowDownTrayIcon, ArrowUpTrayIcon, TrashIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 import { templateToMarkdown, markdownToTemplate } from '@/lib/calls/templates/markdown';
 
 interface Template {
@@ -23,10 +23,20 @@ const callTypeLabels: Record<string, string> = {
   meeting: 'Meeting', follow_up: 'Follow-up', custom: 'Custom',
 };
 
-export function TemplatesListClient({ templates, isAdmin }: { templates: Template[]; isAdmin: boolean }) {
+interface Props {
+  templates: Template[];
+  isAdmin: boolean;
+  isSuperAdmin?: boolean;
+}
+
+export function TemplatesListClient({ templates, isAdmin, isSuperAdmin = false }: Props) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  const canManage = isAdmin || isSuperAdmin;
 
   const handleDownloadBlank = () => {
     const md = templateToMarkdown();
@@ -67,6 +77,8 @@ export function TemplatesListClient({ templates, isAdmin }: { templates: Templat
           openingScript: parsed.opening_script || null,
           closingScript: parsed.closing_script || null,
           objectionBank: parsed.objection_bank,
+          // Super admin uploads as system template
+          ...(isSuperAdmin ? { isSystem: true } : {}),
         }),
       });
 
@@ -85,6 +97,35 @@ export function TemplatesListClient({ templates, isAdmin }: { templates: Templat
     }
   };
 
+  const handleDelete = async (template: Template) => {
+    if (confirmDelete !== template.id) {
+      setConfirmDelete(template.id);
+      return;
+    }
+
+    setDeleting(template.id);
+    try {
+      const res = await fetch(`/api/calls/templates/${template.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        router.refresh();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Failed to delete template');
+      }
+    } catch {
+      alert('Network error');
+    } finally {
+      setDeleting(null);
+      setConfirmDelete(null);
+    }
+  };
+
+  const canDelete = (template: Template) => {
+    if (isSuperAdmin) return true;
+    if (isAdmin && !template.is_system) return true;
+    return false;
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
@@ -93,7 +134,7 @@ export function TemplatesListClient({ templates, isAdmin }: { templates: Templat
           <p className="text-sm text-stone mt-1">Framework templates to guide your conversations</p>
         </div>
         <div className="flex items-center gap-2">
-          {isAdmin && (
+          {canManage && (
             <>
               <button
                 onClick={handleDownloadBlank}
@@ -101,14 +142,18 @@ export function TemplatesListClient({ templates, isAdmin }: { templates: Templat
                 title="Download a blank template file (.md) to fill in offline"
               >
                 <ArrowDownTrayIcon className="w-4 h-4" />
-                Download Template
+                <span className="hidden sm:inline">Blank .md</span>
               </button>
               <label
                 className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-charcoal bg-cream-warm border border-stone/20 rounded-lg hover:bg-cream/50 transition-colors cursor-pointer ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
-                title="Upload a filled .md template file to create a new template"
+                title={isSuperAdmin ? 'Upload .md file as system template' : 'Upload .md file as org template'}
               >
                 <ArrowUpTrayIcon className="w-4 h-4" />
-                {uploading ? 'Importing...' : 'Upload Template'}
+                {uploading ? 'Importing...' : (
+                  <span className="hidden sm:inline">
+                    Upload .md{isSuperAdmin ? ' (System)' : ''}
+                  </span>
+                )}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -128,9 +173,21 @@ export function TemplatesListClient({ templates, isAdmin }: { templates: Templat
         </div>
       </div>
 
+      {/* .md format guide for super admin */}
+      {isSuperAdmin && (
+        <div className="mb-6 px-4 py-3 bg-teal/5 border border-teal/15 rounded-xl text-xs text-charcoal space-y-1">
+          <p className="font-semibold text-teal text-sm">Template .md Format</p>
+          <p>Download the blank .md file for the standardised format. Fill in the sections: Metadata (name, description, call_type), opening_script, Phases (with questions, triggers, AI instructions), closing_script, and objection_bank. Upload back to create a system template.</p>
+          <p className="text-stone">Valid call types: discovery, sales, onboarding, meeting, follow_up, custom</p>
+        </div>
+      )}
+
       <div className="space-y-3">
         {templates.map((template) => {
           const phaseCount = Array.isArray(template.phases) ? template.phases.length : 0;
+          const isConfirming = confirmDelete === template.id;
+          const isDeleting = deleting === template.id;
+
           return (
             <div
               key={template.id}
@@ -150,8 +207,8 @@ export function TemplatesListClient({ templates, isAdmin }: { templates: Templat
                     <span>{phaseCount} phases</span>
                   </div>
                 </Link>
-                {isAdmin && (
-                  <div className="flex items-center gap-1 ml-3 flex-shrink-0">
+                <div className="flex items-center gap-1 ml-3 flex-shrink-0">
+                  {canManage && (
                     <button
                       onClick={(e) => { e.preventDefault(); handleDownloadTemplate(template); }}
                       className="p-1.5 text-stone hover:text-teal rounded transition-colors"
@@ -159,8 +216,45 @@ export function TemplatesListClient({ templates, isAdmin }: { templates: Templat
                     >
                       <ArrowDownTrayIcon className="w-4 h-4" />
                     </button>
-                  </div>
-                )}
+                  )}
+                  {canManage && (
+                    <Link
+                      href={`/calls/templates/${template.id}`}
+                      className="p-1.5 text-stone hover:text-teal rounded transition-colors"
+                      title="Edit template"
+                    >
+                      <PencilSquareIcon className="w-4 h-4" />
+                    </Link>
+                  )}
+                  {canDelete(template) && (
+                    isConfirming ? (
+                      <div className="flex items-center gap-1 ml-1">
+                        <span className="text-xs text-red-600">Delete?</span>
+                        <button
+                          onClick={() => handleDelete(template)}
+                          disabled={isDeleting}
+                          className="px-2 py-0.5 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {isDeleting ? '...' : 'Yes'}
+                        </button>
+                        <button
+                          onClick={() => setConfirmDelete(null)}
+                          className="px-2 py-0.5 text-xs font-medium text-charcoal bg-cream border border-stone/20 rounded hover:bg-stone/10"
+                        >
+                          No
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleDelete(template)}
+                        className="p-1.5 text-stone hover:text-red-600 rounded transition-colors"
+                        title="Delete template"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    )
+                  )}
+                </div>
               </div>
             </div>
           );

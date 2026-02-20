@@ -13,7 +13,11 @@ export async function GET(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { data: audit, error } = await supabase
+    // Try with user join first, fall back without if FK not resolved
+    let audit: Record<string, unknown> | null = null;
+    let fetchError: unknown = null;
+
+    const { data: auditData, error: err1 } = await supabase
       .from('brand_audits')
       .select(`
         *,
@@ -25,7 +29,26 @@ export async function GET(
       .eq('id', id)
       .single();
 
-    if (error) throw error;
+    if (!err1) {
+      audit = auditData;
+    } else {
+      // FK to auth.users may not be resolvable — retry without user join
+      const { data: auditFallback, error: err2 } = await supabase
+        .from('brand_audits')
+        .select(`
+          *,
+          crm_contacts (id, first_name, last_name, email, phone, company_id, crm_companies (id, name)),
+          brand_audit_sections (id, section_key, data, is_complete, data_source, extraction_confidence, notes),
+          brand_audit_scores (id, category, score, rating, weight, analysis, key_finding, actionable_insight, evidence)
+        `)
+        .eq('id', id)
+        .single();
+
+      if (err2) fetchError = err2;
+      else audit = auditFallback;
+    }
+
+    if (fetchError) throw fetchError;
     if (!audit) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     // Verify org membership
