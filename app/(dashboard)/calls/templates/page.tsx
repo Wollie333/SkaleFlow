@@ -23,8 +23,17 @@ export default async function TemplatesPage() {
 
   const isAdmin = member?.role === 'owner' || member?.role === 'admin';
 
+  // Deduplicate by name — prefer org-specific over system templates
+  const deduped = new Map<string, (typeof templates)[number]>();
+  for (const t of templates || []) {
+    const existing = deduped.get(t.name);
+    if (!existing || (!t.is_system && existing.is_system)) {
+      deduped.set(t.name, t);
+    }
+  }
+
   // Coerce Json fields to arrays for the client component
-  const safeTemplates = (templates || []).map(t => ({
+  const safeTemplates = Array.from(deduped.values()).map(t => ({
     ...t,
     phases: Array.isArray(t.phases) ? t.phases : [],
     objection_bank: Array.isArray(t.objection_bank) ? t.objection_bank : [],
