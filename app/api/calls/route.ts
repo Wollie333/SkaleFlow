@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { generateRoomCode } from '@/lib/calls/config';
 
 // GET — list calls for org
@@ -161,4 +161,75 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json(data, { status: 201 });
+}
+
+// DELETE — super admin only: delete a call and all related data
+export async function DELETE(request: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  // Super admin check
+  const serviceClient = createServiceClient();
+  const { data: userData } = await serviceClient
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (!userData || userData.role !== 'super_admin') {
+    return NextResponse.json({ error: 'Forbidden — super admin only' }, { status: 403 });
+  }
+
+  const { callId } = await request.json();
+  if (!callId) {
+    return NextResponse.json({ error: 'callId is required' }, { status: 400 });
+  }
+
+  // Verify call exists
+  const { data: call } = await serviceClient
+    .from('calls')
+    .select('id, recording_url')
+    .eq('id', callId)
+    .single();
+
+  if (!call) {
+    return NextResponse.json({ error: 'Call not found' }, { status: 404 });
+  }
+
+  // Delete in dependency order (children first)
+  // 1. call_ai_guidance (depends on call_transcripts)
+  await serviceClient.from('call_ai_guidance').delete().eq('call_id', callId);
+  // 2. call_brand_insights (depends on call_transcripts)
+  await serviceClient.from('call_brand_insights').delete().eq('call_id', callId);
+  // 3. call_transcripts (depends on call_participants)
+  await serviceClient.from('call_transcripts').delete().eq('call_id', callId);
+  // 4. call_action_items (depends on call_summaries)
+  await serviceClient.from('call_action_items').delete().eq('call_id', callId);
+  // 5. call_summaries
+  await serviceClient.from('call_summaries').delete().eq('call_id', callId);
+  // 6. call_participants
+  await serviceClient.from('call_participants').delete().eq('call_id', callId);
+  // 7. Unlink bookings (set call_id to null, don't delete the booking)
+  await serviceClient.from('call_bookings').update({ call_id: null }).eq('call_id', callId);
+  // 8. Delete the call itself
+  const { error } = await serviceClient.from('calls').delete().eq('id', callId);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Try to delete recording from storage (non-blocking)
+  if (call.recording_url) {
+    try {
+      const path = call.recording_url.split('/call-recordings/').pop();
+      if (path) {
+        await serviceClient.storage.from('call-recordings').remove([path]);
+      }
+    } catch {
+      // Non-blocking
+    }
+  }
+
+  return NextResponse.json({ success: true });
 }

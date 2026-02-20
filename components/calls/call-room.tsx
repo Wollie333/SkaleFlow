@@ -9,6 +9,7 @@ import { ControlsBar } from './controls-bar';
 import { OffersPanel, type Offer, type OfferResponseMap } from './offers-panel';
 import { OfferOverlay } from './offer-overlay';
 import { DeviceSettings } from './device-settings';
+import { ChatPanel, type ChatMessage } from './chat-panel';
 import { CallSignaling } from '@/lib/calls/signaling';
 import { CallRecorder, uploadRecording } from '@/lib/calls/recording';
 import { TranscriptionManager } from '@/lib/calls/transcription';
@@ -23,9 +24,10 @@ interface CallRoomProps {
   guestName?: string;
   guestEmail?: string;
   showOpenInTab?: boolean;
+  autoJoin?: boolean;
 }
 
-export type PanelView = 'copilot' | 'transcript' | 'attendees' | 'offers' | 'insights' | 'none';
+export type PanelView = 'copilot' | 'transcript' | 'attendees' | 'offers' | 'insights' | 'chat' | 'none';
 
 export interface Participant {
   id: string;
@@ -62,7 +64,7 @@ export interface GuidanceItem {
 export type RecordingState = 'idle' | 'recording' | 'stopping';
 
 export function CallRoom({
-  roomCode, callId, callTitle, organizationId, userId, isHost, guestName, guestEmail, showOpenInTab
+  roomCode, callId, callTitle, organizationId, userId, isHost, guestName, guestEmail, showOpenInTab, autoJoin
 }: CallRoomProps) {
   const [activePanel, setActivePanel] = useState<PanelView>(isHost ? 'insights' : 'attendees');
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -80,6 +82,11 @@ export function CallRoom({
   const [isSaving, setIsSaving] = useState(false);
   const [showDeviceSettings, setShowDeviceSettings] = useState(false);
   const [showCaptions, setShowCaptions] = useState(true);
+
+  // Chat state
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [unreadChat, setUnreadChat] = useState(0);
+  const chatCounterRef = useRef(0);
 
   // Offer presentation state
   const [presentedOfferId, setPresentedOfferId] = useState<string | null>(null);
@@ -100,6 +107,8 @@ export function CallRoom({
 
   const displayName = callTitle || `Room: ${roomCode}`;
   const isRecording = recordingState === 'recording' || isRecordingRemote;
+  const waitingCount = participants.filter(p => p.status === 'waiting').length;
+  const prevWaitingCountRef = useRef(0);
 
   // Call timer
   useEffect(() => {
@@ -285,6 +294,20 @@ export function CallRoom({
       }
     });
 
+    // Handle incoming chat messages
+    signaling.on('chat-message', (msg) => {
+      const chatMsg: ChatMessage = {
+        id: `chat-${++chatCounterRef.current}`,
+        senderId: msg.senderId,
+        senderName: (msg.payload.senderName as string) || 'Unknown',
+        content: (msg.payload.content as string) || '',
+        timestamp: (msg.payload.timestamp as number) || Date.now(),
+      };
+      setChatMessages(prev => [...prev, chatMsg]);
+      // Increment unread if chat panel is not active
+      setUnreadChat(prev => prev + 1);
+    });
+
     signaling.connect().catch(err => {
       console.error('Signaling connection failed:', err);
     });
@@ -407,6 +430,14 @@ export function CallRoom({
     }
   }, []);
 
+  // Auto-join when opened via "Open in new tab" or autoJoin prop
+  useEffect(() => {
+    if (autoJoin && !callActive) {
+      startMedia();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoJoin]);
+
   const toggleMute = useCallback(() => {
     if (localStreamRef.current) {
       localStreamRef.current.getAudioTracks().forEach(t => { t.enabled = !t.enabled; });
@@ -508,6 +539,41 @@ export function CallRoom({
     // Also flag the most recent transcript in the database
     // (the flag will be picked up by the post-call summary pipeline)
   }, []);
+
+  // Auto-open attendees panel when someone enters waiting room (host only)
+  useEffect(() => {
+    if (isHost && waitingCount > prevWaitingCountRef.current && waitingCount > 0) {
+      setActivePanel('attendees');
+    }
+    prevWaitingCountRef.current = waitingCount;
+  }, [waitingCount, isHost]);
+
+  // Send chat message
+  const sendChatMessage = useCallback((content: string) => {
+    const senderName = isHost ? 'Host' : (guestName || 'Attendee');
+    const msg: ChatMessage = {
+      id: `chat-${++chatCounterRef.current}`,
+      senderId: participantIdRef.current || '',
+      senderName,
+      content,
+      timestamp: Date.now(),
+    };
+    // Add to local state immediately
+    setChatMessages(prev => [...prev, msg]);
+    // Broadcast to other participants
+    signalingRef.current?.send('chat-message', {
+      senderName,
+      content,
+      timestamp: msg.timestamp,
+    });
+  }, [isHost, guestName]);
+
+  // Clear unread when chat panel is opened
+  useEffect(() => {
+    if (activePanel === 'chat') {
+      setUnreadChat(0);
+    }
+  }, [activePanel]);
 
   // Admit / Deny handlers
   const admitParticipant = useCallback(async (pId: string) => {
@@ -743,24 +809,34 @@ export function CallRoom({
           )}
         </div>
         <div className="flex items-center gap-1.5 md:gap-2">
-          {(isHost ? ['attendees', 'insights', 'offers'] : ['attendees']).map((panel) => (
+          {(isHost ? ['attendees', 'chat', 'insights', 'offers'] : ['attendees', 'chat']).map((panel) => (
             <button
               key={panel}
               onClick={() => setActivePanel(activePanel === panel ? 'none' : panel as PanelView)}
-              className={`px-2 md:px-3 py-1.5 rounded text-[10px] md:text-xs font-medium transition-colors ${
+              className={`relative px-2 md:px-3 py-1.5 rounded text-[10px] md:text-xs font-medium transition-colors ${
                 activePanel === panel
                   ? 'bg-cream-warm/20 text-white'
                   : 'text-white/50 hover:text-white/80'
               }`}
             >
               {panel.charAt(0).toUpperCase() + panel.slice(1)}
+              {panel === 'chat' && unreadChat > 0 && activePanel !== 'chat' && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-teal text-[9px] font-bold text-white">
+                  {unreadChat > 99 ? '99+' : unreadChat}
+                </span>
+              )}
+              {panel === 'attendees' && isHost && waitingCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-yellow-500 text-[9px] font-bold text-white animate-pulse">
+                  {waitingCount}
+                </span>
+              )}
             </button>
           ))}
 
           {/* Open in new tab button — only in dashboard layout */}
           {showOpenInTab && (
             <button
-              onClick={() => window.open(`/call-room/${roomCode}`, '_blank')}
+              onClick={() => window.open(`/call-room/${roomCode}?autoJoin=true`, '_blank')}
               className="px-2 py-1.5 rounded text-white/50 hover:text-white/80 transition-colors"
               title="Open in new tab (full screen)"
             >
@@ -789,7 +865,23 @@ export function CallRoom({
             onStartMedia={startMedia}
           />
 
-          {/* Offer overlay moved to fixed position outside video panel */}
+          {/* Floating waiting room notification — host sees this when guests are waiting */}
+          {isHost && waitingCount > 0 && activePanel !== 'attendees' && (
+            <div className="absolute top-2 left-2 right-2 md:top-4 md:left-4 md:right-4 flex justify-center z-10">
+              <button
+                onClick={() => setActivePanel('attendees')}
+                className="flex items-center gap-2 bg-yellow-500/90 backdrop-blur-sm rounded-lg px-4 py-2.5 shadow-lg hover:bg-yellow-500 transition-colors animate-pulse"
+              >
+                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <span className="text-white text-sm font-semibold">
+                  {waitingCount} {waitingCount === 1 ? 'person' : 'people'} in waiting room
+                </span>
+                <span className="text-white/80 text-xs ml-1">— Click to admit</span>
+              </button>
+            </div>
+          )}
 
           {/* Floating live caption — visible when captions enabled */}
           {callActive && showCaptions && transcripts.length > 0 && (
@@ -856,6 +948,13 @@ export function CallRoom({
                   />
                 </div>
               </div>
+            )}
+            {activePanel === 'chat' && (
+              <ChatPanel
+                messages={chatMessages}
+                onSendMessage={sendChatMessage}
+                localParticipantId={participantIdRef.current}
+              />
             )}
             {activePanel === 'offers' && isHost && (
               <OffersPanel

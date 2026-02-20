@@ -16,7 +16,8 @@ export type SignalType =
   | 'offer-dismissed'
   | 'offer-accepted'
   | 'offer-declined'
-  | 'offer-minimized';
+  | 'offer-minimized'
+  | 'chat-message';
 
 export interface SignalMessage {
   type: SignalType;

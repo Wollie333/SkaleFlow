@@ -1,9 +1,10 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { CALL_TYPE_LABELS, CALL_STATUS_LABELS, CALL_STATUS_COLORS, formatDuration } from '@/lib/calls/helpers';
 import type { CallType, CallStatus } from '@/types/database';
 import CallsPageClient from './calls-page-client';
+import { DeleteCallButton } from '@/components/calls/delete-call-button';
 
 export default async function CallsPage() {
   const supabase = await createClient();
@@ -17,6 +18,15 @@ export default async function CallsPage() {
     .single();
 
   if (!member) redirect('/login');
+
+  // Check super admin status for delete capability
+  const serviceClient = createServiceClient();
+  const { data: userData } = await serviceClient
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+  const isSuperAdmin = userData?.role === 'super_admin';
 
   // Upcoming calls
   const { data: upcomingCalls } = await supabase
@@ -83,28 +93,34 @@ export default async function CallsPage() {
               const guests = (call.call_participants as Array<{ guest_name: string | null; role: string }> || [])
                 .filter((p) => p.role === 'guest');
               return (
-                <Link
-                  key={call.id}
-                  href={`/calls/${call.room_code}`}
-                  className="block bg-cream-warm rounded-xl border border-stone/10 p-4 hover:border-teal/20 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-charcoal">{call.title}</h3>
-                      <div className="flex items-center gap-3 mt-1 text-sm text-stone">
-                        <span>{CALL_TYPE_LABELS[call.call_type as CallType]}</span>
-                        <span>{call.scheduled_start ? new Date(call.scheduled_start).toLocaleString() : 'Unscheduled'}</span>
-                        <span>{formatDuration(call.scheduled_duration_min)}</span>
-                        {guests.length > 0 && (
-                          <span>with {guests.map(g => g.guest_name).filter(Boolean).join(', ')}</span>
-                        )}
+                <div key={call.id} className="flex items-center gap-2 bg-cream-warm rounded-xl border border-stone/10 hover:border-teal/20 transition-colors">
+                  <Link
+                    href={`/calls/${call.room_code}`}
+                    className="flex-1 p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium text-charcoal">{call.title}</h3>
+                        <div className="flex items-center gap-3 mt-1 text-sm text-stone">
+                          <span>{CALL_TYPE_LABELS[call.call_type as CallType]}</span>
+                          <span>{call.scheduled_start ? new Date(call.scheduled_start).toLocaleString() : 'Unscheduled'}</span>
+                          <span>{formatDuration(call.scheduled_duration_min)}</span>
+                          {guests.length > 0 && (
+                            <span>with {guests.map(g => g.guest_name).filter(Boolean).join(', ')}</span>
+                          )}
+                        </div>
                       </div>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${CALL_STATUS_COLORS[call.call_status as CallStatus]}`}>
+                        {CALL_STATUS_LABELS[call.call_status as CallStatus]}
+                      </span>
                     </div>
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${CALL_STATUS_COLORS[call.call_status as CallStatus]}`}>
-                      {CALL_STATUS_LABELS[call.call_status as CallStatus]}
-                    </span>
-                  </div>
-                </Link>
+                  </Link>
+                  {isSuperAdmin && (
+                    <div className="pr-3">
+                      <DeleteCallButton callId={call.id} callTitle={call.title} />
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -123,25 +139,31 @@ export default async function CallsPage() {
             {pastCalls.map((call) => {
               const hasSummary = Array.isArray(call.call_summaries) ? call.call_summaries.length > 0 : !!call.call_summaries;
               return (
-                <Link
-                  key={call.id}
-                  href={hasSummary ? `/calls/${call.room_code}/summary` : `/calls/${call.room_code}`}
-                  className="block bg-cream-warm rounded-xl border border-stone/10 p-4 hover:border-teal/20 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-charcoal">{call.title}</h3>
-                      <div className="flex items-center gap-3 mt-1 text-sm text-stone">
-                        <span>{CALL_TYPE_LABELS[call.call_type as CallType]}</span>
-                        <span>{call.actual_end ? new Date(call.actual_end).toLocaleDateString() : 'Unknown date'}</span>
-                        {hasSummary && <span className="text-teal">Summary available</span>}
+                <div key={call.id} className="flex items-center gap-2 bg-cream-warm rounded-xl border border-stone/10 hover:border-teal/20 transition-colors">
+                  <Link
+                    href={hasSummary ? `/calls/${call.room_code}/summary` : `/calls/${call.room_code}`}
+                    className="flex-1 p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium text-charcoal">{call.title}</h3>
+                        <div className="flex items-center gap-3 mt-1 text-sm text-stone">
+                          <span>{CALL_TYPE_LABELS[call.call_type as CallType]}</span>
+                          <span>{call.actual_end ? new Date(call.actual_end).toLocaleDateString() : 'Unknown date'}</span>
+                          {hasSummary && <span className="text-teal">Summary available</span>}
+                        </div>
                       </div>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${CALL_STATUS_COLORS[call.call_status as CallStatus]}`}>
+                        {CALL_STATUS_LABELS[call.call_status as CallStatus]}
+                      </span>
                     </div>
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${CALL_STATUS_COLORS[call.call_status as CallStatus]}`}>
-                      {CALL_STATUS_LABELS[call.call_status as CallStatus]}
-                    </span>
-                  </div>
-                </Link>
+                  </Link>
+                  {isSuperAdmin && (
+                    <div className="pr-3">
+                      <DeleteCallButton callId={call.id} callTitle={call.title} />
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
