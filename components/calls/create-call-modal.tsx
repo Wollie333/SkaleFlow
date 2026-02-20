@@ -71,7 +71,19 @@ export default function CreateCallModal({ open, onClose }: { open: boolean; onCl
 
     fetch('/api/calls/templates')
       .then(r => r.json())
-      .then(data => { if (Array.isArray(data)) setTemplates(data); })
+      .then(data => {
+        if (Array.isArray(data)) {
+          // Deduplicate by name — prefer org-specific over system templates
+          const seen = new Map<string, typeof data[0]>();
+          for (const t of data) {
+            const existing = seen.get(t.name);
+            if (!existing || (!t.is_system && existing.is_system)) {
+              seen.set(t.name, t);
+            }
+          }
+          setTemplates(Array.from(seen.values()));
+        }
+      })
       .catch(() => {});
 
     fetch('/api/team')
