@@ -161,14 +161,14 @@ export default function AnalyticsPage() {
       {/* Filters row: Tabs + Campaign filter */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         {/* Tab bar */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1">
+        <div className="flex gap-4 border-b border-stone/10 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
           <button
             onClick={() => setActiveTab('overview')}
             className={cn(
-              'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors border-b-2',
+              'pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
               activeTab === 'overview'
-                ? 'bg-teal/10 text-teal border-teal'
-                : 'bg-cream-warm text-stone hover:text-charcoal border-transparent'
+                ? 'border-teal text-teal'
+                : 'border-transparent text-stone hover:text-charcoal'
             )}
           >
             Overview
@@ -181,12 +181,11 @@ export default function AnalyticsPage() {
                 key={platform}
                 onClick={() => setActiveTab(platform)}
                 className={cn(
-                  'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors border-b-2',
+                  'pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
                   isActive
-                    ? 'bg-white text-charcoal'
-                    : 'bg-cream-warm text-stone hover:text-charcoal border-transparent'
+                    ? 'border-teal text-teal'
+                    : 'border-transparent text-stone hover:text-charcoal'
                 )}
-                style={isActive ? { borderColor: config.color } : undefined}
               >
                 {config.name}
               </button>
@@ -199,7 +198,7 @@ export default function AnalyticsPage() {
           <select
             value={campaignFilter}
             onChange={e => setCampaignFilter(e.target.value)}
-            className="px-4 py-2 rounded-lg text-sm font-medium border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+            className="px-4 py-2 rounded-lg text-sm font-medium border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
           >
             <option value="all">All Campaigns</option>
             {campaigns.map(c => (

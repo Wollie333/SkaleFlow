@@ -43,7 +43,7 @@ export function PhaseNavDropdown({ phases, currentPhaseId, onPhaseClick }: Phase
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-lg border border-stone/15 bg-white px-3 py-2 hover:bg-cream-warm transition-colors w-full"
+        className="flex items-center gap-2 rounded-lg border border-stone/15 bg-cream-warm px-3 py-2 hover:bg-cream-warm transition-colors w-full"
       >
         <span className="flex items-center justify-center w-6 h-6 rounded-full bg-teal/10 text-teal text-xs font-bold flex-shrink-0">
           {currentPhase.phase_number}
@@ -60,7 +60,7 @@ export function PhaseNavDropdown({ phases, currentPhaseId, onPhaseClick }: Phase
       </button>
 
       {isOpen && (
-        <div className="absolute top-full mt-1 left-0 right-0 z-50 bg-white rounded-lg shadow-lg border border-stone/15 py-1 max-h-80 overflow-y-auto">
+        <div className="absolute top-full mt-1 left-0 right-0 z-50 bg-cream-warm rounded-lg shadow-lg border border-stone/15 py-1 max-h-80 overflow-y-auto">
           {phases.map((phase) => {
             const isActive = phase.id === currentPhaseId;
             const isCompleted = phase.status === 'locked' || phase.status === 'completed';

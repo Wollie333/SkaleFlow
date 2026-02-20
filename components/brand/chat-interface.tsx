@@ -223,7 +223,7 @@ export function ChatInterface({
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-180px)] bg-white rounded-xl border border-stone/10 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-180px)] bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
       {/* Header */}
       <div className="px-6 py-4 border-b border-stone/10">
         <div className="flex items-center justify-between">

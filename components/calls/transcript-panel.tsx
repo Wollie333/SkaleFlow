@@ -48,7 +48,7 @@ export function TranscriptPanel({ transcripts }: TranscriptPanelProps) {
           placeholder="Search transcript..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-2 py-1.5 rounded bg-white/10 text-white text-xs placeholder-white/30 border border-white/10 focus:outline-none focus:border-white/30"
+          className="w-full px-2 py-1.5 rounded bg-cream-warm/10 text-white text-xs placeholder-white/30 border border-white/10 focus:outline-none focus:border-white/30"
         />
       </div>
 
@@ -96,7 +96,7 @@ export function TranscriptPanel({ transcripts }: TranscriptPanelProps) {
               scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
             }
           }}
-          className="mx-3 mb-3 py-1.5 rounded bg-white/10 text-white/70 text-xs hover:bg-white/15 transition-colors"
+          className="mx-3 mb-3 py-1.5 rounded bg-cream-warm/10 text-white/70 text-xs hover:bg-cream-warm/15 transition-colors"
         >
           &#x2193; Scroll to latest
         </button>

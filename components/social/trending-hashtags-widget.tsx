@@ -78,7 +78,7 @@ export function TrendingHashtagsWidget({ organizationId }: TrendingHashtagsWidge
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/50 transition-colors"
+        className="w-full px-6 py-4 flex items-center justify-between hover:bg-cream-warm/50 transition-colors"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-teal to-teal-dark rounded-lg flex items-center justify-center">
@@ -121,7 +121,7 @@ export function TrendingHashtagsWidget({ organizationId }: TrendingHashtagsWidge
               {trendingHashtags.slice(0, 5).map((item, index) => (
                 <div
                   key={item.tag}
-                  className="flex items-center justify-between p-3 bg-white rounded-lg border border-stone/10 hover:border-teal/30 transition-colors group"
+                  className="flex items-center justify-between p-3 bg-cream-warm rounded-lg border border-stone/10 hover:border-teal/30 transition-colors group"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="flex-shrink-0">
@@ -129,9 +129,9 @@ export function TrendingHashtagsWidget({ organizationId }: TrendingHashtagsWidge
                         className={cn(
                           'w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold',
                           index === 0 && 'bg-yellow-100 text-yellow-700',
-                          index === 1 && 'bg-stone-100 text-stone-700',
+                          index === 1 && 'bg-cream text-charcoal',
                           index === 2 && 'bg-orange-100 text-orange-700',
-                          index > 2 && 'bg-stone-50 text-stone-600'
+                          index > 2 && 'bg-cream text-stone'
                         )}
                       >
                         #{index + 1}

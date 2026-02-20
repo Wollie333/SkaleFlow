@@ -84,7 +84,7 @@ export function UserOverviewTab({
     <div className="space-y-6">
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+        <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
           <div className="flex items-center gap-2 mb-2">
             <DocumentTextIcon className="w-5 h-5 text-teal" />
             <p className="text-xs font-semibold text-stone uppercase tracking-wider">Content Items</p>
@@ -95,7 +95,7 @@ export function UserOverviewTab({
           </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+        <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
           <div className="flex items-center gap-2 mb-2">
             <CpuChipIcon className="w-5 h-5 text-teal" />
             <p className="text-xs font-semibold text-stone uppercase tracking-wider">Credits Used</p>
@@ -106,7 +106,7 @@ export function UserOverviewTab({
           </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+        <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
           <div className="flex items-center gap-2 mb-2">
             <SparklesIcon className="w-5 h-5 text-teal" />
             <p className="text-xs font-semibold text-stone uppercase tracking-wider">Brand Progress</p>
@@ -117,7 +117,7 @@ export function UserOverviewTab({
           </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+        <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
           <div className="flex items-center gap-2 mb-2">
             <CheckBadgeIcon className="w-5 h-5 text-teal" />
             <p className="text-xs font-semibold text-stone uppercase tracking-wider">Subscription</p>
@@ -126,7 +126,7 @@ export function UserOverviewTab({
         </div>
 
         {teamMemberCount !== undefined && (
-          <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+          <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
             <div className="flex items-center gap-2 mb-2">
               <UsersIcon className="w-5 h-5 text-teal" />
               <p className="text-xs font-semibold text-stone uppercase tracking-wider">Team Members</p>
@@ -137,7 +137,7 @@ export function UserOverviewTab({
       </div>
 
       {/* Brand Progress */}
-      <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+      <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
         <h3 className="font-serif text-lg font-bold text-charcoal mb-4">Brand Progress</h3>
         <div className="space-y-2">
           {brandProgress.map((phase) => (
@@ -158,7 +158,7 @@ export function UserOverviewTab({
       </div>
 
       {/* Recent Content */}
-      <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
+      <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
         <div className="px-5 py-4 border-b border-cream">
           <h3 className="font-serif text-lg font-bold text-charcoal">Recent Content</h3>
         </div>

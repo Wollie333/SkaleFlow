@@ -35,7 +35,7 @@ export default function TestAvatarPage() {
 
       <div className="space-y-6">
         {/* Avatar Display Test */}
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-cream-warm p-6 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-4">Avatar Component Test</h2>
           <div className="flex items-center gap-4">
             <UserAvatar
@@ -44,8 +44,8 @@ export default function TestAvatarPage() {
               size="xl"
             />
             <div>
-              <p className="text-sm text-gray-600">Size: XL (96x96px)</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-stone">Size: XL (96x96px)</p>
+              <p className="text-sm text-stone">
                 Status: {user?.profile?.avatar_url ? 'Has Avatar URL' : 'No Avatar URL'}
               </p>
             </div>
@@ -53,14 +53,14 @@ export default function TestAvatarPage() {
         </div>
 
         {/* Raw Data */}
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-cream-warm p-6 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-4">User Data</h2>
           <div className="space-y-2 text-sm">
             <p><strong>User ID:</strong> {user?.id}</p>
             <p><strong>Email:</strong> {user?.email}</p>
             <p><strong>Full Name:</strong> {user?.profile?.full_name || 'Not set'}</p>
             <p><strong>Avatar URL:</strong></p>
-            <div className="bg-gray-50 p-3 rounded mt-1 break-all font-mono text-xs">
+            <div className="bg-cream p-3 rounded mt-1 break-all font-mono text-xs">
               {user?.profile?.avatar_url || 'NULL (No avatar uploaded)'}
             </div>
           </div>
@@ -68,18 +68,18 @@ export default function TestAvatarPage() {
 
         {/* Avatar URL Preview */}
         {user?.profile?.avatar_url && (
-          <div className="bg-white p-6 rounded-lg shadow">
+          <div className="bg-cream-warm p-6 rounded-lg shadow">
             <h2 className="text-lg font-semibold mb-4">Direct Image Preview</h2>
             <img
               src={user.profile.avatar_url}
               alt="Direct preview"
-              className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
+              className="w-32 h-32 rounded-full object-cover border-4 border-stone/10"
               onError={(e) => {
                 console.error('Image failed to load:', user.profile.avatar_url);
                 (e.target as HTMLImageElement).style.border = '4px solid red';
               }}
             />
-            <p className="text-sm text-gray-600 mt-2">
+            <p className="text-sm text-stone mt-2">
               If you see a broken image above, the URL might be invalid or inaccessible.
             </p>
           </div>

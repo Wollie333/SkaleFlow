@@ -95,7 +95,7 @@ export function HashtagPickerModal({
       branded: 'bg-purple-100 text-purple-700',
       campaign: 'bg-green-100 text-green-700',
     };
-    return colors[category?.toLowerCase()] || 'bg-stone-100 text-stone-700';
+    return colors[category?.toLowerCase()] || 'bg-cream text-charcoal';
   };
 
   return (
@@ -104,7 +104,7 @@ export function HashtagPickerModal({
       <div className="fixed inset-0 bg-black/50 z-50" onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-4xl bg-white rounded-xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
+      <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-4xl bg-cream-warm rounded-xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <div className="flex-1">
@@ -164,7 +164,7 @@ export function HashtagPickerModal({
                       'w-full text-left p-3 rounded-lg border transition-all',
                       selectedSet?.id === set.id
                         ? 'bg-teal/5 border-teal ring-1 ring-teal'
-                        : 'bg-white border-stone/10 hover:border-teal/50'
+                        : 'bg-cream-warm border-stone/10 hover:border-teal/50'
                     )}
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
@@ -216,7 +216,7 @@ export function HashtagPickerModal({
                           'flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border transition-all',
                           isSelected
                             ? 'bg-teal text-white border-teal'
-                            : 'bg-white text-charcoal border-stone/10 hover:border-teal'
+                            : 'bg-cream-warm text-charcoal border-stone/10 hover:border-teal'
                         )}
                       >
                         {tag}
@@ -271,7 +271,7 @@ export function HashtagPickerModal({
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-stone hover:text-charcoal border border-stone/20 rounded-lg hover:bg-white transition-colors"
+              className="px-4 py-2 text-sm font-medium text-stone hover:text-charcoal border border-stone/20 rounded-lg hover:bg-cream-warm transition-colors"
             >
               Cancel
             </button>

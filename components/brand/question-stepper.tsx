@@ -23,7 +23,7 @@ export function QuestionStepper({ totalQuestions, currentQuestionIndex, phaseCom
                 'flex items-center justify-center rounded-full transition-all duration-300 text-[10px] font-semibold',
                 totalQuestions > 7 ? 'w-6 h-6' : 'w-7 h-7',
                 isCompleted && 'bg-teal text-cream',
-                isCurrent && 'bg-white text-teal ring-2 ring-teal',
+                isCurrent && 'bg-cream-warm text-teal ring-2 ring-teal',
                 !isCompleted && !isCurrent && 'bg-stone/10 text-stone/50'
               )}
               title={`Question ${i + 1}${isCompleted ? ' (completed)' : isCurrent ? ' (current)' : ''}`}

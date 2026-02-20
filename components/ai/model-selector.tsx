@@ -43,7 +43,7 @@ export function ModelSelector({ models, selectedModelId, onSelect, compact = fal
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'flex items-center gap-1.5 rounded-lg border border-stone/20 bg-white hover:bg-cream-warm transition-colors',
+          'flex items-center gap-1.5 rounded-lg border border-stone/20 bg-cream-warm hover:bg-cream-warm transition-colors',
           compact ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
         )}
       >
@@ -74,7 +74,7 @@ export function ModelSelector({ models, selectedModelId, onSelect, compact = fal
       </button>
 
       {isOpen && (
-        <div className="absolute top-full mt-1 left-0 z-50 w-64 bg-white rounded-lg shadow-lg border border-stone/15 py-1">
+        <div className="absolute top-full mt-1 left-0 z-50 w-64 bg-cream-warm rounded-lg shadow-lg border border-stone/15 py-1">
           {models.map((model) => (
             <button
               key={model.id}

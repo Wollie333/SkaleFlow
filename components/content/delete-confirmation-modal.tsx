@@ -31,7 +31,7 @@ export function DeleteConfirmationModal({
 
   return (
     <div className="fixed inset-0 bg-dark/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+      <div className="bg-cream-warm rounded-2xl p-6 w-full max-w-md shadow-xl">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">

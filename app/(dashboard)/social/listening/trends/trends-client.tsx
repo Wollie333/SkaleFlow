@@ -54,7 +54,7 @@ const PLATFORM_COLORS: Record<string, string> = {
   facebook: 'bg-indigo-500',
   instagram: 'bg-pink-500',
   reddit: 'bg-orange-500',
-  news: 'bg-gray-500',
+  news: 'bg-cream0',
   blog: 'bg-purple-500',
 };
 
@@ -136,21 +136,21 @@ export function TrendsClient({ trends24h, trends7d, trends30d, organizationId }:
 
       {/* Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-stone/10 p-4">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
           <p className="text-sm text-stone mb-1">Total Trends</p>
           <p className="text-2xl font-bold text-charcoal">{allTrends.length}</p>
         </div>
-        <div className="bg-white rounded-xl border border-stone/10 p-4">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
           <p className="text-sm text-stone mb-1">Total Mentions</p>
           <p className="text-2xl font-bold text-teal">{totalMentions.toLocaleString()}</p>
         </div>
-        <div className="bg-white rounded-xl border border-stone/10 p-4">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
           <p className="text-sm text-stone mb-1">Avg Growth Rate</p>
           <p className={cn('text-2xl font-bold', avgGrowth > 0 ? 'text-green-600' : avgGrowth < 0 ? 'text-red-500' : 'text-stone')}>
             {avgGrowth > 0 ? '+' : ''}{avgGrowth.toFixed(1)}%
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-stone/10 p-4">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
           <p className="text-sm text-stone mb-1">Top Trend</p>
           <p className="text-lg font-bold text-charcoal truncate" title={topTrend?.trend_value || '—'}>
             {topTrend?.trend_value || '—'}
@@ -159,7 +159,7 @@ export function TrendsClient({ trends24h, trends7d, trends30d, organizationId }:
       </div>
 
       {/* Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white rounded-xl border border-stone/10 p-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-cream-warm rounded-xl border border-stone/10 p-4">
         {/* Time Period Tabs */}
         <div className="flex items-center gap-1 bg-stone/5 rounded-lg p-1">
           {TIME_PERIODS.map(period => (
@@ -205,7 +205,7 @@ export function TrendsClient({ trends24h, trends7d, trends30d, organizationId }:
 
       {/* Trends List */}
       {filteredTrends.length === 0 ? (
-        <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-12 text-center">
           <div className="w-16 h-16 mx-auto mb-4 bg-stone/10 rounded-full flex items-center justify-center">
             <FireIcon className="w-8 h-8 text-stone" />
           </div>
@@ -232,7 +232,7 @@ export function TrendsClient({ trends24h, trends7d, trends30d, organizationId }:
             return (
               <div
                 key={trend.id}
-                className="bg-white rounded-xl border border-stone/10 p-5 hover:border-teal/20 transition-colors"
+                className="bg-cream-warm rounded-xl border border-stone/10 p-5 hover:border-teal/20 transition-colors"
               >
                 <div className="flex items-start gap-4">
                   {/* Rank */}

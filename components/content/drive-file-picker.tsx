@@ -159,7 +159,7 @@ export function DriveFilePicker({ organizationId, contentItemId, onImport, onClo
 
   return (
     <div className="fixed inset-0 bg-dark/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-xl">
+      <div className="bg-cream-warm rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <h2 className="text-heading-md text-charcoal">Import from Google Drive</h2>

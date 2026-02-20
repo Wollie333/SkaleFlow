@@ -78,16 +78,16 @@ export default function CompanyList({ organizationId, onCreateClick }: CompanyLi
 
   return (
     <div className="space-y-4">
-      {/* Header with Search and Add Button */}
+      {/* Search and Add Button */}
       <div className="flex items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-charcoal/50" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-stone" />
           <input
             type="text"
             placeholder="Search companies..."
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-stone/30 rounded-lg focus:ring-2 focus:ring-teal focus:border-teal"
+            className="w-full pl-10 pr-4 py-2 bg-cream-warm border border-stone/10 rounded-lg text-charcoal placeholder:text-stone/60 focus:ring-2 focus:ring-teal focus:border-teal"
           />
         </div>
         <button
@@ -104,8 +104,8 @@ export default function CompanyList({ organizationId, onCreateClick }: CompanyLi
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal"></div>
         </div>
       ) : companies.length === 0 ? (
-        <div className="text-center py-12 bg-cream/30 rounded-lg border border-stone/20">
-          <p className="text-charcoal/60">No companies found</p>
+        <div className="text-center py-12 bg-cream-warm rounded-lg border border-stone/10">
+          <p className="text-stone">No companies found</p>
           <button
             onClick={onCreateClick}
             className="mt-4 text-teal hover:underline font-medium"
@@ -115,26 +115,26 @@ export default function CompanyList({ organizationId, onCreateClick }: CompanyLi
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-lg border border-stone/20 overflow-hidden">
+          <div className="bg-cream-warm rounded-lg border border-stone/10 overflow-hidden">
             <table className="w-full">
               <thead>
-                <tr className="bg-cream/50 border-b border-stone/20">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-charcoal uppercase tracking-wider">
+                <tr className="bg-cream border-b border-stone/10">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                     Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-charcoal uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                     Industry
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-charcoal uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-charcoal uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                     Phone
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-charcoal uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                     Website
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-charcoal uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                     Created
                   </th>
                 </tr>
@@ -144,22 +144,22 @@ export default function CompanyList({ organizationId, onCreateClick }: CompanyLi
                   <tr
                     key={company.id}
                     onClick={() => handleRowClick(company.id)}
-                    className="hover:bg-cream/20 cursor-pointer transition-colors"
+                    className="hover:bg-cream/50 cursor-pointer transition-colors"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-charcoal">{company.name}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-charcoal/70">{company.industry || '-'}</div>
+                      <div className="text-sm text-stone">{company.industry || '-'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-charcoal/70">{company.email || '-'}</div>
+                      <div className="text-sm text-stone">{company.email || '-'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-charcoal/70">{company.phone || '-'}</div>
+                      <div className="text-sm text-stone">{company.phone || '-'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-charcoal/70">
+                      <div className="text-sm text-stone">
                         {company.website ? (
                           <a
                             href={company.website}
@@ -176,7 +176,7 @@ export default function CompanyList({ organizationId, onCreateClick }: CompanyLi
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-charcoal/70">{formatDate(company.created_at)}</div>
+                      <div className="text-sm text-stone">{formatDate(company.created_at)}</div>
                     </td>
                   </tr>
                 ))}
@@ -186,15 +186,15 @@ export default function CompanyList({ organizationId, onCreateClick }: CompanyLi
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-stone/20">
-              <div className="text-sm text-charcoal/70">
+            <div className="flex items-center justify-between px-4 py-3 bg-cream-warm rounded-lg border border-stone/10">
+              <div className="text-sm text-stone">
                 Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} companies
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-3 py-1 border border-stone/30 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cream/30"
+                  className="px-3 py-1.5 border border-stone/10 rounded-lg text-sm text-charcoal disabled:opacity-40 disabled:cursor-not-allowed hover:bg-cream/50"
                 >
                   Previous
                 </button>
@@ -214,10 +214,10 @@ export default function CompanyList({ organizationId, onCreateClick }: CompanyLi
                       <button
                         key={pageNum}
                         onClick={() => setPage(pageNum)}
-                        className={`px-3 py-1 rounded-lg text-sm ${
+                        className={`px-3 py-1.5 rounded-lg text-sm ${
                           page === pageNum
                             ? 'bg-teal text-white'
-                            : 'border border-stone/30 hover:bg-cream/30'
+                            : 'border border-stone/10 text-charcoal hover:bg-cream/50'
                         }`}
                       >
                         {pageNum}
@@ -228,7 +228,7 @@ export default function CompanyList({ organizationId, onCreateClick }: CompanyLi
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="px-3 py-1 border border-stone/30 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cream/30"
+                  className="px-3 py-1.5 border border-stone/10 rounded-lg text-sm text-charcoal disabled:opacity-40 disabled:cursor-not-allowed hover:bg-cream/50"
                 >
                   Next
                 </button>

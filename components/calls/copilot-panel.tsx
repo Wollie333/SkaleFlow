@@ -27,7 +27,7 @@ const GUIDANCE_COLORS: Record<string, string> = {
   phase_transition: 'bg-[#1E6B63]/20 text-[#1E6B63] border-[#1E6B63]/30',
   closing: 'bg-green-500/20 text-green-300 border-green-500/30',
   opening: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
-  general: 'bg-white/10 text-white/70 border-white/20',
+  general: 'bg-cream-warm/10 text-white/70 border-white/20',
 };
 
 export function CopilotPanel({ guidance, callActive, transcriptCount = 0 }: CopilotPanelProps) {
@@ -71,7 +71,7 @@ export function CopilotPanel({ guidance, callActive, transcriptCount = 0 }: Copi
             className={`p-2 md:p-3 rounded-lg border ${GUIDANCE_COLORS[item.guidanceType] || GUIDANCE_COLORS.general}`}
           >
             <div className="flex items-start gap-2">
-              <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+              <span className="w-6 h-6 rounded-full bg-cream-warm/10 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
                 {GUIDANCE_ICONS[item.guidanceType] || 'i'}
               </span>
               <div className="flex-1 min-w-0">

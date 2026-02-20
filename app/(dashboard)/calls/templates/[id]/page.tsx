@@ -111,7 +111,7 @@ export default function TemplateEditorPage({ params }: { params: Promise<{ id: s
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-stone/10 p-6 space-y-6">
+      <div className="bg-cream-warm rounded-xl border border-stone/10 p-6 space-y-6">
         {isReadOnly && (
           <div className="px-3 py-2 bg-teal/5 border border-teal/10 rounded-lg text-xs text-teal">
             System template (read-only). Duplicate to customise.

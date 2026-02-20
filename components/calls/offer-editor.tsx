@@ -67,7 +67,7 @@ export function OfferEditor({ offer, onSave }: { offer?: Offer; onSave: () => vo
   }
 
   return (
-    <div className="bg-white rounded-xl border border-stone/10 p-6 space-y-6">
+    <div className="bg-cream-warm rounded-xl border border-stone/10 p-6 space-y-6">
       <h2 className="text-lg font-serif font-bold text-charcoal">{offer?.id ? 'Edit Offer' : 'New Offer'}</h2>
 
       {offer?.source === 'brand_engine' && (

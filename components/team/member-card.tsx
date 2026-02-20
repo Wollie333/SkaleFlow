@@ -103,7 +103,7 @@ export function MemberCard({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5 transition-all duration-200 hover:shadow-[0_4px_16px_rgba(15,31,29,0.06)]">
+    <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5 transition-all duration-200 hover:shadow-[0_4px_16px_rgba(15,31,29,0.06)]">
       <div className="flex items-start gap-4">
         {/* Avatar */}
         <div className="flex-shrink-0">
@@ -151,7 +151,7 @@ export function MemberCard({
                     className="fixed inset-0 z-40"
                     onClick={() => setRoleDropdownOpen(false)}
                   />
-                  <div className="absolute top-full left-0 mt-1 z-50 bg-white rounded-lg border border-stone/10 shadow-lg py-1 min-w-[120px]">
+                  <div className="absolute top-full left-0 mt-1 z-50 bg-cream-warm rounded-lg border border-stone/10 shadow-lg py-1 min-w-[120px]">
                     {ASSIGNABLE_ROLES.map((role) => (
                       <button
                         key={role}

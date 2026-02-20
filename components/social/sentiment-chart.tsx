@@ -38,7 +38,7 @@ export function SentimentChart({ sentimentCounts, totalMentions }: SentimentChar
   const negativeOffset = positiveLength + neutralLength;
 
   return (
-    <div className="bg-white rounded-xl border border-stone/10 p-6">
+    <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
       <h3 className="font-semibold text-charcoal mb-6">Sentiment Overview</h3>
 
       {totalMentions === 0 ? (
@@ -133,13 +133,13 @@ export function SentimentChart({ sentimentCounts, totalMentions }: SentimentChar
             {/* Neutral */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-4 h-4 rounded-full bg-gray-500" />
+                <div className="w-4 h-4 rounded-full bg-cream0" />
                 <div>
                   <p className="text-sm font-medium text-charcoal">Neutral</p>
                   <p className="text-xs text-stone">{neutral} mentions</p>
                 </div>
               </div>
-              <span className="text-lg font-bold text-gray-600">{neutralPercentage}%</span>
+              <span className="text-lg font-bold text-stone">{neutralPercentage}%</span>
             </div>
 
             {/* Negative */}
@@ -161,7 +161,7 @@ export function SentimentChart({ sentimentCounts, totalMentions }: SentimentChar
                 <span
                   className={cn(
                     'text-lg font-bold',
-                    positive > negative ? 'text-green-600' : negative > positive ? 'text-red-600' : 'text-gray-600'
+                    positive > negative ? 'text-green-600' : negative > positive ? 'text-red-600' : 'text-stone'
                   )}
                 >
                   {positive > negative ? '😊 Positive' : negative > positive ? '😞 Negative' : '😐 Neutral'}

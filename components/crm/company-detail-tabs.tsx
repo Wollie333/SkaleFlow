@@ -105,24 +105,22 @@ export default function CompanyDetailTabs({ companyId, organizationId }: Company
   ];
 
   return (
-    <div className="bg-white rounded-lg border border-stone/20">
+    <div className="bg-cream-warm rounded-lg border border-stone/10">
       {/* Tab Headers */}
-      <div className="border-b border-stone/20">
-        <div className="flex gap-6 px-6">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`py-4 px-2 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? 'border-teal text-teal'
-                  : 'border-transparent text-charcoal/60 hover:text-charcoal hover:border-stone/30'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      <div className="flex gap-4 border-b border-stone/10 px-6">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+              activeTab === tab.id
+                ? 'border-teal text-teal'
+                : 'border-transparent text-stone hover:text-charcoal'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* Tab Content */}
@@ -137,24 +135,24 @@ export default function CompanyDetailTabs({ companyId, organizationId }: Company
             {activeTab === 'contacts' && (
               <div>
                 {contacts.length === 0 ? (
-                  <div className="text-center py-12 text-charcoal/60">
+                  <div className="text-center py-12 text-stone">
                     No contacts found for this company
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-stone/20">
-                          <th className="px-4 py-3 text-left text-xs font-medium text-charcoal uppercase tracking-wider">
+                        <tr className="border-b border-stone/10">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                             Name
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-charcoal uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                             Email
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-charcoal uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                             Lifecycle
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-charcoal uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                             Job Title
                           </th>
                         </tr>
@@ -164,7 +162,7 @@ export default function CompanyDetailTabs({ companyId, organizationId }: Company
                           <tr
                             key={contact.id}
                             onClick={() => router.push(`/crm/contacts/${contact.id}`)}
-                            className="hover:bg-cream/20 cursor-pointer transition-colors"
+                            className="hover:bg-cream/50 cursor-pointer transition-colors"
                           >
                             <td className="px-4 py-3">
                               <div className="text-sm font-medium text-charcoal">
@@ -172,7 +170,7 @@ export default function CompanyDetailTabs({ companyId, organizationId }: Company
                               </div>
                             </td>
                             <td className="px-4 py-3">
-                              <div className="text-sm text-charcoal/70">{contact.email || '-'}</div>
+                              <div className="text-sm text-stone">{contact.email || '-'}</div>
                             </td>
                             <td className="px-4 py-3">
                               {contact.lifecycle_stage ? (
@@ -180,11 +178,11 @@ export default function CompanyDetailTabs({ companyId, organizationId }: Company
                                   {contact.lifecycle_stage}
                                 </span>
                               ) : (
-                                <span className="text-sm text-charcoal/70">-</span>
+                                <span className="text-sm text-stone">-</span>
                               )}
                             </td>
                             <td className="px-4 py-3">
-                              <div className="text-sm text-charcoal/70">{contact.job_title || '-'}</div>
+                              <div className="text-sm text-stone">{contact.job_title || '-'}</div>
                             </td>
                           </tr>
                         ))}
@@ -199,27 +197,27 @@ export default function CompanyDetailTabs({ companyId, organizationId }: Company
             {activeTab === 'deals' && (
               <div>
                 {deals.length === 0 ? (
-                  <div className="text-center py-12 text-charcoal/60">
+                  <div className="text-center py-12 text-stone">
                     No deals found for this company
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-stone/20">
-                          <th className="px-4 py-3 text-left text-xs font-medium text-charcoal uppercase tracking-wider">
+                        <tr className="border-b border-stone/10">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                             Deal Name
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-charcoal uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                             Amount
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-charcoal uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                             Stage
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-charcoal uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                             Probability
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-charcoal uppercase tracking-wider">
+                          <th className="px-4 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                             Expected Close
                           </th>
                         </tr>
@@ -229,7 +227,7 @@ export default function CompanyDetailTabs({ companyId, organizationId }: Company
                           <tr
                             key={deal.id}
                             onClick={() => router.push(`/crm/deals/${deal.id}`)}
-                            className="hover:bg-cream/20 cursor-pointer transition-colors"
+                            className="hover:bg-cream/50 cursor-pointer transition-colors"
                           >
                             <td className="px-4 py-3">
                               <div className="text-sm font-medium text-charcoal">{deal.name}</div>
@@ -240,17 +238,17 @@ export default function CompanyDetailTabs({ companyId, organizationId }: Company
                               </div>
                             </td>
                             <td className="px-4 py-3">
-                              <span className="px-2 py-1 bg-cream/80 text-charcoal rounded-full text-xs font-medium">
+                              <span className="px-2 py-1 bg-cream text-charcoal rounded-full text-xs font-medium">
                                 {deal.stage}
                               </span>
                             </td>
                             <td className="px-4 py-3">
-                              <div className="text-sm text-charcoal/70">
+                              <div className="text-sm text-stone">
                                 {deal.probability ? `${deal.probability}%` : '-'}
                               </div>
                             </td>
                             <td className="px-4 py-3">
-                              <div className="text-sm text-charcoal/70">
+                              <div className="text-sm text-stone">
                                 {formatDate(deal.expected_close_date)}
                               </div>
                             </td>
@@ -266,8 +264,8 @@ export default function CompanyDetailTabs({ companyId, organizationId }: Company
             {/* Activity Tab */}
             {activeTab === 'activity' && (
               <div className="text-center py-12">
-                <div className="text-charcoal/40 mb-2">Activity tracking coming soon</div>
-                <p className="text-sm text-charcoal/60">
+                <div className="text-stone/60 mb-2">Activity tracking coming soon</div>
+                <p className="text-sm text-stone">
                   View all interactions, notes, and timeline events for this company
                 </p>
               </div>

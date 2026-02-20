@@ -153,7 +153,7 @@ export default function AuthorityPressKitPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Press Kit Builder - 2 cols */}
         <div className="xl:col-span-2">
-          <div className="bg-white border border-stone/10 rounded-xl p-6 shadow-sm">
+          <div className="bg-cream-warm border border-stone/10 rounded-xl p-6 shadow-sm">
             <PressKitBuilder
               pressKit={pressKit as Parameters<typeof PressKitBuilder>[0]['pressKit']}
               organizationId={organizationId!}
@@ -167,7 +167,7 @@ export default function AuthorityPressKitPage() {
 
         {/* Story Angles - 1 col */}
         <div className="xl:col-span-1">
-          <div className="bg-white border border-stone/10 rounded-xl p-6 shadow-sm">
+          <div className="bg-cream-warm border border-stone/10 rounded-xl p-6 shadow-sm">
             <StoryAngleManager
               angles={storyAngles}
               organizationId={organizationId!}

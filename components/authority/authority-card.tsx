@@ -53,7 +53,7 @@ export function AuthorityCard({ card, onClick, isDragging }: AuthorityCardProps)
       {...attributes}
       onClick={onClick}
       className={cn(
-        'bg-white rounded-lg border border-stone/15 p-3 cursor-pointer hover:border-teal/30 hover:shadow-sm transition-all group',
+        'bg-cream-warm rounded-lg border border-stone/15 p-3 cursor-pointer hover:border-teal/30 hover:shadow-sm transition-all group',
         isDragging && 'opacity-50 shadow-lg rotate-2'
       )}
     >

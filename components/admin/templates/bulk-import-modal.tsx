@@ -192,7 +192,7 @@ export function BulkImportModal({ onClose, onSaved }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 overflow-y-auto py-8">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4">
+      <div className="bg-cream-warm rounded-xl shadow-xl w-full max-w-3xl mx-4">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <h2 className="text-lg font-semibold text-charcoal">
@@ -291,7 +291,7 @@ export function BulkImportModal({ onClose, onSaved }: Props) {
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                         funnelStages.includes(stage)
                           ? 'bg-teal/15 text-teal border-teal/30'
-                          : 'bg-white text-stone border-stone/20 hover:border-stone/40'
+                          : 'bg-cream-warm text-stone border-stone/20 hover:border-stone/40'
                       }`}
                     >
                       {stage.charAt(0).toUpperCase() + stage.slice(1)}
@@ -323,7 +323,7 @@ export function BulkImportModal({ onClose, onSaved }: Props) {
                     <div
                       key={idx}
                       className={`border rounded-lg transition-colors ${
-                        isSelected ? 'border-teal/30 bg-teal/5' : 'border-stone/15 bg-white opacity-60'
+                        isSelected ? 'border-teal/30 bg-teal/5' : 'border-stone/15 bg-cream-warm opacity-60'
                       }`}
                     >
                       {/* Row */}

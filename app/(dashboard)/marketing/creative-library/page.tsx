@@ -220,7 +220,7 @@ export default function CreativeLibraryPage() {
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search creatives..."
-            className="w-full pl-10 pr-4 py-2 rounded-lg text-sm border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+            className="w-full pl-10 pr-4 py-2 rounded-lg text-sm border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
           />
           {searchQuery && (
             <button
@@ -235,7 +235,7 @@ export default function CreativeLibraryPage() {
         <select
           value={complianceFilter}
           onChange={e => setComplianceFilter(e.target.value)}
-          className="px-4 py-2 rounded-lg text-sm font-medium border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+          className="px-4 py-2 rounded-lg text-sm font-medium border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
         >
           {COMPLIANCE_OPTIONS.map(opt => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -245,7 +245,7 @@ export default function CreativeLibraryPage() {
         <select
           value={formatFilter}
           onChange={e => setFormatFilter(e.target.value)}
-          className="px-4 py-2 rounded-lg text-sm font-medium border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+          className="px-4 py-2 rounded-lg text-sm font-medium border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
         >
           {FORMAT_OPTIONS.map(opt => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -255,7 +255,7 @@ export default function CreativeLibraryPage() {
         <select
           value={platformFilter}
           onChange={e => setPlatformFilter(e.target.value)}
-          className="px-4 py-2 rounded-lg text-sm font-medium border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+          className="px-4 py-2 rounded-lg text-sm font-medium border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
         >
           {PLATFORM_OPTIONS.map(opt => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -394,9 +394,9 @@ export default function CreativeLibraryPage() {
           />
 
           {/* Panel */}
-          <div className="relative w-full max-w-lg bg-white shadow-2xl overflow-y-auto">
+          <div className="relative w-full max-w-lg bg-cream-warm shadow-2xl overflow-y-auto">
             {/* Header */}
-            <div className="sticky top-0 bg-white z-10 flex items-center justify-between p-5 border-b border-stone/10">
+            <div className="sticky top-0 bg-cream-warm z-10 flex items-center justify-between p-5 border-b border-stone/10">
               <h2 className="text-lg font-semibold text-charcoal truncate">
                 {selectedCreative.name}
               </h2>

@@ -96,7 +96,7 @@ export default function PressReleaseEditorPage() {
         Back to Press Releases
       </button>
 
-      <div className="bg-white border border-stone/10 rounded-xl p-6 shadow-sm">
+      <div className="bg-cream-warm border border-stone/10 rounded-xl p-6 shadow-sm">
         <PressReleaseEditor
           release={release}
           organizationId={organizationId || release.organization_id}

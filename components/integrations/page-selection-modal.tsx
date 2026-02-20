@@ -228,7 +228,7 @@ export function PageSelectionModal({ platform, isOpen, onClose, onPagesAdded }: 
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-dark/60 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden max-h-[90vh] flex flex-col">
+      <div className="relative bg-cream-warm rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-stone/10 flex-shrink-0">
           <h2 className="text-heading-md text-charcoal">

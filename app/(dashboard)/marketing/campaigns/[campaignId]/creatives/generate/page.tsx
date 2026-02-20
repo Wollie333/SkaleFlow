@@ -354,7 +354,7 @@ export default function GenerateCreativesPage() {
               <select
                 value={ctaType}
                 onChange={e => setCtaType(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
+                className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
               >
                 {ctaOptions.map(cta => (
                   <option key={cta} value={cta}>
@@ -397,7 +397,7 @@ export default function GenerateCreativesPage() {
                 onChange={e => setAdditionalPrompt(e.target.value)}
                 rows={3}
                 placeholder="E.g. Focus on our new product launch, use social proof, mention limited time offer..."
-                className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm resize-none"
               />
             </div>
           </div>

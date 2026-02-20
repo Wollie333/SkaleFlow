@@ -25,7 +25,7 @@ export function FinancialSummaryBar({
   }
 
   return (
-    <div className="flex items-center gap-6 px-4 py-3 bg-white border border-stone/10 rounded-xl shadow-sm mb-4">
+    <div className="flex items-center gap-6 px-4 py-3 bg-cream-warm border border-stone/10 rounded-xl shadow-sm mb-4">
       <div className="flex items-center gap-2">
         <BanknotesIcon className="w-4 h-4 text-charcoal" />
         <div>

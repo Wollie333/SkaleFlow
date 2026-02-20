@@ -96,28 +96,28 @@ export default function PipelineAnalyticsPage() {
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-xl border border-stone/10 p-5">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
           <div className="flex items-center gap-2 text-stone mb-2">
             <UsersIcon className="w-4 h-4" />
             <span className="text-xs font-medium uppercase">Total Contacts</span>
           </div>
           <p className="text-2xl font-bold text-charcoal">{totalContacts}</p>
         </div>
-        <div className="bg-white rounded-xl border border-stone/10 p-5">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
           <div className="flex items-center gap-2 text-stone mb-2">
             <CurrencyDollarIcon className="w-4 h-4" />
             <span className="text-xs font-medium uppercase">Total Value</span>
           </div>
           <p className="text-2xl font-bold text-charcoal">R {(totalValue / 100).toLocaleString('en-ZA')}</p>
         </div>
-        <div className="bg-white rounded-xl border border-stone/10 p-5">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
           <div className="flex items-center gap-2 text-stone mb-2">
             <ChartBarIcon className="w-4 h-4" />
             <span className="text-xs font-medium uppercase">Win Rate</span>
           </div>
           <p className="text-2xl font-bold text-teal">{winRate}%</p>
         </div>
-        <div className="bg-white rounded-xl border border-stone/10 p-5">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
           <div className="flex items-center gap-2 text-stone mb-2">
             <CurrencyDollarIcon className="w-4 h-4" />
             <span className="text-xs font-medium uppercase">Won Value</span>
@@ -127,7 +127,7 @@ export default function PipelineAnalyticsPage() {
       </div>
 
       {/* Stage Breakdown */}
-      <section className="bg-white rounded-xl border border-stone/10 p-6 mb-8">
+      <section className="bg-cream-warm rounded-xl border border-stone/10 p-6 mb-8">
         <h2 className="text-lg font-semibold text-charcoal mb-4">Stage Breakdown</h2>
         <div className="space-y-4">
           {stageData.map((stage) => (
@@ -157,7 +157,7 @@ export default function PipelineAnalyticsPage() {
       </section>
 
       {/* Conversion Funnel */}
-      <section className="bg-white rounded-xl border border-stone/10 p-6">
+      <section className="bg-cream-warm rounded-xl border border-stone/10 p-6">
         <h2 className="text-lg font-semibold text-charcoal mb-4">Conversion Funnel</h2>
         <div className="flex items-end gap-2 h-48">
           {stageData.map((stage) => {

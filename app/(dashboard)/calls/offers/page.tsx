@@ -115,14 +115,14 @@ export default function OffersPage() {
       {loading ? (
         <div className="text-stone text-sm animate-pulse">Loading offers...</div>
       ) : offers.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-stone/10">
+        <div className="text-center py-16 bg-cream-warm rounded-xl border border-stone/10">
           <p className="text-stone text-sm mb-2">No offers configured yet</p>
           <p className="text-xs text-stone">Create offers so the AI co-pilot can reference them during calls.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {offers.map(offer => (
-            <div key={offer.id} className="bg-white rounded-xl border border-stone/10 p-5">
+            <div key={offer.id} className="bg-cream-warm rounded-xl border border-stone/10 p-5">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">

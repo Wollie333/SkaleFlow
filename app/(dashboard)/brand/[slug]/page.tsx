@@ -918,7 +918,7 @@ export default function BrandPhaseDetailPage() {
       {/* Two-panel layout */}
       <div className="flex-1 flex flex-col lg:flex-row gap-4 overflow-y-auto lg:overflow-hidden min-h-0 px-1 pb-1">
         {/* Left panel Ã¢â‚¬â€ Question & Context (42%) */}
-        <div className="lg:w-[42%] lg:flex-shrink-0 w-full bg-white rounded-xl border border-stone/10 lg:overflow-hidden flex-shrink-0">
+        <div className="lg:w-[42%] lg:flex-shrink-0 w-full bg-cream-warm rounded-xl border border-stone/10 lg:overflow-hidden flex-shrink-0">
           <QuestionPanel
             phases={phases}
             currentPhase={currentPhase}

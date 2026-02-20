@@ -72,7 +72,7 @@ function getEmptyMessage(tab: TabKey): string {
 
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] px-5 py-4 animate-pulse">
+    <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] px-5 py-4 animate-pulse">
       <div className="flex items-center gap-4">
         <div className="w-9 h-9 rounded-full bg-stone/10" />
         <div className="flex-1 space-y-2">
@@ -176,39 +176,37 @@ export function ReviewDashboard() {
       </div>
 
       {/* Tab navigation */}
-      <div className="border-b border-stone/10">
-        <nav className="flex gap-6 -mb-px">
-          {TABS.map((tab) => {
-            const count = filterItems(items, tab.key).length;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key)}
-                className={cn(
-                  'pb-3 text-sm font-medium transition-colors whitespace-nowrap',
-                  activeTab === tab.key
-                    ? 'border-b-2 border-teal text-teal'
-                    : 'text-stone hover:text-charcoal'
-                )}
-              >
-                {tab.label}
-                {count > 0 && (
-                  <span
-                    className={cn(
-                      'ml-2 text-xs font-semibold px-2 py-0.5 rounded-full',
-                      activeTab === tab.key
-                        ? 'bg-teal/10 text-teal'
-                        : 'bg-stone/10 text-stone'
-                    )}
-                  >
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
+      <div className="mb-4 flex gap-4 border-b border-stone/10 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+        {TABS.map((tab) => {
+          const count = filterItems(items, tab.key).length;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                'pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
+                activeTab === tab.key
+                  ? 'border-teal text-teal'
+                  : 'border-transparent text-stone hover:text-charcoal'
+              )}
+            >
+              {tab.label}
+              {count > 0 && (
+                <span
+                  className={cn(
+                    'ml-2 text-xs font-semibold px-2 py-0.5 rounded-full',
+                    activeTab === tab.key
+                      ? 'bg-teal/10 text-teal'
+                      : 'bg-stone/10 text-stone'
+                  )}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Error state */}

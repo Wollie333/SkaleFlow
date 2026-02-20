@@ -172,7 +172,7 @@ export function PlatformHistorySection({ platform, onPostClick }: PlatformHistor
           <button
             key={post.postId}
             onClick={() => onPostClick(post)}
-            className="text-left bg-white rounded-xl border border-stone/10 hover:border-stone/20 hover:shadow-md transition-all p-4 group"
+            className="text-left bg-cream-warm rounded-xl border border-stone/10 hover:border-stone/20 hover:shadow-md transition-all p-4 group"
           >
             {/* Thumbnail + content */}
             <div className="flex gap-3 mb-3">

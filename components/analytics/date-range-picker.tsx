@@ -25,7 +25,7 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
           className={cn(
             'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
             value === range.value
-              ? 'bg-white text-charcoal shadow-sm'
+              ? 'bg-cream-warm text-charcoal shadow-sm'
               : 'text-stone hover:text-charcoal'
           )}
         >

@@ -19,7 +19,7 @@ export function ViewToggle({ mode, onChange }: ViewToggleProps) {
           'flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors',
           mode === 'calendar'
             ? 'bg-teal text-white'
-            : 'bg-white text-stone hover:bg-cream-warm'
+            : 'bg-cream-warm text-stone hover:bg-cream-warm'
         )}
       >
         <CalendarDaysIcon className="w-4 h-4" />
@@ -31,7 +31,7 @@ export function ViewToggle({ mode, onChange }: ViewToggleProps) {
           'flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors',
           mode === 'table'
             ? 'bg-teal text-white'
-            : 'bg-white text-stone hover:bg-cream-warm'
+            : 'bg-cream-warm text-stone hover:bg-cream-warm'
         )}
       >
         <TableCellsIcon className="w-4 h-4" />
@@ -43,7 +43,7 @@ export function ViewToggle({ mode, onChange }: ViewToggleProps) {
           'flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors',
           mode === 'kanban'
             ? 'bg-teal text-white'
-            : 'bg-white text-stone hover:bg-cream-warm'
+            : 'bg-cream-warm text-stone hover:bg-cream-warm'
         )}
       >
         <ViewColumnsIcon className="w-4 h-4" />

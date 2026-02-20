@@ -117,7 +117,7 @@ export function ContactDetailPanel({
   ];
 
   return (
-    <div className="fixed inset-y-0 right-0 w-96 bg-white shadow-xl border-l border-stone/10 z-50 flex flex-col">
+    <div className="fixed inset-y-0 right-0 w-96 bg-cream-warm shadow-xl border-l border-stone/10 z-50 flex flex-col">
       {/* Header */}
       <div className="px-6 py-4 border-b border-stone/10">
         <div className="flex items-center justify-between">
@@ -150,10 +150,10 @@ export function ContactDetailPanel({
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              'flex-1 py-2.5 text-xs font-medium transition-colors',
+              'flex-1 py-2.5 text-xs font-medium border-b-2 transition-colors',
               activeTab === tab.id
-                ? 'text-teal border-b-2 border-teal'
-                : 'text-stone hover:text-charcoal'
+                ? 'border-teal text-teal'
+                : 'border-transparent text-stone hover:text-charcoal'
             )}
           >
             {tab.label}

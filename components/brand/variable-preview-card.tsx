@@ -86,7 +86,7 @@ export function VariablePreviewCard({
           : isEditing
             ? 'bg-cream-warm border border-teal/20'
             : isEmpty
-              ? 'border border-dashed border-stone/20 bg-white'
+              ? 'border border-dashed border-stone/20 bg-cream-warm'
               : isLocked
                 ? 'bg-teal/5 border border-teal/15'
                 : 'bg-cream-warm border border-cream-warm'
@@ -200,7 +200,7 @@ export function VariablePreviewCard({
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
             rows={4}
-            className="w-full text-sm border border-stone/15 rounded-lg px-3 py-2 resize-y focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal/30 bg-white"
+            className="w-full text-sm border border-stone/15 rounded-lg px-3 py-2 resize-y focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal/30 bg-cream-warm"
             placeholder="Enter value..."
             autoFocus
           />

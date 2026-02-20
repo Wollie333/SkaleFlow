@@ -138,7 +138,7 @@ export function PermissionsGrid({
   };
 
   return (
-    <div className={cn('bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden', saving && 'opacity-60 pointer-events-none')}>
+    <div className={cn('bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden', saving && 'opacity-60 pointer-events-none')}>
       {/* Header */}
       <div className="px-6 py-4 border-b border-stone/10">
         <h3 className="text-sm font-semibold text-charcoal">Feature Permissions</h3>
@@ -240,7 +240,7 @@ export function PermissionsGrid({
                             return (
                               <div
                                 key={feature}
-                                className="bg-white rounded-lg border border-stone/10 p-3"
+                                className="bg-cream-warm rounded-lg border border-stone/10 p-3"
                               >
                                 <h4 className="text-xs font-semibold text-charcoal mb-2">
                                   {FEATURE_LABELS[feature]}
@@ -264,7 +264,7 @@ export function PermissionsGrid({
                                       >
                                         <span
                                           className={cn(
-                                            'absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow-sm transition-transform duration-200',
+                                            'absolute top-0.5 w-3.5 h-3.5 rounded-full bg-cream-warm shadow-sm transition-transform duration-200',
                                             featurePerms[permKey]
                                               ? 'translate-x-[18px]'
                                               : 'translate-x-0.5'

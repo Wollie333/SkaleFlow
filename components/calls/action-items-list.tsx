@@ -36,7 +36,7 @@ export function ActionItemsList({ items, roomCode }: { items: ActionItem[]; room
       {actionItems.map(item => (
         <div
           key={item.id}
-          className={`bg-white rounded-xl border border-stone/10 p-4 flex items-start gap-3 ${
+          className={`bg-cream-warm rounded-xl border border-stone/10 p-4 flex items-start gap-3 ${
             item.status === 'completed' ? 'opacity-60' : ''
           }`}
         >

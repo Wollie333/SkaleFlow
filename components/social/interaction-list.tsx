@@ -17,7 +17,7 @@ export function InteractionList({
 }: InteractionListProps) {
   if (interactions.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
+      <div className="bg-cream-warm rounded-xl border border-stone/10 p-12 text-center">
         <p className="text-stone text-sm">No interactions found</p>
         <p className="text-stone/60 text-xs mt-2">
           Your social media interactions will appear here

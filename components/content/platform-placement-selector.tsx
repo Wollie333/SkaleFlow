@@ -72,7 +72,7 @@ export default function PlatformPlacementSelector({
         Platforms & Placements
       </label>
 
-      <div className="border border-stone-200 rounded-lg divide-y divide-stone-100">
+      <div className="border border-stone/10 rounded-lg divide-y divide-stone-100">
         {PLATFORM_ORDER.map((platform) => {
           const platformState = value[platform];
           const options = PLACEMENT_OPTIONS[platform];
@@ -87,7 +87,7 @@ export default function PlatformPlacementSelector({
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     platformState.enabled
                       ? 'bg-teal-50 text-teal-700 border border-teal-200'
-                      : 'bg-stone-50 text-stone-500 border border-stone-200 hover:border-stone-300'
+                      : 'bg-cream text-stone border border-stone/10 hover:border-stone/10'
                   }`}
                 >
                   <span
@@ -130,7 +130,7 @@ export default function PlatformPlacementSelector({
                               ? hasWarning
                                 ? 'bg-gold-50 text-gold-700 border border-gold-300'
                                 : 'bg-teal-100 text-teal-800 border border-teal-200'
-                              : 'bg-white text-stone-500 border border-stone-200 hover:border-stone-300'
+                              : 'bg-cream-warm text-stone border border-stone/10 hover:border-stone/10'
                           }`}
                         >
                           {option.label}
@@ -150,7 +150,7 @@ export default function PlatformPlacementSelector({
 
       {/* Summary */}
       {platformCount > 0 && (
-        <p className="text-xs text-stone-500">
+        <p className="text-xs text-stone">
           {platformCount} platform{platformCount !== 1 ? 's' : ''},{' '}
           {placementCount} placement{placementCount !== 1 ? 's' : ''}{' '}
           ({placementCount} post{placementCount !== 1 ? 's' : ''} will be created)

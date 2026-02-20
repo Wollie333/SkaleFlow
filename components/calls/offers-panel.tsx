@@ -255,7 +255,7 @@ export function OffersPanel({
   };
 
   const cardStyles: Record<string, string> = {
-    idle: 'border-white/10 bg-white/5 hover:border-white/20',
+    idle: 'border-white/10 bg-cream-warm/5 hover:border-white/20',
     presented: 'border-gold/50 bg-gold/10',
     accepted: 'border-emerald-500/50 bg-emerald-500/10',
     declined: 'border-red-500/40 bg-red-500/10',
@@ -288,7 +288,7 @@ export function OffersPanel({
               </span>
             </div>
           </div>
-          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-cream-warm/5 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full bg-gradient-to-r ${getLikelihoodColor(saleLikelihood)} transition-all duration-1000 ease-out`}
               style={{ width: `${saleLikelihood}%` }}
@@ -346,7 +346,7 @@ export function OffersPanel({
                     {effective.price_display && (
                       <button
                         onClick={() => openPriceEditor(offer)}
-                        className="group relative text-gold text-sm font-semibold whitespace-nowrap hover:bg-white/10 rounded px-1.5 py-0.5 -mr-1.5 transition-colors"
+                        className="group relative text-gold text-sm font-semibold whitespace-nowrap hover:bg-cream-warm/10 rounded px-1.5 py-0.5 -mr-1.5 transition-colors"
                         title="Click to edit price"
                       >
                         {effective.price_display}
@@ -367,7 +367,7 @@ export function OffersPanel({
 
                 {/* Inline price editor */}
                 {isEditingThis && (
-                  <div className="mt-2 p-2 md:p-3 bg-white/5 rounded-lg border border-gold/30 space-y-2.5">
+                  <div className="mt-2 p-2 md:p-3 bg-cream-warm/5 rounded-lg border border-gold/30 space-y-2.5">
                     <div className="flex items-center gap-2 mb-1">
                       <svg className="w-3.5 h-3.5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -382,7 +382,7 @@ export function OffersPanel({
                         value={editPriceDisplay}
                         onChange={(e) => setEditPriceDisplay(e.target.value)}
                         placeholder="R2,500"
-                        className="w-full px-2.5 py-1.5 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-gold/50"
+                        className="w-full px-2.5 py-1.5 rounded bg-cream-warm/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-gold/50"
                         onKeyDown={(e) => { if (e.key === 'Enter') savePriceOverride(); if (e.key === 'Escape') setEditingPriceId(null); }}
                       />
                     </div>
@@ -393,7 +393,7 @@ export function OffersPanel({
                         value={editPriceValue}
                         onChange={(e) => setEditPriceValue(e.target.value)}
                         placeholder="2500"
-                        className="w-full px-2.5 py-1.5 rounded bg-white/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-gold/50"
+                        className="w-full px-2.5 py-1.5 rounded bg-cream-warm/5 border border-white/10 text-white text-sm placeholder-white/20 focus:outline-none focus:border-gold/50"
                         onKeyDown={(e) => { if (e.key === 'Enter') savePriceOverride(); if (e.key === 'Escape') setEditingPriceId(null); }}
                       />
                     </div>
@@ -405,14 +405,14 @@ export function OffersPanel({
                     <div className="flex flex-col gap-1.5 md:flex-row md:gap-2">
                       <button
                         onClick={() => setEditingPriceId(null)}
-                        className="flex-1 py-1.5 rounded text-xs font-medium border border-white/10 text-white/50 hover:bg-white/5 transition-colors"
+                        className="flex-1 py-1.5 rounded text-xs font-medium border border-white/10 text-white/50 hover:bg-cream-warm/5 transition-colors"
                       >
                         Cancel
                       </button>
                       {hasOverride && (
                         <button
                           onClick={() => resetPrice(offer.id)}
-                          className="py-1.5 px-2.5 rounded text-xs font-medium border border-white/10 text-white/40 hover:bg-white/5 transition-colors"
+                          className="py-1.5 px-2.5 rounded text-xs font-medium border border-white/10 text-white/40 hover:bg-cream-warm/5 transition-colors"
                           title="Reset to original price"
                         >
                           Reset
@@ -460,7 +460,7 @@ export function OffersPanel({
                               ? 'bg-red-500/20 text-red-400'
                               : r.status === 'minimized'
                               ? 'bg-gold/20 text-gold'
-                              : 'bg-white/10 text-white/50'
+                              : 'bg-cream-warm/10 text-white/50'
                           }`}
                         >
                           {r.status === 'accepted' && '✓'}
@@ -485,7 +485,7 @@ export function OffersPanel({
 
                 {/* Attendee selector */}
                 {isSelectorOpen && eligibleAttendees.length > 0 && (
-                  <div className="mt-3 p-2.5 bg-white/5 rounded-lg border border-white/10">
+                  <div className="mt-3 p-2.5 bg-cream-warm/5 rounded-lg border border-white/10">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-white/60 text-xs font-medium">Show to:</span>
                       <button

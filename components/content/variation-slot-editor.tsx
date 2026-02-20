@@ -89,7 +89,7 @@ export function VariationSlotEditor({
         <select
           value={slot.format}
           onChange={e => onChange({ ...slot, format: e.target.value as ContentFormat })}
-          className="w-full px-3 py-2 text-sm border border-stone/20 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+          className="w-full px-3 py-2 text-sm border border-stone/20 rounded-lg bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
         >
           {FORMAT_OPTIONS.map(([value, label]) => (
             <option key={value} value={value}>{label}</option>
@@ -123,7 +123,7 @@ export function VariationSlotEditor({
         <select
           value={slot.storybrandStage}
           onChange={e => onChange({ ...slot, storybrandStage: e.target.value as StoryBrandStage })}
-          className="w-full px-3 py-2 text-sm border border-stone/20 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+          className="w-full px-3 py-2 text-sm border border-stone/20 rounded-lg bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
         >
           {STORYBRAND_STAGES.map(s => (
             <option key={s.value} value={s.value}>{s.label}</option>
@@ -138,7 +138,7 @@ export function VariationSlotEditor({
           <select
             value={slot.templateOverride || ''}
             onChange={e => onChange({ ...slot, templateOverride: e.target.value || null })}
-            className="w-full px-3 py-2 text-sm border border-stone/20 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+            className="w-full px-3 py-2 text-sm border border-stone/20 rounded-lg bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
           >
             <option value="">Auto (AI chooses)</option>
             {templates.map(t => (

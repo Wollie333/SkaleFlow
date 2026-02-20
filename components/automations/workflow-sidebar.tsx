@@ -6,7 +6,7 @@ const nodeTypes = [
   { type: 'move_stage', label: 'Move Stage', color: 'bg-purple-100 border-purple-300 text-purple-800', icon: '→' },
   { type: 'add_tag', label: 'Add Tag', color: 'bg-orange-100 border-orange-300 text-orange-800', icon: '+' },
   { type: 'remove_tag', label: 'Remove Tag', color: 'bg-orange-100 border-orange-300 text-orange-700', icon: '−' },
-  { type: 'webhook', label: 'Webhook', color: 'bg-gray-100 border-gray-300 text-gray-700', icon: '🌐' },
+  { type: 'webhook', label: 'Webhook', color: 'bg-cream border-stone/10 text-charcoal', icon: '🌐' },
   { type: 'delay', label: 'Delay', color: 'bg-yellow-100 border-yellow-300 text-yellow-800', icon: '⏱' },
   { type: 'condition', label: 'Condition', color: 'bg-indigo-100 border-indigo-300 text-indigo-800', icon: '?' },
 ];
@@ -18,7 +18,7 @@ export function WorkflowSidebar() {
   };
 
   return (
-    <div className="w-56 bg-white border-r border-stone/10 p-4 flex-shrink-0">
+    <div className="w-56 bg-cream-warm border-r border-stone/10 p-4 flex-shrink-0">
       <h3 className="text-xs font-semibold text-stone uppercase tracking-wider mb-3">Nodes</h3>
       <div className="space-y-2">
         {nodeTypes.map((node) => (

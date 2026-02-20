@@ -137,7 +137,7 @@ export function ReviewItemCard({
   return (
     <div
       className={cn(
-        'bg-white rounded-xl border shadow-[0_2px_12px_rgba(15,31,29,0.03)] transition-all duration-200',
+        'bg-cream-warm rounded-xl border shadow-[0_2px_12px_rgba(15,31,29,0.03)] transition-all duration-200',
         isExpanded
           ? 'border-teal/20 ring-1 ring-teal/10'
           : 'border-teal/[0.08] hover:border-teal/15'

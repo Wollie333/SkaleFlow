@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { ContactList } from '@/components/crm/contact-list';
 import { ContactFormModal } from '@/components/crm/contact-form-modal';
-import { Button } from '@/components/ui/button';
 import { PlusIcon } from '@heroicons/react/24/outline';
 
 export default function ContactsPage() {
@@ -22,19 +21,13 @@ export default function ContactsPage() {
     load();
   }, []);
 
-  if (!organizationId) return <div className="p-6"><div className="animate-pulse bg-gray-100 rounded-xl h-96" /></div>;
+  if (!organizationId) return <div className="p-6"><div className="animate-pulse bg-cream rounded-xl h-96" /></div>;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-charcoal">Contacts</h1>
-          <p className="text-sm text-stone mt-1">Manage your contacts and relationships</p>
-        </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <PlusIcon className="h-5 w-5 mr-2" />
-          Add Contact
-        </Button>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-charcoal">Contacts</h1>
+        <p className="text-sm text-stone mt-1">Manage your contacts and relationships</p>
       </div>
 
       <ContactList organizationId={organizationId} onCreateClick={() => setShowCreateModal(true)} />

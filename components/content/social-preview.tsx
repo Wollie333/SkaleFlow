@@ -99,7 +99,7 @@ function LinkedInPreview({ caption, hashtags, mediaUrls, targetUrl, userName }: 
   const displayName = userName || 'Your Name';
 
   return (
-    <div className="bg-white rounded-lg border border-stone/15 shadow-sm overflow-hidden">
+    <div className="bg-cream-warm rounded-lg border border-stone/15 shadow-sm overflow-hidden">
       {/* Header */}
       <div className="p-3 flex items-start gap-2.5">
         <AvatarPlaceholder name={displayName} size={48} />
@@ -152,7 +152,7 @@ function FacebookPreview({ caption, hashtags, mediaUrls, targetUrl, userName }: 
   const displayName = userName || 'Your Page';
 
   return (
-    <div className="bg-white rounded-lg border border-stone/15 shadow-sm overflow-hidden">
+    <div className="bg-cream-warm rounded-lg border border-stone/15 shadow-sm overflow-hidden">
       {/* Header */}
       <div className="p-3 flex items-start gap-2.5">
         <AvatarPlaceholder name={displayName} size={40} />
@@ -198,7 +198,7 @@ function InstagramPreview({ caption, hashtags, mediaUrls, userName }: SocialPrev
   const displayName = userName || 'yourpage';
 
   return (
-    <div className="bg-white rounded-lg border border-stone/15 shadow-sm overflow-hidden">
+    <div className="bg-cream-warm rounded-lg border border-stone/15 shadow-sm overflow-hidden">
       {/* Header */}
       <div className="p-3 flex items-center gap-2.5">
         <AvatarPlaceholder name={displayName} size={32} />
@@ -243,7 +243,7 @@ function TwitterPreview({ caption, hashtags, mediaUrls, userName }: SocialPrevie
   const handle = '@' + displayName.toLowerCase().replace(/\s+/g, '');
 
   return (
-    <div className="bg-white rounded-lg border border-stone/15 shadow-sm overflow-hidden p-3">
+    <div className="bg-cream-warm rounded-lg border border-stone/15 shadow-sm overflow-hidden p-3">
       <div className="flex gap-2.5">
         <AvatarPlaceholder name={displayName} size={40} />
         <div className="flex-1 min-w-0">
@@ -330,7 +330,7 @@ function YouTubePreview({ caption, hashtags, mediaUrls, userName }: SocialPrevie
   const displayName = userName || 'Your Channel';
 
   return (
-    <div className="bg-white rounded-lg overflow-hidden border border-stone/10">
+    <div className="bg-cream-warm rounded-lg overflow-hidden border border-stone/10">
       {/* Video thumbnail */}
       <div className="aspect-video bg-charcoal flex items-center justify-center relative">
         {mediaUrls.length > 0 && mediaUrls[0] ? (
@@ -425,11 +425,11 @@ function StoryPreview({ caption, hashtags, mediaUrls, userName, platform }: Soci
       </div>
       {/* Story progress bar */}
       <div className="absolute top-2 left-2 right-2 flex gap-1">
-        <div className="flex-1 h-0.5 bg-white/60 rounded-full" />
+        <div className="flex-1 h-0.5 bg-cream-warm/60 rounded-full" />
       </div>
       {/* User info top */}
       <div className="absolute top-5 left-3 right-3 flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">
+        <div className="w-8 h-8 rounded-full bg-cream-warm/20 flex items-center justify-center text-white text-xs font-bold">
           {displayName.charAt(0).toUpperCase()}
         </div>
         <span className="text-white text-xs font-semibold">{displayName}</span>
@@ -459,7 +459,7 @@ function LinkedInArticlePreview({ caption, hashtags, mediaUrls, userName }: Soci
   const excerpt = caption.split('\n').slice(1).join(' ').slice(0, 200) || 'Article excerpt will appear here...';
 
   return (
-    <div className="bg-white rounded-lg border border-stone/15 shadow-sm overflow-hidden">
+    <div className="bg-cream-warm rounded-lg border border-stone/15 shadow-sm overflow-hidden">
       <div className="p-3 flex items-start gap-2.5">
         <AvatarPlaceholder name={displayName} size={48} />
         <div>
@@ -497,7 +497,7 @@ function LinkedInDocumentPreview({ caption, hashtags, mediaUrls, userName }: Soc
   const displayName = userName || 'Your Name';
 
   return (
-    <div className="bg-white rounded-lg border border-stone/15 shadow-sm overflow-hidden">
+    <div className="bg-cream-warm rounded-lg border border-stone/15 shadow-sm overflow-hidden">
       <div className="p-3 flex items-start gap-2.5">
         <AvatarPlaceholder name={displayName} size={48} />
         <div>
@@ -516,7 +516,7 @@ function LinkedInDocumentPreview({ caption, hashtags, mediaUrls, userName }: Soc
             <img src={mediaUrls[0]} alt="Document" className="w-full h-full object-cover" />
           ) : (
             <div className="text-center">
-              <div className="w-12 h-14 mx-auto border-2 border-stone/30 rounded bg-white flex items-center justify-center mb-2">
+              <div className="w-12 h-14 mx-auto border-2 border-stone/30 rounded bg-cream-warm flex items-center justify-center mb-2">
                 <span className="text-stone/40 text-xs">PDF</span>
               </div>
               <span className="text-stone/30 text-xs">Document carousel</span>
@@ -562,7 +562,7 @@ function TwitterThreadPreview({ caption, hashtags, mediaUrls, userName }: Social
   return (
     <div className="space-y-0">
       {tweets.map((tweet, i) => (
-        <div key={i} className="bg-white border border-stone/15 p-3 first:rounded-t-lg last:rounded-b-lg -mt-px">
+        <div key={i} className="bg-cream-warm border border-stone/15 p-3 first:rounded-t-lg last:rounded-b-lg -mt-px">
           <div className="flex gap-2.5">
             <div className="flex flex-col items-center">
               <AvatarPlaceholder name={displayName} size={40} />
@@ -592,7 +592,7 @@ function YouTubeCommunityPreview({ caption, hashtags, mediaUrls, userName }: Soc
   const displayName = userName || 'Your Channel';
 
   return (
-    <div className="bg-white rounded-lg border border-stone/15 shadow-sm overflow-hidden p-3">
+    <div className="bg-cream-warm rounded-lg border border-stone/15 shadow-sm overflow-hidden p-3">
       <div className="flex items-start gap-2.5 mb-2">
         <div className="w-10 h-10 rounded-full bg-stone/20 flex-shrink-0 flex items-center justify-center text-xs font-bold text-stone">
           {displayName.charAt(0).toUpperCase()}
@@ -705,7 +705,7 @@ export function SocialPreviewTabs({ platforms, caption, hashtags, mediaUrls, tar
             className={cn(
               'flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
               currentPlatform === p
-                ? 'bg-white text-charcoal shadow-sm'
+                ? 'bg-cream-warm text-charcoal shadow-sm'
                 : 'text-stone hover:text-charcoal'
             )}
           >

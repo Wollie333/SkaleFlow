@@ -154,7 +154,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
   return (
     <div className="space-y-6">
       {/* Team Members */}
-      <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
+      <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
         <div className="px-5 py-4 border-b border-cream">
           <h3 className="font-serif text-lg font-bold text-charcoal">
             Team Members
@@ -252,7 +252,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
       </div>
 
       {/* Pending Invitations */}
-      <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
+      <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
         <div className="px-5 py-4 border-b border-cream">
           <h3 className="font-serif text-lg font-bold text-charcoal">
             Pending Invitations
@@ -326,7 +326,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
       </div>
 
       {/* Invite Form */}
-      <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+      <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
         <h3 className="font-serif text-lg font-bold text-charcoal mb-4">Invite Team Member</h3>
 
         {inviteError && (

@@ -332,7 +332,7 @@ export default function AdminUserDetailPage() {
       {/* Org Assignment Popup */}
       {showOrgPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-xl border border-teal/[0.08] p-6 w-full max-w-md mx-4">
+          <div className="bg-cream-warm rounded-xl shadow-xl border border-teal/[0.08] p-6 w-full max-w-md mx-4">
             <h3 className="font-serif text-lg font-bold text-charcoal mb-1">
               Assign Organization
             </h3>
@@ -403,7 +403,7 @@ export default function AdminUserDetailPage() {
                 value={currentTierId}
                 onChange={(e) => handleTierChange(e.target.value)}
                 disabled={tierLoading}
-                className="text-sm border border-cream rounded-lg px-2.5 py-2 bg-white text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal disabled:opacity-50 cursor-pointer"
+                className="text-sm border border-cream rounded-lg px-2.5 py-2 bg-cream-warm text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal disabled:opacity-50 cursor-pointer"
               >
                 <option value="">No tier</option>
                 {tiers.map(tier => (
@@ -450,15 +450,15 @@ export default function AdminUserDetailPage() {
         {/* Left: Tabbed content */}
         <div className="flex-1 min-w-0">
           {/* Tab bar */}
-          <div className="flex items-center gap-1 border-b border-cream mb-6 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="mb-4 flex gap-4 border-b border-stone/10 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => handleTabChange(tab.key)}
-                className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap flex-shrink-0 ${
+                className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.key
                     ? 'border-teal text-teal'
-                    : 'border-transparent text-stone hover:text-charcoal hover:border-stone/20'
+                    : 'border-transparent text-stone hover:text-charcoal'
                 }`}
               >
                 {tab.label}

@@ -27,7 +27,7 @@ export function ConversationThread({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-stone/10 overflow-hidden sticky top-6">
+    <div className="bg-cream-warm rounded-xl border border-stone/10 overflow-hidden sticky top-6">
       {/* Header */}
       <div className="px-6 py-4 border-b border-stone/10">
         <div className="flex items-start gap-3">

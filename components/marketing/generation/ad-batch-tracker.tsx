@@ -123,7 +123,7 @@ export function AdBatchTracker({ batchId, onComplete, onCancel }: AdBatchTracker
 
   if (!status) {
     return (
-      <div className="bg-white rounded-xl border border-stone/10 p-4">
+      <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
         <div className="flex items-center gap-2">
           <SparklesIcon className="w-5 h-5 text-teal animate-pulse" />
           <span className="text-sm text-stone">Starting ad generation...</span>
@@ -137,7 +137,7 @@ export function AdBatchTracker({ batchId, onComplete, onCancel }: AdBatchTracker
   const currentItem = status.completedItems + status.failedItems + 1;
 
   return (
-    <div className="bg-white rounded-xl border border-stone/10 p-4 space-y-3">
+    <div className="bg-cream-warm rounded-xl border border-stone/10 p-4 space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

@@ -67,8 +67,8 @@ export function PlacementPreviewCard({
         hasError
           ? 'border-red-300 bg-red-50/50'
           : item
-            ? 'border-stone-200 hover:border-teal hover:shadow-md cursor-pointer'
-            : 'border-stone-200',
+            ? 'border-stone/10 hover:border-teal hover:shadow-md cursor-pointer'
+            : 'border-stone/10',
         isGenerating && 'animate-pulse'
       )}
     >
@@ -84,13 +84,13 @@ export function PlacementPreviewCard({
         </div>
         <div className="flex items-center gap-1.5">
           {hasConfigOverride && (
-            <span className="text-[10px] bg-white/20 text-white px-1.5 py-0.5 rounded-full font-medium">
+            <span className="text-[10px] bg-cream-warm/20 text-white px-1.5 py-0.5 rounded-full font-medium">
               Custom
             </span>
           )}
           <button
             onClick={onConfigClick}
-            className="p-0.5 rounded hover:bg-white/20 transition-colors text-white"
+            className="p-0.5 rounded hover:bg-cream-warm/20 transition-colors text-white"
             title="Configure this placement"
           >
             <Cog6ToothIcon className="w-3.5 h-3.5" />
@@ -155,10 +155,10 @@ export function PlacementPreviewCard({
         ) : (
           // Empty state
           <div className="flex flex-col items-center justify-center py-3 text-center">
-            <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center mb-2">
+            <div className="w-8 h-8 rounded-full bg-cream flex items-center justify-center mb-2">
               <span className="text-stone-400 text-xs font-medium">AI</span>
             </div>
-            <p className="text-xs text-stone-500">Will be generated</p>
+            <p className="text-xs text-stone">Will be generated</p>
             <p className="text-[10px] text-stone-400 mt-0.5">
               {FORMAT_LABELS[effectiveFormat] || effectiveFormat}
             </p>

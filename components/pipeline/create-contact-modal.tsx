@@ -54,7 +54,7 @@ export function CreateContactModal({ isOpen, stageId, stageName, onClose, onCrea
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
+      <div className="bg-cream-warm rounded-xl shadow-xl w-full max-w-lg mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <div>
             <h2 className="text-lg font-semibold text-charcoal">Add Contact</h2>

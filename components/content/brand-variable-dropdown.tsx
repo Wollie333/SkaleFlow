@@ -60,7 +60,7 @@ export function BrandVariableDropdown({
   const dropdown = (
     <div
       ref={containerRef}
-      className="fixed z-[60] w-[320px] max-h-[300px] overflow-y-auto bg-white rounded-xl border border-stone/15 shadow-xl"
+      className="fixed z-[60] w-[320px] max-h-[300px] overflow-y-auto bg-cream-warm rounded-xl border border-stone/15 shadow-xl"
       style={{ top: clampedTop, left: clampedLeft }}
     >
       {/* Header */}

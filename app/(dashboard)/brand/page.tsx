@@ -341,7 +341,7 @@ export default function BrandEnginePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
             onClick={() => router.push('/calendar')}
-            className="group relative text-left bg-white rounded-xl border border-stone/10 p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-dark/5 hover:border-teal/30"
+            className="group relative text-left bg-cream-warm rounded-xl border border-stone/10 p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-dark/5 hover:border-teal/30"
           >
             <div className="w-11 h-11 rounded-lg bg-teal/10 flex items-center justify-center mb-4 group-hover:bg-teal/15 transition-colors">
               <RocketLaunchIcon className="w-5 h-5 text-teal" />
@@ -355,7 +355,7 @@ export default function BrandEnginePage() {
 
           <button
             onClick={handleExportPlaybook}
-            className="group relative text-left bg-white rounded-xl border border-stone/10 p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-dark/5 hover:border-gold/30"
+            className="group relative text-left bg-cream-warm rounded-xl border border-stone/10 p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-dark/5 hover:border-gold/30"
           >
             <div className="w-11 h-11 rounded-lg bg-gold/10 flex items-center justify-center mb-4 group-hover:bg-gold/15 transition-colors">
               <BookOpenIcon className="w-5 h-5 text-gold" />
@@ -369,7 +369,7 @@ export default function BrandEnginePage() {
 
           <button
             onClick={() => setShowImportModal(true)}
-            className="group relative text-left bg-white rounded-xl border border-stone/10 p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-dark/5 hover:border-stone/30"
+            className="group relative text-left bg-cream-warm rounded-xl border border-stone/10 p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-dark/5 hover:border-stone/30"
           >
             <div className="w-11 h-11 rounded-lg bg-stone/10 flex items-center justify-center mb-4 group-hover:bg-stone/15 transition-colors">
               <ArrowUpTrayIcon className="w-5 h-5 text-stone" />
@@ -435,7 +435,7 @@ export default function BrandEnginePage() {
                   tabIndex={accessible ? 0 : -1}
                   onClick={() => accessible && handlePhaseClick(phase)}
                   onKeyDown={(e) => { if (accessible && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handlePhaseClick(phase); } }}
-                  className={`relative text-left bg-white rounded-xl border p-5 transition-all duration-200 ${
+                  className={`relative text-left bg-cream-warm rounded-xl border p-5 transition-all duration-200 ${
                     !accessible
                       ? 'opacity-50 cursor-not-allowed'
                       : 'hover:-translate-y-1 hover:shadow-lg hover:shadow-dark/5 cursor-pointer'
@@ -595,7 +595,7 @@ export default function BrandEnginePage() {
             className="absolute inset-0 bg-dark/50 backdrop-blur-sm"
             onClick={!isClearing ? () => setShowClearConfirm(false) : undefined}
           />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+          <div className="relative bg-cream-warm rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
             <div className="px-6 py-5 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">

@@ -221,7 +221,7 @@ export default function MeetingsPage() {
               onClick={() => handleViewModeChange('calendar')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 viewMode === 'calendar'
-                  ? 'bg-white text-charcoal shadow-sm'
+                  ? 'bg-cream-warm text-charcoal shadow-sm'
                   : 'text-stone hover:text-charcoal'
               }`}
             >
@@ -232,7 +232,7 @@ export default function MeetingsPage() {
               onClick={() => handleViewModeChange('list')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 viewMode === 'list'
-                  ? 'bg-white text-charcoal shadow-sm'
+                  ? 'bg-cream-warm text-charcoal shadow-sm'
                   : 'text-stone hover:text-charcoal'
               }`}
             >
@@ -247,7 +247,7 @@ export default function MeetingsPage() {
       {viewMode === 'calendar' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Calendar Grid */}
-          <div className="lg:col-span-2 bg-white rounded-xl border border-stone/10 p-6">
+          <div className="lg:col-span-2 bg-cream-warm rounded-xl border border-stone/10 p-6">
             {/* Month Navigation */}
             <div className="flex items-center justify-between mb-6">
               <button
@@ -290,13 +290,13 @@ export default function MeetingsPage() {
                     key={key}
                     onClick={() => setSelectedDay(day)}
                     className={`relative min-h-[80px] p-1.5 border border-stone/5 text-left transition-colors ${
-                      !inMonth ? 'bg-cream-warm/50' : 'bg-white hover:bg-cream-warm/40'
+                      !inMonth ? 'bg-cream-warm/50' : 'bg-cream-warm hover:bg-cream/50'
                     } ${selected ? 'ring-2 ring-teal ring-inset' : ''}`}
                   >
                     <span
                       className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-medium ${
                         today
-                          ? 'bg-teal text-cream font-bold'
+                          ? 'bg-teal text-white font-bold'
                           : inMonth
                             ? 'text-charcoal'
                             : 'text-stone/40'
@@ -338,7 +338,7 @@ export default function MeetingsPage() {
 
           {/* Day Detail Sidebar */}
           <div className="space-y-4">
-            <div className="bg-white rounded-xl border border-stone/10 p-6">
+            <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
               <h3 className="font-serif text-lg font-bold text-charcoal mb-1">
                 {selectedDay ? format(selectedDay, 'EEEE, d MMMM yyyy') : 'Select a day'}
               </h3>
@@ -358,7 +358,7 @@ export default function MeetingsPage() {
               return (
                 <div
                   key={meeting.id}
-                  className="bg-white rounded-xl border border-stone/10 p-5 space-y-3"
+                  className="bg-cream-warm rounded-xl border border-stone/10 p-5 space-y-3"
                 >
                   <div className="flex items-start justify-between">
                     <div>
@@ -427,7 +427,7 @@ export default function MeetingsPage() {
 
             {/* No day selected empty state */}
             {!selectedDay && (
-              <div className="bg-white rounded-xl border border-stone/10 p-8 text-center">
+              <div className="bg-cream-warm rounded-xl border border-stone/10 p-8 text-center">
                 <CalendarDaysIcon className="w-10 h-10 mx-auto text-stone/20 mb-3" />
                 <p className="text-sm text-stone">Click a day on the calendar to see meetings</p>
               </div>
@@ -447,7 +447,7 @@ export default function MeetingsPage() {
                 onClick={() => handleFilterChange(tab)}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors capitalize ${
                   filter === tab
-                    ? 'bg-white text-charcoal shadow-sm'
+                    ? 'bg-cream-warm text-charcoal shadow-sm'
                     : 'text-stone hover:text-charcoal'
                 }`}
               >
@@ -478,7 +478,7 @@ export default function MeetingsPage() {
                 return (
                   <div
                     key={meeting.id}
-                    className="bg-white rounded-xl border border-stone/10 p-5 flex flex-col md:flex-row md:items-center gap-4"
+                    className="bg-cream-warm rounded-xl border border-stone/10 p-5 flex flex-col md:flex-row md:items-center gap-4"
                   >
                     {/* Applicant Info */}
                     <div className="flex-1 min-w-0">

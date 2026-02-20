@@ -1288,14 +1288,14 @@ export default function ContentCreatePage() {
                 <button
                   type="button"
                   onClick={() => setShowScriptModal(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-stone-600 hover:border-teal/30 hover:text-teal transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-stone hover:border-teal/30 hover:text-teal transition-colors"
                 >
                   Script {scriptData.hook || scriptData.script_body ? '(added)' : '(optional)'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowTargetUrl(prev => !prev)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-stone-600 hover:border-teal/30 hover:text-teal transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-stone hover:border-teal/30 hover:text-teal transition-colors"
                 >
                   <LinkIcon className="w-4 h-4" />
                   {targetUrl ? 'Edit Link' : 'Add Link'}
@@ -1452,7 +1452,7 @@ export default function ContentCreatePage() {
       {/* AI Model Selection Modal (kept for backward compat, used by bulk/engine) */}
       {showModelModal && (
         <div className="fixed inset-0 bg-dark/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-cream-warm rounded-2xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-teal/10 flex items-center justify-center">

@@ -44,7 +44,7 @@ function ModelCard({
         'w-full text-left p-3 rounded-xl border-2 transition-all',
         isSelected
           ? 'border-teal bg-teal/5 shadow-sm'
-          : 'border-stone/15 hover:border-stone/30 bg-white'
+          : 'border-stone/15 hover:border-stone/30 bg-cream-warm'
       )}
     >
       <div className="flex items-center justify-between">
@@ -115,7 +115,7 @@ export function GenerateWeekModal({
 
   return (
     <div className="fixed inset-0 bg-dark/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-cream-warm rounded-2xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-teal/10 flex items-center justify-center">
@@ -165,7 +165,7 @@ export function GenerateWeekModal({
                     <button
                       onClick={() => setPostCount(Math.max(1, postCount - 1))}
                       disabled={postCount <= 1}
-                      className="w-8 h-8 rounded-lg border border-stone/20 flex items-center justify-center hover:bg-white disabled:opacity-30 transition-colors"
+                      className="w-8 h-8 rounded-lg border border-stone/20 flex items-center justify-center hover:bg-cream-warm disabled:opacity-30 transition-colors"
                     >
                       <MinusIcon className="w-4 h-4 text-charcoal" />
                     </button>
@@ -173,7 +173,7 @@ export function GenerateWeekModal({
                     <button
                       onClick={() => setPostCount(Math.min(itemCount, postCount + 1))}
                       disabled={postCount >= itemCount}
-                      className="w-8 h-8 rounded-lg border border-stone/20 flex items-center justify-center hover:bg-white disabled:opacity-30 transition-colors"
+                      className="w-8 h-8 rounded-lg border border-stone/20 flex items-center justify-center hover:bg-cream-warm disabled:opacity-30 transition-colors"
                     >
                       <PlusIcon className="w-4 h-4 text-charcoal" />
                     </button>

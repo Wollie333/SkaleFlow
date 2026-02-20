@@ -52,7 +52,7 @@ export function IconPicker({ onIconSelect, className }: IconPickerProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-full mt-2 w-80 bg-white border border-stone/15 rounded-xl shadow-2xl overflow-hidden z-50">
+        <div className="absolute left-0 top-full mt-2 w-80 bg-cream-warm border border-stone/15 rounded-xl shadow-2xl overflow-hidden z-50">
           <div className="p-3 border-b border-stone/10">
             <h4 className="text-xs font-semibold text-charcoal uppercase tracking-wider">
               Select Icon

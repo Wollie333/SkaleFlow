@@ -60,7 +60,7 @@ function MetricCard({
   bg: string;
 }) {
   return (
-    <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-stone/10">
+    <div className="flex items-center gap-3 p-3 bg-cream-warm rounded-lg border border-stone/10">
       <div className={cn('p-2 rounded-lg', bg)}>
         <Icon className={cn('w-4 h-4', color)} />
       </div>
@@ -266,7 +266,7 @@ export function PostDetailModal({ post, isOpen, onClose }: PostDetailModalProps)
 
           {/* Performance context */}
           {post.impressions > 0 && (
-            <div className="bg-white rounded-lg border border-stone/10 p-4">
+            <div className="bg-cream-warm rounded-lg border border-stone/10 p-4">
               <h4 className="text-sm font-semibold text-charcoal mb-2">Performance Notes</h4>
               <ul className="space-y-1.5 text-xs text-stone">
                 {post.engagementRate > 5 && (

@@ -165,7 +165,7 @@ export function WorkflowBuilder({
         {/* Toolbar */}
         <div className="absolute top-3 right-3 z-10 flex gap-2">
           <button onClick={handleSave} disabled={saving}
-            className="px-3 py-1.5 text-xs font-medium bg-white border border-stone/20 rounded-lg hover:bg-cream text-charcoal disabled:opacity-50">
+            className="px-3 py-1.5 text-xs font-medium bg-cream-warm border border-stone/20 rounded-lg hover:bg-cream text-charcoal disabled:opacity-50">
             {saving ? 'Saving...' : 'Save Draft'}
           </button>
           <button onClick={handlePublish} disabled={publishing}
@@ -189,7 +189,7 @@ export function WorkflowBuilder({
           fitView
           deleteKeyCode="Delete"
         >
-          <Controls className="!bg-white !border-stone/10 !rounded-lg !shadow-sm" />
+          <Controls className="!bg-cream-warm !border-stone/10 !rounded-lg !shadow-sm" />
           <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#e5e7eb" />
         </ReactFlow>
       </div>

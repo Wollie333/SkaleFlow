@@ -43,7 +43,7 @@ export function ContactDetailHeader({
   const lifetimeValue = `R${(contact.lifetime_value_cents / 100).toFixed(2)}`;
 
   return (
-    <div className="bg-white rounded-lg border border-stone p-6 space-y-4">
+    <div className="bg-cream-warm rounded-lg border border-stone/10 p-6 space-y-4">
       {/* Top Row: Avatar + Info + Actions */}
       <div className="flex items-start justify-between gap-6">
         {/* Left: Avatar + Info */}
@@ -55,10 +55,10 @@ export function ContactDetailHeader({
 
           {/* Info */}
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-dark">{fullName}</h1>
-            <div className="flex items-center gap-3 text-charcoal">
+            <h1 className="text-3xl font-bold text-charcoal">{fullName}</h1>
+            <div className="flex items-center gap-3 text-stone">
               {contact.job_title && (
-                <span className="font-medium">{contact.job_title}</span>
+                <span className="font-medium text-charcoal">{contact.job_title}</span>
               )}
               {contact.company && (
                 <>
@@ -74,52 +74,49 @@ export function ContactDetailHeader({
             </div>
             <div className="flex items-center gap-3">
               <LifecycleBadge stage={contact.lifecycle_stage as CrmLifecycleStage} />
-              <span className="text-sm text-charcoal">
-                Lifetime Value: <span className="font-semibold text-dark">{lifetimeValue}</span>
+              <span className="text-sm text-stone">
+                Lifetime Value: <span className="font-semibold text-charcoal">{lifetimeValue}</span>
               </span>
             </div>
           </div>
         </div>
 
-        {/* Right: Quick Actions */}
-        <div className="flex gap-2">
-          <button
-            onClick={onEdit}
-            className="flex items-center gap-2 px-4 py-2 border border-stone rounded-lg text-charcoal hover:bg-cream transition-colors"
-          >
-            <PencilIcon className="w-4 h-4" />
-            Edit
-          </button>
-        </div>
+        {/* Right: Edit */}
+        <button
+          onClick={onEdit}
+          className="flex items-center gap-2 px-4 py-2 border border-stone/10 rounded-lg text-charcoal hover:bg-cream/50 transition-colors"
+        >
+          <PencilIcon className="w-4 h-4" />
+          Edit
+        </button>
       </div>
 
       {/* Bottom Row: Action Buttons */}
-      <div className="flex gap-3 pt-2 border-t border-stone">
+      <div className="flex gap-3 pt-4 border-t border-stone/10">
         <button
           onClick={() => {
-            // Scroll to activity tab
             const activityTab = document.querySelector('[data-tab="activity"]');
             if (activityTab) {
               (activityTab as HTMLElement).click();
             }
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-cream text-charcoal rounded-lg hover:bg-cream-warm transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-cream text-charcoal rounded-lg hover:bg-cream-warm transition-colors text-sm font-medium"
         >
-          <ChatBubbleLeftIcon className="w-5 h-5" />
+          <ChatBubbleLeftIcon className="w-4 h-4" />
           Log Activity
         </button>
         <button
           onClick={() => router.push(`/crm/deals?contactId=${contact.id}`)}
-          className="flex items-center gap-2 px-4 py-2 bg-cream text-charcoal rounded-lg hover:bg-cream-warm transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-cream text-charcoal rounded-lg hover:bg-cream-warm transition-colors text-sm font-medium"
         >
-          <CurrencyDollarIcon className="w-5 h-5" />
+          <CurrencyDollarIcon className="w-4 h-4" />
           Create Deal
         </button>
         <button
           onClick={() => router.push(`/crm/invoices/new?contactId=${contact.id}`)}
-          className="flex items-center gap-2 px-4 py-2 bg-cream text-charcoal rounded-lg hover:bg-cream-warm transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-cream text-charcoal rounded-lg hover:bg-cream-warm transition-colors text-sm font-medium"
         >
-          <DocumentTextIcon className="w-5 h-5" />
+          <DocumentTextIcon className="w-4 h-4" />
           Create Invoice
         </button>
       </div>

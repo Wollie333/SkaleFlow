@@ -245,21 +245,21 @@ export default function PipelineBoardPage() {
           <div className="flex items-center gap-1 bg-cream-warm rounded-lg p-1">
             <button
               onClick={() => router.push(`/pipeline/${pipelineId}/automations`)}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-stone hover:text-teal hover:bg-white rounded-md transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-stone hover:text-teal hover:bg-cream-warm rounded-md transition-all"
             >
               <BoltIcon className="w-4 h-4" />
               Automations
             </button>
             <button
               onClick={() => router.push(`/pipeline/${pipelineId}/analytics`)}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-stone hover:text-teal hover:bg-white rounded-md transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-stone hover:text-teal hover:bg-cream-warm rounded-md transition-all"
             >
               <ChartBarIcon className="w-4 h-4" />
               Analytics
             </button>
             <button
               onClick={() => router.push(`/pipeline/${pipelineId}/settings`)}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-stone hover:text-teal hover:bg-white rounded-md transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-stone hover:text-teal hover:bg-cream-warm rounded-md transition-all"
             >
               <Cog6ToothIcon className="w-4 h-4" />
               Settings

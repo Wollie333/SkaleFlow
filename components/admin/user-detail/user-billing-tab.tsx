@@ -127,7 +127,7 @@ export function UserBillingTab({
   return (
     <div className="space-y-6">
       {/* Subscription Management */}
-      <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+      <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
         <h3 className="font-serif text-lg font-bold text-charcoal mb-4">Subscription</h3>
 
         {subscription ? (
@@ -154,7 +154,7 @@ export function UserBillingTab({
                 value={subscription.tier_id || ''}
                 onChange={(e) => onChangeTier(e.target.value)}
                 disabled={tierLoading}
-                className="text-sm border border-cream rounded-lg px-2.5 py-2 bg-white text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal disabled:opacity-50 cursor-pointer"
+                className="text-sm border border-cream rounded-lg px-2.5 py-2 bg-cream-warm text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal disabled:opacity-50 cursor-pointer"
               >
                 <option value="">No tier</option>
                 {tiers.map(tier => (
@@ -227,19 +227,19 @@ export function UserBillingTab({
         <div>
           <h3 className="font-serif text-lg font-bold text-charcoal mb-4">Credit Balance</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+            <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
               <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Monthly</p>
               <p className="text-2xl font-bold text-charcoal">{credits.monthly_balance.toLocaleString('en-ZA')}</p>
               {credits.period_end && (
                 <p className="text-xs text-stone mt-1">Resets {formatDate(credits.period_end)}</p>
               )}
             </div>
-            <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+            <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
               <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Top-up</p>
               <p className="text-2xl font-bold text-charcoal">{credits.topup_balance.toLocaleString('en-ZA')}</p>
               <p className="text-xs text-stone mt-1">Never expires</p>
             </div>
-            <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+            <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
               <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Total Available</p>
               <p className="text-2xl font-bold text-teal">{credits.total_balance.toLocaleString('en-ZA')}</p>
             </div>
@@ -248,7 +248,7 @@ export function UserBillingTab({
       )}
 
       {/* Transaction History */}
-      <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
+      <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
         <div className="px-5 py-4 border-b border-cream">
           <h3 className="font-serif text-lg font-bold text-charcoal">Transaction History</h3>
         </div>
@@ -293,7 +293,7 @@ export function UserBillingTab({
       </div>
 
       {/* Invoices */}
-      <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
+      <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
         <div className="px-5 py-4 border-b border-cream">
           <h3 className="font-serif text-lg font-bold text-charcoal">Invoices</h3>
         </div>

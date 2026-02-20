@@ -97,14 +97,14 @@ export function TemplatesListClient({ templates, isAdmin }: { templates: Templat
             <>
               <button
                 onClick={handleDownloadBlank}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-charcoal bg-white border border-stone/20 rounded-lg hover:bg-cream/50 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-charcoal bg-cream-warm border border-stone/20 rounded-lg hover:bg-cream/50 transition-colors"
                 title="Download a blank template file (.md) to fill in offline"
               >
                 <ArrowDownTrayIcon className="w-4 h-4" />
                 Download Template
               </button>
               <label
-                className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-charcoal bg-white border border-stone/20 rounded-lg hover:bg-cream/50 transition-colors cursor-pointer ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
+                className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-charcoal bg-cream-warm border border-stone/20 rounded-lg hover:bg-cream/50 transition-colors cursor-pointer ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
                 title="Upload a filled .md template file to create a new template"
               >
                 <ArrowUpTrayIcon className="w-4 h-4" />
@@ -134,7 +134,7 @@ export function TemplatesListClient({ templates, isAdmin }: { templates: Templat
           return (
             <div
               key={template.id}
-              className="bg-white rounded-xl border border-stone/10 p-5 hover:border-teal/20 transition-colors"
+              className="bg-cream-warm rounded-xl border border-stone/10 p-5 hover:border-teal/20 transition-colors"
             >
               <div className="flex items-start justify-between">
                 <Link href={`/calls/templates/${template.id}`} className="flex-1 min-w-0">
@@ -167,7 +167,7 @@ export function TemplatesListClient({ templates, isAdmin }: { templates: Templat
         })}
 
         {templates.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-xl border border-stone/10">
+          <div className="text-center py-12 bg-cream-warm rounded-xl border border-stone/10">
             <p className="text-stone text-sm mb-2">No templates yet</p>
             <p className="text-xs text-stone">Ask your admin to seed system templates or create your own.</p>
           </div>

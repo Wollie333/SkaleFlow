@@ -375,7 +375,7 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 overflow-y-auto py-8">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4">
+      <div className="bg-cream-warm rounded-xl shadow-xl w-full max-w-3xl mx-4">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <div className="flex items-center gap-3">
@@ -401,7 +401,7 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
                   onClick={() => setInputMode('upload')}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                     inputMode === 'upload'
-                      ? 'bg-white text-charcoal shadow-sm'
+                      ? 'bg-cream-warm text-charcoal shadow-sm'
                       : 'text-stone hover:text-charcoal'
                   }`}
                 >
@@ -412,7 +412,7 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
                   onClick={() => setInputMode('paste')}
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                     inputMode === 'paste'
-                      ? 'bg-white text-charcoal shadow-sm'
+                      ? 'bg-cream-warm text-charcoal shadow-sm'
                       : 'text-stone hover:text-charcoal'
                   }`}
                 >
@@ -531,7 +531,7 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
                   {parsed.prompt_instructions && (
                     <div>
                       <span className="text-xs font-semibold text-stone/60">Prompt Instructions:</span>
-                      <pre className="mt-1 text-xs font-mono bg-white rounded p-2 max-h-24 overflow-auto whitespace-pre-wrap">
+                      <pre className="mt-1 text-xs font-mono bg-cream-warm rounded p-2 max-h-24 overflow-auto whitespace-pre-wrap">
                         {parsed.prompt_instructions.substring(0, 500)}
                       </pre>
                     </div>
@@ -578,7 +578,7 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
                     <select
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-stone/20 rounded-lg bg-white"
+                      className="w-full px-3 py-2 text-sm border border-stone/20 rounded-lg bg-cream-warm"
                     >
                       {CATEGORIES.map(c => (
                         <option key={c.value} value={c.value}>{c.label}</option>
@@ -590,7 +590,7 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
                     <select
                       value={contentType}
                       onChange={(e) => setContentType(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-stone/20 rounded-lg bg-white"
+                      className="w-full px-3 py-2 text-sm border border-stone/20 rounded-lg bg-cream-warm"
                     >
                       {CONTENT_TYPES.map(c => (
                         <option key={c.value} value={c.value}>{c.label}</option>
@@ -602,7 +602,7 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
                     <select
                       value={formatCategory}
                       onChange={(e) => setFormatCategory(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-stone/20 rounded-lg bg-white"
+                      className="w-full px-3 py-2 text-sm border border-stone/20 rounded-lg bg-cream-warm"
                     >
                       {FORMAT_CATEGORIES.map(c => (
                         <option key={c.value} value={c.value}>{c.label}</option>
@@ -622,7 +622,7 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                           tier === t.value
                             ? 'bg-teal/15 text-teal border-teal/30'
-                            : 'bg-white text-stone border-stone/20 hover:border-stone/40'
+                            : 'bg-cream-warm text-stone border-stone/20 hover:border-stone/40'
                         }`}
                       >
                         {t.label}
@@ -642,7 +642,7 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                           funnelStages.includes(stage)
                             ? 'bg-teal/15 text-teal border-teal/30'
-                            : 'bg-white text-stone border-stone/20 hover:border-stone/40'
+                            : 'bg-cream-warm text-stone border-stone/20 hover:border-stone/40'
                         }`}
                       >
                         {stage.charAt(0).toUpperCase() + stage.slice(1)}
@@ -676,7 +676,7 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
                               ? 'bg-teal text-white border-teal'
                               : isSelected
                               ? 'bg-teal/15 text-teal border-teal/30'
-                              : 'bg-white text-stone border-stone/20 hover:border-stone/40'
+                              : 'bg-cream-warm text-stone border-stone/20 hover:border-stone/40'
                           }`}
                         >
                           {STORYBRAND_LABELS[stage]}

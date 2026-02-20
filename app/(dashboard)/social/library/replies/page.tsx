@@ -29,7 +29,7 @@ export default async function SavedRepliesPage() {
 
   return (
     <div className="p-6 md:p-8 space-y-6">
-      <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
+      <div className="bg-cream-warm rounded-xl border border-stone/10 p-12 text-center">
         <h2 className="text-2xl font-bold text-charcoal mb-2">Saved Replies</h2>
         <p className="text-stone mb-4">Coming soon - Quick response templates for social engagement</p>
       </div>

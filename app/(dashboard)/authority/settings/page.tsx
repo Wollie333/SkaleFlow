@@ -85,7 +85,7 @@ export default function AuthoritySettingsPage() {
       </div>
 
       {/* BCC Email Capture */}
-      <div className="bg-white rounded-xl border border-stone/10 p-5 mb-6">
+      <div className="bg-cream-warm rounded-xl border border-stone/10 p-5 mb-6">
         <div className="flex items-center gap-2 mb-3">
           <EnvelopeIcon className="w-5 h-5 text-teal" />
           <h2 className="text-sm font-semibold text-charcoal">Email Capture (BCC)</h2>
@@ -135,7 +135,7 @@ export default function AuthoritySettingsPage() {
       </div>
 
       {/* Notification Preferences */}
-      <div className="bg-white rounded-xl border border-stone/10 p-5 mb-6">
+      <div className="bg-cream-warm rounded-xl border border-stone/10 p-5 mb-6">
         <div className="flex items-center gap-2 mb-3">
           <ShieldCheckIcon className="w-5 h-5 text-teal" />
           <h2 className="text-sm font-semibold text-charcoal">Notifications</h2>

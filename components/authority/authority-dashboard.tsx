@@ -151,7 +151,7 @@ export function AuthorityDashboard({ organizationId }: AuthorityDashboardProps) 
 
       {/* Current Quest */}
       {currentQuest && (
-        <div className="bg-white rounded-xl border border-stone/10 p-5 shadow-sm">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5 shadow-sm">
           <h3 className="text-sm font-serif font-semibold text-charcoal mb-3 flex items-center gap-2">
             <ChartBarIcon className="w-4 h-4 text-teal" />
             Current Quest
@@ -172,7 +172,7 @@ export function AuthorityDashboard({ organizationId }: AuthorityDashboardProps) 
       {/* Two columns: Monthly Trend + Category Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Monthly Trend (simple bar chart) */}
-        <div className="bg-white rounded-xl border border-stone/10 p-5 shadow-sm">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5 shadow-sm">
           <h3 className="text-sm font-serif font-semibold text-charcoal mb-3">Monthly Points</h3>
           <div className="flex items-end gap-1 h-32">
             {scoreData.monthly_trend.map((m) => {
@@ -194,7 +194,7 @@ export function AuthorityDashboard({ organizationId }: AuthorityDashboardProps) 
         </div>
 
         {/* Category Breakdown */}
-        <div className="bg-white rounded-xl border border-stone/10 p-5 shadow-sm">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5 shadow-sm">
           <h3 className="text-sm font-serif font-semibold text-charcoal mb-3">Points by Category</h3>
           <div className="space-y-2.5">
             {Object.entries(scoreData.category_breakdown)
@@ -227,7 +227,7 @@ export function AuthorityDashboard({ organizationId }: AuthorityDashboardProps) 
 
       {/* Recent Activity */}
       {scoreData.recent_scores.length > 0 && (
-        <div className="bg-white rounded-xl border border-stone/10 p-5 shadow-sm">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5 shadow-sm">
           <h3 className="text-sm font-serif font-semibold text-charcoal mb-3">Recent Scores</h3>
           <div className="space-y-2">
             {scoreData.recent_scores.map((score) => (
@@ -250,7 +250,7 @@ export function AuthorityDashboard({ organizationId }: AuthorityDashboardProps) 
 
       {/* All Quests */}
       {questData && questData.quests.length > 1 && (
-        <div className="bg-white rounded-xl border border-stone/10 p-5 shadow-sm">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5 shadow-sm">
           <h3 className="text-sm font-serif font-semibold text-charcoal mb-3">All Quests</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {questData.quests.map((quest) => (
@@ -275,7 +275,7 @@ export function AuthorityDashboard({ organizationId }: AuthorityDashboardProps) 
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="bg-white rounded-xl border border-stone/10 p-4 shadow-sm flex items-center gap-3">
+    <div className="bg-cream-warm rounded-xl border border-stone/10 p-4 shadow-sm flex items-center gap-3">
       <div className="p-2 bg-cream-warm/50 rounded-lg">{icon}</div>
       <div>
         <p className="text-[10px] text-stone uppercase tracking-wider">{label}</p>
@@ -288,9 +288,9 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
 function HowPointsWorkModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[85vh] overflow-y-auto">
+      <div className="bg-cream-warm rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[85vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10 sticky top-0 bg-white rounded-t-xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10 sticky top-0 bg-cream-warm rounded-t-xl">
           <h2 className="text-lg font-serif font-semibold text-charcoal">How Authority Points Work</h2>
           <button onClick={onClose} className="p-1 hover:bg-cream-warm rounded-lg transition-colors">
             <XMarkIcon className="w-5 h-5 text-stone" />

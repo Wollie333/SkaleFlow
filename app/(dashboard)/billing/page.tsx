@@ -365,7 +365,7 @@ export default function BillingPage() {
       {activeTab === 'usage' && (
         <div className="space-y-6">
           {/* Period Filter */}
-          <div className="flex items-center gap-1 bg-white rounded-lg border border-stone/10 p-1 w-fit">
+          <div className="flex items-center gap-1 bg-cream-warm rounded-lg border border-stone/10 p-1 w-fit">
             {USAGE_PERIODS.map((p) => (
               <button
                 key={p.value}
@@ -384,18 +384,18 @@ export default function BillingPage() {
           {/* Summary */}
           {usageData?.summary && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white rounded-xl border border-stone/10 p-5">
+              <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
                 <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Total Requests</p>
                 <p className="text-2xl font-bold text-charcoal">{usageData.summary.totalRequests.toLocaleString()}</p>
                 {usageData.summary.freeRequests > 0 && (
                   <p className="text-sm text-stone mt-1">{usageData.summary.freeRequests.toLocaleString()} free</p>
                 )}
               </div>
-              <div className="bg-white rounded-xl border border-stone/10 p-5">
+              <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
                 <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Credits Used</p>
                 <p className="text-2xl font-bold text-charcoal">{usageData.summary.totalCredits.toLocaleString()}</p>
               </div>
-              <div className="bg-white rounded-xl border border-stone/10 p-5">
+              <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
                 <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Models Used</p>
                 <p className="text-2xl font-bold text-charcoal">{usageData.byModel?.length || 0}</p>
               </div>
@@ -675,7 +675,7 @@ export default function BillingPage() {
               <div className="p-4 rounded-xl bg-gradient-to-br from-red-50 to-red-100 border border-red-200">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-semibold text-red-900">💸 Real API Costs</h4>
-                  <Badge variant="default" className="bg-white/50">What You Pay</Badge>
+                  <Badge variant="default" className="bg-cream-warm/50">What You Pay</Badge>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
                   <div>
@@ -704,7 +704,7 @@ export default function BillingPage() {
               <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-semibold text-emerald-900">💰 Sales Revenue Potential</h4>
-                  <Badge variant="default" className="bg-white/50">100% Markup</Badge>
+                  <Badge variant="default" className="bg-cream-warm/50">100% Markup</Badge>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
                   <div>
@@ -737,7 +737,7 @@ export default function BillingPage() {
               <div className="p-4 rounded-xl bg-gradient-to-br from-gold/20 to-gold/30 border border-gold/40">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-semibold text-charcoal">📈 Profit Margin</h4>
-                  <Badge variant="default" className="bg-white/50">Revenue - Cost</Badge>
+                  <Badge variant="default" className="bg-cream-warm/50">Revenue - Cost</Badge>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
                   <div>
@@ -915,7 +915,7 @@ export default function BillingPage() {
       {/* Invoice Modal */}
       {selectedInvoice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
+          <div className="bg-cream-warm rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
             <button
               onClick={() => setSelectedInvoice(null)}
               className="absolute top-4 right-4 p-1 hover:bg-stone/10 rounded-lg"

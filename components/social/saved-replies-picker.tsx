@@ -42,7 +42,7 @@ export function SavedRepliesPicker({
       <div className="fixed inset-0 z-10" onClick={onClose} />
 
       {/* Dropdown */}
-      <div className="absolute bottom-full left-0 mb-2 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-2xl border border-stone/10 z-20 max-h-[400px] flex flex-col">
+      <div className="absolute bottom-full left-0 mb-2 w-96 max-w-[calc(100vw-2rem)] bg-cream-warm rounded-lg shadow-2xl border border-stone/10 z-20 max-h-[400px] flex flex-col">
         {/* Search */}
         <div className="p-3 border-b border-stone/10">
           <div className="relative">

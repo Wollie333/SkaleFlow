@@ -30,20 +30,20 @@ interface Activity {
 }
 
 const typeConfig: Record<string, { icon: React.ElementType; color: string }> = {
-  email: { icon: EnvelopeIcon, color: 'text-blue-500 bg-blue-50' },
-  call: { icon: PhoneIcon, color: 'text-green-500 bg-green-50' },
-  meeting: { icon: CalendarIcon, color: 'text-purple-500 bg-purple-50' },
-  note: { icon: ChatBubbleLeftIcon, color: 'text-gray-500 bg-gray-50' },
+  email: { icon: EnvelopeIcon, color: 'text-blue-400 bg-blue-500/10' },
+  call: { icon: PhoneIcon, color: 'text-green-400 bg-green-500/10' },
+  meeting: { icon: CalendarIcon, color: 'text-purple-400 bg-purple-500/10' },
+  note: { icon: ChatBubbleLeftIcon, color: 'text-stone bg-stone/10' },
   deal_created: { icon: CurrencyDollarIcon, color: 'text-teal bg-teal/10' },
-  deal_won: { icon: CheckCircleIcon, color: 'text-green-600 bg-green-50' },
-  deal_lost: { icon: XCircleIcon, color: 'text-red-500 bg-red-50' },
-  invoice_sent: { icon: DocumentTextIcon, color: 'text-blue-500 bg-blue-50' },
-  invoice_paid: { icon: CheckCircleIcon, color: 'text-green-600 bg-green-50' },
-  stage_changed: { icon: ArrowRightIcon, color: 'text-orange-500 bg-orange-50' },
+  deal_won: { icon: CheckCircleIcon, color: 'text-green-400 bg-green-500/10' },
+  deal_lost: { icon: XCircleIcon, color: 'text-red-400 bg-red-500/10' },
+  invoice_sent: { icon: DocumentTextIcon, color: 'text-blue-400 bg-blue-500/10' },
+  invoice_paid: { icon: CheckCircleIcon, color: 'text-green-400 bg-green-500/10' },
+  stage_changed: { icon: ArrowRightIcon, color: 'text-orange-400 bg-orange-500/10' },
   contact_created: { icon: UserPlusIcon, color: 'text-teal bg-teal/10' },
-  contact_updated: { icon: PencilIcon, color: 'text-gray-500 bg-gray-50' },
-  tag_added: { icon: TagIcon, color: 'text-indigo-500 bg-indigo-50' },
-  tag_removed: { icon: TagIcon, color: 'text-red-400 bg-red-50' },
+  contact_updated: { icon: PencilIcon, color: 'text-stone bg-stone/10' },
+  tag_added: { icon: TagIcon, color: 'text-indigo-400 bg-indigo-500/10' },
+  tag_removed: { icon: TagIcon, color: 'text-red-400 bg-red-500/10' },
 };
 
 interface ActivityTimelineProps {
@@ -74,13 +74,13 @@ export function ActivityTimeline({ activities, className }: ActivityTimelineProp
               <div className="relative pb-8">
                 {!isLast && (
                   <span
-                    className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200"
+                    className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-stone/20"
                     aria-hidden="true"
                   />
                 )}
                 <div className="relative flex space-x-3">
                   <div>
-                    <span className={cn('h-8 w-8 rounded-full flex items-center justify-center ring-4 ring-white', config.color)}>
+                    <span className={cn('h-8 w-8 rounded-full flex items-center justify-center ring-4 ring-cream-warm', config.color)}>
                       <Icon className="h-4 w-4" />
                     </span>
                   </div>

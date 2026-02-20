@@ -166,7 +166,7 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-dark/95 backdrop-blur-md border-b border-teal/12">
+    <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-dark/95 backdrop-blur-md border-b border-white/5">
       <div className="h-full px-4 md:px-6 flex items-center justify-between">
         {/* Logo & Hamburger */}
         <div className="flex items-center gap-2">
@@ -179,7 +179,7 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
                 e.stopPropagation();
                 onMenuClick();
               }}
-              className="lg:hidden p-2 rounded-lg text-cream hover:bg-teal/10 transition-colors relative z-[100]"
+              className="lg:hidden p-2 rounded-lg text-white hover:bg-teal/10 transition-colors relative z-[100]"
               aria-label="Open menu"
             >
               <Bars3Icon className="w-6 h-6" />
@@ -187,10 +187,10 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
           )}
 
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="font-serif font-bold text-xl text-cream tracking-wide">
+            <span className="font-serif font-bold text-xl text-white tracking-wide">
               SkaleFlow
             </span>
-            <span className="text-xs text-stone font-normal hidden md:inline">by Mana</span>
+            <span className="text-xs text-white/50 font-normal hidden md:inline">by Mana</span>
           </Link>
         </div>
 
@@ -232,7 +232,7 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg text-stone hover:text-cream hover:bg-teal/10 transition-colors"
+            className="p-2 rounded-lg text-stone hover:text-white hover:bg-teal/10 transition-colors"
             aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             {theme === 'dark' ? (
@@ -246,7 +246,7 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
           <div ref={dropdownRef} className="relative">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="relative p-2 rounded-lg text-stone hover:text-cream hover:bg-teal/10 transition-colors"
+              className="relative p-2 rounded-lg text-stone hover:text-white hover:bg-teal/10 transition-colors"
             >
               <BellIcon className="w-5 h-5" />
               {unreadCount > 0 && (
@@ -257,7 +257,7 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
             </button>
 
             {isOpen && (
-              <div className="absolute right-0 top-full mt-2 w-screen max-w-sm sm:w-96 bg-white dark:bg-dark-light border border-stone/15 rounded-xl shadow-2xl overflow-hidden z-[60]">
+              <div className="absolute right-0 top-full mt-2 w-screen max-w-sm sm:w-96 bg-cream-warm border border-stone/10 rounded-xl shadow-2xl overflow-hidden z-[60]">
                 {/* Header */}
                 <div className="px-4 py-3 border-b border-stone/10 flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-charcoal">Notifications</h3>
@@ -339,7 +339,7 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
                 size="md"
               />
               <div className="text-left hidden sm:block">
-                <p className="text-sm font-medium text-cream">
+                <p className="text-sm font-medium text-white">
                   {user?.full_name || user?.email?.split('@')[0]}
                 </p>
                 <p className="text-xs text-stone">{user?.email}</p>
@@ -350,13 +350,13 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
             <div className="absolute right-0 top-full mt-2 w-48 py-2 bg-dark-light border border-teal/12 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
               <Link
                 href="/settings"
-                className="block px-4 py-2 text-sm text-stone hover:text-cream hover:bg-teal/10 transition-colors"
+                className="block px-4 py-2 text-sm text-stone hover:text-white hover:bg-teal/10 transition-colors"
               >
                 Settings
               </Link>
               <button
                 onClick={handleSignOut}
-                className="w-full text-left px-4 py-2 text-sm text-stone hover:text-cream hover:bg-teal/10 transition-colors"
+                className="w-full text-left px-4 py-2 text-sm text-stone hover:text-white hover:bg-teal/10 transition-colors"
               >
                 Sign out
               </button>

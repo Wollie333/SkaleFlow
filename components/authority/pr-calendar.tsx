@@ -113,7 +113,7 @@ export function PrCalendar({ organizationId }: PrCalendarProps) {
           <button
             onClick={() => setView('month')}
             className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-              view === 'month' ? 'bg-white text-charcoal shadow-sm' : 'text-stone'
+              view === 'month' ? 'bg-cream-warm text-charcoal shadow-sm' : 'text-stone'
             }`}
           >
             Month
@@ -121,7 +121,7 @@ export function PrCalendar({ organizationId }: PrCalendarProps) {
           <button
             onClick={() => setView('agenda')}
             className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-              view === 'agenda' ? 'bg-white text-charcoal shadow-sm' : 'text-stone'
+              view === 'agenda' ? 'bg-cream-warm text-charcoal shadow-sm' : 'text-stone'
             }`}
           >
             Agenda
@@ -135,7 +135,7 @@ export function PrCalendar({ organizationId }: PrCalendarProps) {
         </div>
       ) : view === 'month' ? (
         /* Month View */
-        <div className="bg-white rounded-xl border border-stone/10 overflow-hidden">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
           <div className="grid grid-cols-7 border-b border-stone/10">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
               <div key={d} className="px-2 py-1.5 text-[10px] font-semibold text-stone text-center uppercase">
@@ -190,7 +190,7 @@ export function PrCalendar({ organizationId }: PrCalendarProps) {
         </div>
       ) : (
         /* Agenda View */
-        <div className="bg-white rounded-xl border border-stone/10 divide-y divide-stone/5">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 divide-y divide-stone/5">
           {events.length === 0 ? (
             <div className="text-center py-12">
               <CalendarDaysIcon className="w-8 h-8 text-stone/30 mx-auto mb-2" />

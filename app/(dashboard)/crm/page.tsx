@@ -18,7 +18,7 @@ export default function CrmDashboardPage() {
     load();
   }, []);
 
-  if (!organizationId) return <div className="p-6"><div className="animate-pulse bg-gray-100 rounded-xl h-96" /></div>;
+  if (!organizationId) return <div className="p-6"><div className="animate-pulse bg-cream rounded-xl h-96" /></div>;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">

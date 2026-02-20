@@ -73,7 +73,7 @@ export function CompetitorCard({
   return (
     <div
       className={cn(
-        'group bg-white rounded-xl border overflow-hidden hover:shadow-lg transition-all',
+        'group bg-cream-warm rounded-xl border overflow-hidden hover:shadow-lg transition-all',
         competitor.is_active ? 'border-stone/10' : 'border-stone/20 opacity-60'
       )}
     >

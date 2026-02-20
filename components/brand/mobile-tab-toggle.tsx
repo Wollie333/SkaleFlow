@@ -19,7 +19,7 @@ export function MobileTabToggle({ activeTab, onTabChange, hasNewOutputs = false 
         className={cn(
           'flex-1 text-sm font-medium py-2 rounded-md transition-colors relative',
           activeTab === 'question'
-            ? 'bg-white text-charcoal shadow-sm'
+            ? 'bg-cream-warm text-charcoal shadow-sm'
             : 'text-stone hover:text-charcoal'
         )}
       >
@@ -34,7 +34,7 @@ export function MobileTabToggle({ activeTab, onTabChange, hasNewOutputs = false 
         className={cn(
           'flex-1 text-sm font-medium py-2 rounded-md transition-colors',
           activeTab === 'chat'
-            ? 'bg-white text-charcoal shadow-sm'
+            ? 'bg-cream-warm text-charcoal shadow-sm'
             : 'text-stone hover:text-charcoal'
         )}
       >

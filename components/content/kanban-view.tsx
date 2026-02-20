@@ -74,7 +74,7 @@ export function KanbanView({ items, onItemClick, onStatusChange }: KanbanViewPro
           >
             <div className="px-3 py-2 flex items-center justify-between">
               <h4 className="text-xs font-semibold text-charcoal uppercase tracking-wide">{col.label}</h4>
-              <span className="text-xs text-stone bg-white rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="text-xs text-stone bg-cream-warm rounded-full w-5 h-5 flex items-center justify-center">
                 {columnItems.length}
               </span>
             </div>
@@ -86,7 +86,7 @@ export function KanbanView({ items, onItemClick, onStatusChange }: KanbanViewPro
                   draggable
                   onDragStart={e => handleDragStart(e, item.id)}
                   onClick={() => onItemClick(item)}
-                  className="bg-white rounded-lg p-3 shadow-sm border border-stone/5 cursor-pointer hover:shadow-md transition-shadow"
+                  className="bg-cream-warm rounded-lg p-3 shadow-sm border border-stone/5 cursor-pointer hover:shadow-md transition-shadow"
                 >
                   <p className="text-sm font-medium text-charcoal line-clamp-2 mb-2">
                     {item.topic || item.format.replace(/_/g, ' ')}

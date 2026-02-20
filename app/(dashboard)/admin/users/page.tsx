@@ -269,7 +269,7 @@ export default function AdminUsersPage() {
       {/* Org Assignment Popup */}
       {orgPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-xl border border-teal/[0.08] p-6 w-full max-w-md mx-4">
+          <div className="bg-cream-warm rounded-xl shadow-xl border border-teal/[0.08] p-6 w-full max-w-md mx-4">
             <h3 className="font-serif text-lg font-bold text-charcoal mb-1">
               Assign Organization
             </h3>
@@ -339,7 +339,7 @@ export default function AdminUsersPage() {
             </span>
           </h2>
 
-          <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
+          <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-cream">
@@ -400,7 +400,7 @@ export default function AdminUsersPage() {
                             </Button>
                             <Button
                               onClick={() => setConfirmDelete(null)}
-                              className="bg-white hover:bg-cream text-stone border border-stone/20 text-sm px-4 py-2"
+                              className="bg-cream-warm hover:bg-cream text-stone border border-stone/20 text-sm px-4 py-2"
                             >
                               Cancel
                             </Button>
@@ -408,7 +408,7 @@ export default function AdminUsersPage() {
                         ) : (
                           <Button
                             onClick={() => setConfirmDelete(user.id)}
-                            className="bg-white hover:bg-red-50 text-red-600 border border-red-200 text-sm px-4 py-2"
+                            className="bg-cream-warm hover:bg-red-50 text-red-600 border border-red-200 text-sm px-4 py-2"
                           >
                             Delete
                           </Button>
@@ -431,11 +431,11 @@ export default function AdminUsersPage() {
         </h2>
 
         {approvedUsers.length === 0 ? (
-          <div className="bg-white rounded-xl border border-teal/[0.08] p-8 text-center text-stone">
+          <div className="bg-cream-warm rounded-xl border border-teal/[0.08] p-8 text-center text-stone">
             No approved users yet.
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
+          <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-cream">
@@ -484,7 +484,7 @@ export default function AdminUsersPage() {
                           value={getUserTier(user)?.id || ''}
                           onChange={(e) => handleTierChange(user.id, e.target.value)}
                           disabled={tierLoading === user.id}
-                          className="text-sm border border-cream rounded-lg px-2.5 py-1.5 bg-white text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal disabled:opacity-50 cursor-pointer"
+                          className="text-sm border border-cream rounded-lg px-2.5 py-1.5 bg-cream-warm text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal disabled:opacity-50 cursor-pointer"
                         >
                           <option value="">No tier</option>
                           {tiers.map(tier => (
@@ -513,7 +513,7 @@ export default function AdminUsersPage() {
                             user.ai_beta_enabled ? 'bg-teal' : 'bg-stone/20'
                           }`}
                         >
-                          <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                          <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-cream-warm shadow transition-transform ${
                             user.ai_beta_enabled ? 'translate-x-5' : ''
                           }`} />
                         </button>
@@ -536,7 +536,7 @@ export default function AdminUsersPage() {
                           </Button>
                           <Button
                             onClick={() => setConfirmDelete(null)}
-                            className="bg-white hover:bg-cream text-stone border border-stone/20 text-sm px-3 py-1.5"
+                            className="bg-cream-warm hover:bg-cream text-stone border border-stone/20 text-sm px-3 py-1.5"
                           >
                             Cancel
                           </Button>

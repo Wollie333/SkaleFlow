@@ -34,7 +34,7 @@ export function ControlsBar({
       <button
         onClick={onToggleMute}
         className={`p-2 md:p-3 rounded-full transition-colors ${
-          isMuted ? 'bg-red-500/20 text-red-400' : 'bg-white/10 text-white hover:bg-white/20'
+          isMuted ? 'bg-red-500/20 text-red-400' : 'bg-cream-warm/10 text-white hover:bg-cream-warm/20'
         }`}
         title={isMuted ? 'Unmute' : 'Mute'}
       >
@@ -54,7 +54,7 @@ export function ControlsBar({
       <button
         onClick={onToggleCamera}
         className={`p-2 md:p-3 rounded-full transition-colors ${
-          isCameraOff ? 'bg-red-500/20 text-red-400' : 'bg-white/10 text-white hover:bg-white/20'
+          isCameraOff ? 'bg-red-500/20 text-red-400' : 'bg-cream-warm/10 text-white hover:bg-cream-warm/20'
         }`}
         title={isCameraOff ? 'Turn on camera' : 'Turn off camera'}
       >
@@ -73,7 +73,7 @@ export function ControlsBar({
       <button
         onClick={onToggleScreenShare}
         className={`hidden md:flex p-2 md:p-3 rounded-full transition-colors ${
-          isScreenSharing ? 'bg-[#1E6B63] text-white' : 'bg-white/10 text-white hover:bg-white/20'
+          isScreenSharing ? 'bg-[#1E6B63] text-white' : 'bg-cream-warm/10 text-white hover:bg-cream-warm/20'
         }`}
         title={isScreenSharing ? 'Stop sharing' : 'Share screen'}
       >
@@ -87,7 +87,7 @@ export function ControlsBar({
         <button
           onClick={onToggleCaptions}
           className={`p-2 md:p-3 rounded-full transition-colors ${
-            isCaptionsOn ? 'bg-[#1E6B63] text-white' : 'bg-white/10 text-white/50 hover:bg-white/20'
+            isCaptionsOn ? 'bg-[#1E6B63] text-white' : 'bg-cream-warm/10 text-white/50 hover:bg-cream-warm/20'
           }`}
           title={isCaptionsOn ? 'Hide captions' : 'Show captions'}
         >
@@ -102,7 +102,7 @@ export function ControlsBar({
       {onOpenSettings && (
         <button
           onClick={onOpenSettings}
-          className="p-2 md:p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+          className="p-2 md:p-3 rounded-full bg-cream-warm/10 text-white hover:bg-cream-warm/20 transition-colors"
           title="Device settings"
         >
           <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -117,7 +117,7 @@ export function ControlsBar({
         <button
           onClick={onToggleRecording}
           className={`p-2 md:p-3 rounded-full transition-colors ${
-            isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-white/10 text-white hover:bg-white/20'
+            isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-cream-warm/10 text-white hover:bg-cream-warm/20'
           }`}
           title={isRecording ? 'Stop recording' : 'Start recording'}
         >
@@ -133,7 +133,7 @@ export function ControlsBar({
         <button
           onClick={onToggleOffers}
           className={`p-2 md:p-3 rounded-full transition-colors ${
-            isOffersOpen ? 'bg-gold/20 text-gold' : 'bg-white/10 text-white hover:bg-white/20'
+            isOffersOpen ? 'bg-gold/20 text-gold' : 'bg-cream-warm/10 text-white hover:bg-cream-warm/20'
           }`}
           title="Present offers"
         >
@@ -146,7 +146,7 @@ export function ControlsBar({
       {/* Flag moment */}
       <button
         onClick={onFlag}
-        className="p-2 md:p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+        className="p-2 md:p-3 rounded-full bg-cream-warm/10 text-white hover:bg-cream-warm/20 transition-colors"
         title="Flag this moment"
       >
         <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -154,7 +154,7 @@ export function ControlsBar({
         </svg>
       </button>
 
-      <div className="w-px h-6 md:h-8 bg-white/20 mx-1" />
+      <div className="w-px h-6 md:h-8 bg-cream-warm/20 mx-1" />
 
       {/* End call */}
       <button

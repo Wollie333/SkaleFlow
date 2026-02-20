@@ -19,8 +19,8 @@ export function StoryAnglesSection({ storyAngles, primaryColor = '#14b8a6' }: St
   return (
     <section id="story-angles" className="py-12 px-6">
       <div className="max-w-5xl mx-auto">
-        <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2 text-center">Story Angles</h2>
-        <p className="text-sm text-gray-500 text-center mb-8">
+        <h2 className="text-2xl font-serif font-bold text-charcoal mb-2 text-center">Story Angles</h2>
+        <p className="text-sm text-stone text-center mb-8">
           Ready-made angles for journalists and media professionals
         </p>
 
@@ -28,10 +28,10 @@ export function StoryAnglesSection({ storyAngles, primaryColor = '#14b8a6' }: St
           {storyAngles.map((angle) => (
             <div
               key={angle.id}
-              className="p-5 bg-white border border-gray-100 rounded-xl hover:border-gray-200 transition-colors"
+              className="p-5 bg-cream-warm border border-gray-100 rounded-xl hover:border-stone/10 transition-colors"
             >
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cream text-stone">
                   {angle.category.replace(/_/g, ' ')}
                 </span>
                 <div className="flex gap-0.5 ml-auto">
@@ -46,9 +46,9 @@ export function StoryAnglesSection({ storyAngles, primaryColor = '#14b8a6' }: St
                   ))}
                 </div>
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">{angle.title}</h3>
+              <h3 className="text-sm font-semibold text-charcoal mb-1">{angle.title}</h3>
               {angle.summary && (
-                <p className="text-xs text-gray-500 line-clamp-3">{angle.summary}</p>
+                <p className="text-xs text-stone line-clamp-3">{angle.summary}</p>
               )}
             </div>
           ))}

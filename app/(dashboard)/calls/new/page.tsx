@@ -64,7 +64,7 @@ export default function NewCallPage() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-serif font-bold text-charcoal mb-6">New Call</h1>
 
-      <div className="bg-white rounded-xl border border-stone/10 p-6 space-y-6">
+      <div className="bg-cream-warm rounded-xl border border-stone/10 p-6 space-y-6">
         <div>
           <label className="block text-sm font-medium text-charcoal mb-1">Call Title</label>
           <input

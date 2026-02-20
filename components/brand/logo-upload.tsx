@@ -181,7 +181,7 @@ export function LogoUpload({ organizationId, currentLogoUrl, onLogoUploaded, dis
     return (
       <div className="border border-teal/30 bg-teal/5 rounded-lg p-4">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-lg bg-white border border-stone/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+          <div className="w-16 h-16 rounded-lg bg-cream-warm border border-stone/10 flex items-center justify-center overflow-hidden flex-shrink-0">
             <img src={previewUrl} alt="Logo" className="max-w-full max-h-full object-contain" />
           </div>
           <div className="flex-1 min-w-0">
@@ -206,7 +206,7 @@ export function LogoUpload({ organizationId, currentLogoUrl, onLogoUploaded, dis
     return (
       <div className="border border-teal/30 bg-teal/5 rounded-lg p-4 space-y-3">
         <p className="text-sm font-medium text-charcoal">AI Generated Logo</p>
-        <div className="w-32 h-32 mx-auto rounded-lg bg-white border border-stone/10 flex items-center justify-center overflow-hidden">
+        <div className="w-32 h-32 mx-auto rounded-lg bg-cream-warm border border-stone/10 flex items-center justify-center overflow-hidden">
           <img src={generatedUrl} alt="Generated logo" className="max-w-full max-h-full object-contain" />
         </div>
         <div className="flex gap-2">

@@ -98,7 +98,7 @@ export function CanvaDesignPicker({ onImport, onClose }: CanvaDesignPickerProps)
 
   return (
     <div className="fixed inset-0 bg-dark/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl max-h-[85vh] flex flex-col">
+      <div className="bg-cream-warm rounded-2xl w-full max-w-2xl shadow-xl max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-stone/10">
           <div className="flex items-center gap-3">

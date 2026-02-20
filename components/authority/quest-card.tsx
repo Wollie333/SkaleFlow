@@ -35,7 +35,7 @@ export function QuestCard({
           ? 'border-teal bg-teal/5 shadow-sm'
           : isCompleted
           ? 'border-green-200 bg-green-50/30'
-          : 'border-stone/10 bg-white opacity-60'
+          : 'border-stone/10 bg-cream-warm opacity-60'
       }`}
     >
       {/* Header */}
@@ -95,7 +95,7 @@ export function QuestCard({
               className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${
                 req.completed
                   ? 'bg-green-500'
-                  : 'border border-stone/20 bg-white'
+                  : 'border border-stone/20 bg-cream-warm'
               }`}
             >
               {req.completed && (

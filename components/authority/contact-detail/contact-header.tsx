@@ -32,7 +32,7 @@ export function ContactHeader({ contact, hasGmail, onSendEmail, onEditContact }:
   const warmthConfig = WARMTH_CONFIG[contact.warmth as keyof typeof WARMTH_CONFIG];
 
   return (
-    <div className="bg-white border border-stone/10 rounded-xl p-6">
+    <div className="bg-cream-warm border border-stone/10 rounded-xl p-6">
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-4">
           <button

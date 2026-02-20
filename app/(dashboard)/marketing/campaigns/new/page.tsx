@@ -325,7 +325,7 @@ export default function CreateCampaignPage() {
               <select
                 value={specialAdCategory}
                 onChange={e => setSpecialAdCategory(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
+                className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
               >
                 <option value="">None</option>
                 <option value="CREDIT">Credit</option>

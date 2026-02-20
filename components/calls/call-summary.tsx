@@ -15,7 +15,7 @@ export function CallSummary({ summary }: SummaryProps) {
     <div className="space-y-6">
       {/* Narrative Summary */}
       {summary.summary_text && (
-        <div className="bg-white rounded-xl border border-stone/10 p-5">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
           <h3 className="text-sm font-semibold text-charcoal mb-3">Summary</h3>
           <p className="text-sm text-charcoal leading-relaxed whitespace-pre-wrap">{summary.summary_text}</p>
         </div>
@@ -23,7 +23,7 @@ export function CallSummary({ summary }: SummaryProps) {
 
       {/* Key Points */}
       {summary.key_points?.length > 0 && (
-        <div className="bg-white rounded-xl border border-stone/10 p-5">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
           <h3 className="text-sm font-semibold text-charcoal mb-3">Key Points</h3>
           <ul className="space-y-2">
             {summary.key_points.map((point, i) => (
@@ -38,7 +38,7 @@ export function CallSummary({ summary }: SummaryProps) {
 
       {/* Decisions */}
       {summary.decisions_made?.length > 0 && (
-        <div className="bg-white rounded-xl border border-stone/10 p-5">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
           <h3 className="text-sm font-semibold text-charcoal mb-3">Decisions Made</h3>
           <ul className="space-y-1.5">
             {summary.decisions_made.map((d, i) => (
@@ -52,7 +52,7 @@ export function CallSummary({ summary }: SummaryProps) {
 
       {/* Objections */}
       {summary.objections_raised?.length > 0 && (
-        <div className="bg-white rounded-xl border border-stone/10 p-5">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
           <h3 className="text-sm font-semibold text-charcoal mb-3">Objections Raised</h3>
           <div className="space-y-3">
             {summary.objections_raised.map((obj, i) => (
@@ -70,7 +70,7 @@ export function CallSummary({ summary }: SummaryProps) {
 
       {/* Next Steps */}
       {summary.next_steps?.length > 0 && (
-        <div className="bg-white rounded-xl border border-stone/10 p-5">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
           <h3 className="text-sm font-semibold text-charcoal mb-3">Next Steps</h3>
           <div className="space-y-2">
             {summary.next_steps.map((step, i) => (

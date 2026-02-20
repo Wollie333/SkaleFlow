@@ -36,7 +36,7 @@ export function NodeConfigPanel({ node, stages, tags, templates, endpoints, onUp
   };
 
   return (
-    <div className="w-72 bg-white border-l border-stone/10 p-4 flex-shrink-0 overflow-y-auto">
+    <div className="w-72 bg-cream-warm border-l border-stone/10 p-4 flex-shrink-0 overflow-y-auto">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-charcoal">Configure Node</h3>
         <button onClick={onClose} className="text-stone hover:text-charcoal">

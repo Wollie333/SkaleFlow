@@ -264,7 +264,7 @@ export function TemplateEditModal({ template, onClose, onSaved }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 overflow-y-auto py-8">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4">
+      <div className="bg-cream-warm rounded-xl shadow-xl w-full max-w-3xl mx-4">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <div className="flex items-center gap-3">
@@ -287,15 +287,15 @@ export function TemplateEditModal({ template, onClose, onSaved }: Props) {
         </div>
 
         {/* Tab nav */}
-        <div className="flex gap-1 px-6 pt-3 bg-cream-warm/30">
+        <div className="flex gap-4 px-6 border-b border-stone/10">
           {TABS.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 text-xs font-medium rounded-t-lg transition-colors ${
+              className={`pb-3 px-1 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'bg-white text-charcoal border-t border-x border-stone/10'
-                  : 'text-stone hover:text-charcoal'
+                  ? 'border-teal text-teal'
+                  : 'border-transparent text-stone hover:text-charcoal'
               }`}
             >
               {tab.label}
@@ -386,7 +386,7 @@ export function TemplateEditModal({ template, onClose, onSaved }: Props) {
                 <label className="block text-xs font-medium text-charcoal mb-1">Funnel Stages</label>
                 <div className="flex gap-2">
                   {FUNNEL_STAGES.map(stage => (
-                    <button key={stage} onClick={() => toggleFunnelStage(stage)} className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${funnelStages.includes(stage) ? 'bg-teal/15 text-teal border-teal/30' : 'bg-white text-stone border-stone/20 hover:border-stone/40'}`}>
+                    <button key={stage} onClick={() => toggleFunnelStage(stage)} className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${funnelStages.includes(stage) ? 'bg-teal/15 text-teal border-teal/30' : 'bg-cream-warm text-stone border-stone/20 hover:border-stone/40'}`}>
                       {stage.charAt(0).toUpperCase() + stage.slice(1)}
                     </button>
                   ))}

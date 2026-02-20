@@ -209,7 +209,7 @@ export function PreviewPanel({
                 'w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shrink-0',
                 isEnabled
                   ? 'text-white shadow-lg scale-105'
-                  : 'bg-stone-100 border border-stone-200 text-stone-400 hover:bg-stone-50 hover:border-stone-300'
+                  : 'bg-cream border border-stone/10 text-stone-400 hover:bg-cream hover:border-stone/10'
               )}
               style={
                 isEnabled
@@ -239,7 +239,7 @@ export function PreviewPanel({
                   'px-3 py-1.5 rounded-full text-xs font-medium transition-colors border',
                   isSelected
                     ? 'bg-teal text-white border-teal'
-                    : 'bg-stone-50 text-stone-500 border-stone-200 hover:border-stone-300'
+                    : 'bg-cream text-stone border-stone/10 hover:border-stone/10'
                 )}
               >
                 {opt.label}
@@ -276,7 +276,7 @@ export function PreviewPanel({
                   'rounded-xl overflow-hidden border transition-all',
                   isEditing
                     ? 'border-teal ring-2 ring-teal/20'
-                    : 'border-stone-200'
+                    : 'border-stone/10'
                 )}
               >
                 {/* Card header — click to collapse/expand */}
@@ -302,14 +302,14 @@ export function PreviewPanel({
                   </div>
                   <div className="flex items-center gap-2">
                     {hasOverride && (
-                      <span className="text-[10px] bg-white/20 text-white px-1.5 py-0.5 rounded-full font-medium">
+                      <span className="text-[10px] bg-cream-warm/20 text-white px-1.5 py-0.5 rounded-full font-medium">
                         Customized
                       </span>
                     )}
                     {onEditInstance && (
                       <button
                         onClick={(e) => { e.stopPropagation(); onEditInstance(placement); }}
-                        className="p-0.5 rounded hover:bg-white/20 transition-colors text-white"
+                        className="p-0.5 rounded hover:bg-cream-warm/20 transition-colors text-white"
                         title="Edit this instance"
                       >
                         <PencilSquareIcon className="w-3.5 h-3.5" />
@@ -320,7 +320,7 @@ export function PreviewPanel({
 
                 {/* Preview body — collapsible */}
                 {!isCollapsed && (
-                  <div className="bg-stone-50 p-2">
+                  <div className="bg-cream p-2">
                     <SocialPreview
                       platform={platform}
                       caption={effectiveCaption}
@@ -337,15 +337,15 @@ export function PreviewPanel({
           })}
         </div>
       ) : (
-        <div className="bg-stone-50 rounded-xl p-3 min-h-[380px] flex flex-col">
+        <div className="bg-cream rounded-xl p-3 min-h-[380px] flex flex-col">
           <div className="flex-1 flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mb-3">
+            <div className="w-16 h-16 rounded-full bg-cream flex items-center justify-center mb-3">
               <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="text-stone-400">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-stone-500">Select a channel to preview</p>
+            <p className="text-sm font-medium text-stone">Select a channel to preview</p>
             <p className="text-xs text-stone-400 mt-1">Click a platform icon above to get started</p>
           </div>
         </div>
@@ -353,7 +353,7 @@ export function PreviewPanel({
 
       {/* ── Summary Footer ───────────────────────────────────────── */}
       {platformCount > 0 && (
-        <div className="bg-stone-50 rounded-lg px-3 py-2">
+        <div className="bg-cream rounded-lg px-3 py-2">
           <p className="text-xs font-medium text-teal">
             Publishing to {platformCount} channel{platformCount !== 1 ? 's' : ''}, {placementCount} post{placementCount !== 1 ? 's' : ''}
           </p>

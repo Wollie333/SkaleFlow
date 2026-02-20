@@ -139,7 +139,7 @@ export function BrandVariablesPanel({ organizationId, isOpen, onClose }: BrandVa
       />
 
       {/* Sidebar panel */}
-      <div className="fixed inset-y-0 right-0 w-[420px] max-w-[90vw] bg-white shadow-2xl border-l border-stone/10 z-50 flex flex-col animate-in slide-in-from-right duration-200">
+      <div className="fixed inset-y-0 right-0 w-[420px] max-w-[90vw] bg-cream-warm shadow-2xl border-l border-stone/10 z-50 flex flex-col animate-in slide-in-from-right duration-200">
         {/* Header */}
         <div className="flex-shrink-0 border-b border-stone/10 px-6 py-4">
           <div className="flex items-center justify-between">

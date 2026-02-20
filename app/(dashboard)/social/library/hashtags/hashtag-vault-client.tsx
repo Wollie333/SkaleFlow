@@ -149,7 +149,7 @@ export function HashtagVaultClient({
                   'px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors',
                   selectedCategory === category
                     ? 'bg-teal text-white border-teal'
-                    : 'bg-white text-stone border-stone/20 hover:border-teal hover:text-teal'
+                    : 'bg-cream-warm text-stone border-stone/20 hover:border-teal hover:text-teal'
                 )}
               >
                 {category}
@@ -173,17 +173,17 @@ export function HashtagVaultClient({
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-stone/10 p-4">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
           <p className="text-sm text-stone mb-1">Total Sets</p>
           <p className="text-2xl font-bold text-charcoal">{hashtagSets.length}</p>
         </div>
-        <div className="bg-white rounded-xl border border-stone/10 p-4">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
           <p className="text-sm text-stone mb-1">Total Hashtags</p>
           <p className="text-2xl font-bold text-charcoal">
             {hashtagSets.reduce((sum, set) => sum + (set.hashtags?.length || 0), 0)}
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-stone/10 p-4">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
           <p className="text-sm text-stone mb-1">Average Engagement</p>
           <p className="text-2xl font-bold text-charcoal">
             {hashtagSets.length > 0
@@ -199,7 +199,7 @@ export function HashtagVaultClient({
 
       {/* Hashtag Sets Grid */}
       {filteredSets.length === 0 ? (
-        <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-12 text-center">
           <div className="w-16 h-16 mx-auto mb-4 bg-stone/10 rounded-full flex items-center justify-center">
             <FunnelIcon className="w-8 h-8 text-stone" />
           </div>

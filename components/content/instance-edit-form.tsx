@@ -88,7 +88,7 @@ export function InstanceEditForm({
           </h3>
           <button
             onClick={onCancel}
-            className="p-1 rounded-md hover:bg-stone-100 transition-colors"
+            className="p-1 rounded-md hover:bg-cream transition-colors"
           >
             <XMarkIcon className="w-4 h-4 text-stone" />
           </button>

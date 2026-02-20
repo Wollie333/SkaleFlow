@@ -336,7 +336,7 @@ export function AnalyticsOverviewClient({
       {/* Date range + Platform tabs row */}
       <div className="flex flex-col gap-3">
         {/* Date range selector */}
-        <div className="flex items-center gap-1 bg-white rounded-lg border border-stone/10 p-1 w-fit">
+        <div className="flex items-center gap-1 bg-cream-warm rounded-lg border border-stone/10 p-1 w-fit">
           {(['7days', '30days', '90days'] as DateRangePreset[]).map((preset) => (
             <button
               key={preset}
@@ -377,7 +377,7 @@ export function AnalyticsOverviewClient({
                 className={cn(
                   'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors border-b-2',
                   isActive
-                    ? 'bg-white text-charcoal'
+                    ? 'bg-cream-warm text-charcoal'
                     : 'bg-cream-warm text-stone hover:text-charcoal border-transparent'
                 )}
                 style={isActive ? { borderColor: config.color } : undefined}

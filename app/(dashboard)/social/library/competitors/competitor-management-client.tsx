@@ -141,7 +141,7 @@ export function CompetitorManagementClient({
             className={`px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
               showActiveOnly
                 ? 'bg-teal text-white border-teal'
-                : 'bg-white text-stone border-stone/20 hover:border-teal'
+                : 'bg-cream-warm text-stone border-stone/20 hover:border-teal'
             }`}
           >
             Active Only
@@ -152,7 +152,7 @@ export function CompetitorManagementClient({
           {/* View Comparison Dashboard */}
           <Link
             href="/social/competitors/compare"
-            className="flex items-center gap-2 px-4 py-2 bg-white text-charcoal border border-stone/20 rounded-lg hover:border-teal hover:text-teal transition-colors text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-cream-warm text-charcoal border border-stone/20 rounded-lg hover:border-teal hover:text-teal transition-colors text-sm font-medium"
           >
             <ChartBarIcon className="w-4 h-4" />
             Compare
@@ -171,17 +171,17 @@ export function CompetitorManagementClient({
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-stone/10 p-4">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
           <p className="text-sm text-stone mb-1">Total Competitors</p>
           <p className="text-2xl font-bold text-charcoal">{competitors.length}</p>
         </div>
-        <div className="bg-white rounded-xl border border-stone/10 p-4">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
           <p className="text-sm text-stone mb-1">Actively Tracking</p>
           <p className="text-2xl font-bold text-teal">
             {competitors.filter((c) => c.is_active).length}
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-stone/10 p-4">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
           <p className="text-sm text-stone mb-1">Platforms Monitored</p>
           <p className="text-2xl font-bold text-charcoal">
             {new Set(
@@ -202,7 +202,7 @@ export function CompetitorManagementClient({
 
       {/* Competitors Grid */}
       {filteredCompetitors.length === 0 ? (
-        <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-12 text-center">
           <div className="w-16 h-16 mx-auto mb-4 bg-stone/10 rounded-full flex items-center justify-center">
             <FunnelIcon className="w-8 h-8 text-stone" />
           </div>

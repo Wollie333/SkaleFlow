@@ -33,8 +33,8 @@ export function LatestNews({ placements, pressReleases, primaryColor = '#14b8a6'
     return (
       <section id="news" className="py-12 px-6">
         <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-2xl font-serif font-bold text-gray-900 mb-3">Latest News</h2>
-          <p className="text-gray-500">No press coverage yet. Check back soon.</p>
+          <h2 className="text-2xl font-serif font-bold text-charcoal mb-3">Latest News</h2>
+          <p className="text-stone">No press coverage yet. Check back soon.</p>
         </div>
       </section>
     );
@@ -43,7 +43,7 @@ export function LatestNews({ placements, pressReleases, primaryColor = '#14b8a6'
   return (
     <section id="news" className="py-12 px-6">
       <div className="max-w-5xl mx-auto">
-        <h2 className="text-2xl font-serif font-bold text-gray-900 mb-8 text-center">Latest News</h2>
+        <h2 className="text-2xl font-serif font-bold text-charcoal mb-8 text-center">Latest News</h2>
 
         {/* Press Releases */}
         {pressReleases.length > 0 && (
@@ -51,10 +51,10 @@ export function LatestNews({ placements, pressReleases, primaryColor = '#14b8a6'
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Press Releases</h3>
             <div className="space-y-4">
               {pressReleases.map((pr) => (
-                <article key={pr.id} className="p-5 bg-white border border-gray-100 rounded-xl hover:border-gray-200 transition-colors">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-1">{pr.headline}</h4>
-                  {pr.subtitle && <p className="text-sm text-gray-500 mb-2">{pr.subtitle}</p>}
-                  <p className="text-sm text-gray-600 line-clamp-3">{pr.body_content}</p>
+                <article key={pr.id} className="p-5 bg-cream-warm border border-gray-100 rounded-xl hover:border-stone/10 transition-colors">
+                  <h4 className="text-lg font-semibold text-charcoal mb-1">{pr.headline}</h4>
+                  {pr.subtitle && <p className="text-sm text-stone mb-2">{pr.subtitle}</p>}
+                  <p className="text-sm text-stone line-clamp-3">{pr.body_content}</p>
                   {pr.published_at && (
                     <p className="text-xs text-gray-400 mt-2">{new Date(pr.published_at).toLocaleDateString()}</p>
                   )}
@@ -70,19 +70,19 @@ export function LatestNews({ placements, pressReleases, primaryColor = '#14b8a6'
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Media Coverage</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {placements.map((p) => (
-                <article key={p.id} className="p-4 bg-white border border-gray-100 rounded-xl hover:border-gray-200 transition-colors">
+                <article key={p.id} className="p-4 bg-cream-warm border border-gray-100 rounded-xl hover:border-stone/10 transition-colors">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-semibold text-gray-900 truncate">{p.opportunity_name}</h4>
+                      <h4 className="text-sm font-semibold text-charcoal truncate">{p.opportunity_name}</h4>
                       {p.target_outlet && (
                         <p className="text-xs font-medium mt-0.5" style={{ color: primaryColor }}>{p.target_outlet}</p>
                       )}
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-cream text-stone">
                           {p.category.replace(/_/g, ' ')}
                         </span>
                         {p.confirmed_format && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-cream text-stone">
                             {p.confirmed_format.replace(/_/g, ' ')}
                           </span>
                         )}

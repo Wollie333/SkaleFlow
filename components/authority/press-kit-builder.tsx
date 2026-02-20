@@ -217,7 +217,7 @@ export function PressKitBuilder({ pressKit, organizationId, brandData, onSave, s
             onClick={() => setActiveSection(s.key)}
             className={`flex-1 py-2 text-xs font-medium rounded-lg transition-colors ${
               activeSection === s.key
-                ? 'bg-white text-charcoal shadow-sm'
+                ? 'bg-cream-warm text-charcoal shadow-sm'
                 : 'text-stone hover:text-charcoal'
             }`}
           >
@@ -465,7 +465,7 @@ function AiWriteModal({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+      <div className="bg-cream-warm rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-stone/10">
           <div className="flex items-center gap-2">

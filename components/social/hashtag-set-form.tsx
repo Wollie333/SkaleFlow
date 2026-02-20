@@ -115,7 +115,7 @@ export function HashtagSetForm({ set, onSave, onCancel }: HashtagSetFormProps) {
       <div className="fixed inset-0 bg-black/50 z-50" onClick={onCancel} />
 
       {/* Modal */}
-      <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-white rounded-xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
+      <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-cream-warm rounded-xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <h2 className="text-xl font-semibold text-charcoal">
@@ -171,7 +171,7 @@ export function HashtagSetForm({ set, onSave, onCancel }: HashtagSetFormProps) {
                     'px-3 py-2 text-sm font-medium rounded-lg border transition-colors capitalize',
                     formData.category === category
                       ? 'bg-teal text-white border-teal'
-                      : 'bg-white text-stone border-stone/20 hover:border-teal hover:text-teal'
+                      : 'bg-cream-warm text-stone border-stone/20 hover:border-teal hover:text-teal'
                   )}
                 >
                   {category}
@@ -198,7 +198,7 @@ export function HashtagSetForm({ set, onSave, onCancel }: HashtagSetFormProps) {
                     'px-3 py-2 text-sm font-medium rounded-lg border transition-colors',
                     formData.platforms.includes(platform)
                       ? 'bg-teal text-white border-teal'
-                      : 'bg-white text-stone border-stone/20 hover:border-teal hover:text-teal'
+                      : 'bg-cream-warm text-stone border-stone/20 hover:border-teal hover:text-teal'
                   )}
                 >
                   {getPlatformLabel(platform)}
@@ -244,7 +244,7 @@ export function HashtagSetForm({ set, onSave, onCancel }: HashtagSetFormProps) {
                   {formData.hashtags.map((tag: string, index: number) => (
                     <div
                       key={index}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-white text-charcoal text-sm rounded-lg border border-stone/10"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-cream-warm text-charcoal text-sm rounded-lg border border-stone/10"
                     >
                       <span>{tag}</span>
                       <button

@@ -68,15 +68,15 @@ export default function ConfigModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl">
+      <div className="relative w-full max-w-md bg-cream-warm rounded-xl shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <h2 className="text-lg font-semibold text-charcoal-900">Content Configuration</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-md hover:bg-stone-100 transition-colors"
+            className="p-1.5 rounded-md hover:bg-cream transition-colors"
           >
-            <XMarkIcon className="w-5 h-5 text-stone-500" />
+            <XMarkIcon className="w-5 h-5 text-stone" />
           </button>
         </div>
 
@@ -88,7 +88,7 @@ export default function ConfigModal({
             <select
               value={localConfig.format}
               onChange={(e) => setLocalConfig(prev => ({ ...prev, format: e.target.value as ContentFormat }))}
-              className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              className="w-full px-3 py-2 border border-stone/10 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
             >
               {FORMAT_OPTIONS.map(([value, label]) => (
                 <option key={value} value={value}>{label}</option>
@@ -108,7 +108,7 @@ export default function ConfigModal({
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
                     localConfig.funnelStage === value
                       ? 'bg-teal-50 text-teal-700 border-teal-300'
-                      : 'bg-white text-stone-600 border-stone-200 hover:border-stone-300'
+                      : 'bg-cream-warm text-stone border-stone/10 hover:border-stone/10'
                   }`}
                 >
                   {label}
@@ -123,7 +123,7 @@ export default function ConfigModal({
             <select
               value={localConfig.storybrandStage}
               onChange={(e) => setLocalConfig(prev => ({ ...prev, storybrandStage: e.target.value as StoryBrandStage }))}
-              className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              className="w-full px-3 py-2 border border-stone/10 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
             >
               {STORYBRAND_STAGES.map(({ value, label }) => (
                 <option key={value} value={value}>{label}</option>
@@ -137,7 +137,7 @@ export default function ConfigModal({
             <select
               value={localConfig.angleId || ''}
               onChange={(e) => setLocalConfig(prev => ({ ...prev, angleId: e.target.value || null }))}
-              className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              className="w-full px-3 py-2 border border-stone/10 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
             >
               <option value="">No specific angle</option>
               {angles.map((angle) => (
@@ -151,11 +151,11 @@ export default function ConfigModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-stone-200">
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-stone/10">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm text-stone-600 border border-stone-300 rounded-lg hover:bg-stone-50 transition-colors"
+            className="px-4 py-2 text-sm text-stone border border-stone/10 rounded-lg hover:bg-cream transition-colors"
           >
             Cancel
           </button>
@@ -182,7 +182,7 @@ export function ConfigSummaryChip({ config, angles }: { config: ContentConfig; a
   if (angleLabel) parts.push(angleLabel);
 
   return (
-    <span className="inline-flex items-center px-2.5 py-1 bg-stone-100 text-stone-600 rounded-md text-xs">
+    <span className="inline-flex items-center px-2.5 py-1 bg-cream text-stone rounded-md text-xs">
       {parts.join(' | ')}
     </span>
   );

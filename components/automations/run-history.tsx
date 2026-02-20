@@ -29,7 +29,7 @@ export function RunHistory({ runs, onViewRun }: RunHistoryProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-stone/10 overflow-hidden">
+    <div className="bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-cream border-b border-stone/10">

@@ -40,7 +40,7 @@ export default async function DraftsPage() {
       />
 
       {items.length === 0 ? (
-        <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-12 text-center">
           <div className="w-16 h-16 rounded-full bg-teal/10 flex items-center justify-center mx-auto mb-4">
             <SparklesIcon className="w-8 h-8 text-teal" />
           </div>

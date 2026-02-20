@@ -175,7 +175,7 @@ export function PlatformSelector({
                     isSelected && isConnected
                       ? 'border-teal bg-teal/10 text-teal'
                       : isConnected
-                        ? 'border-stone/20 bg-white text-charcoal hover:border-teal/50'
+                        ? 'border-stone/20 bg-cream-warm text-charcoal hover:border-teal/50'
                         : 'border-stone/10 bg-stone/5 text-stone/40 cursor-not-allowed'
                   )}
                 >
@@ -218,7 +218,7 @@ export function PlatformSelector({
                   {platformConnections.map(conn => (
                     <label
                       key={conn.id}
-                      className="flex items-center gap-2 p-2 hover:bg-white rounded cursor-pointer transition-colors"
+                      className="flex items-center gap-2 p-2 hover:bg-cream-warm rounded cursor-pointer transition-colors"
                     >
                       <input
                         type="checkbox"

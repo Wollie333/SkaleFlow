@@ -171,7 +171,7 @@ export function PostsPerformanceClient({ organizationId, connections }: PostsPer
           title="Post Performance"
           subtitle="Detailed analytics for each social media post"
         />
-        <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-12 text-center">
           <p className="text-stone mb-4">No social media accounts connected yet.</p>
         </div>
       </div>
@@ -214,7 +214,7 @@ export function PostsPerformanceClient({ organizationId, connections }: PostsPer
           <select
             value={platformFilter}
             onChange={(e) => setPlatformFilter(e.target.value)}
-            className="px-3 py-2 border border-stone/20 rounded-lg text-sm bg-white"
+            className="px-3 py-2 border border-stone/20 rounded-lg text-sm bg-cream-warm"
           >
             <option value="all">All Platforms</option>
             {platforms.map(platform => (
@@ -227,7 +227,7 @@ export function PostsPerformanceClient({ organizationId, connections }: PostsPer
 
         {/* Date Range Selector */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-2 bg-white rounded-lg border border-stone/10 p-1">
+          <div className="flex items-center gap-2 bg-cream-warm rounded-lg border border-stone/10 p-1">
             <button
               onClick={() => setDateRangePreset('7days')}
               className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
@@ -276,7 +276,7 @@ export function PostsPerformanceClient({ organizationId, connections }: PostsPer
 
           {/* Custom Date Picker */}
           {dateRangePreset === 'custom' && showDatePicker && (
-            <div className="flex items-center gap-2 bg-white rounded-lg border border-stone/10 p-3">
+            <div className="flex items-center gap-2 bg-cream-warm rounded-lg border border-stone/10 p-3">
               <div className="flex items-center gap-2">
                 <label className="text-sm text-stone font-medium">From:</label>
                 <input
@@ -311,7 +311,7 @@ export function PostsPerformanceClient({ organizationId, connections }: PostsPer
       )}
 
       {/* Posts Table */}
-      <div className="bg-white rounded-xl border border-stone/10 overflow-hidden">
+      <div className="bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-cream-warm border-b border-stone/10">

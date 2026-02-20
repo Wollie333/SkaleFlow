@@ -251,11 +251,11 @@ export default function AudiencesPage() {
       />
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-stone/10 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="mb-4 flex gap-4 border-b border-stone/10 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
         <button
           onClick={() => handleTabChange('audiences')}
           className={cn(
-            'flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
+            'flex items-center gap-2 pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
             activeTab === 'audiences'
               ? 'border-teal text-teal'
               : 'border-transparent text-stone hover:text-charcoal'
@@ -275,7 +275,7 @@ export default function AudiencesPage() {
         <button
           onClick={() => handleTabChange('pipeline_audiences')}
           className={cn(
-            'flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
+            'flex items-center gap-2 pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
             activeTab === 'pipeline_audiences'
               ? 'border-teal text-teal'
               : 'border-transparent text-stone hover:text-charcoal'
@@ -306,7 +306,7 @@ export default function AudiencesPage() {
             <select
               value={platformFilter}
               onChange={e => setPlatformFilter(e.target.value)}
-              className="px-4 py-2 rounded-lg text-sm font-medium border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+              className="px-4 py-2 rounded-lg text-sm font-medium border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
             >
               {PLATFORM_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -315,7 +315,7 @@ export default function AudiencesPage() {
             <select
               value={typeFilter}
               onChange={e => setTypeFilter(e.target.value)}
-              className="px-4 py-2 rounded-lg text-sm font-medium border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+              className="px-4 py-2 rounded-lg text-sm font-medium border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
             >
               {AUDIENCE_TYPE_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -500,7 +500,7 @@ export default function AudiencesPage() {
       {/* Create Audience Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4">
+          <div className="bg-cream-warm rounded-xl shadow-2xl max-w-lg w-full mx-4">
             <div className="flex items-center justify-between p-5 border-b border-stone/10">
               <h2 className="text-lg font-semibold text-charcoal">Create Audience</h2>
               <button
@@ -528,7 +528,7 @@ export default function AudiencesPage() {
                   onChange={e => setNewAudienceDescription(e.target.value)}
                   rows={2}
                   placeholder="Describe this audience..."
-                  className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm resize-none"
                 />
               </div>
 
@@ -538,7 +538,7 @@ export default function AudiencesPage() {
                   <select
                     value={newAudiencePlatform}
                     onChange={e => setNewAudiencePlatform(e.target.value as AdPlatform)}
-                    className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
+                    className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
                   >
                     <option value="meta">Meta</option>
                     <option value="tiktok">TikTok</option>
@@ -549,7 +549,7 @@ export default function AudiencesPage() {
                   <select
                     value={newAudienceType}
                     onChange={e => setNewAudienceType(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
+                    className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
                   >
                     <option value="saved">Saved</option>
                     <option value="custom">Custom</option>

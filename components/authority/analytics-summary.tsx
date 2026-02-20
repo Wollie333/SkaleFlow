@@ -130,7 +130,7 @@ export function AnalyticsSummary({ organizationId }: AnalyticsSummaryProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Monthly Placements Chart */}
-        <div className="bg-white rounded-xl border border-stone/10 p-4">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
           <h3 className="text-sm font-serif font-semibold text-charcoal mb-3">Monthly Placements</h3>
           <div className="flex items-end gap-2 h-32">
             {data.monthly_placements.map(m => {
@@ -152,7 +152,7 @@ export function AnalyticsSummary({ organizationId }: AnalyticsSummaryProps) {
         </div>
 
         {/* Category Breakdown */}
-        <div className="bg-white rounded-xl border border-stone/10 p-4">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
           <h3 className="text-sm font-serif font-semibold text-charcoal mb-3">By Category</h3>
           {data.category_breakdown.length === 0 ? (
             <p className="text-xs text-stone text-center py-8">No published placements yet</p>
@@ -186,7 +186,7 @@ export function AnalyticsSummary({ organizationId }: AnalyticsSummaryProps) {
 
 function MetricCard({ icon, label, value, suffix }: { icon: React.ReactNode; label: string; value: number | string; suffix?: string }) {
   return (
-    <div className="bg-white rounded-xl border border-stone/10 p-4">
+    <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
       <div className="flex items-center gap-2 mb-2">
         <div className="p-1.5 bg-cream-warm/50 rounded-lg">{icon}</div>
       </div>

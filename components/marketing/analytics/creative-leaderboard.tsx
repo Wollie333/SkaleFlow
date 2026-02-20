@@ -39,7 +39,7 @@ export function CreativeLeaderboard({ creatives }: CreativeLeaderboardProps) {
 
   if (sorted.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-teal/8 p-6">
+      <div className="bg-cream-warm rounded-xl border border-teal/8 p-6">
         <h3 className="text-sm font-semibold text-charcoal mb-4">Top Creatives</h3>
         <div className="flex items-center justify-center h-32 text-stone text-sm">
           No creative performance data available yet.
@@ -49,7 +49,7 @@ export function CreativeLeaderboard({ creatives }: CreativeLeaderboardProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-teal/8 p-6">
+    <div className="bg-cream-warm rounded-xl border border-teal/8 p-6">
       <div className="flex items-center gap-2 mb-4">
         <TrophyIcon className="w-5 h-5 text-gold" />
         <h3 className="text-sm font-semibold text-charcoal">Top Creatives</h3>

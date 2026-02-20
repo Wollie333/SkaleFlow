@@ -125,7 +125,7 @@ export default function ModelUsagePage() {
       />
 
       {/* Period Filter */}
-      <div className="flex items-center gap-1 mb-6 bg-white rounded-lg border border-stone/10 p-1 w-fit">
+      <div className="flex items-center gap-1 mb-6 bg-cream-warm rounded-lg border border-stone/10 p-1 w-fit">
         {PERIODS.map((p) => (
           <button
             key={p.value}
@@ -151,18 +151,18 @@ export default function ModelUsagePage() {
           {/* Summary Cards */}
           {s && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-              <div className="bg-white rounded-xl border border-stone/10 p-5">
+              <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
                 <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Total Requests</p>
                 <p className="text-2xl font-bold text-charcoal">{formatNumber(s.totalRequests)}</p>
                 {s.freeRequests > 0 && (
                   <p className="text-sm text-stone mt-1">{formatNumber(s.freeRequests)} free</p>
                 )}
               </div>
-              <div className="bg-white rounded-xl border border-stone/10 p-5">
+              <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
                 <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Credits Used</p>
                 <p className="text-2xl font-bold text-charcoal">{formatNumber(s.totalCredits)}</p>
               </div>
-              <div className="bg-white rounded-xl border border-stone/10 p-5">
+              <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
                 <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Unique Users</p>
                 <p className="text-2xl font-bold text-charcoal">{formatNumber(data?.byUser?.length || 0)}</p>
               </div>
@@ -278,7 +278,7 @@ export default function ModelUsagePage() {
 
           {/* Empty state */}
           {s && s.totalRequests === 0 && (
-            <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
+            <div className="bg-cream-warm rounded-xl border border-stone/10 p-12 text-center">
               <CpuChipIcon className="w-12 h-12 text-stone/30 mx-auto mb-3" />
               <p className="text-stone">No usage data for this model in the selected period.</p>
             </div>

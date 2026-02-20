@@ -39,7 +39,7 @@ export default function CompanyDetailHeader({
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="bg-white rounded-lg border border-stone/20 p-6">
+      <div className="bg-cream-warm rounded-lg border border-stone/10 p-6">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-charcoal mb-3">{company.name}</h1>
@@ -51,7 +51,7 @@ export default function CompanyDetailHeader({
                 </span>
               )}
               {company.size && (
-                <span className="px-3 py-1 bg-cream/80 text-charcoal rounded-full text-sm font-medium">
+                <span className="px-3 py-1 bg-cream text-charcoal rounded-full text-sm font-medium">
                   {company.size}
                 </span>
               )}
@@ -63,7 +63,7 @@ export default function CompanyDetailHeader({
                   href={company.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-charcoal/70 hover:text-teal transition-colors"
+                  className="flex items-center gap-2 text-stone hover:text-teal transition-colors"
                 >
                   <GlobeAltIcon className="h-5 w-5" />
                   <span className="text-sm">{company.website}</span>
@@ -72,7 +72,7 @@ export default function CompanyDetailHeader({
               {company.email && (
                 <a
                   href={`mailto:${company.email}`}
-                  className="flex items-center gap-2 text-charcoal/70 hover:text-teal transition-colors"
+                  className="flex items-center gap-2 text-stone hover:text-teal transition-colors"
                 >
                   <EnvelopeIcon className="h-5 w-5" />
                   <span className="text-sm">{company.email}</span>
@@ -81,7 +81,7 @@ export default function CompanyDetailHeader({
               {company.phone && (
                 <a
                   href={`tel:${company.phone}`}
-                  className="flex items-center gap-2 text-charcoal/70 hover:text-teal transition-colors"
+                  className="flex items-center gap-2 text-stone hover:text-teal transition-colors"
                 >
                   <PhoneIcon className="h-5 w-5" />
                   <span className="text-sm">{company.phone}</span>
@@ -90,15 +90,15 @@ export default function CompanyDetailHeader({
             </div>
 
             {company.notes && (
-              <div className="mt-4 p-4 bg-cream/30 rounded-lg">
-                <p className="text-sm text-charcoal/80">{company.notes}</p>
+              <div className="mt-4 p-4 bg-cream rounded-lg">
+                <p className="text-sm text-stone">{company.notes}</p>
               </div>
             )}
           </div>
 
           <button
             onClick={onEdit}
-            className="flex items-center gap-2 px-4 py-2 border border-stone/30 rounded-lg hover:bg-cream/30 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 border border-stone/10 rounded-lg hover:bg-cream/50 transition-colors text-charcoal"
           >
             <PencilIcon className="h-4 w-4" />
             <span className="text-sm font-medium">Edit</span>
@@ -108,16 +108,16 @@ export default function CompanyDetailHeader({
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg border border-stone/20 p-6">
-          <div className="text-sm font-medium text-charcoal/60 mb-1">Contacts</div>
+        <div className="bg-cream-warm rounded-lg border border-stone/10 p-6">
+          <div className="text-sm font-medium text-stone mb-1">Contacts</div>
           <div className="text-3xl font-bold text-charcoal">{contactsCount}</div>
         </div>
-        <div className="bg-white rounded-lg border border-stone/20 p-6">
-          <div className="text-sm font-medium text-charcoal/60 mb-1">Total Deal Value</div>
+        <div className="bg-cream-warm rounded-lg border border-stone/10 p-6">
+          <div className="text-sm font-medium text-stone mb-1">Total Deal Value</div>
           <div className="text-3xl font-bold text-teal">{formatCurrency(dealsValue)}</div>
         </div>
-        <div className="bg-white rounded-lg border border-stone/20 p-6">
-          <div className="text-sm font-medium text-charcoal/60 mb-1">Active Deals</div>
+        <div className="bg-cream-warm rounded-lg border border-stone/10 p-6">
+          <div className="text-sm font-medium text-stone mb-1">Active Deals</div>
           <div className="text-3xl font-bold text-gold">{activeDeals}</div>
         </div>
       </div>

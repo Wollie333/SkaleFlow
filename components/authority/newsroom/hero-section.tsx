@@ -18,11 +18,11 @@ export function HeroSection({ orgName, logoUrl, tagline, primaryColor = '#14b8a6
             className="h-16 mx-auto mb-6 object-contain"
           />
         )}
-        <h1 className="text-4xl md:text-5xl font-serif font-bold text-gray-900 mb-3">
+        <h1 className="text-4xl md:text-5xl font-serif font-bold text-charcoal mb-3">
           Press Room
         </h1>
         {tagline && (
-          <p className="text-lg text-gray-500 max-w-xl mx-auto">{tagline}</p>
+          <p className="text-lg text-stone max-w-xl mx-auto">{tagline}</p>
         )}
         <div className="mt-6 flex justify-center gap-4">
           <a

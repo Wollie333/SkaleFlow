@@ -51,7 +51,7 @@ export function InteractionCard({
     <div
       onClick={onClick}
       className={cn(
-        'bg-white rounded-xl border border-stone/10 p-4 hover:shadow-md transition-all cursor-pointer',
+        'bg-cream-warm rounded-xl border border-stone/10 p-4 hover:shadow-md transition-all cursor-pointer',
         isSelected && 'ring-2 ring-teal',
         !interaction.is_read && 'bg-teal/5'
       )}

@@ -127,7 +127,7 @@ export default function AuthorityPipelinePage() {
         </div>
         <div className="flex items-center gap-3">
           {/* Tabs */}
-          <div className="flex items-center bg-white border border-stone/15 rounded-lg p-0.5">
+          <div className="flex items-center bg-cream-warm border border-stone/15 rounded-lg p-0.5">
             <button
               onClick={() => setActiveTab('pipeline')}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${

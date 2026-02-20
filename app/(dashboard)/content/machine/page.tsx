@@ -797,7 +797,7 @@ export default function ContentEnginePage() {
               <select
                 value={sharedConfig.format}
                 onChange={e => setSharedConfig(prev => ({ ...prev, format: e.target.value as ContentFormat }))}
-                className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-white"
+                className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-cream-warm"
               >
                 {FORMAT_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -817,7 +817,7 @@ export default function ContentEnginePage() {
                       'px-3 py-1.5 rounded-full text-xs font-medium transition-colors border',
                       sharedConfig.funnelStage === opt.value
                         ? 'bg-teal text-white border-teal'
-                        : 'bg-stone-50 text-stone-500 border-stone-200 hover:border-stone-300'
+                        : 'bg-cream text-stone border-stone/10 hover:border-stone/10'
                     )}
                   >
                     {opt.label}
@@ -832,7 +832,7 @@ export default function ContentEnginePage() {
               <select
                 value={sharedConfig.storybrandStage}
                 onChange={e => setSharedConfig(prev => ({ ...prev, storybrandStage: e.target.value as StoryBrandStage }))}
-                className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-white"
+                className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-cream-warm"
               >
                 {STORYBRAND_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -1022,7 +1022,7 @@ export default function ContentEnginePage() {
                         'w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 shrink-0',
                         isEnabled
                           ? 'text-white shadow-lg scale-105'
-                          : 'bg-stone-100 border border-stone-200 text-stone-400 hover:bg-stone-50 hover:border-stone-300'
+                          : 'bg-cream border border-stone/10 text-stone-400 hover:bg-cream hover:border-stone/10'
                       )}
                       style={
                         isEnabled
@@ -1054,8 +1054,8 @@ export default function ContentEnginePage() {
                             isSelected
                               ? 'bg-teal text-white border-teal'
                               : atMax
-                                ? 'bg-stone-50 text-stone-300 border-stone-100 cursor-not-allowed'
-                                : 'bg-stone-50 text-stone-500 border-stone-200 hover:border-stone-300'
+                                ? 'bg-cream text-stone-300 border-stone-100 cursor-not-allowed'
+                                : 'bg-cream text-stone border-stone/10 hover:border-stone/10'
                           )}
                         >
                           {opt.label}
@@ -1096,18 +1096,18 @@ export default function ContentEnginePage() {
                   ))}
                 </div>
               ) : (
-                <div className="bg-stone-50 rounded-xl p-3 min-h-[200px] flex flex-col items-center justify-center text-center">
-                  <div className="w-14 h-14 rounded-full bg-stone-100 flex items-center justify-center mb-3">
+                <div className="bg-cream rounded-xl p-3 min-h-[200px] flex flex-col items-center justify-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-cream flex items-center justify-center mb-3">
                     <BoltIcon className="w-6 h-6 text-stone-400" />
                   </div>
-                  <p className="text-sm font-medium text-stone-500">Select channels above</p>
+                  <p className="text-sm font-medium text-stone">Select channels above</p>
                   <p className="text-xs text-stone-400 mt-1">Each placement = 1 generated post</p>
                 </div>
               )}
 
               {/* Summary */}
               {placementCount > 0 && (
-                <div className="bg-stone-50 rounded-lg px-3 py-2 mt-3">
+                <div className="bg-cream rounded-lg px-3 py-2 mt-3">
                   <p className="text-xs font-medium text-teal">
                     {enabledPlatforms.length} channel{enabledPlatforms.length !== 1 ? 's' : ''}, {placementCount}/{MAX_PLACEMENTS} posts
                   </p>
@@ -1177,7 +1177,7 @@ export default function ContentEnginePage() {
                     <select
                       value={placementConfigs[configPopoverPlacement]?.format || ''}
                       onChange={e => updatePlacementConfig(configPopoverPlacement, 'format', e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-stone/20 text-xs focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-white"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-stone/20 text-xs focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-cream-warm"
                     >
                       <option value="">Use shared default</option>
                       {FORMAT_OPTIONS.map(opt => (
@@ -1191,7 +1191,7 @@ export default function ContentEnginePage() {
                     <select
                       value={placementConfigs[configPopoverPlacement]?.funnelStage || ''}
                       onChange={e => updatePlacementConfig(configPopoverPlacement, 'funnelStage', e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-stone/20 text-xs focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-white"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-stone/20 text-xs focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-cream-warm"
                     >
                       <option value="">Use shared default</option>
                       {FUNNEL_OPTIONS.map(opt => (
@@ -1205,7 +1205,7 @@ export default function ContentEnginePage() {
                     <select
                       value={placementConfigs[configPopoverPlacement]?.storybrandStage || ''}
                       onChange={e => updatePlacementConfig(configPopoverPlacement, 'storybrandStage', e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-stone/20 text-xs focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-white"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-stone/20 text-xs focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-cream-warm"
                     >
                       <option value="">Use shared default</option>
                       {STORYBRAND_OPTIONS.map(opt => (

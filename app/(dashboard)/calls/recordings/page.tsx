@@ -46,7 +46,7 @@ export default async function RecordingsPage() {
       </div>
 
       {!recordings || recordings.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-stone/10">
+        <div className="text-center py-16 bg-cream-warm rounded-xl border border-stone/10">
           <svg className="w-10 h-10 mx-auto text-stone/30 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <circle cx="12" cy="12" r="10" strokeWidth={1.5} />
             <circle cx="12" cy="12" r="3" fill="currentColor" />
@@ -55,7 +55,7 @@ export default async function RecordingsPage() {
           <p className="text-xs text-stone/60">Recordings appear here after you record a call</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-stone/10 overflow-hidden">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b border-stone/10">

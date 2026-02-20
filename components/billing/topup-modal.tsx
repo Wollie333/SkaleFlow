@@ -76,7 +76,7 @@ export function TopupModal({ organizationId, onClose, message }: TopupModalProps
         className="absolute inset-0 bg-dark/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 overflow-hidden">
+      <div className="relative bg-cream-warm rounded-xl shadow-xl w-full max-w-2xl mx-4 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-stone/10">
           <div className="flex items-center gap-3">

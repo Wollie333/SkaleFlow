@@ -40,7 +40,7 @@ export function ContactList({ contacts, onContactClick }: ContactListProps) {
   }
 
   return (
-    <div className="bg-white border border-stone/10 rounded-xl overflow-hidden shadow-sm">
+    <div className="bg-cream-warm border border-stone/10 rounded-xl overflow-hidden shadow-sm">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-stone/10">

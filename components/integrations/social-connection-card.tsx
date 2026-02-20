@@ -95,7 +95,7 @@ export function SocialConnectionCard({ platform, connections, onDisconnect, onMa
       {/* Main platform row */}
       <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-stone/10">
+          <div className="w-10 h-10 bg-cream-warm rounded-lg flex items-center justify-center border border-stone/10">
             {platformIcons[platform]}
           </div>
           <div>
@@ -163,7 +163,7 @@ export function SocialConnectionCard({ platform, connections, onDisconnect, onMa
       {pageConns.map(pageConn => (
         <div
           key={pageConn.id}
-          className="flex items-center justify-between p-3 ml-8 bg-white border border-stone/10 rounded-xl"
+          className="flex items-center justify-between p-3 ml-8 bg-cream-warm border border-stone/10 rounded-xl"
         >
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-teal" />

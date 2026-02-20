@@ -248,7 +248,7 @@ export default function AdminModelsPage() {
           Toggle models on/off per subscription tier. Enabled by default when no rule is set.
         </p>
 
-        <div className="bg-white rounded-xl border border-stone/10 overflow-hidden">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b border-stone/10">
@@ -294,7 +294,7 @@ export default function AdminModelsPage() {
                         >
                           <span
                             className={cn(
-                              'inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm',
+                              'inline-block h-4 w-4 transform rounded-full bg-cream-warm transition-transform shadow-sm',
                               isEnabled ? 'translate-x-6' : 'translate-x-1'
                             )}
                           />
@@ -332,7 +332,7 @@ export default function AdminModelsPage() {
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal"
           />
           {showDropdown && userSearch && filteredUsers.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-stone/15 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-cream-warm border border-stone/15 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
               {filteredUsers.map(u => (
                 <button
                   key={u.id}
@@ -352,7 +352,7 @@ export default function AdminModelsPage() {
         </div>
 
         {selectedUser && (
-          <div className="bg-white rounded-xl border border-stone/10 overflow-hidden">
+          <div className="bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
             <div className="px-4 py-3 border-b border-stone/10 flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-charcoal">{selectedUser.full_name || selectedUser.email}</p>
@@ -419,7 +419,7 @@ export default function AdminModelsPage() {
                         >
                           <span
                             className={cn(
-                              'inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm',
+                              'inline-block h-4 w-4 transform rounded-full bg-cream-warm transition-transform shadow-sm',
                               effectiveEnabled ? 'translate-x-6' : 'translate-x-1'
                             )}
                           />

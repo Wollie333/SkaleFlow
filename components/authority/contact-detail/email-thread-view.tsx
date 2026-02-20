@@ -38,7 +38,7 @@ export function EmailThreadView({ thread, onReply }: EmailThreadViewProps) {
   const previewText = latestMessage?.email_body_text?.slice(0, 120) || '';
 
   return (
-    <div className="bg-white border border-stone/10 rounded-xl overflow-hidden">
+    <div className="bg-cream-warm border border-stone/10 rounded-xl overflow-hidden">
       {/* Thread Header — always visible */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}

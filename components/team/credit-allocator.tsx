@@ -110,7 +110,7 @@ export function CreditAllocator({
   return (
     <div className="space-y-6">
       {/* Org Balance Summary */}
-      <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-6">
+      <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-6">
         <div className="flex items-center gap-2 mb-4">
           <CurrencyDollarIcon className="w-5 h-5 text-teal" />
           <h3 className="text-sm font-semibold text-charcoal">Organisation Credit Pool</h3>
@@ -136,7 +136,7 @@ export function CreditAllocator({
       </div>
 
       {/* Quick Allocate */}
-      <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-6">
+      <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-6">
         <h3 className="text-sm font-semibold text-charcoal mb-4">Quick Allocate</h3>
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex-1 min-w-[160px]">
@@ -144,7 +144,7 @@ export function CreditAllocator({
             <select
               value={quickMember}
               onChange={(e) => setQuickMember(e.target.value)}
-              className="w-full px-3 py-2 border border-stone/20 rounded-lg text-sm text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-teal/30"
+              className="w-full px-3 py-2 border border-stone/20 rounded-lg text-sm text-charcoal bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/30"
             >
               <option value="">Select member...</option>
               {members.map((m) => (
@@ -160,7 +160,7 @@ export function CreditAllocator({
             <select
               value={quickFeature}
               onChange={(e) => setQuickFeature(e.target.value)}
-              className="w-full px-3 py-2 border border-stone/20 rounded-lg text-sm text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-teal/30"
+              className="w-full px-3 py-2 border border-stone/20 rounded-lg text-sm text-charcoal bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/30"
             >
               <option value="">Select feature...</option>
               {FEATURES.map((f) => (
@@ -195,7 +195,7 @@ export function CreditAllocator({
       </div>
 
       {/* Allocations Table */}
-      <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
+      <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
         <div className="px-6 py-4 border-b border-stone/10">
           <h3 className="text-sm font-semibold text-charcoal">Credit Allocations</h3>
           <p className="text-xs text-stone mt-0.5">Manage per-member credit allocations by feature</p>

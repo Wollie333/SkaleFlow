@@ -228,7 +228,7 @@ export default function AdminCostsPage() {
         subtitle="Monitor API costs, credits charged, and platform profitability"
         breadcrumbs={[{ label: 'Admin' }, { label: 'Costs' }]}
         action={
-          <div className="flex items-center gap-1 bg-white rounded-lg border border-stone/10 p-1">
+          <div className="flex items-center gap-1 bg-cream-warm rounded-lg border border-stone/10 p-1">
             {PERIODS.map((p) => (
               <button
                 key={p.value}
@@ -255,14 +255,14 @@ export default function AdminCostsPage() {
       {s && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {/* API Cost */}
-          <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+          <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
             <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">API Cost</p>
             <p className="text-2xl font-bold text-charcoal">{formatUSD(s.totalApiCostUSD)}</p>
             <p className="text-sm text-stone mt-1">{formatZAR(s.totalApiCostZAR)}</p>
           </div>
 
           {/* Credits Charged */}
-          <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+          <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
             <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Credits Charged</p>
             <p className="text-2xl font-bold text-charcoal">{formatNumber(s.totalCreditsCharged)}</p>
             <p className="text-sm text-stone mt-1">
@@ -271,7 +271,7 @@ export default function AdminCostsPage() {
           </div>
 
           {/* Revenue */}
-          <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+          <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
             <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Revenue (Credits)</p>
             <p className="text-2xl font-bold text-charcoal">{formatZAR(s.totalRevenueZAR)}</p>
             {topup && topup.count > 0 && (
@@ -282,7 +282,7 @@ export default function AdminCostsPage() {
           </div>
 
           {/* Profit */}
-          <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+          <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
             <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Profit</p>
             <p className={`text-2xl font-bold ${s.profitZAR >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
               {formatZAR(s.profitZAR)}
@@ -305,7 +305,7 @@ export default function AdminCostsPage() {
           <h2 className="font-serif text-xl font-bold text-charcoal mb-4">
             Model Controls
           </h2>
-          <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
+          <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -337,7 +337,7 @@ export default function AdminCostsPage() {
                           } ${togglingModel === m.id ? 'opacity-50' : ''}`}
                         >
                           <span
-                            className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+                            className={`inline-block h-4 w-4 rounded-full bg-cream-warm shadow-sm transition-transform ${
                               m.isEnabled ? 'translate-x-6' : 'translate-x-1'
                             }`}
                           />
@@ -361,7 +361,7 @@ export default function AdminCostsPage() {
           <h2 className="font-serif text-xl font-bold text-charcoal mb-4">
             By Organization
           </h2>
-          <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
+          <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -429,7 +429,7 @@ export default function AdminCostsPage() {
           <h2 className="font-serif text-xl font-bold text-charcoal mb-4">
             By Model
           </h2>
-          <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
+          <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -475,7 +475,7 @@ export default function AdminCostsPage() {
           <h2 className="font-serif text-xl font-bold text-charcoal mb-4">
             By Feature
           </h2>
-          <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
+          <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -506,7 +506,7 @@ export default function AdminCostsPage() {
 
       {/* Empty state */}
       {s && s.totalRequests === 0 && (
-        <div className="bg-white rounded-xl border border-teal/[0.08] p-8 text-center text-stone">
+        <div className="bg-cream-warm rounded-xl border border-teal/[0.08] p-8 text-center text-stone">
           No AI usage data found for this period.
         </div>
       )}

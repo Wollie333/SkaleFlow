@@ -261,9 +261,9 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
     : {};
 
   return (
-    <div className="fixed inset-y-0 right-0 w-[600px] bg-white shadow-2xl border-l border-stone/10 overflow-y-auto z-50">
+    <div className="fixed inset-y-0 right-0 w-[600px] bg-cream-warm shadow-2xl border-l border-stone/10 overflow-y-auto z-50">
       {/* Header */}
-      <div className="sticky top-0 bg-white border-b border-stone/10 px-6 py-4 flex items-center justify-between z-10">
+      <div className="sticky top-0 bg-cream-warm border-b border-stone/10 px-6 py-4 flex items-center justify-between z-10">
         <div>
           <h2 className="text-heading-md text-charcoal">Edit Content</h2>
           <p className="text-sm text-stone">
@@ -639,7 +639,7 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
               {formData.target_url && formData.utm_parameters && (
                 <div className="mt-2">
                   <p className="text-xs font-medium text-stone mb-1">Full tracked URL:</p>
-                  <p className="text-xs text-teal bg-white rounded-lg px-3 py-2 break-all border border-stone/10">
+                  <p className="text-xs text-teal bg-cream-warm rounded-lg px-3 py-2 break-all border border-stone/10">
                     {buildTrackedUrl(formData.target_url, formData.utm_parameters as unknown as UTMParams)}
                   </p>
                 </div>
@@ -723,7 +723,7 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
             <select
               value={formData.assigned_to || ''}
               onChange={(e) => updateField('assigned_to', e.target.value || null)}
-              className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+              className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
             >
               <option value="">Unassigned</option>
               {teamMembers.map(m => (
@@ -741,7 +741,7 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
           <select
             value={formData.status}
             onChange={(e) => updateField('status', e.target.value as ContentStatus)}
-            className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+            className="w-full px-4 py-3 rounded-xl border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
           >
             <option value="idea">Idea</option>
             <option value="scripted">Scripted</option>
@@ -774,13 +774,13 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
                 type="date"
                 value={formData.scheduled_date}
                 onChange={e => updateField('scheduled_date', e.target.value)}
-                className="flex-1 px-4 py-3 rounded-xl border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20"
+                className="flex-1 px-4 py-3 rounded-xl border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20"
               />
               <input
                 type="time"
                 value={formData.scheduled_time || ''}
                 onChange={e => updateField('scheduled_time', e.target.value || null)}
-                className="w-36 px-4 py-3 rounded-xl border border-stone/20 bg-white focus:outline-none focus:ring-2 focus:ring-teal/20"
+                className="w-36 px-4 py-3 rounded-xl border border-stone/20 bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20"
               />
             </div>
           )}
@@ -924,7 +924,7 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
       </div>
 
       {/* Footer */}
-      <div className="sticky bottom-0 bg-white border-t border-stone/10 px-6 py-4 flex gap-3">
+      <div className="sticky bottom-0 bg-cream-warm border-t border-stone/10 px-6 py-4 flex gap-3">
         <Button onClick={onClose} variant="ghost" className="flex-1">Cancel</Button>
         <Button onClick={handleSave} isLoading={isSaving} className="flex-1">Save Changes</Button>
       </div>

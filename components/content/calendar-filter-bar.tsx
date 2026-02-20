@@ -115,7 +115,7 @@ export function CalendarFilterBar({
     (filters.searchQuery ? 1 : 0);
 
   return (
-    <div className="bg-white rounded-xl border border-stone/10 overflow-hidden">
+    <div className="bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
       {/* Filter Toggle Button */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -166,7 +166,7 @@ export function CalendarFilterBar({
                     'px-3 py-1.5 text-sm rounded-lg border transition-colors',
                     filters.platforms.includes(value)
                       ? 'bg-teal text-white border-teal'
-                      : 'bg-white text-stone border-stone/20 hover:border-teal hover:text-teal'
+                      : 'bg-cream-warm text-stone border-stone/20 hover:border-teal hover:text-teal'
                   )}
                 >
                   {label}
@@ -189,7 +189,7 @@ export function CalendarFilterBar({
                     'px-3 py-1.5 text-sm rounded-lg border transition-colors',
                     filters.status.includes(value)
                       ? 'bg-teal text-white border-teal'
-                      : 'bg-white text-stone border-stone/20 hover:border-teal hover:text-teal'
+                      : 'bg-cream-warm text-stone border-stone/20 hover:border-teal hover:text-teal'
                   )}
                 >
                   {label}
@@ -258,7 +258,7 @@ export function CalendarFilterBar({
                       'px-3 py-1.5 text-sm rounded-lg border transition-colors',
                       filters.tags.includes(tag)
                         ? 'bg-teal text-white border-teal'
-                        : 'bg-white text-stone border-stone/20 hover:border-teal hover:text-teal'
+                        : 'bg-cream-warm text-stone border-stone/20 hover:border-teal hover:text-teal'
                     )}
                   >
                     #{tag}

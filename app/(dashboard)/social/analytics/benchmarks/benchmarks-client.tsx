@@ -80,7 +80,7 @@ export function BenchmarksClient({ benchmarks, orgMetrics, industry }: Benchmark
       />
 
       {/* Platform Selector */}
-      <div className="bg-white rounded-xl border border-stone/10 p-4">
+      <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
         <div className="flex items-center gap-2 overflow-x-auto">
           {PLATFORMS.map((platform) => (
             <button
@@ -101,7 +101,7 @@ export function BenchmarksClient({ benchmarks, orgMetrics, industry }: Benchmark
 
       {/* Benchmark Cards */}
       {platformBenchmarks.length === 0 ? (
-        <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-12 text-center">
           <div className="w-16 h-16 mx-auto mb-4 bg-stone/10 rounded-full flex items-center justify-center">
             <ChartBarIcon className="w-8 h-8 text-stone" />
           </div>
@@ -121,7 +121,7 @@ export function BenchmarksClient({ benchmarks, orgMetrics, industry }: Benchmark
             const performance = getPerformanceLevel(metric.orgValue, metric.key);
 
             return (
-              <div key={metric.key} className="bg-white rounded-xl border border-stone/10 overflow-hidden">
+              <div key={metric.key} className="bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-stone/10 bg-stone/5">
                   <div className="flex items-center justify-between">

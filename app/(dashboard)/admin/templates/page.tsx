@@ -393,7 +393,7 @@ Visual/structural rules for the output.
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         {/* Category tabs */}
-        <div className="flex gap-1 bg-white border border-stone/15 rounded-lg p-0.5">
+        <div className="flex gap-1 bg-cream-warm border border-stone/15 rounded-lg p-0.5">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.value}
@@ -413,7 +413,7 @@ Visual/structural rules for the output.
         <select
           value={tierFilter}
           onChange={(e) => setTierFilter(e.target.value)}
-          className="text-xs border border-stone/20 rounded-lg px-2.5 py-1.5 bg-white"
+          className="text-xs border border-stone/20 rounded-lg px-2.5 py-1.5 bg-cream-warm"
         >
           <option value="">All Tiers</option>
           <option value="core_rotation">Core Rotation</option>
@@ -425,7 +425,7 @@ Visual/structural rules for the output.
         <select
           value={activeFilter}
           onChange={(e) => setActiveFilter(e.target.value)}
-          className="text-xs border border-stone/20 rounded-lg px-2.5 py-1.5 bg-white"
+          className="text-xs border border-stone/20 rounded-lg px-2.5 py-1.5 bg-cream-warm"
         >
           <option value="">All Status</option>
           <option value="true">Active Only</option>
@@ -440,7 +440,7 @@ Visual/structural rules for the output.
             placeholder="Search templates..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-xs border border-stone/20 rounded-lg bg-white"
+            className="w-full pl-8 pr-3 py-1.5 text-xs border border-stone/20 rounded-lg bg-cream-warm"
           />
         </div>
       </div>
@@ -465,7 +465,7 @@ Visual/structural rules for the output.
               <div
                 key={template.id}
                 className={`border rounded-lg transition-colors ${
-                  template.is_active ? 'border-stone/15 bg-white' : 'border-stone/10 bg-stone/5'
+                  template.is_active ? 'border-stone/15 bg-cream-warm' : 'border-stone/10 bg-stone/5'
                 }`}
               >
                 {/* Row header */}

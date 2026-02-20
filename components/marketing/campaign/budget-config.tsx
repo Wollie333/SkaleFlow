@@ -42,7 +42,7 @@ export function BudgetConfig({
             'flex-1 py-2.5 text-sm font-medium transition-all duration-200',
             budgetType === 'daily'
               ? 'bg-teal text-cream'
-              : 'bg-white text-stone hover:bg-cream-warm/30'
+              : 'bg-cream-warm text-stone hover:bg-cream-warm/30'
           )}
         >
           Daily Budget
@@ -54,7 +54,7 @@ export function BudgetConfig({
             'flex-1 py-2.5 text-sm font-medium transition-all duration-200',
             budgetType === 'lifetime'
               ? 'bg-teal text-cream'
-              : 'bg-white text-stone hover:bg-cream-warm/30'
+              : 'bg-cream-warm text-stone hover:bg-cream-warm/30'
           )}
         >
           Lifetime Budget
@@ -81,7 +81,7 @@ export function BudgetConfig({
             }}
             placeholder="0.00"
             className={cn(
-              'w-full pl-8 pr-4 py-3 rounded-xl border bg-white transition-all duration-200',
+              'w-full pl-8 pr-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
               'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
               'placeholder:text-stone/60',
               'border-stone/20 hover:border-stone/40'
@@ -106,7 +106,7 @@ export function BudgetConfig({
             value={startDate}
             onChange={(e) => onChange({ startDate: e.target.value })}
             className={cn(
-              'w-full px-4 py-3 rounded-xl border bg-white transition-all duration-200',
+              'w-full px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
               'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
               'border-stone/20 hover:border-stone/40',
               'text-charcoal'
@@ -123,7 +123,7 @@ export function BudgetConfig({
             onChange={(e) => onChange({ endDate: e.target.value })}
             min={startDate}
             className={cn(
-              'w-full px-4 py-3 rounded-xl border bg-white transition-all duration-200',
+              'w-full px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
               'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
               'border-stone/20 hover:border-stone/40',
               'text-charcoal'

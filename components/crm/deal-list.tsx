@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 
 interface Deal {
   id: string;
@@ -72,20 +70,19 @@ export default function DealList({ organizationId, onCreateClick, initialContact
   }
 
   function handleDealClick(dealId: string) {
-    // TODO: Open deal detail panel or modal
     alert(`Deal ${dealId} clicked - detail view coming soon`);
   }
 
   function getStatusBadgeColor(status: string) {
     switch (status) {
       case 'open':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-500/15 text-blue-400 border-blue-500/20';
       case 'won':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-500/15 text-green-400 border-green-500/20';
       case 'lost':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-500/15 text-red-400 border-red-500/20';
       default:
-        return 'bg-stone-100 text-stone-800 border-stone-200';
+        return 'bg-stone/10 text-stone border-stone/20';
     }
   }
 
@@ -102,118 +99,103 @@ export default function DealList({ organizationId, onCreateClick, initialContact
     });
   }
 
+  const filterButtons: { key: StatusFilter; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'open', label: 'Open' },
+    { key: 'won', label: 'Won' },
+    { key: 'lost', label: 'Lost' },
+  ];
+
   return (
     <div className="space-y-4">
       {/* Filter Bar */}
-      <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-lg border border-stone-200">
+      <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setStatusFilter('all')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              statusFilter === 'all'
-                ? 'bg-dark text-white'
-                : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setStatusFilter('open')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              statusFilter === 'open'
-                ? 'bg-blue-500 text-white'
-                : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-            }`}
-          >
-            Open
-          </button>
-          <button
-            onClick={() => setStatusFilter('won')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              statusFilter === 'won'
-                ? 'bg-green-500 text-white'
-                : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-            }`}
-          >
-            Won
-          </button>
-          <button
-            onClick={() => setStatusFilter('lost')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              statusFilter === 'lost'
-                ? 'bg-red-500 text-white'
-                : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-            }`}
-          >
-            Lost
-          </button>
+          {filterButtons.map((btn) => (
+            <button
+              key={btn.key}
+              onClick={() => setStatusFilter(btn.key)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                statusFilter === btn.key
+                  ? 'bg-teal text-white'
+                  : 'bg-cream text-charcoal hover:bg-cream-warm'
+              }`}
+            >
+              {btn.label}
+            </button>
+          ))}
         </div>
 
-        <Button onClick={onCreateClick} className="bg-teal text-white hover:bg-teal/90">
+        <button
+          onClick={onCreateClick}
+          className="px-4 py-2 bg-teal text-white rounded-lg hover:bg-teal/90 transition-colors font-medium"
+        >
           Add Deal
-        </Button>
+        </button>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg border border-stone-200 overflow-hidden">
+      <div className="bg-cream-warm rounded-lg border border-stone/10 overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-stone-500">Loading deals...</div>
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal"></div>
+          </div>
         ) : deals.length === 0 ? (
-          <div className="p-8 text-center text-stone-500">
+          <div className="text-center py-12 text-stone">
             No deals found. Click "Add Deal" to create your first deal.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-stone-50 border-b border-stone-200">
+              <thead className="bg-cream border-b border-stone/10">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-stone-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                     Title
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-stone-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                     Contact
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-stone-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                     Value
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-stone-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                     Probability
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-stone-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                     Expected Close
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-stone-700 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">
                     Status
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-200">
+              <tbody className="divide-y divide-stone/10">
                 {deals.map((deal) => (
                   <tr
                     key={deal.id}
                     onClick={() => handleDealClick(deal.id)}
-                    className="hover:bg-stone-50 cursor-pointer transition-colors"
+                    className="hover:bg-cream/50 cursor-pointer transition-colors"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-dark">{deal.title}</div>
+                      <div className="text-sm font-medium text-charcoal">{deal.title}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-stone-700">
+                      <div className="text-sm text-stone">
                         {deal.crm_contacts
                           ? `${deal.crm_contacts.first_name} ${deal.crm_contacts.last_name}`
                           : '-'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-semibold text-dark">
+                      <div className="text-sm font-semibold text-charcoal">
                         {formatCurrency(deal.value_cents)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-stone-700">{deal.probability}%</div>
+                      <div className="text-sm text-stone">{deal.probability}%</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-stone-700">
+                      <div className="text-sm text-stone">
                         {formatDate(deal.expected_close_date)}
                       </div>
                     </td>
@@ -235,31 +217,29 @@ export default function DealList({ organizationId, onCreateClick, initialContact
 
         {/* Pagination */}
         {!loading && totalPages > 1 && (
-          <div className="px-6 py-4 bg-stone-50 border-t border-stone-200 flex items-center justify-between">
-            <div className="text-sm text-stone-600">
+          <div className="px-6 py-4 bg-cream border-t border-stone/10 flex items-center justify-between">
+            <div className="text-sm text-stone">
               Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total}{' '}
               deals
             </div>
             <div className="flex items-center gap-2">
-              <Button
+              <button
                 onClick={() => setPage(page - 1)}
                 disabled={page === 1}
-                className="px-3 py-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                variant="outline"
+                className="px-3 py-1.5 border border-stone/10 rounded-lg text-sm text-charcoal disabled:opacity-40 disabled:cursor-not-allowed hover:bg-cream/50"
               >
                 Previous
-              </Button>
-              <div className="text-sm text-stone-600">
+              </button>
+              <div className="text-sm text-stone">
                 Page {page} of {totalPages}
               </div>
-              <Button
+              <button
                 onClick={() => setPage(page + 1)}
                 disabled={page === totalPages}
-                className="px-3 py-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                variant="outline"
+                className="px-3 py-1.5 border border-stone/10 rounded-lg text-sm text-charcoal disabled:opacity-40 disabled:cursor-not-allowed hover:bg-cream/50"
               >
                 Next
-              </Button>
+              </button>
             </div>
           </div>
         )}

@@ -304,15 +304,15 @@ export default function ContentReviewsPage() {
       )}
 
       {/* Filter tabs */}
-      <div className="flex gap-1 mb-6 bg-cream-warm rounded-lg p-1">
+      <div className="mb-4 flex gap-4 border-b border-stone/10 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
         {tabs.map(tab => (
           <button
             key={tab.key}
             onClick={() => handleTabChange(tab.key)}
-            className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
               activeTab === tab.key
-                ? 'bg-white text-charcoal shadow-sm'
-                : 'text-stone hover:text-charcoal'
+                ? 'border-teal text-teal'
+                : 'border-transparent text-stone hover:text-charcoal'
             }`}
           >
             {tab.label}
@@ -340,7 +340,7 @@ export default function ContentReviewsPage() {
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-stone/10 overflow-hidden divide-y divide-stone/5">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 overflow-hidden divide-y divide-stone/5">
           {filteredNotifications.map(notification => {
             const IconComponent = notificationIcons[notification.type] || DocumentTextIcon;
             const colors = notificationColors[notification.type] || { icon: 'text-stone', bg: 'bg-stone/10' };

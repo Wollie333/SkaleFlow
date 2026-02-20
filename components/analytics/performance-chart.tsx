@@ -133,7 +133,7 @@ export function PerformanceChart({ data, isLoading, platformFilter, availableMet
                 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200 border',
                 visibleLines.has(line.key)
                   ? 'border-transparent'
-                  : 'border-stone/20 bg-white text-stone opacity-50'
+                  : 'border-stone/20 bg-cream-warm text-stone opacity-50'
               )}
               style={
                 visibleLines.has(line.key)

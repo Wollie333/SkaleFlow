@@ -336,25 +336,23 @@ export default function MyTeamPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-cream mb-6">
-        <nav className="flex gap-6">
-          {tabs
-            .filter(tab => !tab.adminOnly || isAdmin)
-            .map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={cn(
-                  'pb-3 text-sm font-medium transition-colors border-b-2',
-                  activeTab === tab.id
-                    ? 'border-teal text-teal'
-                    : 'border-transparent text-stone hover:text-charcoal'
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-        </nav>
+      <div className="mb-4 flex gap-4 border-b border-stone/10 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+        {tabs
+          .filter(tab => !tab.adminOnly || isAdmin)
+          .map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabChange(tab.id)}
+              className={cn(
+                'pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
+                activeTab === tab.id
+                  ? 'border-teal text-teal'
+                  : 'border-transparent text-stone hover:text-charcoal'
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
       </div>
 
       {/* Tab Content */}
@@ -362,7 +360,7 @@ export default function MyTeamPage() {
         <div>
           {/* Inline invite form (admin only) */}
           {isAdmin && (
-            <form onSubmit={handleInvite} className="mb-6 bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+            <form onSubmit={handleInvite} className="mb-6 bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
               <h3 className="font-serif text-lg font-bold text-charcoal mb-3">Invite Member</h3>
               <div className="flex items-end gap-3 flex-wrap">
                 <div className="flex-1 min-w-[220px]">
@@ -381,7 +379,7 @@ export default function MyTeamPage() {
                   <select
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value as OrgMemberRole)}
-                    className="w-full px-3 py-2 border border-cream rounded-lg text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
+                    className="w-full px-3 py-2 border border-cream rounded-lg text-charcoal bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
                   >
                     <option value="member">Member</option>
                     <option value="viewer">Viewer</option>
@@ -435,7 +433,7 @@ export default function MyTeamPage() {
             Team Members <span className="text-stone font-normal text-sm">({members.length})</span>
           </h3>
           {members.length === 0 ? (
-            <div className="bg-white rounded-xl border border-teal/[0.08] p-8 text-center text-stone">
+            <div className="bg-cream-warm rounded-xl border border-teal/[0.08] p-8 text-center text-stone">
               No team members yet. {isAdmin && 'Invite your first team member to get started.'}
             </div>
           ) : (

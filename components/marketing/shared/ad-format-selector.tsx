@@ -34,7 +34,7 @@ export function AdFormatSelector({ platform, value, onChange }: AdFormatSelector
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={cn(
-          'w-full px-4 py-3 rounded-xl border bg-white transition-all duration-200',
+          'w-full px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
           'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
           'border-stone/20 hover:border-stone/40',
           'text-charcoal'

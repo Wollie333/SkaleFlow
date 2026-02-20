@@ -41,7 +41,7 @@ export function TemplatePicker({ organizationId, onSelect, onClose }: TemplatePi
 
   return (
     <div className="fixed inset-0 bg-dark/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[70vh] flex flex-col shadow-xl">
+      <div className="bg-cream-warm rounded-2xl w-full max-w-lg max-h-[70vh] flex flex-col shadow-xl">
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <h2 className="text-heading-md text-charcoal">Content Templates</h2>
           <button onClick={onClose} className="p-2 hover:bg-cream-warm rounded-lg">

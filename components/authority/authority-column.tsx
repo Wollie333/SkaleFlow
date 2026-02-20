@@ -47,7 +47,7 @@ export function AuthorityColumn({ stage, cards, onCardClick, onAddCard }: Author
     <div
       ref={setNodeRef}
       className={cn(
-        'flex flex-col w-60 min-w-[15rem] rounded-xl bg-white border border-stone/10 shadow-sm transition-all flex-shrink-0',
+        'flex flex-col w-60 min-w-[15rem] rounded-xl bg-cream-warm border border-stone/10 shadow-sm transition-all flex-shrink-0',
         isOver && 'border-teal/40 bg-teal/5 shadow-md'
       )}
     >

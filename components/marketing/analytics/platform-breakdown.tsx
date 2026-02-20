@@ -44,7 +44,7 @@ export function PlatformBreakdown({ metaMetrics, tiktokMetrics }: PlatformBreakd
   const tiktokSpendPct = totalSpend > 0 ? (tiktokMetrics.spend / totalSpend) * 100 : 50;
 
   return (
-    <div className="bg-white rounded-xl border border-teal/8 p-6">
+    <div className="bg-cream-warm rounded-xl border border-teal/8 p-6">
       <h3 className="text-sm font-semibold text-charcoal mb-4">Platform Breakdown</h3>
 
       {/* Platform Headers */}

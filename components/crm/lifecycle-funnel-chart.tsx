@@ -28,7 +28,7 @@ export function LifecycleFunnelChart({ data }: LifecycleFunnelChartProps) {
               <span className="font-medium text-charcoal">{label}</span>
               <span className="text-stone">{count}</span>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-3">
+            <div className="w-full bg-cream rounded-full h-3">
               <div
                 className="h-3 rounded-full transition-all duration-500"
                 style={{ width: `${pct}%`, backgroundColor: color }}

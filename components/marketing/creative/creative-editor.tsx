@@ -150,7 +150,7 @@ export function CreativeEditor({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-teal/8 overflow-hidden">
+    <div className="bg-cream-warm rounded-xl border border-teal/8 overflow-hidden">
       <div className="p-6 space-y-5">
         {/* Name */}
         <div>
@@ -163,7 +163,7 @@ export function CreativeEditor({
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Summer Sale - Video Ad"
             className={cn(
-              'w-full px-4 py-3 rounded-xl border bg-white transition-all duration-200',
+              'w-full px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
               'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
               'placeholder:text-stone/60 border-stone/20 hover:border-stone/40'
             )}
@@ -203,7 +203,7 @@ export function CreativeEditor({
             rows={4}
             placeholder="Write your ad copy here..."
             className={cn(
-              'w-full px-4 py-3 rounded-xl border bg-white transition-all duration-200 resize-none',
+              'w-full px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200 resize-none',
               'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
               'placeholder:text-stone/60',
               primaryText.length > primaryTextMaxLimit
@@ -237,7 +237,7 @@ export function CreativeEditor({
             onChange={(e) => setHeadline(e.target.value)}
             placeholder="Short compelling headline"
             className={cn(
-              'w-full px-4 py-3 rounded-xl border bg-white transition-all duration-200',
+              'w-full px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
               'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
               'placeholder:text-stone/60',
               headline.length > headlineLimit
@@ -266,7 +266,7 @@ export function CreativeEditor({
             onChange={(e) => setDescription(e.target.value)}
             placeholder={platform === 'meta' ? 'Short description (optional)' : 'Ad description'}
             className={cn(
-              'w-full px-4 py-3 rounded-xl border bg-white transition-all duration-200',
+              'w-full px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
               'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
               'placeholder:text-stone/60',
               description.length > descriptionLimit
@@ -285,7 +285,7 @@ export function CreativeEditor({
             value={ctaType}
             onChange={(e) => setCtaType(e.target.value)}
             className={cn(
-              'w-full px-4 py-3 rounded-xl border bg-white transition-all duration-200',
+              'w-full px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
               'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
               'border-stone/20 hover:border-stone/40 text-charcoal'
             )}
@@ -311,7 +311,7 @@ export function CreativeEditor({
               onChange={(e) => setTargetUrl(e.target.value)}
               placeholder="https://yoursite.com/landing-page"
               className={cn(
-                'w-full pl-10 pr-4 py-3 rounded-xl border bg-white transition-all duration-200',
+                'w-full pl-10 pr-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
                 'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
                 'placeholder:text-stone/60 border-stone/20 hover:border-stone/40'
               )}
@@ -342,7 +342,7 @@ export function CreativeEditor({
                 onChange={(e) => setUtmSource(e.target.value)}
                 placeholder="facebook"
                 className={cn(
-                  'w-full px-3 py-2 rounded-lg border bg-white transition-all duration-200 text-sm',
+                  'w-full px-3 py-2 rounded-lg border bg-cream-warm transition-all duration-200 text-sm',
                   'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
                   'placeholder:text-stone/60 border-stone/20'
                 )}
@@ -356,7 +356,7 @@ export function CreativeEditor({
                 onChange={(e) => setUtmMedium(e.target.value)}
                 placeholder="paid_social"
                 className={cn(
-                  'w-full px-3 py-2 rounded-lg border bg-white transition-all duration-200 text-sm',
+                  'w-full px-3 py-2 rounded-lg border bg-cream-warm transition-all duration-200 text-sm',
                   'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
                   'placeholder:text-stone/60 border-stone/20'
                 )}
@@ -370,7 +370,7 @@ export function CreativeEditor({
                 onChange={(e) => setUtmCampaign(e.target.value)}
                 placeholder="summer_sale"
                 className={cn(
-                  'w-full px-3 py-2 rounded-lg border bg-white transition-all duration-200 text-sm',
+                  'w-full px-3 py-2 rounded-lg border bg-cream-warm transition-all duration-200 text-sm',
                   'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
                   'placeholder:text-stone/60 border-stone/20'
                 )}
@@ -384,7 +384,7 @@ export function CreativeEditor({
                 onChange={(e) => setUtmContent(e.target.value)}
                 placeholder="video_ad"
                 className={cn(
-                  'w-full px-3 py-2 rounded-lg border bg-white transition-all duration-200 text-sm',
+                  'w-full px-3 py-2 rounded-lg border bg-cream-warm transition-all duration-200 text-sm',
                   'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
                   'placeholder:text-stone/60 border-stone/20'
                 )}
@@ -405,7 +405,7 @@ export function CreativeEditor({
               onChange={(e) => setDisplayLink(e.target.value)}
               placeholder="yoursite.com"
               className={cn(
-                'w-full px-4 py-3 rounded-xl border bg-white transition-all duration-200',
+                'w-full px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
                 'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
                 'placeholder:text-stone/60 border-stone/20 hover:border-stone/40'
               )}

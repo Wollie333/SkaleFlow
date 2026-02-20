@@ -134,7 +134,7 @@ function DraggablePost({
       case 'scheduled': return 'bg-blue-100 text-blue-700 border-blue-200';
       case 'approved': return 'bg-purple-100 text-purple-700 border-purple-200';
       case 'pending_review': return 'bg-amber-100 text-amber-700 border-amber-200';
-      default: return 'bg-stone-100 text-stone-700 border-stone-200';
+      default: return 'bg-cream text-charcoal border-stone/10';
     }
   };
 
@@ -154,7 +154,7 @@ function DraggablePost({
       {...listeners}
       onClick={() => onItemClick(item)}
       className={cn(
-        'group relative bg-white rounded-lg border border-stone/10 overflow-hidden hover:shadow-md transition-all cursor-pointer',
+        'group relative bg-cream-warm rounded-lg border border-stone/10 overflow-hidden hover:shadow-md transition-all cursor-pointer',
         isDragging && 'opacity-30'
       )}
     >
@@ -214,7 +214,7 @@ function DraggablePost({
             onPreview?.(item);
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          className="p-2 bg-white/10 rounded hover:bg-white/20 transition-colors"
+          className="p-2 bg-cream-warm/10 rounded hover:bg-cream-warm/20 transition-colors"
           title="Preview"
         >
           <EyeIcon className="w-4 h-4 text-white" />
@@ -225,7 +225,7 @@ function DraggablePost({
             onItemClick(item);
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          className="p-2 bg-white/10 rounded hover:bg-white/20 transition-colors"
+          className="p-2 bg-cream-warm/10 rounded hover:bg-cream-warm/20 transition-colors"
           title="Edit"
         >
           <PencilIcon className="w-4 h-4 text-white" />
@@ -236,7 +236,7 @@ function DraggablePost({
             onClone?.(item);
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          className="p-2 bg-white/10 rounded hover:bg-teal/30 transition-colors"
+          className="p-2 bg-cream-warm/10 rounded hover:bg-teal/30 transition-colors"
           title="Clone"
         >
           <DocumentDuplicateIcon className="w-4 h-4 text-white" />
@@ -247,7 +247,7 @@ function DraggablePost({
             onDelete?.(item);
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          className="p-2 bg-white/10 rounded hover:bg-red-500/30 transition-colors"
+          className="p-2 bg-cream-warm/10 rounded hover:bg-red-500/30 transition-colors"
           title="Delete"
         >
           <TrashIcon className="w-4 h-4 text-white" />
@@ -419,7 +419,7 @@ export function CalendarView({ items, onItemClick, onMonthChange, onMovePost, on
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="bg-white rounded-xl border border-stone/10 overflow-hidden">
+      <div className="bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
         {/* Header */}
         <div className="px-6 py-4 border-b border-stone/10 flex items-center justify-between">
           <h2 className="text-heading-md text-charcoal">
@@ -528,11 +528,11 @@ export function CalendarView({ items, onItemClick, onMonthChange, onMovePost, on
       {previewItem && (
         <div className="fixed inset-0 bg-dark/50 flex items-center justify-center z-50" onClick={() => setPreviewItem(null)}>
           <div
-            className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            className="bg-cream-warm rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal header */}
-            <div className="sticky top-0 bg-white border-b border-stone/10 px-5 py-4 flex items-center justify-between rounded-t-2xl z-10">
+            <div className="sticky top-0 bg-cream-warm border-b border-stone/10 px-5 py-4 flex items-center justify-between rounded-t-2xl z-10">
               <div className="min-w-0">
                 <h3 className="text-heading-md text-charcoal truncate">
                   {previewItem.topic || previewItem.format.replace(/_/g, ' ')}

@@ -46,7 +46,7 @@ export function BulkActionsToolbar({
       <div className="fixed inset-0 bg-black/20 z-40" onClick={onDeselectAll} />
 
       {/* Toolbar */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white rounded-2xl shadow-2xl border border-stone/10 animate-in slide-in-from-bottom-4">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-cream-warm rounded-2xl shadow-2xl border border-stone/10 animate-in slide-in-from-bottom-4">
         <div className="flex items-center gap-4 px-6 py-3">
           {/* Selection count */}
           <div className="flex items-center gap-2">
@@ -111,7 +111,7 @@ export function BulkActionsToolbar({
                   />
 
                   {/* Dropdown menu */}
-                  <div className="absolute bottom-full right-0 mb-2 w-48 bg-white rounded-lg shadow-xl border border-stone/10 py-1 z-20">
+                  <div className="absolute bottom-full right-0 mb-2 w-48 bg-cream-warm rounded-lg shadow-xl border border-stone/10 py-1 z-20">
                     <button
                       onClick={() => {
                         onBulkAction('change_status');

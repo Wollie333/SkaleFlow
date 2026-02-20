@@ -42,11 +42,11 @@ export function HashtagSetCard({ set, onEdit, onDelete, onCopy }: HashtagSetCard
       branded: 'bg-purple-100 text-purple-700 border-purple-200',
       campaign: 'bg-green-100 text-green-700 border-green-200',
     };
-    return colors[category?.toLowerCase()] || 'bg-stone-100 text-stone-700 border-stone-200';
+    return colors[category?.toLowerCase()] || 'bg-cream text-charcoal border-stone/10';
   };
 
   return (
-    <div className="group bg-white rounded-xl border border-stone/10 overflow-hidden hover:shadow-lg transition-shadow">
+    <div className="group bg-cream-warm rounded-xl border border-stone/10 overflow-hidden hover:shadow-lg transition-shadow">
       {/* Header */}
       <div className="p-4 border-b border-stone/10">
         <div className="flex items-start justify-between gap-3 mb-2">
@@ -131,7 +131,7 @@ export function HashtagSetCard({ set, onEdit, onDelete, onCopy }: HashtagSetCard
             'flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all',
             copied
               ? 'bg-green-500 text-white border-green-500'
-              : 'bg-white text-charcoal border-stone/20 hover:border-teal hover:text-teal'
+              : 'bg-cream-warm text-charcoal border-stone/20 hover:border-teal hover:text-teal'
           )}
         >
           {copied ? (

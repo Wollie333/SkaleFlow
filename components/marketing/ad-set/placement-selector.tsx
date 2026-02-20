@@ -69,7 +69,7 @@ export function PlacementSelector({ platform, value, onChange }: PlacementSelect
                 'flex items-start gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all duration-200',
                 isSelected
                   ? 'border-teal/30 bg-teal/5'
-                  : 'border-stone/15 bg-white hover:border-stone/30'
+                  : 'border-stone/15 bg-cream-warm hover:border-stone/30'
               )}
             >
               <input

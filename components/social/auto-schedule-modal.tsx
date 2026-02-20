@@ -105,7 +105,7 @@ export function AutoScheduleModal({
       <div className="fixed inset-0 bg-black/50 z-50" onClick={onCancel} />
 
       {/* Modal */}
-      <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-white rounded-xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
+      <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-cream-warm rounded-xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <div className="flex items-center gap-3">
@@ -157,7 +157,7 @@ export function AutoScheduleModal({
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   {/* Date */}
-                  <div className="bg-white rounded-lg p-4 border border-purple/10">
+                  <div className="bg-cream-warm rounded-lg p-4 border border-purple/10">
                     <div className="flex items-center gap-2 mb-2">
                       <CalendarIcon className="w-4 h-4 text-purple-600" />
                       <span className="text-xs font-medium text-stone uppercase tracking-wider">
@@ -170,7 +170,7 @@ export function AutoScheduleModal({
                   </div>
 
                   {/* Time */}
-                  <div className="bg-white rounded-lg p-4 border border-purple/10">
+                  <div className="bg-cream-warm rounded-lg p-4 border border-purple/10">
                     <div className="flex items-center gap-2 mb-2">
                       <ClockIcon className="w-4 h-4 text-purple-600" />
                       <span className="text-xs font-medium text-stone uppercase tracking-wider">
@@ -184,7 +184,7 @@ export function AutoScheduleModal({
                 </div>
 
                 {/* Reason */}
-                <div className="bg-white/50 rounded-lg p-3 border border-purple/10">
+                <div className="bg-cream-warm/50 rounded-lg p-3 border border-purple/10">
                   <p className="text-xs text-stone">{suggestion.reason}</p>
                 </div>
               </div>
@@ -192,7 +192,7 @@ export function AutoScheduleModal({
               {/* Performance Metrics */}
               <div className="grid grid-cols-2 gap-4">
                 {/* Confidence Score */}
-                <div className="bg-white rounded-xl p-4 border border-stone/10">
+                <div className="bg-cream-warm rounded-xl p-4 border border-stone/10">
                   <p className="text-xs text-stone mb-2">Confidence Score</p>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-2 bg-stone/10 rounded-full overflow-hidden">
@@ -208,7 +208,7 @@ export function AutoScheduleModal({
                 </div>
 
                 {/* Expected Engagement */}
-                <div className="bg-white rounded-xl p-4 border border-stone/10">
+                <div className="bg-cream-warm rounded-xl p-4 border border-stone/10">
                   <p className="text-xs text-stone mb-2">Expected Engagement</p>
                   <p className="text-lg font-bold text-purple-600">
                     {suggestion.expectedEngagementRate.toFixed(2)}%

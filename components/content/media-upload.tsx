@@ -137,7 +137,7 @@ export function MediaUpload({
 
             return (
               <div key={file.url} className="flex items-center gap-3 p-2 bg-cream-warm rounded-lg group">
-                <div className="w-12 h-12 rounded-lg bg-white border border-stone/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                <div className="w-12 h-12 rounded-lg bg-cream-warm border border-stone/10 flex items-center justify-center overflow-hidden flex-shrink-0">
                   {isImage ? (
                     <img src={file.url} alt={file.fileName} className="w-full h-full object-cover" />
                   ) : isVideo ? (

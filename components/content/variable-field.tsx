@@ -64,7 +64,7 @@ export function VariableTextarea({
         onFocus={trigger.triggerProps.onFocus}
         placeholder={hintedPlaceholder}
         className={cn(
-          'w-full px-4 py-3 rounded-xl border bg-white transition-all duration-200',
+          'w-full px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
           'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
           'placeholder:text-stone/60 resize-y',
           error
@@ -140,7 +140,7 @@ export function VariableInput({
         onFocus={trigger.triggerProps.onFocus}
         placeholder={hintedPlaceholder}
         className={cn(
-          'w-full px-4 py-3 rounded-xl border bg-white transition-all duration-200',
+          'w-full px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
           'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
           'placeholder:text-stone/60',
           error

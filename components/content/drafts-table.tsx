@@ -20,8 +20,8 @@ const PLATFORM_COLORS: Record<string, string> = {
   linkedin: 'bg-blue-100 text-blue-700',
   facebook: 'bg-blue-50 text-blue-600',
   instagram: 'bg-pink-50 text-pink-600',
-  twitter: 'bg-gray-100 text-gray-700',
-  tiktok: 'bg-gray-100 text-gray-800',
+  twitter: 'bg-cream text-charcoal',
+  tiktok: 'bg-cream text-charcoal',
   youtube: 'bg-red-50 text-red-600',
 };
 
@@ -78,7 +78,7 @@ export function DraftsTable({ items: initialItems }: DraftsTableProps) {
 
   return (
     <>
-      <div className="bg-white rounded-xl border border-stone/10 overflow-hidden">
+      <div className="bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -113,7 +113,7 @@ export function DraftsTable({ items: initialItems }: DraftsTableProps) {
                         {platforms.map(p => (
                           <span
                             key={p}
-                            className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${PLATFORM_COLORS[p] || 'bg-stone-100 text-stone-600'}`}
+                            className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${PLATFORM_COLORS[p] || 'bg-cream text-stone'}`}
                           >
                             {PLATFORM_LABELS[p] || p}
                           </span>

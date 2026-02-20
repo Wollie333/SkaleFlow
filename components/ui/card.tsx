@@ -10,9 +10,9 @@ export interface CardProps {
 
 export function Card({ children, className, variant = 'default', hover = false, onClick }: CardProps) {
   const variants = {
-    default: 'bg-white dark:bg-dark-light border border-teal/8 dark:border-white/8',
+    default: 'bg-cream-warm border border-teal/8 dark:border-white/8',
     dark: 'bg-dark-light border border-teal/12 text-cream',
-    gradient: 'bg-white dark:bg-dark-light border border-teal/8 dark:border-white/8 card-gradient-border',
+    gradient: 'bg-cream-warm border border-teal/8 dark:border-white/8 card-gradient-border',
   };
 
   return (

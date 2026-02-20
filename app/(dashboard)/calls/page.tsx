@@ -71,7 +71,7 @@ export default async function CallsPage() {
       <div className="mb-10">
         <h2 className="text-lg font-semibold text-charcoal mb-4">Upcoming</h2>
         {!upcomingCalls || upcomingCalls.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-xl border border-stone/10">
+          <div className="text-center py-12 bg-cream-warm rounded-xl border border-stone/10">
             <p className="text-stone text-sm">No upcoming calls</p>
             <Link href="/calls/new" className="text-teal text-sm hover:underline mt-1 inline-block">
               Schedule a call
@@ -86,7 +86,7 @@ export default async function CallsPage() {
                 <Link
                   key={call.id}
                   href={`/calls/${call.room_code}`}
-                  className="block bg-white rounded-xl border border-stone/10 p-4 hover:border-teal/20 transition-colors"
+                  className="block bg-cream-warm rounded-xl border border-stone/10 p-4 hover:border-teal/20 transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -115,7 +115,7 @@ export default async function CallsPage() {
       <div>
         <h2 className="text-lg font-semibold text-charcoal mb-4">Past Calls</h2>
         {!pastCalls || pastCalls.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-xl border border-stone/10">
+          <div className="text-center py-12 bg-cream-warm rounded-xl border border-stone/10">
             <p className="text-stone text-sm">No past calls yet</p>
           </div>
         ) : (
@@ -126,7 +126,7 @@ export default async function CallsPage() {
                 <Link
                   key={call.id}
                   href={hasSummary ? `/calls/${call.room_code}/summary` : `/calls/${call.room_code}`}
-                  className="block bg-white rounded-xl border border-stone/10 p-4 hover:border-teal/20 transition-colors"
+                  className="block bg-cream-warm rounded-xl border border-stone/10 p-4 hover:border-teal/20 transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div>

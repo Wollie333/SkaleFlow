@@ -197,7 +197,7 @@ export function MemberDetailPanel({
       {/* Panel */}
       <div
         className={cn(
-          'fixed inset-y-0 right-0 w-[420px] max-w-full bg-white shadow-xl border-l border-stone/10 z-50 flex flex-col transition-transform duration-300',
+          'fixed inset-y-0 right-0 w-[420px] max-w-full bg-cream-warm shadow-xl border-l border-stone/10 z-50 flex flex-col transition-transform duration-300',
           isOpen ? 'translate-x-0' : 'translate-x-full'
         )}
       >
@@ -249,7 +249,7 @@ export function MemberDetailPanel({
               {roleDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setRoleDropdownOpen(false)} />
-                  <div className="absolute top-full left-0 mt-1 z-50 bg-white rounded-lg border border-stone/10 shadow-lg py-1 min-w-[120px]">
+                  <div className="absolute top-full left-0 mt-1 z-50 bg-cream-warm rounded-lg border border-stone/10 shadow-lg py-1 min-w-[120px]">
                     {ASSIGNABLE_ROLES.map((role) => (
                       <button
                         key={role}
@@ -314,7 +314,7 @@ export function MemberDetailPanel({
                       >
                         <span
                           className={cn(
-                            'absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200',
+                            'absolute top-0.5 w-4 h-4 rounded-full bg-cream-warm shadow-sm transition-transform duration-200',
                             hasAccess ? 'translate-x-[18px]' : 'translate-x-0.5'
                           )}
                         />

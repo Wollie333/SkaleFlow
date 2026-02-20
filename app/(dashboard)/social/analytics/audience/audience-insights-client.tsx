@@ -92,7 +92,7 @@ export function AudienceInsightsClient({ organizationId, connections }: Audience
         <PageHeader
           title="Audience Insights"
         />
-        <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-12 text-center">
           <p className="text-stone mb-4">No social media accounts connected yet.</p>
         </div>
       </div>
@@ -158,7 +158,7 @@ export function AudienceInsightsClient({ organizationId, connections }: Audience
               className={cn(
                 'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors border-b-2',
                 isActive
-                  ? 'bg-white text-charcoal'
+                  ? 'bg-cream-warm text-charcoal'
                   : 'bg-cream-warm text-stone hover:text-charcoal border-transparent'
               )}
               style={isActive ? { borderColor: config.color } : undefined}

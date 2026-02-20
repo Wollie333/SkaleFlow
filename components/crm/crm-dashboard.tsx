@@ -60,12 +60,12 @@ export function CrmDashboard({ organizationId }: CrmDashboardProps) {
       <div className="animate-pulse space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-gray-100 rounded-xl h-24" />
+            <div key={i} className="bg-cream rounded-xl h-24" />
           ))}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-gray-100 rounded-xl h-64" />
-          <div className="bg-gray-100 rounded-xl h-64" />
+          <div className="bg-cream rounded-xl h-64" />
+          <div className="bg-cream rounded-xl h-64" />
         </div>
       </div>
     );
@@ -109,7 +109,7 @@ export function CrmDashboard({ organizationId }: CrmDashboardProps) {
       {/* Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {metricCards.map((card) => (
-          <div key={card.label} className="bg-white rounded-xl border border-gray-200 p-4">
+          <div key={card.label} className="bg-cream-warm rounded-xl border border-stone/10 p-4">
             <div className="flex items-center gap-3 mb-2">
               <div className={`p-2 rounded-lg ${card.color}`}>
                 <card.icon className="w-5 h-5" />
@@ -124,13 +124,13 @@ export function CrmDashboard({ organizationId }: CrmDashboardProps) {
 
       {/* Overdue invoices warning */}
       {stats.overdue_invoices_count > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center gap-3">
           <ExclamationTriangleIcon className="w-5 h-5 text-red-500 flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium text-red-800">
+            <p className="text-sm font-medium text-red-400">
               {stats.overdue_invoices_count} overdue invoice{stats.overdue_invoices_count > 1 ? 's' : ''}
             </p>
-            <p className="text-xs text-red-600">Review and follow up on outstanding payments</p>
+            <p className="text-xs text-red-400/70">Review and follow up on outstanding payments</p>
           </div>
         </div>
       )}
@@ -138,7 +138,7 @@ export function CrmDashboard({ organizationId }: CrmDashboardProps) {
       {/* Charts Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Lifecycle Funnel */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
           <h3 className="text-sm font-semibold text-charcoal mb-4">Contact Lifecycle</h3>
           <LifecycleFunnelChart data={stats.contacts_by_lifecycle} />
         </div>
@@ -149,7 +149,7 @@ export function CrmDashboard({ organizationId }: CrmDashboardProps) {
             revenueThisMonth={stats.revenue_this_month}
             revenueLastMonth={stats.revenue_last_month}
           />
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
             <div className="flex items-center gap-2 mb-1">
               <DocumentTextIcon className="w-4 h-4 text-red-500" />
               <p className="text-sm font-medium text-charcoal">Overdue Invoices</p>
@@ -160,7 +160,7 @@ export function CrmDashboard({ organizationId }: CrmDashboardProps) {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
         <h3 className="text-sm font-semibold text-charcoal mb-4">Recent Activity</h3>
         <ActivityTimeline activities={stats.recent_activity} />
       </div>

@@ -25,7 +25,7 @@ export function AIModelPicker({ models, selectedModelId, onSelect, costLabelFn }
             'w-full text-left p-3 rounded-xl border-2 transition-all',
             selectedModelId === model.id
               ? 'border-teal bg-teal/5 shadow-sm'
-              : 'border-stone/15 hover:border-stone/30 bg-white'
+              : 'border-stone/15 hover:border-stone/30 bg-cream-warm'
           )}
         >
           <div className="flex items-center justify-between">

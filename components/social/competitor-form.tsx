@@ -71,7 +71,7 @@ export function CompetitorForm({ competitor, onSave, onCancel }: CompetitorFormP
       <div className="fixed inset-0 bg-black/50 z-50" onClick={onCancel} />
 
       {/* Modal */}
-      <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-white rounded-xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
+      <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-cream-warm rounded-xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <h2 className="text-xl font-semibold text-charcoal">

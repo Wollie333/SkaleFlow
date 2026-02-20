@@ -92,11 +92,10 @@ export default function ProductList({ organizationId }: ProductListProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-charcoal">Products</h2>
+      <div className="flex items-center justify-end">
         <button
           onClick={handleAddProduct}
-          className="flex items-center gap-2 px-4 py-2 bg-teal text-white rounded-lg hover:bg-teal/90 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-teal text-white rounded-lg hover:bg-teal/90 transition-colors font-medium"
         >
           <PlusIcon className="h-5 w-5" />
           Add Product
@@ -105,7 +104,7 @@ export default function ProductList({ organizationId }: ProductListProps) {
 
       {/* Product Table */}
       {products.length === 0 ? (
-        <div className="bg-white rounded-lg border border-stone/20 p-12 text-center">
+        <div className="bg-cream-warm rounded-lg border border-stone/10 p-12 text-center">
           <p className="text-stone mb-4">No products yet</p>
           <button
             onClick={handleAddProduct}
@@ -116,21 +115,21 @@ export default function ProductList({ organizationId }: ProductListProps) {
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-stone/20 overflow-hidden">
+        <div className="bg-cream-warm rounded-lg border border-stone/10 overflow-hidden">
           <table className="w-full">
-            <thead className="bg-cream-warm border-b border-stone/20">
+            <thead className="bg-cream border-b border-stone/10">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-charcoal">Name</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-charcoal">SKU</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-charcoal">Price</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-charcoal">Type</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-charcoal">Active</th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-charcoal">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">SKU</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">Price</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-stone uppercase tracking-wider">Active</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-stone uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone/10">
               {products.map((product) => (
-                <tr key={product.id} className="hover:bg-cream-warm/30 transition-colors">
+                <tr key={product.id} className="hover:bg-cream/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-medium text-charcoal">{product.name}</div>
                     {product.description && (
@@ -172,15 +171,13 @@ export default function ProductList({ organizationId }: ProductListProps) {
                     </button>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => handleEditProduct(product)}
-                        className="p-2 hover:bg-cream/50 rounded-lg transition-colors"
-                        title="Edit product"
-                      >
-                        <PencilIcon className="h-4 w-4 text-charcoal" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handleEditProduct(product)}
+                      className="p-2 hover:bg-cream/50 rounded-lg transition-colors"
+                      title="Edit product"
+                    >
+                      <PencilIcon className="h-4 w-4 text-stone hover:text-charcoal" />
+                    </button>
                   </td>
                 </tr>
               ))}

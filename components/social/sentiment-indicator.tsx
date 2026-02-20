@@ -24,7 +24,7 @@ export function SentimentIndicator({
     neutral: {
       emoji: '😐',
       label: 'Neutral',
-      color: 'bg-stone-100 text-stone-700 border-stone-200',
+      color: 'bg-cream text-charcoal border-stone/10',
     },
     negative: {
       emoji: '😞',

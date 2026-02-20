@@ -161,7 +161,7 @@ export default function PipelineSettingsPage() {
 
       <div className="space-y-8">
         {/* General */}
-        <section className="bg-white rounded-xl border border-stone/10 p-6">
+        <section className="bg-cream-warm rounded-xl border border-stone/10 p-6">
           <h2 className="text-lg font-semibold text-charcoal mb-4">General</h2>
           <div className="space-y-4">
             <div>
@@ -178,7 +178,7 @@ export default function PipelineSettingsPage() {
         </section>
 
         {/* Stages */}
-        <section className="bg-white rounded-xl border border-stone/10 p-6">
+        <section className="bg-cream-warm rounded-xl border border-stone/10 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-charcoal">Stages</h2>
             <button onClick={handleAddStage} className="flex items-center gap-1 text-xs text-teal hover:text-teal/80">
@@ -218,7 +218,7 @@ export default function PipelineSettingsPage() {
         </section>
 
         {/* Tags */}
-        <section className="bg-white rounded-xl border border-stone/10 p-6">
+        <section className="bg-cream-warm rounded-xl border border-stone/10 p-6">
           <TagManager tags={tags} onCreate={handleCreateTag} onUpdate={handleUpdateTag} onDelete={handleDeleteTag} />
         </section>
 

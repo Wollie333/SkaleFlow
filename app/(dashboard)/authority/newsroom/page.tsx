@@ -93,7 +93,7 @@ export default function NewsroomManagePage() {
 
       {/* Public URL */}
       {orgSlug && (
-        <div className="bg-white rounded-xl border border-stone/10 p-5 mb-6">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5 mb-6">
           <h2 className="text-sm font-semibold text-charcoal mb-2">Public Press Page</h2>
           <p className="text-xs text-stone mb-3">
             Share this URL with journalists and media professionals.
@@ -123,7 +123,7 @@ export default function NewsroomManagePage() {
       )}
 
       {/* Inquiries */}
-      <div className="bg-white rounded-xl border border-stone/10 p-5">
+      <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
         <div className="flex items-center gap-2 mb-4">
           <InboxArrowDownIcon className="w-5 h-5 text-teal" />
           <h2 className="text-sm font-semibold text-charcoal">Press Inquiries</h2>

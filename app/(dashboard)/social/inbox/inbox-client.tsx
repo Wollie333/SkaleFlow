@@ -324,7 +324,7 @@ export function InboxClient({ organizationId }: InboxClientProps) {
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       {/* ── Top Bar ─────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 bg-white border-b border-stone/10">
+      <div className="flex-shrink-0 bg-cream-warm border-b border-stone/10">
         {/* Header row */}
         <div className="px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -378,7 +378,7 @@ export function InboxClient({ organizationId }: InboxClientProps) {
                     className={cn(
                       'min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold px-1',
                       isActive
-                        ? 'bg-white/25 text-white'
+                        ? 'bg-cream-warm/25 text-white'
                         : 'bg-red-500 text-white'
                     )}
                   >
@@ -404,7 +404,7 @@ export function InboxClient({ organizationId }: InboxClientProps) {
       {/* ── Main Content (Split Panel) ──────────────────────────── */}
       <div className="flex flex-1 min-h-0">
         {/* ── Left Panel: Message List ──────────────────────────── */}
-        <div className="w-full md:w-[420px] lg:w-[460px] flex-shrink-0 border-r border-stone/10 flex flex-col bg-white">
+        <div className="w-full md:w-[420px] lg:w-[460px] flex-shrink-0 border-r border-stone/10 flex flex-col bg-cream-warm">
           {/* Search + Type Filters */}
           <div className="p-3 border-b border-stone/10 space-y-2">
             {/* Search bar */}
@@ -464,7 +464,7 @@ export function InboxClient({ organizationId }: InboxClientProps) {
                 {showFilters && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setShowFilters(false)} />
-                    <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-stone/10 z-20 py-1 min-w-[140px]">
+                    <div className="absolute right-0 top-full mt-1 bg-cream-warm rounded-lg shadow-lg border border-stone/10 z-20 py-1 min-w-[140px]">
                       {[
                         { value: 'all', label: 'All messages' },
                         { value: 'unread', label: 'Unread only' },
@@ -597,7 +597,7 @@ function MessageRow({
           )}
           {/* Platform indicator dot */}
           <div
-            className="absolute -bottom-0.5 -right-0.5 w-4.5 h-4.5 rounded-full bg-white p-0.5 flex items-center justify-center"
+            className="absolute -bottom-0.5 -right-0.5 w-4.5 h-4.5 rounded-full bg-cream-warm p-0.5 flex items-center justify-center"
           >
             <PlatformIcon
               className="w-3 h-3"
@@ -715,7 +715,7 @@ function ConversationDetail({
   return (
     <div className="flex flex-col h-full">
       {/* ── Detail Header ──────────────────────────────────────── */}
-      <div className="flex-shrink-0 bg-white border-b border-stone/10 px-6 py-4">
+      <div className="flex-shrink-0 bg-cream-warm border-b border-stone/10 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* Avatar */}
@@ -795,7 +795,7 @@ function ConversationDetail({
       </div>
 
       {/* ── Reply Composer ─────────────────────────────────────── */}
-      <div className="flex-shrink-0 bg-white border-t border-stone/10 p-4">
+      <div className="flex-shrink-0 bg-cream-warm border-t border-stone/10 p-4">
         <div className="flex items-end gap-3">
           <div className="flex-1">
             <textarea
@@ -881,7 +881,7 @@ function MessageBubble({
             'px-4 py-3 rounded-2xl text-sm leading-relaxed',
             isOwn
               ? 'bg-teal text-white rounded-br-md'
-              : 'bg-white border border-stone/10 text-charcoal rounded-bl-md shadow-sm'
+              : 'bg-cream-warm border border-stone/10 text-charcoal rounded-bl-md shadow-sm'
           )}
         >
           {message}

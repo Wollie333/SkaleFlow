@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import {
   PaperAirplaneIcon,
   CheckCircleIcon,
@@ -107,96 +106,85 @@ export function InvoiceStatusActions({
   };
 
   return (
-    <div className="flex items-center gap-3">
-      {/* Draft Status Actions */}
+    <div className="flex items-center gap-2">
+      {/* Primary action based on status */}
       {status === 'draft' && (
-        <>
-          <Button
-            onClick={handleMarkAsSent}
-            disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <PaperAirplaneIcon className="h-5 w-5 mr-2" />
-            Mark as Sent
-          </Button>
-          <Button
-            onClick={handleDelete}
-            disabled={loading}
-            variant="outline"
-            className="border-red-600 text-red-600 hover:bg-red-50"
-          >
-            <TrashIcon className="h-5 w-5 mr-2" />
-            Delete
-          </Button>
-        </>
+        <button
+          onClick={handleMarkAsSent}
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-teal text-white rounded-lg hover:bg-teal/90 transition-colors font-medium text-sm disabled:opacity-50"
+        >
+          <PaperAirplaneIcon className="h-4 w-4" />
+          Mark as Sent
+        </button>
       )}
 
-      {/* Sent Status Actions */}
       {status === 'sent' && (
-        <>
-          <Button
-            onClick={handleMarkAsPaid}
-            disabled={loading}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            <CheckCircleIcon className="h-5 w-5 mr-2" />
-            Mark as Paid
-          </Button>
-        </>
+        <button
+          onClick={handleMarkAsPaid}
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm disabled:opacity-50"
+        >
+          <CheckCircleIcon className="h-4 w-4" />
+          Mark as Paid
+        </button>
       )}
 
-      {/* Paid Status - Show Badge */}
       {status === 'paid' && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-md font-medium">
-          <CheckCircleIcon className="h-5 w-5" />
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/15 text-green-400 rounded-lg font-medium text-sm">
+          <CheckCircleIcon className="h-4 w-4" />
           Paid
         </div>
       )}
 
-      {/* Share Link - Available for Sent and Paid */}
+      {/* Share link — for sent/paid */}
       {(status === 'sent' || status === 'paid') && (
         <>
           {!shareToken ? (
-            <Button
+            <button
               onClick={handleGenerateShareLink}
               disabled={loading}
-              variant="outline"
-              className="border-teal text-teal hover:bg-teal/10"
+              className="inline-flex items-center gap-2 px-3 py-2 border border-stone/10 text-charcoal rounded-lg hover:bg-cream/50 transition-colors text-sm disabled:opacity-50"
             >
-              <ShareIcon className="h-5 w-5 mr-2" />
-              Share Link
-            </Button>
+              <ShareIcon className="h-4 w-4" />
+              Share
+            </button>
           ) : (
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={handleCopyShareLink}
-                variant="outline"
-                className={`border-teal hover:bg-teal/10 ${
-                  copied ? 'text-green-600 border-green-600' : 'text-teal'
-                }`}
-              >
-                <ClipboardIcon className="h-5 w-5 mr-2" />
-                {copied ? 'Copied!' : 'Copy Share Link'}
-              </Button>
-            </div>
+            <button
+              onClick={handleCopyShareLink}
+              className={`inline-flex items-center gap-2 px-3 py-2 border border-stone/10 rounded-lg transition-colors text-sm ${
+                copied ? 'text-green-400 border-green-500/20' : 'text-charcoal hover:bg-cream/50'
+              }`}
+            >
+              <ClipboardIcon className="h-4 w-4" />
+              {copied ? 'Copied!' : 'Copy Link'}
+            </button>
           )}
         </>
       )}
 
-      {/* PDF Download - Available for All Statuses */}
+      {/* PDF download — always */}
       <a
         href={`/api/crm/invoices/${invoiceId}/pdf`}
         target="_blank"
         rel="noopener noreferrer"
+        className="inline-flex items-center gap-2 px-3 py-2 border border-stone/10 text-charcoal rounded-lg hover:bg-cream/50 transition-colors text-sm"
       >
-        <Button
-          variant="outline"
-          className="border-stone-300 text-stone-700 hover:bg-stone-50"
-        >
-          <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
-          PDF
-        </Button>
+        <ArrowDownTrayIcon className="h-4 w-4" />
+        PDF
       </a>
+
+      {/* Delete — draft only */}
+      {status === 'draft' && (
+        <button
+          onClick={handleDelete}
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-3 py-2 border border-red-500/20 text-red-400 rounded-lg hover:bg-red-500/10 transition-colors text-sm disabled:opacity-50"
+        >
+          <TrashIcon className="h-4 w-4" />
+          Delete
+        </button>
+      )}
     </div>
   );
 }

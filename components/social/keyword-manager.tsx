@@ -100,7 +100,7 @@ export function KeywordManager({ keywords: initialKeywords, organizationId, onCl
       industry: 'bg-blue-100 text-blue-700 border-blue-200',
       hashtag: 'bg-purple-100 text-purple-700 border-purple-200',
     };
-    return colors[type] || 'bg-stone-100 text-stone-700 border-stone-200';
+    return colors[type] || 'bg-cream text-charcoal border-stone/10';
   };
 
   // Group by type
@@ -117,7 +117,7 @@ export function KeywordManager({ keywords: initialKeywords, organizationId, onCl
       <div className="fixed inset-0 bg-black/50 z-50" onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-white rounded-xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
+      <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-cream-warm rounded-xl shadow-2xl z-50 flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <div>
@@ -215,7 +215,7 @@ export function KeywordManager({ keywords: initialKeywords, organizationId, onCl
                           className={cn(
                             'flex items-center justify-between p-3 rounded-lg border transition-all',
                             keyword.is_active
-                              ? 'bg-white border-stone/10'
+                              ? 'bg-cream-warm border-stone/10'
                               : 'bg-stone/5 border-stone/20 opacity-60'
                           )}
                         >
@@ -237,7 +237,7 @@ export function KeywordManager({ keywords: initialKeywords, organizationId, onCl
                                 'px-3 py-1 text-xs font-medium rounded-lg border transition-colors',
                                 keyword.is_active
                                   ? 'bg-teal text-white border-teal'
-                                  : 'bg-white text-stone border-stone/20 hover:border-teal'
+                                  : 'bg-cream-warm text-stone border-stone/20 hover:border-teal'
                               )}
                             >
                               {keyword.is_active ? 'Active' : 'Inactive'}
@@ -269,7 +269,7 @@ export function KeywordManager({ keywords: initialKeywords, organizationId, onCl
           </p>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium bg-white text-charcoal border border-stone/20 rounded-lg hover:bg-stone/5 transition-colors"
+            className="px-4 py-2 text-sm font-medium bg-cream-warm text-charcoal border border-stone/20 rounded-lg hover:bg-stone/5 transition-colors"
           >
             Done
           </button>

@@ -27,7 +27,7 @@ export function CreativeCard({ creative, onClick }: CreativeCardProps) {
   return (
     <div
       className={cn(
-        'bg-white rounded-xl border border-teal/8 overflow-hidden transition-all duration-300',
+        'bg-cream-warm rounded-xl border border-teal/8 overflow-hidden transition-all duration-300',
         'hover:-translate-y-0.5 hover:shadow-lg hover:shadow-dark/5',
         onClick && 'cursor-pointer'
       )}
@@ -38,7 +38,7 @@ export function CreativeCard({ creative, onClick }: CreativeCardProps) {
         {hasMedia ? (
           isVideo ? (
             <div className="w-full h-full flex items-center justify-center bg-charcoal/5">
-              <div className="w-12 h-12 rounded-full bg-white/80 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-cream-warm/80 flex items-center justify-center">
                 <div className="w-0 h-0 border-l-[16px] border-l-teal border-y-[10px] border-y-transparent ml-1" />
               </div>
             </div>

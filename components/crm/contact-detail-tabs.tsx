@@ -165,67 +165,60 @@ export function ContactDetailTabs({
   return (
     <div className="space-y-4">
       {/* Tab Bar */}
-      <div className="border-b border-stone">
-        <div className="flex gap-6">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              data-tab={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                'px-4 py-3 font-medium transition-colors relative',
-                activeTab === tab.id
-                  ? 'text-teal'
-                  : 'text-charcoal hover:text-dark'
-              )}
-            >
-              {tab.label}
-              {activeTab === tab.id && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal" />
-              )}
-            </button>
-          ))}
-        </div>
+      <div className="mb-4 flex gap-4 border-b border-stone/10 overflow-x-auto scrollbar-hide">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            data-tab={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              'pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
+              activeTab === tab.id
+                ? 'border-teal text-teal'
+                : 'border-transparent text-stone hover:text-charcoal'
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white rounded-lg border border-stone p-6">
+      <div className="bg-cream-warm rounded-lg border border-stone/10 p-6">
         {activeTab === 'overview' && contact && (
           <div className="space-y-6">
-            {/* Contact Info Card */}
             <div>
-              <h3 className="text-lg font-bold text-dark mb-4">Contact Information</h3>
+              <h3 className="text-lg font-bold text-charcoal mb-4">Contact Information</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm font-medium text-charcoal mb-1">Email</p>
-                  <p className="text-dark">{contact.email}</p>
+                  <p className="text-sm font-medium text-stone mb-1">Email</p>
+                  <p className="text-charcoal">{contact.email}</p>
                 </div>
                 {contact.phone && (
                   <div>
-                    <p className="text-sm font-medium text-charcoal mb-1">Phone</p>
-                    <p className="text-dark">{contact.phone}</p>
+                    <p className="text-sm font-medium text-stone mb-1">Phone</p>
+                    <p className="text-charcoal">{contact.phone}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-sm font-medium text-charcoal mb-1">Source</p>
-                  <p className="text-dark capitalize">{contact.source.replace('_', ' ')}</p>
+                  <p className="text-sm font-medium text-stone mb-1">Source</p>
+                  <p className="text-charcoal capitalize">{contact.source.replace('_', ' ')}</p>
                 </div>
                 {contact.assigned_to && (
                   <div>
-                    <p className="text-sm font-medium text-charcoal mb-1">Assigned To</p>
-                    <p className="text-dark">{contact.assigned_to}</p>
+                    <p className="text-sm font-medium text-stone mb-1">Assigned To</p>
+                    <p className="text-charcoal">{contact.assigned_to}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-sm font-medium text-charcoal mb-1">Created</p>
-                  <p className="text-dark">{new Date(contact.created_at).toLocaleDateString()}</p>
+                  <p className="text-sm font-medium text-stone mb-1">Created</p>
+                  <p className="text-charcoal">{new Date(contact.created_at).toLocaleDateString()}</p>
                 </div>
               </div>
             </div>
 
-            {/* Tags Section */}
-            <div className="pt-6 border-t border-stone">
-              <h3 className="text-lg font-bold text-dark mb-4">Tags</h3>
+            <div className="pt-6 border-t border-stone/10">
+              <h3 className="text-lg font-bold text-charcoal mb-4">Tags</h3>
               <TagManager
                 organizationId={organizationId}
                 contactId={contactId}
@@ -238,39 +231,41 @@ export function ContactDetailTabs({
 
         {activeTab === 'deals' && (
           <div>
-            <h3 className="text-lg font-bold text-dark mb-4">Deals</h3>
+            <h3 className="text-lg font-bold text-charcoal mb-4">Deals</h3>
             {loadingDeals ? (
-              <p className="text-charcoal">Loading deals...</p>
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal"></div>
+              </div>
             ) : deals.length === 0 ? (
-              <p className="text-charcoal">No deals yet</p>
+              <p className="text-stone text-center py-8">No deals yet</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-cream border-b border-stone">
+                  <thead className="bg-cream border-b border-stone/10">
                     <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-charcoal uppercase">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-stone uppercase">
                         Title
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-charcoal uppercase">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-stone uppercase">
                         Value
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-charcoal uppercase">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-stone uppercase">
                         Status
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-charcoal uppercase">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-stone uppercase">
                         Expected Close
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-stone">
+                  <tbody className="divide-y divide-stone/10">
                     {deals.map((deal) => (
                       <tr key={deal.id} className="hover:bg-cream/50">
-                        <td className="px-4 py-3 text-dark">{deal.title}</td>
-                        <td className="px-4 py-3 text-dark">
+                        <td className="px-4 py-3 text-charcoal">{deal.title}</td>
+                        <td className="px-4 py-3 text-charcoal">
                           R{(deal.value_cents / 100).toFixed(2)}
                         </td>
-                        <td className="px-4 py-3 text-dark capitalize">{deal.status}</td>
-                        <td className="px-4 py-3 text-charcoal">
+                        <td className="px-4 py-3 text-charcoal capitalize">{deal.status}</td>
+                        <td className="px-4 py-3 text-stone">
                           {deal.expected_close_date
                             ? new Date(deal.expected_close_date).toLocaleDateString()
                             : '-'}
@@ -286,39 +281,41 @@ export function ContactDetailTabs({
 
         {activeTab === 'invoices' && (
           <div>
-            <h3 className="text-lg font-bold text-dark mb-4">Invoices</h3>
+            <h3 className="text-lg font-bold text-charcoal mb-4">Invoices</h3>
             {loadingInvoices ? (
-              <p className="text-charcoal">Loading invoices...</p>
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal"></div>
+              </div>
             ) : invoices.length === 0 ? (
-              <p className="text-charcoal">No invoices yet</p>
+              <p className="text-stone text-center py-8">No invoices yet</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-cream border-b border-stone">
+                  <thead className="bg-cream border-b border-stone/10">
                     <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-charcoal uppercase">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-stone uppercase">
                         Invoice Number
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-charcoal uppercase">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-stone uppercase">
                         Status
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-charcoal uppercase">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-stone uppercase">
                         Total
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-charcoal uppercase">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-stone uppercase">
                         Due Date
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-stone">
+                  <tbody className="divide-y divide-stone/10">
                     {invoices.map((invoice) => (
                       <tr key={invoice.id} className="hover:bg-cream/50">
-                        <td className="px-4 py-3 text-dark">{invoice.invoice_number}</td>
-                        <td className="px-4 py-3 text-dark capitalize">{invoice.status}</td>
-                        <td className="px-4 py-3 text-dark">
+                        <td className="px-4 py-3 text-charcoal">{invoice.invoice_number}</td>
+                        <td className="px-4 py-3 text-charcoal capitalize">{invoice.status}</td>
+                        <td className="px-4 py-3 text-charcoal">
                           R{(invoice.total_cents / 100).toFixed(2)}
                         </td>
-                        <td className="px-4 py-3 text-charcoal">
+                        <td className="px-4 py-3 text-stone">
                           {invoice.due_date
                             ? new Date(invoice.due_date).toLocaleDateString()
                             : '-'}
@@ -335,8 +332,8 @@ export function ContactDetailTabs({
         {activeTab === 'activity' && (
           <div className="space-y-6">
             {/* Log Activity Form */}
-            <div className="bg-cream/50 rounded-lg p-4">
-              <h3 className="text-lg font-bold text-dark mb-4">Log Activity</h3>
+            <div className="bg-cream rounded-lg p-4">
+              <h3 className="text-lg font-bold text-charcoal mb-4">Log Activity</h3>
               <form onSubmit={handleLogActivity} className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-charcoal mb-1">
@@ -345,7 +342,7 @@ export function ContactDetailTabs({
                   <select
                     value={activityType}
                     onChange={(e) => setActivityType(e.target.value)}
-                    className="w-full px-3 py-2 border border-stone rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                    className="w-full px-3 py-2 bg-cream-warm border border-stone/10 rounded-lg text-charcoal focus:ring-2 focus:ring-teal focus:border-transparent"
                   >
                     <option value="note">Note</option>
                     <option value="call">Call</option>
@@ -363,7 +360,7 @@ export function ContactDetailTabs({
                     required
                     value={activityTitle}
                     onChange={(e) => setActivityTitle(e.target.value)}
-                    className="w-full px-3 py-2 border border-stone rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                    className="w-full px-3 py-2 bg-cream-warm border border-stone/10 rounded-lg text-charcoal focus:ring-2 focus:ring-teal focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -374,14 +371,14 @@ export function ContactDetailTabs({
                     rows={3}
                     value={activityDescription}
                     onChange={(e) => setActivityDescription(e.target.value)}
-                    className="w-full px-3 py-2 border border-stone rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                    className="w-full px-3 py-2 bg-cream-warm border border-stone/10 rounded-lg text-charcoal focus:ring-2 focus:ring-teal focus:border-transparent"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={submittingActivity}
                   className={cn(
-                    'px-4 py-2 bg-teal text-white rounded-lg transition-colors',
+                    'px-4 py-2 bg-teal text-white rounded-lg transition-colors font-medium text-sm',
                     submittingActivity
                       ? 'opacity-50 cursor-not-allowed'
                       : 'hover:bg-teal/90'
@@ -394,9 +391,11 @@ export function ContactDetailTabs({
 
             {/* Activity Timeline */}
             <div>
-              <h3 className="text-lg font-bold text-dark mb-4">Activity Timeline</h3>
+              <h3 className="text-lg font-bold text-charcoal mb-4">Activity Timeline</h3>
               {loadingActivities ? (
-                <p className="text-charcoal">Loading activities...</p>
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal"></div>
+                </div>
               ) : (
                 <ActivityTimeline activities={activities} />
               )}

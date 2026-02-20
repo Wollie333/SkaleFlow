@@ -27,7 +27,7 @@ export function ProgressTracker({ phases, currentPhaseId, onPhaseClick, onUnlock
   const completedCount = phases.filter(p => p.status === 'locked' || p.status === 'completed').length;
 
   return (
-    <div className="bg-white rounded-xl border border-stone/10 p-6">
+    <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
       {/* Header — always visible, clickable to toggle */}
       <button
         type="button"

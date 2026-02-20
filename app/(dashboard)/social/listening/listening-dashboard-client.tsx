@@ -116,19 +116,19 @@ export function ListeningDashboardClient({
 
       {/* Top Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-stone/10 p-4">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
           <p className="text-sm text-stone mb-1">Total Mentions (7d)</p>
           <p className="text-2xl font-bold text-charcoal">{totalMentions}</p>
         </div>
-        <div className="bg-white rounded-xl border border-stone/10 p-4">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
           <p className="text-sm text-stone mb-1">Unread</p>
           <p className="text-2xl font-bold text-teal">{unreadMentions}</p>
         </div>
-        <div className="bg-white rounded-xl border border-stone/10 p-4">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
           <p className="text-sm text-stone mb-1">Flagged</p>
           <p className="text-2xl font-bold text-orange-500">{flaggedMentions}</p>
         </div>
-        <div className="bg-white rounded-xl border border-stone/10 p-4">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
           <p className="text-sm text-stone mb-1">Tracking Keywords</p>
           <p className="text-2xl font-bold text-purple-600">{keywords.length}</p>
         </div>
@@ -140,7 +140,7 @@ export function ListeningDashboardClient({
         <SentimentChart sentimentCounts={sentimentCounts} totalMentions={totalMentions} />
 
         {/* Trending Topics */}
-        <div className="bg-white rounded-xl border border-stone/10 p-6">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-charcoal flex items-center gap-2">
               <FireIcon className="w-5 h-5 text-orange-500" />
@@ -187,7 +187,7 @@ export function ListeningDashboardClient({
       </div>
 
       {/* Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white rounded-xl border border-stone/10 p-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-cream-warm rounded-xl border border-stone/10 p-4">
         <div className="flex items-center gap-3 flex-1 w-full sm:w-auto">
           {/* Search */}
           <div className="relative flex-1 sm:flex-initial sm:w-80">
@@ -236,7 +236,7 @@ export function ListeningDashboardClient({
                 'px-3 py-2 text-sm font-medium rounded-lg border transition-colors',
                 showReadOnly
                   ? 'bg-teal text-white border-teal'
-                  : 'bg-white text-stone border-stone/20 hover:border-teal'
+                  : 'bg-cream-warm text-stone border-stone/20 hover:border-teal'
               )}
             >
               {showReadOnly ? 'All' : 'Unread'}
@@ -264,7 +264,7 @@ export function ListeningDashboardClient({
       </div>
 
       {/* Mentions Feed */}
-      <div className="bg-white rounded-xl border border-stone/10">
+      <div className="bg-cream-warm rounded-xl border border-stone/10">
         <div className="px-6 py-4 border-b border-stone/10">
           <h3 className="font-semibold text-charcoal">
             Recent Mentions ({filteredMentions.length})

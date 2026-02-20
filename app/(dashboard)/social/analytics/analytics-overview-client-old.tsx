@@ -136,7 +136,7 @@ export function AnalyticsOverviewClient({
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Platform Performance */}
-        <div className="bg-white rounded-xl border border-stone/10 p-6">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-semibold text-charcoal flex items-center gap-2">
               <ChartBarIcon className="w-5 h-5 text-teal" />
@@ -182,7 +182,7 @@ export function AnalyticsOverviewClient({
         </div>
 
         {/* Engagement Breakdown */}
-        <div className="bg-white rounded-xl border border-stone/10 p-6">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
           <h3 className="font-semibold text-charcoal mb-6">Engagement Breakdown</h3>
 
           <div className="space-y-4">
@@ -213,7 +213,7 @@ export function AnalyticsOverviewClient({
       </div>
 
       {/* Top Performing Posts */}
-      <div className="bg-white rounded-xl border border-stone/10">
+      <div className="bg-cream-warm rounded-xl border border-stone/10">
         <div className="px-6 py-4 border-b border-stone/10">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-charcoal flex items-center gap-2">

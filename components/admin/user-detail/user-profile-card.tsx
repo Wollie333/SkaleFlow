@@ -88,7 +88,7 @@ export function UserProfileCard({
   return (
     <div className="space-y-4">
       {/* Profile Card */}
-      <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+      <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-full bg-teal/10 flex items-center justify-center text-teal font-bold text-lg">
             {getInitials(user.full_name)}
@@ -149,7 +149,7 @@ export function UserProfileCard({
       </div>
 
       {/* Organization Card */}
-      <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+      <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
         <h4 className="text-xs font-semibold text-stone uppercase tracking-wider mb-3">Organization</h4>
         {organization ? (
           <div className="space-y-2 text-sm">
@@ -174,7 +174,7 @@ export function UserProfileCard({
 
       {/* Subscription Card */}
       {organization && (
-        <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+        <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
           <h4 className="text-xs font-semibold text-stone uppercase tracking-wider mb-3">Subscription</h4>
           {organization.subscription ? (
             <div className="space-y-2 text-sm">
@@ -267,7 +267,7 @@ export function UserProfileCard({
 
       {/* Credit Balance Card */}
       {organization?.credits && (
-        <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+        <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
           <h4 className="text-xs font-semibold text-stone uppercase tracking-wider mb-3">Credit Balance</h4>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">

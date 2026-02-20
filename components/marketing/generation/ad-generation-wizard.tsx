@@ -196,7 +196,7 @@ export function AdGenerationWizard({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-teal/8 overflow-hidden">
+    <div className="bg-cream-warm rounded-xl border border-teal/8 overflow-hidden">
       <div className="px-6 py-4 border-b border-stone/10 bg-cream-warm/20">
         <div className="flex items-center gap-2">
           <SparklesIcon className="w-5 h-5 text-teal" />
@@ -352,7 +352,7 @@ export function AdGenerationWizard({
               )
             }
             className={cn(
-              'w-24 px-4 py-3 rounded-xl border bg-white transition-all duration-200 text-center',
+              'w-24 px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200 text-center',
               'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
               'border-stone/20 hover:border-stone/40'
             )}
@@ -377,7 +377,7 @@ export function AdGenerationWizard({
                   'flex items-start gap-2 px-3 py-2.5 rounded-xl border text-left transition-all duration-200',
                   selectedModelId === model.id
                     ? 'border-teal bg-teal/5 ring-1 ring-teal/20'
-                    : 'border-stone/20 bg-white hover:border-stone/40'
+                    : 'border-stone/20 bg-cream-warm hover:border-stone/40'
                 )}
               >
                 <div
@@ -425,7 +425,7 @@ export function AdGenerationWizard({
             value={ctaType}
             onChange={(e) => setCtaType(e.target.value)}
             className={cn(
-              'w-full px-4 py-3 rounded-xl border bg-white transition-all duration-200',
+              'w-full px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
               'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
               'border-stone/20 hover:border-stone/40 text-charcoal'
             )}

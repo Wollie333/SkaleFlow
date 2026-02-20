@@ -54,16 +54,16 @@ export function PlatformOverrideTabs({
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-1 bg-stone/5 rounded-lg p-1">
+      <div className="flex gap-4 border-b border-stone/10">
         {tabs.map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={cn(
-              'flex-1 px-3 py-1.5 rounded-md text-xs font-medium capitalize transition-colors',
+              'pb-2 px-1 text-xs font-medium capitalize border-b-2 transition-colors whitespace-nowrap',
               activeTab === tab
-                ? 'bg-white text-charcoal shadow-sm'
-                : 'text-stone hover:text-charcoal'
+                ? 'border-teal text-teal'
+                : 'border-transparent text-stone hover:text-charcoal'
             )}
           >
             {tab}

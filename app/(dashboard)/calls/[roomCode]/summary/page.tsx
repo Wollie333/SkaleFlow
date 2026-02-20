@@ -92,12 +92,12 @@ export default function PostCallSummaryPage({ params }: { params: Promise<{ room
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-stone/10 mb-6">
+      <div className="mb-4 flex gap-4 border-b border-stone/10 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as typeof activeTab)}
-            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
               activeTab === tab.id
                 ? 'border-teal text-teal'
                 : 'border-transparent text-stone hover:text-charcoal'
@@ -113,7 +113,7 @@ export default function PostCallSummaryPage({ params }: { params: Promise<{ room
         <CallSummary summary={data.summary} />
       )}
       {activeTab === 'recording' && (
-        <div className="bg-white rounded-xl border border-stone/10 p-5">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
           {data.call.recording_url ? (
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-3">
@@ -166,7 +166,7 @@ export default function PostCallSummaryPage({ params }: { params: Promise<{ room
             <p className="text-stone text-sm text-center py-8">No brand insights extracted from this call.</p>
           ) : (
             data.insights.map(insight => (
-              <div key={insight.id} className="bg-white rounded-xl border border-stone/10 p-4">
+              <div key={insight.id} className="bg-cream-warm rounded-xl border border-stone/10 p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="px-2 py-0.5 text-xs font-medium bg-gold/10 text-gold rounded-full capitalize">
                     {insight.insight_type.replace('_', ' ')}
@@ -174,7 +174,7 @@ export default function PostCallSummaryPage({ params }: { params: Promise<{ room
                   <span className={`px-2 py-0.5 text-xs rounded-full ${
                     insight.status === 'accepted' ? 'bg-green-100 text-green-700' :
                     insight.status === 'dismissed' ? 'bg-red-100 text-red-700' :
-                    'bg-gray-100 text-gray-700'
+                    'bg-cream text-charcoal'
                   }`}>
                     {insight.status}
                   </span>
@@ -190,7 +190,7 @@ export default function PostCallSummaryPage({ params }: { params: Promise<{ room
       )}
 
       {!data.summary && activeTab === 'summary' && (
-        <div className="text-center py-12 bg-white rounded-xl border border-stone/10">
+        <div className="text-center py-12 bg-cream-warm rounded-xl border border-stone/10">
           <p className="text-stone text-sm">Summary is still being generated...</p>
           <button
             onClick={() => window.location.reload()}

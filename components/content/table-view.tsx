@@ -101,7 +101,7 @@ export function TableView({ items, onItemClick, onBulkAction }: TableViewProps) 
   );
 
   return (
-    <div className="bg-white rounded-xl border border-stone/10 overflow-hidden">
+    <div className="bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
       {/* Toolbar */}
       <div className="px-4 py-3 border-b border-stone/10 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">

@@ -86,7 +86,7 @@ export function TargetingBuilder({ value, onChange, audiences }: TargetingBuilde
                 update({ ageMin: Math.max(13, Math.min(parseInt(e.target.value) || 13, value.ageMax)) })
               }
               className={cn(
-                'w-full px-3 py-2.5 rounded-xl border bg-white transition-all duration-200 text-center',
+                'w-full px-3 py-2.5 rounded-xl border bg-cream-warm transition-all duration-200 text-center',
                 'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
                 'border-stone/20 hover:border-stone/40 text-sm'
               )}
@@ -104,7 +104,7 @@ export function TargetingBuilder({ value, onChange, audiences }: TargetingBuilde
                 update({ ageMax: Math.max(value.ageMin, Math.min(parseInt(e.target.value) || 65, 65)) })
               }
               className={cn(
-                'w-full px-3 py-2.5 rounded-xl border bg-white transition-all duration-200 text-center',
+                'w-full px-3 py-2.5 rounded-xl border bg-cream-warm transition-all duration-200 text-center',
                 'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
                 'border-stone/20 hover:border-stone/40 text-sm'
               )}
@@ -127,7 +127,7 @@ export function TargetingBuilder({ value, onChange, audiences }: TargetingBuilde
                 'flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200',
                 value.gender === opt.value
                   ? 'border-teal bg-teal/5 text-teal ring-1 ring-teal/20'
-                  : 'border-stone/20 bg-white text-stone hover:border-stone/40'
+                  : 'border-stone/20 bg-cream-warm text-stone hover:border-stone/40'
               )}
             >
               {opt.label}
@@ -152,7 +152,7 @@ export function TargetingBuilder({ value, onChange, audiences }: TargetingBuilde
             }}
             placeholder="e.g., South Africa, Cape Town"
             className={cn(
-              'flex-1 px-4 py-2.5 rounded-xl border bg-white transition-all duration-200 text-sm',
+              'flex-1 px-4 py-2.5 rounded-xl border bg-cream-warm transition-all duration-200 text-sm',
               'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
               'placeholder:text-stone/60 border-stone/20 hover:border-stone/40'
             )}
@@ -207,7 +207,7 @@ export function TargetingBuilder({ value, onChange, audiences }: TargetingBuilde
             }}
             placeholder="e.g., Fitness, Technology, Travel"
             className={cn(
-              'flex-1 px-4 py-2.5 rounded-xl border bg-white transition-all duration-200 text-sm',
+              'flex-1 px-4 py-2.5 rounded-xl border bg-cream-warm transition-all duration-200 text-sm',
               'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
               'placeholder:text-stone/60 border-stone/20 hover:border-stone/40'
             )}

@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import DealList from '@/components/crm/deal-list';
 import DealFormModal from '@/components/crm/deal-form-modal';
-import { Button } from '@/components/ui/button';
 import { PlusIcon } from '@heroicons/react/24/outline';
 
 export default function DealsPage() {
@@ -26,19 +25,13 @@ export default function DealsPage() {
     load();
   }, []);
 
-  if (!organizationId) return <div className="p-6"><div className="animate-pulse bg-gray-100 rounded-xl h-96" /></div>;
+  if (!organizationId) return <div className="p-6"><div className="animate-pulse bg-cream rounded-xl h-96" /></div>;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-charcoal">Deals</h1>
-          <p className="text-sm text-stone mt-1">Track your sales opportunities</p>
-        </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <PlusIcon className="h-5 w-5 mr-2" />
-          Add Deal
-        </Button>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-charcoal">Deals</h1>
+        <p className="text-sm text-stone mt-1">Track your sales opportunities</p>
       </div>
 
       <DealList organizationId={organizationId} onCreateClick={() => setShowCreateModal(true)} initialContactId={initialContactId || undefined} />

@@ -688,7 +688,7 @@ export default function CalendarPage() {
               {showHeaderMenu && (
                 <>
                   <div className="fixed inset-0 z-30" onClick={() => setShowHeaderMenu(false)} />
-                  <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-lg border border-stone/10 py-1 z-40">
+                  <div className="absolute right-0 top-full mt-1 w-52 bg-cream-warm rounded-xl shadow-lg border border-stone/10 py-1 z-40">
                     {viewMode === 'calendar' && items.length > 0 && (
                       <button
                         onClick={() => { calendarSelectionMode ? exitSelectionMode() : setCalendarSelectionMode(true); setShowHeaderMenu(false); }}
@@ -775,7 +775,7 @@ export default function CalendarPage() {
                 await reloadItems(cal.id);
               }
             }}
-            className="px-4 py-2.5 rounded-xl border border-stone/20 bg-white text-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+            className="px-4 py-2.5 rounded-xl border border-stone/20 bg-cream-warm text-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
           >
             {calendars.map(cal => {
               const isMainCal = cal.name === 'Main Calendar' || cal.name === 'Default';
@@ -935,7 +935,7 @@ export default function CalendarPage() {
 
       {/* Floating selection toolbar */}
       {calendarSelectionMode && calendarSelectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-white rounded-2xl shadow-xl border border-stone/10 px-6 py-3 flex items-center gap-4">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-cream-warm rounded-2xl shadow-xl border border-stone/10 px-6 py-3 flex items-center gap-4">
           <span className="text-sm font-medium text-charcoal">
             {calendarSelectedIds.size} selected
           </span>

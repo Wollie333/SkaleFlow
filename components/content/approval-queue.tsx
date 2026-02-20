@@ -77,7 +77,7 @@ export function ApprovalQueue<T extends QueueItem>({ items, onApprove, onReject,
   const revisionItems = items.filter(i => i.status === 'revision_requested');
 
   return (
-    <div className="bg-white rounded-xl border border-amber-200 overflow-hidden">
+    <div className="bg-cream-warm rounded-xl border border-amber-200 overflow-hidden">
       <div className="px-4 py-3 bg-amber-50 border-b border-amber-200 flex items-center justify-between">
         <h3 className="text-sm font-medium text-amber-800">
           Needs Attention ({items.length})

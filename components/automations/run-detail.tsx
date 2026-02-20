@@ -51,7 +51,7 @@ const StatusIcon = ({ status }: { status: string }) => {
 
 export function RunDetail({ run, onClose }: RunDetailProps) {
   return (
-    <div className="bg-white rounded-xl border border-stone/10 p-6">
+    <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-charcoal">

@@ -85,7 +85,7 @@ export function AddUserModal({ isOpen, onClose, onCreated, tiers }: AddUserModal
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-xl border border-teal/[0.08] w-full max-w-lg mx-4">
+      <div className="bg-cream-warm rounded-xl shadow-xl border border-teal/[0.08] w-full max-w-lg mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <div>
             <h2 className="text-lg font-semibold text-charcoal">Add User</h2>
@@ -156,7 +156,7 @@ export function AddUserModal({ isOpen, onClose, onCreated, tiers }: AddUserModal
             <select
               value={tierId}
               onChange={(e) => setTierId(e.target.value)}
-              className="w-full px-4 py-2.5 border border-stone/20 rounded-lg text-charcoal bg-white focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+              className="w-full px-4 py-2.5 border border-stone/20 rounded-lg text-charcoal bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
             >
               {tiers.map(tier => (
                 <option key={tier.id} value={tier.id}>{tier.name}</option>

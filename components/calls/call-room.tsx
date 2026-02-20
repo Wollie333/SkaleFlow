@@ -749,7 +749,7 @@ export function CallRoom({
               onClick={() => setActivePanel(activePanel === panel ? 'none' : panel as PanelView)}
               className={`px-2 md:px-3 py-1.5 rounded text-[10px] md:text-xs font-medium transition-colors ${
                 activePanel === panel
-                  ? 'bg-white/20 text-white'
+                  ? 'bg-cream-warm/20 text-white'
                   : 'text-white/50 hover:text-white/80'
               }`}
             >
@@ -812,7 +812,7 @@ export function CallRoom({
             {/* Mobile close button */}
             <button
               onClick={() => setActivePanel('none')}
-              className="absolute top-3 right-3 z-10 p-1.5 rounded-lg bg-white/10 text-white/60 hover:text-white hover:bg-white/20 transition-colors md:hidden"
+              className="absolute top-3 right-3 z-10 p-1.5 rounded-lg bg-cream-warm/10 text-white/60 hover:text-white hover:bg-cream-warm/20 transition-colors md:hidden"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

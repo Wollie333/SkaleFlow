@@ -83,7 +83,7 @@ export function QuickCreateModal({ date, onClose, onCreate }: QuickCreateModalPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4">
+      <div className="bg-cream-warm rounded-2xl shadow-xl w-full max-w-md mx-4">
         <div className="px-6 py-4 border-b border-stone/10 flex items-center justify-between">
           <div>
             <h3 className="text-heading-sm text-charcoal">Add Post</h3>

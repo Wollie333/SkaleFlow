@@ -60,7 +60,7 @@ export function UserCreditsTab({
     <div className="space-y-6">
       {/* Credit Balance Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+        <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
           <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Monthly Balance</p>
           <p className="text-2xl font-bold text-charcoal">
             {credits ? credits.monthly_balance.toLocaleString('en-ZA') : '—'}
@@ -70,7 +70,7 @@ export function UserCreditsTab({
           </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+        <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
           <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Top-Up Balance</p>
           <p className="text-2xl font-bold text-charcoal">
             {credits ? credits.topup_balance.toLocaleString('en-ZA') : '—'}
@@ -78,7 +78,7 @@ export function UserCreditsTab({
           <p className="text-sm text-stone mt-1">Never expires</p>
         </div>
 
-        <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+        <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
           <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Total Used</p>
           <p className="text-2xl font-bold text-charcoal">{totalCreditsUsed.toLocaleString('en-ZA')}</p>
           <p className="text-sm text-stone mt-1">
@@ -88,7 +88,7 @@ export function UserCreditsTab({
       </div>
 
       {/* Feature Breakdown */}
-      <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
+      <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
         <div className="px-5 py-4 border-b border-cream">
           <h3 className="font-serif text-lg font-bold text-charcoal">Usage by Feature</h3>
         </div>
@@ -117,7 +117,7 @@ export function UserCreditsTab({
       </div>
 
       {/* Recent Transactions */}
-      <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
+      <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
         <div className="px-5 py-4 border-b border-cream">
           <h3 className="font-serif text-lg font-bold text-charcoal">Recent Transactions</h3>
         </div>

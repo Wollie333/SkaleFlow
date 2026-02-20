@@ -130,7 +130,7 @@ export default function PipelineListPage() {
       />
 
       {pipelines.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-xl border border-stone/10">
+        <div className="text-center py-20 bg-cream-warm rounded-xl border border-stone/10">
           <FunnelIcon className="w-14 h-14 text-stone/20 mx-auto mb-4" />
           <h3 className="font-serif text-lg font-semibold text-charcoal mb-2">No pipelines yet</h3>
           <p className="text-sm text-stone mb-6 max-w-sm mx-auto">Create your first pipeline to start managing contacts and deals.</p>
@@ -148,7 +148,7 @@ export default function PipelineListPage() {
             <div
               key={pipeline.id}
               onClick={() => router.push(`/pipeline/${pipeline.id}`)}
-              className="text-left bg-white rounded-xl border border-stone/10 p-5 hover:border-teal/20 hover:shadow-md transition-all group cursor-pointer relative"
+              className="text-left bg-cream-warm rounded-xl border border-stone/10 p-5 hover:border-teal/20 hover:shadow-md transition-all group cursor-pointer relative"
             >
               <div className="flex items-start justify-between">
                 <div className="min-w-0 flex-1">

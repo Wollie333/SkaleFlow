@@ -107,7 +107,7 @@ export function ComplianceIssuesPanel({ issues, onRevalidate }: ComplianceIssues
                 </button>
                 {isExpanded && issue.recommendation && (
                   <div className="px-3 pb-2.5 ml-6">
-                    <div className="bg-white/60 rounded-lg p-2 border border-red-100">
+                    <div className="bg-cream-warm/60 rounded-lg p-2 border border-red-100">
                       <p className="text-[11px] text-red-700 font-medium mb-0.5">
                         Recommendation:
                       </p>
@@ -157,7 +157,7 @@ export function ComplianceIssuesPanel({ issues, onRevalidate }: ComplianceIssues
                 </button>
                 {isExpanded && issue.recommendation && (
                   <div className="px-3 pb-2.5 ml-6">
-                    <div className="bg-white/60 rounded-lg p-2 border border-yellow-100">
+                    <div className="bg-cream-warm/60 rounded-lg p-2 border border-yellow-100">
                       <p className="text-[11px] text-yellow-700 font-medium mb-0.5">
                         Recommendation:
                       </p>

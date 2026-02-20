@@ -241,7 +241,7 @@ export default async function DashboardPage() {
       {/* Quick stat cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link href="/content/reviews">
-          <Card className={`hover:border-teal/30 transition-colors cursor-pointer ${pendingApprovals > 0 ? 'border-teal/20 bg-teal/[0.02]' : 'bg-white border-stone/10'}`}>
+          <Card className={`hover:border-teal/30 transition-colors cursor-pointer ${pendingApprovals > 0 ? 'border-teal/20 bg-teal/[0.02]' : 'bg-cream-warm border-stone/10'}`}>
             <div className="flex items-center justify-between mb-3">
               <InboxArrowDownIcon className="w-5 h-5 text-teal" />
               {pendingApprovals > 0 && (
@@ -254,7 +254,7 @@ export default async function DashboardPage() {
         </Link>
 
         <Link href="/pipeline">
-          <Card className="bg-white border-stone/10 hover:border-teal/30 transition-colors cursor-pointer">
+          <Card className="bg-cream-warm border-stone/10 hover:border-teal/30 transition-colors cursor-pointer">
             <div className="flex items-center justify-between mb-3">
               <FunnelIcon className="w-5 h-5 text-teal" />
             </div>
@@ -264,7 +264,7 @@ export default async function DashboardPage() {
         </Link>
 
         <Link href="/calendar">
-          <Card className="bg-white border-stone/10 hover:border-teal/30 transition-colors cursor-pointer">
+          <Card className="bg-cream-warm border-stone/10 hover:border-teal/30 transition-colors cursor-pointer">
             <div className="flex items-center justify-between mb-3">
               <CalendarIcon className="w-5 h-5 text-teal" />
             </div>
@@ -274,7 +274,7 @@ export default async function DashboardPage() {
         </Link>
 
         <Link href="/billing">
-          <Card className={`hover:border-teal/30 transition-colors cursor-pointer ${creditsTotal > 0 && creditsRemaining < creditsTotal * 0.1 ? 'border-yellow-200 bg-yellow-50/50' : 'bg-white border-stone/10'}`}>
+          <Card className={`hover:border-teal/30 transition-colors cursor-pointer ${creditsTotal > 0 && creditsRemaining < creditsTotal * 0.1 ? 'border-yellow-200 bg-yellow-50/50' : 'bg-cream-warm border-stone/10'}`}>
             <div className="flex items-center justify-between mb-3">
               <CreditCardIcon className="w-5 h-5 text-teal" />
               {creditsTotal > 0 && creditsRemaining < creditsTotal * 0.1 && (

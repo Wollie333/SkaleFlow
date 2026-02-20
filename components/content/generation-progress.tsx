@@ -31,7 +31,7 @@ export function GenerationProgress({
   const allDone = weeksGenerated >= totalWeeks;
 
   return (
-    <div className="bg-white rounded-xl border border-stone/10 p-4 space-y-3">
+    <div className="bg-cream-warm rounded-xl border border-stone/10 p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-medium text-charcoal">AI Generation Progress</h4>
         <div className="flex items-center gap-2">

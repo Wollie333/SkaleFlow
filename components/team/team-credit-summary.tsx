@@ -63,7 +63,7 @@ export function TeamCreditSummary({ orgBalance, totalAllocated }: TeamCreditSumm
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-6">
+    <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-6">
       <h3 className="text-sm font-semibold text-charcoal mb-5">Team Credit Overview</h3>
 
       {/* Stat Cards */}

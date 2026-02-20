@@ -66,7 +66,7 @@ export function CanvaConnectionCard({ connection, onDisconnect, onSyncBrand }: C
     <div className="p-4 bg-cream-warm rounded-xl space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-stone/10">
+          <div className="w-10 h-10 bg-cream-warm rounded-lg flex items-center justify-center border border-stone/10">
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M5.5 9.5C5.5 7.01 7.51 5 10 5h4c2.49 0 4.5 2.01 4.5 4.5 0 1.41-.65 2.67-1.67 3.5H7.17C6.15 12.17 5.5 10.91 5.5 9.5z" fill="#7D2AE8"/>
               <path d="M7.17 13c-.63.56-1.17 1.24-1.17 2.5C6 17.43 7.57 19 9.5 19c1.1 0 2.07-.51 2.7-1.3" fill="#FF6F61"/>

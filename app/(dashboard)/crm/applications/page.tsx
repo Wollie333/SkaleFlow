@@ -80,7 +80,7 @@ export default function ApplicationsPage() {
               {/* Column header */}
               <div className={`flex items-center justify-between px-3 py-2 rounded-lg mb-3 border ${stage.bgColor}`}>
                 <span className={`text-sm font-semibold ${stage.color}`}>{stage.label}</span>
-                <span className={`text-xs font-bold ${stage.color} bg-white/60 px-2 py-0.5 rounded-full`}>
+                <span className={`text-xs font-bold ${stage.color} bg-cream-warm/60 px-2 py-0.5 rounded-full`}>
                   {stageApps.length}
                 </span>
               </div>
@@ -91,7 +91,7 @@ export default function ApplicationsPage() {
                   <Link
                     key={app.id}
                     href={`/crm/applications/${app.id}`}
-                    className="block p-4 bg-white rounded-lg border border-stone/10 hover:border-teal/20 hover:shadow-sm transition-all group"
+                    className="block p-4 bg-cream-warm rounded-lg border border-stone/10 hover:border-teal/20 hover:shadow-sm transition-all group"
                   >
                     <div className="font-semibold text-sm text-charcoal group-hover:text-teal transition-colors">
                       {app.full_name}

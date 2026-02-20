@@ -41,7 +41,7 @@ export function GoogleDriveConnectionCard({ connection, onDisconnect }: GoogleDr
   return (
     <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-stone/10">
+        <div className="w-10 h-10 bg-cream-warm rounded-lg flex items-center justify-center border border-stone/10">
           <svg className="w-6 h-6" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
             <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066DA"/>
             <path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L0.65 49.55c-.75 1.35-1.15 2.85-1.15 4.45h27.5z" fill="#00AC47"/>

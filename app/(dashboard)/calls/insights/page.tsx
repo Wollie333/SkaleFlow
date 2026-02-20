@@ -68,17 +68,17 @@ export default function InsightsPage() {
       {loading ? (
         <div className="text-stone text-sm animate-pulse">Loading insights...</div>
       ) : insights.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-stone/10">
+        <div className="text-center py-16 bg-cream-warm rounded-xl border border-stone/10">
           <p className="text-stone text-sm">No {filter} insights</p>
         </div>
       ) : (
         <div className="space-y-3">
           {insights.map(insight => (
-            <div key={insight.id} className="bg-white rounded-xl border border-stone/10 p-5">
+            <div key={insight.id} className="bg-cream-warm rounded-xl border border-stone/10 p-5">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${insightTypeColors[insight.insight_type] || 'bg-gray-100 text-gray-700'}`}>
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${insightTypeColors[insight.insight_type] || 'bg-cream text-charcoal'}`}>
                       {insightTypeLabels[insight.insight_type] || insight.insight_type}
                     </span>
                     {insight.calls && (
@@ -100,7 +100,7 @@ export default function InsightsPage() {
                     </button>
                     <button
                       onClick={() => handleAction(insight.id, 'dismiss')}
-                      className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                      className="px-3 py-1.5 text-xs font-medium bg-cream text-charcoal rounded-lg hover:bg-gray-200"
                     >
                       Dismiss
                     </button>

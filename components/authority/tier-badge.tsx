@@ -30,7 +30,7 @@ export function TierBadge({ tier, tierName, totalPoints, size = 'md' }: TierBadg
   };
 
   return (
-    <div className={`rounded-xl border border-stone/10 bg-white ${sizeClasses[size]}`}>
+    <div className={`rounded-xl border border-stone/10 bg-cream-warm ${sizeClasses[size]}`}>
       <div className="flex items-center gap-3">
         <div
           className="rounded-lg p-2"

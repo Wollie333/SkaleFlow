@@ -31,7 +31,7 @@ export function CampaignCard({ campaign, onClick }: CampaignCardProps) {
   return (
     <div
       className={cn(
-        'bg-white rounded-xl border border-teal/8 p-5 transition-all duration-300',
+        'bg-cream-warm rounded-xl border border-teal/8 p-5 transition-all duration-300',
         'hover:-translate-y-0.5 hover:shadow-lg hover:shadow-dark/5',
         onClick && 'cursor-pointer'
       )}

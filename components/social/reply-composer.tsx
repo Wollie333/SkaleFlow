@@ -72,7 +72,7 @@ export function ReplyComposer({
                   'flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors',
                   showSavedReplies
                     ? 'bg-teal text-white border-teal'
-                    : 'bg-white text-stone border-stone/20 hover:border-teal hover:text-teal'
+                    : 'bg-cream-warm text-stone border-stone/20 hover:border-teal hover:text-teal'
                 )}
               >
                 <BookmarkIcon className="w-4 h-4" />

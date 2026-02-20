@@ -123,7 +123,7 @@ export function AddCorrespondenceModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-cream-warm rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <h2 className="text-lg font-serif font-semibold text-charcoal">Log Correspondence</h2>
           <button onClick={onClose} className="p-1 hover:bg-cream-warm rounded-lg transition-colors">
@@ -180,7 +180,7 @@ export function AddCorrespondenceModal({
                   sendRealEmail ? 'bg-teal' : 'bg-stone/20'
                 }`}
               >
-                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-cream-warm shadow transition-transform ${
                   sendRealEmail ? 'translate-x-5' : ''
                 }`} />
               </button>

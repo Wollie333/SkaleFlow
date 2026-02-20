@@ -111,82 +111,74 @@ export default function CompanyFormModal({
 
   if (!isOpen) return null;
 
+  const inputClasses = "w-full px-4 py-2 bg-cream border border-stone/10 rounded-lg text-charcoal placeholder:text-stone/50 focus:ring-2 focus:ring-teal focus:border-teal";
+
   return (
-    <div className="fixed inset-0 bg-dark/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-dark/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-cream-warm rounded-lg shadow-xl border border-stone/10 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-stone/20">
+        <div className="flex items-center justify-between p-6 border-b border-stone/10">
           <h2 className="text-2xl font-bold text-charcoal">
             {company ? 'Edit Company' : 'Add Company'}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-cream/30 rounded-lg transition-colors"
+            className="p-2 hover:bg-cream/50 rounded-lg transition-colors"
           >
-            <XMarkIcon className="h-5 w-5 text-charcoal" />
+            <XMarkIcon className="h-5 w-5 text-stone" />
           </button>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
               {error}
             </div>
           )}
 
-          {/* Name */}
           <div>
             <label className="block text-sm font-medium text-charcoal mb-1">
-              Company Name <span className="text-red-500">*</span>
+              Company Name <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
-              className="w-full px-4 py-2 border border-stone/30 rounded-lg focus:ring-2 focus:ring-teal focus:border-teal"
+              className={inputClasses}
               placeholder="Acme Corp"
               required
             />
           </div>
 
-          {/* Industry */}
           <div>
-            <label className="block text-sm font-medium text-charcoal mb-1">
-              Industry
-            </label>
+            <label className="block text-sm font-medium text-charcoal mb-1">Industry</label>
             <input
               type="text"
               value={formData.industry}
               onChange={(e) => handleChange('industry', e.target.value)}
-              className="w-full px-4 py-2 border border-stone/30 rounded-lg focus:ring-2 focus:ring-teal focus:border-teal"
+              className={inputClasses}
               placeholder="Technology"
             />
           </div>
 
-          {/* Website */}
           <div>
-            <label className="block text-sm font-medium text-charcoal mb-1">
-              Website
-            </label>
+            <label className="block text-sm font-medium text-charcoal mb-1">Website</label>
             <input
               type="url"
               value={formData.website}
               onChange={(e) => handleChange('website', e.target.value)}
-              className="w-full px-4 py-2 border border-stone/30 rounded-lg focus:ring-2 focus:ring-teal focus:border-teal"
+              className={inputClasses}
               placeholder="https://example.com"
             />
           </div>
 
-          {/* Size */}
           <div>
-            <label className="block text-sm font-medium text-charcoal mb-1">
-              Company Size
-            </label>
+            <label className="block text-sm font-medium text-charcoal mb-1">Company Size</label>
             <select
               value={formData.size}
               onChange={(e) => handleChange('size', e.target.value)}
-              className="w-full px-4 py-2 border border-stone/30 rounded-lg focus:ring-2 focus:ring-teal focus:border-teal"
+              className={inputClasses}
             >
               <option value="">Select size</option>
               <option value="1-10">1-10 employees</option>
@@ -197,61 +189,51 @@ export default function CompanyFormModal({
             </select>
           </div>
 
-          {/* Phone */}
           <div>
-            <label className="block text-sm font-medium text-charcoal mb-1">
-              Phone
-            </label>
+            <label className="block text-sm font-medium text-charcoal mb-1">Phone</label>
             <input
               type="tel"
               value={formData.phone}
               onChange={(e) => handleChange('phone', e.target.value)}
-              className="w-full px-4 py-2 border border-stone/30 rounded-lg focus:ring-2 focus:ring-teal focus:border-teal"
+              className={inputClasses}
               placeholder="+1 (555) 123-4567"
             />
           </div>
 
-          {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-charcoal mb-1">
-              Email
-            </label>
+            <label className="block text-sm font-medium text-charcoal mb-1">Email</label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
-              className="w-full px-4 py-2 border border-stone/30 rounded-lg focus:ring-2 focus:ring-teal focus:border-teal"
+              className={inputClasses}
               placeholder="contact@example.com"
             />
           </div>
 
-          {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-charcoal mb-1">
-              Notes
-            </label>
+            <label className="block text-sm font-medium text-charcoal mb-1">Notes</label>
             <textarea
               value={formData.notes}
               onChange={(e) => handleChange('notes', e.target.value)}
-              className="w-full px-4 py-2 border border-stone/30 rounded-lg focus:ring-2 focus:ring-teal focus:border-teal"
+              className={inputClasses}
               placeholder="Additional information..."
               rows={4}
             />
           </div>
 
-          {/* Buttons */}
           <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-stone/30 rounded-lg hover:bg-cream/30 transition-colors"
+              className="px-4 py-2 border border-stone/10 rounded-lg text-charcoal hover:bg-cream/50 transition-colors"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-teal text-white rounded-lg hover:bg-teal/90 transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-teal text-white rounded-lg hover:bg-teal/90 transition-colors disabled:opacity-50 font-medium"
               disabled={loading}
             >
               {loading ? 'Saving...' : company ? 'Save Changes' : 'Create Company'}

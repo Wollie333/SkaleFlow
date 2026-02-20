@@ -246,7 +246,7 @@ export function QuestionPanel({
 
             {/* Logo upload for Phase 7, Question 0 */}
             {currentPhase.phase_number === '7' && currentQuestionIndex === 0 && organizationId && onLogoUploaded && (
-              <div className="border border-stone/10 rounded-lg p-3 bg-white">
+              <div className="border border-stone/10 rounded-lg p-3 bg-cream-warm">
                 <LogoUpload
                   organizationId={organizationId}
                   onLogoUploaded={onLogoUploaded}
@@ -259,7 +259,7 @@ export function QuestionPanel({
               <button
                 type="button"
                 onClick={() => setIsQuickAnswerOpen(!isQuickAnswerOpen)}
-                className="w-full flex items-center justify-between px-3 py-2.5 bg-white hover:bg-cream-warm/50 transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2.5 bg-cream-warm hover:bg-cream-warm/50 transition-colors"
               >
                 <span className="text-xs font-medium text-stone">
                   Know your answer? Type it directly
@@ -271,7 +271,7 @@ export function QuestionPanel({
                 )}
               </button>
               {isQuickAnswerOpen && (
-                <div className="p-3 border-t border-stone/10 bg-white">
+                <div className="p-3 border-t border-stone/10 bg-cream-warm">
                   <textarea
                     value={quickAnswer}
                     onChange={(e) => setQuickAnswer(e.target.value)}
@@ -324,7 +324,7 @@ export function QuestionPanel({
 
       {/* Bottom action bar — sticky */}
       {!phaseComplete && (
-        <div className="border-t border-stone/10 p-4 bg-white space-y-2">
+        <div className="border-t border-stone/10 p-4 bg-cream-warm space-y-2">
           {allCurrentOutputsLocked ? (
             /* All outputs individually locked — just advance */
             <>

@@ -10,7 +10,7 @@ export default function DashboardLoading() {
       {/* Card grid skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-white rounded-xl border border-stone/10 p-6 space-y-4">
+          <div key={i} className="bg-cream-warm rounded-xl border border-stone/10 p-6 space-y-4">
             <div className="h-4 w-24 bg-stone/10 rounded" />
             <div className="h-8 w-16 bg-stone/10 rounded" />
             <div className="h-3 w-full bg-stone/10 rounded" />
@@ -19,7 +19,7 @@ export default function DashboardLoading() {
       </div>
 
       {/* Content area skeleton */}
-      <div className="bg-white rounded-xl border border-stone/10 p-6 space-y-4">
+      <div className="bg-cream-warm rounded-xl border border-stone/10 p-6 space-y-4">
         <div className="h-5 w-36 bg-stone/10 rounded" />
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (

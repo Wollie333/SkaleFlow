@@ -62,7 +62,7 @@ export function AdsOverviewCards({ metrics }: AdsOverviewCardsProps) {
         return (
           <div
             key={card.label}
-            className="bg-white rounded-xl border border-teal/8 p-4 transition-all duration-300 hover:shadow-md hover:shadow-dark/5"
+            className="bg-cream-warm rounded-xl border border-teal/8 p-4 transition-all duration-300 hover:shadow-md hover:shadow-dark/5"
           >
             <div className="flex items-center gap-3">
               <div

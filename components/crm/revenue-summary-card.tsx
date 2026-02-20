@@ -18,7 +18,7 @@ export function RevenueSummaryCard({ revenueThisMonth, revenueLastMonth }: Reven
   const isUp = diff >= 0;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
+    <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
       <p className="text-sm font-medium text-stone mb-1">Revenue This Month</p>
       <p className="text-2xl font-bold text-charcoal">{formatZAR(revenueThisMonth)}</p>
       <div className="flex items-center gap-1 mt-2">

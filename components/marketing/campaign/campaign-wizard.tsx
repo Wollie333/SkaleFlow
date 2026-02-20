@@ -143,7 +143,7 @@ export function CampaignWizard({ onComplete, onCancel }: CampaignWizardProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-teal/8 overflow-hidden">
+    <div className="bg-cream-warm rounded-xl border border-teal/8 overflow-hidden">
       {/* Step Indicators */}
       <div className="px-6 py-4 border-b border-stone/10 bg-cream-warm/20">
         <div className="flex items-center justify-center gap-0">
@@ -208,7 +208,7 @@ export function CampaignWizard({ onComplete, onCancel }: CampaignWizardProps) {
                       'flex items-center gap-3 px-5 py-3 rounded-xl border transition-all duration-200',
                       platform === p
                         ? 'border-teal bg-teal/5 ring-2 ring-teal/20'
-                        : 'border-stone/20 bg-white hover:border-stone/40'
+                        : 'border-stone/20 bg-cream-warm hover:border-stone/40'
                     )}
                   >
                     <PlatformIcon platform={p} size="sm" />
@@ -239,7 +239,7 @@ export function CampaignWizard({ onComplete, onCancel }: CampaignWizardProps) {
                 onChange={(e) => setCampaignName(e.target.value)}
                 placeholder="e.g., Summer Sale 2026"
                 className={cn(
-                  'w-full px-4 py-3 rounded-xl border bg-white transition-all duration-200',
+                  'w-full px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
                   'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
                   'placeholder:text-stone/60',
                   'border-stone/20 hover:border-stone/40'
@@ -257,7 +257,7 @@ export function CampaignWizard({ onComplete, onCancel }: CampaignWizardProps) {
                   value={specialAdCategory}
                   onChange={(e) => setSpecialAdCategory(e.target.value)}
                   className={cn(
-                    'w-full px-4 py-3 rounded-xl border bg-white transition-all duration-200',
+                    'w-full px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
                     'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
                     'border-stone/20 hover:border-stone/40',
                     'text-charcoal'
@@ -317,7 +317,7 @@ export function CampaignWizard({ onComplete, onCancel }: CampaignWizardProps) {
                       'w-full flex items-start gap-3 px-4 py-3 rounded-xl border text-left transition-all duration-200',
                       biddingStrategy === strategy.value
                         ? 'border-teal bg-teal/5 ring-1 ring-teal/20'
-                        : 'border-stone/20 bg-white hover:border-stone/40'
+                        : 'border-stone/20 bg-cream-warm hover:border-stone/40'
                     )}
                   >
                     <div
@@ -373,7 +373,7 @@ export function CampaignWizard({ onComplete, onCancel }: CampaignWizardProps) {
                     'flex flex-col items-center gap-2 p-5 rounded-xl border transition-all duration-200',
                     creativeMode === 'ai_generate'
                       ? 'border-teal bg-teal/5 ring-2 ring-teal/20'
-                      : 'border-stone/20 bg-white hover:border-stone/40'
+                      : 'border-stone/20 bg-cream-warm hover:border-stone/40'
                   )}
                 >
                   <SparklesIcon
@@ -401,7 +401,7 @@ export function CampaignWizard({ onComplete, onCancel }: CampaignWizardProps) {
                     'flex flex-col items-center gap-2 p-5 rounded-xl border transition-all duration-200',
                     creativeMode === 'manual'
                       ? 'border-teal bg-teal/5 ring-2 ring-teal/20'
-                      : 'border-stone/20 bg-white hover:border-stone/40'
+                      : 'border-stone/20 bg-cream-warm hover:border-stone/40'
                   )}
                 >
                   <PencilSquareIcon
@@ -429,7 +429,7 @@ export function CampaignWizard({ onComplete, onCancel }: CampaignWizardProps) {
                     'flex flex-col items-center gap-2 p-5 rounded-xl border transition-all duration-200',
                     creativeMode === 'existing'
                       ? 'border-teal bg-teal/5 ring-2 ring-teal/20'
-                      : 'border-stone/20 bg-white hover:border-stone/40'
+                      : 'border-stone/20 bg-cream-warm hover:border-stone/40'
                   )}
                 >
                   <DocumentDuplicateIcon

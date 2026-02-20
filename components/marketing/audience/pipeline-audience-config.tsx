@@ -174,7 +174,7 @@ export function PipelineAudienceConfig({
   const belowMinimum = estimatedSize !== null && estimatedSize < minAudienceSize;
 
   return (
-    <div className="bg-white rounded-xl border border-teal/8 overflow-hidden">
+    <div className="bg-cream-warm rounded-xl border border-teal/8 overflow-hidden">
       <div className="px-6 py-4 border-b border-stone/10 bg-cream-warm/20">
         <h3 className="text-sm font-semibold text-charcoal">
           Create Audience from Pipeline
@@ -196,7 +196,7 @@ export function PipelineAudienceConfig({
             onChange={(e) => setAudienceName(e.target.value)}
             placeholder="e.g., Hot Leads Q1 2026"
             className={cn(
-              'w-full px-4 py-3 rounded-xl border bg-white transition-all duration-200',
+              'w-full px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
               'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
               'placeholder:text-stone/60 border-stone/20 hover:border-stone/40'
             )}
@@ -212,7 +212,7 @@ export function PipelineAudienceConfig({
             value={selectedPipelineId}
             onChange={(e) => setSelectedPipelineId(e.target.value)}
             className={cn(
-              'w-full px-4 py-3 rounded-xl border bg-white transition-all duration-200',
+              'w-full px-4 py-3 rounded-xl border bg-cream-warm transition-all duration-200',
               'focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal',
               'border-stone/20 hover:border-stone/40 text-charcoal'
             )}
@@ -244,7 +244,7 @@ export function PipelineAudienceConfig({
                       'px-3 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200',
                       isSelected
                         ? 'border-teal bg-teal/10 text-teal'
-                        : 'border-stone/20 bg-white text-stone hover:border-stone/40'
+                        : 'border-stone/20 bg-cream-warm text-stone hover:border-stone/40'
                     )}
                   >
                     {stage.name}
@@ -276,7 +276,7 @@ export function PipelineAudienceConfig({
                       'px-3 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200',
                       isSelected
                         ? 'border-gold bg-gold/10 text-gold'
-                        : 'border-stone/20 bg-white text-stone hover:border-stone/40'
+                        : 'border-stone/20 bg-cream-warm text-stone hover:border-stone/40'
                     )}
                   >
                     {tag.name}
@@ -336,7 +336,7 @@ export function PipelineAudienceConfig({
                   'flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all duration-200',
                   platform === p
                     ? 'border-teal bg-teal/5 ring-1 ring-teal/20'
-                    : 'border-stone/20 bg-white hover:border-stone/40'
+                    : 'border-stone/20 bg-cream-warm hover:border-stone/40'
                 )}
               >
                 <PlatformIcon platform={p} size="sm" />

@@ -107,7 +107,7 @@ export function BestTimeWidget({
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/50 transition-colors"
+        className="w-full px-6 py-4 flex items-center justify-between hover:bg-cream-warm/50 transition-colors"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
@@ -167,7 +167,7 @@ export function BestTimeWidget({
           ) : (
             <div className="space-y-4">
               {/* Confidence Score */}
-              <div className="flex items-center justify-between p-3 bg-white/50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-cream-warm/50 rounded-lg">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                   <span className="text-xs font-medium text-charcoal">Confidence Score</span>
@@ -198,7 +198,7 @@ export function BestTimeWidget({
                     return (
                       <div
                         key={day}
-                        className="flex items-center justify-between p-2 bg-white rounded-lg border border-purple/10"
+                        className="flex items-center justify-between p-2 bg-cream-warm rounded-lg border border-purple/10"
                       >
                         <span className="text-sm font-medium text-charcoal capitalize">
                           {day.substring(0, 3)}

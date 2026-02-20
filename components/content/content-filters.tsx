@@ -102,7 +102,7 @@ export function ContentFilterBar({ filters, onChange, totalCount, filteredCount 
   };
 
   return (
-    <div className="bg-white rounded-xl border border-stone/10">
+    <div className="bg-cream-warm rounded-xl border border-stone/10">
       {/* Toggle bar */}
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -188,7 +188,7 @@ export function ContentFilterBar({ filters, onChange, totalCount, filteredCount 
             <select
               value={filters.status}
               onChange={e => update({ status: e.target.value as ContentStatus | '' })}
-              className="px-3 py-1.5 rounded-lg border border-stone/20 text-sm bg-white min-w-[140px]"
+              className="px-3 py-1.5 rounded-lg border border-stone/20 text-sm bg-cream-warm min-w-[140px]"
             >
               <option value="">All Statuses</option>
               {STATUSES.map(s => (
@@ -202,7 +202,7 @@ export function ContentFilterBar({ filters, onChange, totalCount, filteredCount 
             <select
               value={filters.funnel}
               onChange={e => update({ funnel: e.target.value as FunnelStage | '' })}
-              className="px-3 py-1.5 rounded-lg border border-stone/20 text-sm bg-white min-w-[140px]"
+              className="px-3 py-1.5 rounded-lg border border-stone/20 text-sm bg-cream-warm min-w-[140px]"
             >
               <option value="">All Stages</option>
               {FUNNELS.map(f => (
@@ -216,7 +216,7 @@ export function ContentFilterBar({ filters, onChange, totalCount, filteredCount 
             <select
               value={filters.storybrand}
               onChange={e => update({ storybrand: e.target.value as StoryBrandStage | '' })}
-              className="px-3 py-1.5 rounded-lg border border-stone/20 text-sm bg-white min-w-[140px]"
+              className="px-3 py-1.5 rounded-lg border border-stone/20 text-sm bg-cream-warm min-w-[140px]"
             >
               <option value="">All StoryBrand</option>
               {STORYBRAND_STAGES.map(s => (
@@ -230,7 +230,7 @@ export function ContentFilterBar({ filters, onChange, totalCount, filteredCount 
             <select
               value={filters.formatCategory}
               onChange={e => update({ formatCategory: e.target.value })}
-              className="px-3 py-1.5 rounded-lg border border-stone/20 text-sm bg-white min-w-[140px]"
+              className="px-3 py-1.5 rounded-lg border border-stone/20 text-sm bg-cream-warm min-w-[140px]"
             >
               <option value="">All Types</option>
               {FORMAT_CATEGORIES.map(f => (
@@ -244,7 +244,7 @@ export function ContentFilterBar({ filters, onChange, totalCount, filteredCount 
             <select
               value={filters.platform}
               onChange={e => update({ platform: e.target.value })}
-              className="px-3 py-1.5 rounded-lg border border-stone/20 text-sm bg-white min-w-[140px]"
+              className="px-3 py-1.5 rounded-lg border border-stone/20 text-sm bg-cream-warm min-w-[140px]"
             >
               <option value="">All Platforms</option>
               {PLATFORMS.map(p => (
@@ -259,7 +259,7 @@ export function ContentFilterBar({ filters, onChange, totalCount, filteredCount 
               type="date"
               value={filters.dateFrom}
               onChange={e => update({ dateFrom: e.target.value })}
-              className="px-3 py-1.5 rounded-lg border border-stone/20 text-sm bg-white"
+              className="px-3 py-1.5 rounded-lg border border-stone/20 text-sm bg-cream-warm"
             />
           </div>
 
@@ -269,7 +269,7 @@ export function ContentFilterBar({ filters, onChange, totalCount, filteredCount 
               type="date"
               value={filters.dateTo}
               onChange={e => update({ dateTo: e.target.value })}
-              className="px-3 py-1.5 rounded-lg border border-stone/20 text-sm bg-white"
+              className="px-3 py-1.5 rounded-lg border border-stone/20 text-sm bg-cream-warm"
             />
           </div>
         </div>

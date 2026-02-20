@@ -68,7 +68,7 @@ export function CreateCalendarModal({
 
   return (
     <div className="fixed inset-0 bg-dark/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-cream-warm rounded-2xl p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
         <h2 className="text-heading-lg text-charcoal mb-6">Create Campaign</h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -163,7 +163,7 @@ export function CreateCalendarModal({
                     'w-full text-left p-3 rounded-xl border-2 transition-all',
                     effectiveModelId === model.id
                       ? 'border-teal bg-teal/5 shadow-sm'
-                      : 'border-stone/15 hover:border-stone/30 bg-white'
+                      : 'border-stone/15 hover:border-stone/30 bg-cream-warm'
                   )}
                 >
                   <div className="flex items-center justify-between">

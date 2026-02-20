@@ -89,7 +89,7 @@ export default function AuthorityPressReleasesPage() {
           <div className="animate-pulse text-stone text-sm">Loading...</div>
         </div>
       ) : releases.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-stone/10 rounded-xl">
+        <div className="text-center py-16 bg-cream-warm border border-stone/10 rounded-xl">
           <DocumentTextIcon className="w-10 h-10 text-stone/30 mx-auto mb-3" />
           <p className="text-sm text-stone">No press releases yet</p>
           <p className="text-xs text-stone/60 mt-1">Create one and use AI to generate content</p>
@@ -102,7 +102,7 @@ export default function AuthorityPressReleasesPage() {
               <button
                 key={release.id}
                 onClick={() => router.push(`/authority/press-releases/${release.id}`)}
-                className="w-full text-left p-4 bg-white border border-stone/10 rounded-xl hover:border-teal/20 hover:shadow-sm transition-all"
+                className="w-full text-left p-4 bg-cream-warm border border-stone/10 rounded-xl hover:border-teal/20 hover:shadow-sm transition-all"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">

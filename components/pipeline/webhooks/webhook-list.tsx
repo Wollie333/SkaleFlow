@@ -28,7 +28,7 @@ export function WebhookList({ endpoints, onEdit, onDelete, onTest }: WebhookList
   return (
     <div className="space-y-3">
       {endpoints.map((ep) => (
-        <div key={ep.id} className="bg-white rounded-xl border border-stone/10 p-4 flex items-center gap-4">
+        <div key={ep.id} className="bg-cream-warm rounded-xl border border-stone/10 p-4 flex items-center gap-4">
           <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', ep.is_active ? 'bg-teal/10' : 'bg-stone/10')}>
             <GlobeAltIcon className={cn('w-4 h-4', ep.is_active ? 'text-teal' : 'text-stone')} />
           </div>

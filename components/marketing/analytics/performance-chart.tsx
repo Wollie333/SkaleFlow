@@ -57,7 +57,7 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
 
   if (data.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-teal/8 p-6">
+      <div className="bg-cream-warm rounded-xl border border-teal/8 p-6">
         <h3 className="text-sm font-semibold text-charcoal mb-4">Performance Over Time</h3>
         <div className="flex items-center justify-center h-64 text-stone text-sm">
           No performance data available yet.
@@ -67,7 +67,7 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-teal/8 p-6">
+    <div className="bg-cream-warm rounded-xl border border-teal/8 p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-charcoal">Performance Over Time</h3>
         <div className="flex gap-2">
@@ -80,7 +80,7 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
                 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200 border',
                 visibleLines.has(line.key)
                   ? 'border-transparent'
-                  : 'border-stone/20 bg-white text-stone opacity-50'
+                  : 'border-stone/20 bg-cream-warm text-stone opacity-50'
               )}
               style={
                 visibleLines.has(line.key)

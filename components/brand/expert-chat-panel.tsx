@@ -154,9 +154,9 @@ export function ExpertChatPanel({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-xl border border-stone/10 overflow-hidden">
+    <div className="flex flex-col h-full bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
       {/* Agent header */}
-      <div className="px-5 py-3 border-b border-stone/10 bg-white">
+      <div className="px-5 py-3 border-b border-stone/10 bg-cream-warm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             {agent ? (

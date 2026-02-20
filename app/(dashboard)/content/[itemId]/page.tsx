@@ -601,7 +601,7 @@ export default function PostEditPage() {
 
       {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Variation group tabs Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
       {variationSiblings.length > 0 && (
-        <div className="bg-white border border-stone/15 rounded-xl p-3">
+        <div className="bg-cream-warm border border-stone/15 rounded-xl p-3">
           <p className="text-xs font-medium text-stone mb-2">Variation Group</p>
           <div className="flex gap-2 flex-wrap">
             <span className="px-3 py-1.5 rounded-lg text-xs font-medium bg-teal/10 text-teal border border-teal/20">
@@ -720,14 +720,14 @@ export default function PostEditPage() {
                 <button
                   type="button"
                   onClick={() => setShowScriptModal(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-stone-600 hover:border-teal/30 hover:text-teal transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-stone hover:border-teal/30 hover:text-teal transition-colors"
                 >
                   Script {scriptData.hook || scriptData.script_body ? '(added)' : '(optional)'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowTargetUrl(prev => !prev)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-stone-600 hover:border-teal/30 hover:text-teal transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-stone/20 text-sm text-stone hover:border-teal/30 hover:text-teal transition-colors"
                 >
                   <LinkIcon className="w-4 h-4" />
                   {targetUrl ? 'Edit Link' : 'Add Link'}
@@ -843,7 +843,7 @@ export default function PostEditPage() {
       </div>
 
       {/* Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Footer Actions Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
-      <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-stone/10 -mx-6 px-6 py-4 flex flex-wrap items-center justify-between gap-3 z-30">
+      <div className="sticky bottom-0 bg-cream-warm/95 backdrop-blur-sm border-t border-stone/10 -mx-6 px-6 py-4 flex flex-wrap items-center justify-between gap-3 z-30">
         <div className="flex items-center gap-2 flex-wrap">
           <StatusBadge status={item.status} />
           <Button

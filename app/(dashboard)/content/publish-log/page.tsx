@@ -61,7 +61,7 @@ const PLATFORM_COLORS: Record<string, string> = {
   facebook: 'bg-blue-50 text-blue-600',
   instagram: 'bg-pink-50 text-pink-600',
   twitter: 'bg-sky-50 text-sky-600',
-  tiktok: 'bg-gray-100 text-gray-800',
+  tiktok: 'bg-cream text-charcoal',
 };
 
 const STATUS_CONFIG: Record<PublishStatus, { icon: React.ComponentType<{ className?: string }>; color: string; label: string }> = {
@@ -194,19 +194,19 @@ export default function PublishLogPage() {
       {/* Stats Summary Cards */}
       {records.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="bg-white rounded-xl border border-stone/10 p-4">
+          <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
             <p className="text-xs text-stone font-medium mb-1">Published</p>
             <p className="text-2xl font-bold text-emerald-600">{publishedCount}</p>
           </div>
-          <div className="bg-white rounded-xl border border-stone/10 p-4">
+          <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
             <p className="text-xs text-stone font-medium mb-1">Failed</p>
             <p className="text-2xl font-bold text-red-500">{failedCount}</p>
           </div>
-          <div className="bg-white rounded-xl border border-stone/10 p-4">
+          <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
             <p className="text-xs text-stone font-medium mb-1">Success Rate</p>
             <p className="text-2xl font-bold text-teal">{successRate}%</p>
           </div>
-          <div className="bg-white rounded-xl border border-stone/10 p-4">
+          <div className="bg-cream-warm rounded-xl border border-stone/10 p-4">
             <p className="text-xs text-stone font-medium mb-1">Top Platform</p>
             <p className="text-2xl font-bold text-blue-600 capitalize">{topPlatform ? topPlatform[0] : '—'}</p>
           </div>
@@ -214,7 +214,7 @@ export default function PublishLogPage() {
       )}
 
       {/* Status Tabs */}
-      <div className="flex items-center gap-2 border-b border-stone/10 pb-0 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="mb-4 flex gap-4 border-b border-stone/10 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
         {STATUS_TABS.map(tab => {
           const count = tab.value === 'all' ? records.length : (statusCounts[tab.value] || 0);
           return (
@@ -222,7 +222,7 @@ export default function PublishLogPage() {
               key={tab.value}
               onClick={() => handleStatusFilterChange(tab.value)}
               className={cn(
-                'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-[1px] whitespace-nowrap flex-shrink-0',
+                'pb-3 px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0',
                 statusFilter === tab.value
                   ? 'border-teal text-teal'
                   : 'border-transparent text-stone hover:text-charcoal'
@@ -262,7 +262,7 @@ export default function PublishLogPage() {
       {isLoading ? (
         <div className="p-12 text-center text-stone">Loading publish records...</div>
       ) : records.length === 0 ? (
-        <div className="bg-white rounded-xl border border-stone/10 p-12 text-center">
+        <div className="bg-cream-warm rounded-xl border border-stone/10 p-12 text-center">
           <ClockIcon className="w-10 h-10 text-stone/30 mx-auto mb-3" />
           <p className="text-stone">No publish records found</p>
           <p className="text-sm text-stone/60 mt-1">Published posts will appear here</p>
@@ -270,7 +270,7 @@ export default function PublishLogPage() {
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden lg:block bg-white rounded-xl border border-stone/10 overflow-hidden">
+          <div className="hidden lg:block bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -359,7 +359,7 @@ export default function PublishLogPage() {
               const title = contentItem?.topic || contentItem?.caption?.slice(0, 50) || contentItem?.format?.replace(/_/g, ' ') || 'Untitled';
 
               return (
-                <div key={record.id} className="bg-white rounded-xl border border-stone/10 p-4 space-y-3">
+                <div key={record.id} className="bg-cream-warm rounded-xl border border-stone/10 p-4 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-medium text-charcoal text-sm line-clamp-1">{title}</p>
                     <span className={cn('inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium shrink-0', statusInfo.color)}>

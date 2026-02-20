@@ -50,14 +50,14 @@ const typeConfig: Record<string, { icon: React.ComponentType<{ className?: strin
 export function UserActivityTimeline({ activity }: UserActivityTimelineProps) {
   if (activity.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-8 text-center text-stone text-sm">
+      <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-8 text-center text-stone text-sm">
         No activity yet
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
+    <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
       <div className="relative">
         {/* Timeline line */}
         <div className="absolute left-4 top-0 bottom-0 w-px bg-cream" />

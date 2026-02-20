@@ -101,7 +101,7 @@ export function AttendeesPanel({ participants, isHost, hostUserId, roomCode, onA
               {inCall.map(p => {
                 const isSelf = p.userId === hostUserId && isHost;
                 return (
-                  <div key={p.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/5 group">
+                  <div key={p.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-cream-warm/5 group">
                     <Avatar participant={p} />
                     <div className="flex-1 min-w-0">
                       <span className="text-white text-sm truncate block">
@@ -148,7 +148,7 @@ export function AttendeesPanel({ participants, isHost, hostUserId, roomCode, onA
       <div className="p-3 border-t border-white/10">
         <button
           onClick={copyLink}
-          className="w-full py-2 rounded-lg bg-white/10 text-white text-sm hover:bg-white/15 transition-colors"
+          className="w-full py-2 rounded-lg bg-cream-warm/10 text-white text-sm hover:bg-cream-warm/15 transition-colors"
         >
           {copied ? 'Link Copied!' : 'Copy Invite Link'}
         </button>

@@ -113,14 +113,14 @@ export function ScheduleModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-cream-warm rounded-2xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-stone/10">
           <div className="flex items-center gap-2">
             <CalendarDaysIcon className="w-5 h-5 text-teal" />
             <h2 className="text-base font-semibold text-charcoal">Push to Calendar</h2>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-stone-100 transition-colors">
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-cream transition-colors">
             <XMarkIcon className="w-5 h-5 text-stone" />
           </button>
         </div>
@@ -134,7 +134,7 @@ export function ScheduleModal({
               value={startDate}
               min={tomorrow}
               onChange={e => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-white"
+              className="w-full px-3 py-2 rounded-lg border border-stone/20 text-sm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-cream-warm"
             />
           </div>
 
@@ -148,7 +148,7 @@ export function ScheduleModal({
                   'flex-1 px-3 py-2 rounded-lg text-xs font-medium border transition-colors',
                   strategy === 'one_per_day'
                     ? 'bg-teal text-white border-teal'
-                    : 'bg-stone-50 text-stone-500 border-stone-200 hover:border-stone-300'
+                    : 'bg-cream text-stone border-stone/10 hover:border-stone/10'
                 )}
               >
                 One per day
@@ -159,7 +159,7 @@ export function ScheduleModal({
                   'flex-1 px-3 py-2 rounded-lg text-xs font-medium border transition-colors',
                   strategy === 'same_day'
                     ? 'bg-teal text-white border-teal'
-                    : 'bg-stone-50 text-stone-500 border-stone-200 hover:border-stone-300'
+                    : 'bg-cream text-stone border-stone/10 hover:border-stone/10'
                 )}
               >
                 All on same day
@@ -179,7 +179,7 @@ export function ScheduleModal({
                     'flex-1 px-2 py-2 rounded-lg text-xs font-medium border transition-colors',
                     timeSlot === value
                       ? 'bg-teal text-white border-teal'
-                      : 'bg-stone-50 text-stone-500 border-stone-200 hover:border-stone-300'
+                      : 'bg-cream text-stone border-stone/10 hover:border-stone/10'
                   )}
                 >
                   {label}
@@ -197,7 +197,7 @@ export function ScheduleModal({
               {schedulePreview.map(({ platform, placement, date }) => (
                 <div
                   key={placement}
-                  className="flex items-center justify-between px-3 py-2 bg-stone-50 rounded-lg"
+                  className="flex items-center justify-between px-3 py-2 bg-cream rounded-lg"
                 >
                   <span className="text-xs text-charcoal">
                     {PLATFORM_LABELS[platform]} · {getPlacementLabel(placement as PlacementType)}

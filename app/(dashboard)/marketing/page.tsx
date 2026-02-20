@@ -229,7 +229,7 @@ export default function MarketingDashboardPage() {
                   className={cn(
                     'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
                     dateRange === option.value
-                      ? 'bg-white text-charcoal shadow-sm'
+                      ? 'bg-cream-warm text-charcoal shadow-sm'
                       : 'text-stone hover:text-charcoal'
                   )}
                 >

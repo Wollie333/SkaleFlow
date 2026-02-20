@@ -114,7 +114,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
                 className={`w-full text-left px-4 py-3 rounded-xl border text-xs md:text-sm transition-all ${
                   declineReason === reason
                     ? 'border-gold/50 bg-gold/10 text-white'
-                    : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20'
+                    : 'border-white/10 bg-cream-warm/5 text-white/70 hover:border-white/20'
                 }`}
               >
                 {reason}
@@ -125,7 +125,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
               className={`w-full text-left px-4 py-3 rounded-xl border text-xs md:text-sm transition-all ${
                 declineReason === 'custom'
                   ? 'border-gold/50 bg-gold/10 text-white'
-                  : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20'
+                  : 'border-white/10 bg-cream-warm/5 text-white/70 hover:border-white/20'
               }`}
             >
               Other reason...
@@ -136,7 +136,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
                 onChange={(e) => setCustomReason(e.target.value)}
                 placeholder="Tell us more..."
                 rows={2}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-gold/40 resize-none"
+                className="w-full px-4 py-3 rounded-xl bg-cream-warm/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-gold/40 resize-none"
                 autoFocus
               />
             )}
@@ -149,7 +149,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
                 onChange={(e) => setAdditionalMessage(e.target.value)}
                 placeholder="Type your message here..."
                 rows={3}
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-gold/40 resize-none scrollbar-dark"
+                className="w-full px-4 py-3 rounded-xl bg-cream-warm/5 border border-white/10 text-white text-sm placeholder-white/30 focus:outline-none focus:border-gold/40 resize-none scrollbar-dark"
               />
             </div>
           </div>
@@ -157,7 +157,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
           <div className="px-6 pb-5 flex gap-3">
             <button
               onClick={() => setViewMode('expanded')}
-              className="flex-1 py-3 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-white/5 transition-colors"
+              className="flex-1 py-3 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-cream-warm/5 transition-colors"
             >
               Go Back
             </button>
@@ -167,7 +167,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
               className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-colors ${
                 declineReason && (declineReason !== 'custom' || customReason.trim())
                   ? 'bg-gold text-dark hover:bg-gold/90 shadow-lg shadow-gold/20'
-                  : 'bg-white/10 text-white/40 cursor-not-allowed opacity-40'
+                  : 'bg-cream-warm/10 text-white/40 cursor-not-allowed opacity-40'
               }`}
             >
               Submit Feedback
@@ -201,7 +201,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0 pr-4">
               {offer.tier && (
-                <span className="inline-block px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest bg-white/10 text-white/80 rounded-full mb-2">
+                <span className="inline-block px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest bg-cream-warm/10 text-white/80 rounded-full mb-2">
                   {offer.tier}
                 </span>
               )}
@@ -210,7 +210,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
             <div className="flex items-center gap-1.5 flex-shrink-0">
               <button
                 onClick={handleMinimize}
-                className="p-2 rounded-lg bg-white/10 text-white/60 hover:text-white hover:bg-white/20 transition-colors"
+                className="p-2 rounded-lg bg-cream-warm/10 text-white/60 hover:text-white hover:bg-cream-warm/20 transition-colors"
                 title="Minimize"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -224,7 +224,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
         {/* Body */}
         <div className="px-6 py-6 space-y-6">
           {offer.price_display && (
-            <div className="text-center py-4 bg-white/5 rounded-xl border border-white/5">
+            <div className="text-center py-4 bg-cream-warm/5 rounded-xl border border-white/5">
               <span className="text-gold text-2xl md:text-4xl font-bold tracking-tight">{offer.price_display}</span>
               {offer.billing_frequency && (
                 <span className="text-white/40 text-base ml-1.5">/{offer.billing_frequency}</span>
@@ -285,13 +285,13 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
             </button>
             <button
               onClick={handleMinimize}
-              className="flex-1 py-3 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-white/5 transition-colors"
+              className="flex-1 py-3 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-cream-warm/5 transition-colors"
             >
               View Later
             </button>
             <button
               onClick={handleStartDecline}
-              className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 text-sm font-medium hover:bg-white/5 hover:text-white/70 transition-colors"
+              className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 text-sm font-medium hover:bg-cream-warm/5 hover:text-white/70 transition-colors"
             >
               Not Interested
             </button>

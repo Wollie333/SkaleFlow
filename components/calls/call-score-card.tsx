@@ -40,7 +40,7 @@ export function CallScoreCard({ score }: CallScoreCardProps) {
   return (
     <div className="space-y-6">
       {/* Overall Score */}
-      <div className="bg-white rounded-xl border border-stone/10 p-6 text-center">
+      <div className="bg-cream-warm rounded-xl border border-stone/10 p-6 text-center">
         <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full text-2xl font-bold ${getScoreColor(overall)}`}>
           {overall}
         </div>
@@ -51,7 +51,7 @@ export function CallScoreCard({ score }: CallScoreCardProps) {
       </div>
 
       {/* Breakdown */}
-      <div className="bg-white rounded-xl border border-stone/10 p-5">
+      <div className="bg-cream-warm rounded-xl border border-stone/10 p-5">
         <h3 className="text-sm font-semibold text-charcoal mb-4">Score Breakdown</h3>
         <div className="space-y-4">
           {Object.entries(score)
@@ -64,7 +64,7 @@ export function CallScoreCard({ score }: CallScoreCardProps) {
                     {key === 'talkRatio' ? `${value}%` : value}
                   </span>
                 </div>
-                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-cream rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${getBarColor(value)}`}
                     style={{ width: `${Math.min(value, 100)}%` }}

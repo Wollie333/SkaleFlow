@@ -43,7 +43,7 @@ export function ContactPipelineTab({ cards }: ContactPipelineTabProps) {
           <button
             key={card.id}
             onClick={() => router.push(`/authority?card=${card.id}`)}
-            className="w-full text-left p-4 bg-white border border-stone/10 rounded-xl hover:border-teal/30 transition-colors"
+            className="w-full text-left p-4 bg-cream-warm border border-stone/10 rounded-xl hover:border-teal/30 transition-colors"
           >
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">

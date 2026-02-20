@@ -200,7 +200,7 @@ export default function EmailTemplatesPage() {
       {/* Template List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {templates.map((template) => (
-          <div key={template.id} className="bg-white rounded-xl border border-stone/10 p-5">
+          <div key={template.id} className="bg-cream-warm rounded-xl border border-stone/10 p-5">
             <h3 className="font-semibold text-charcoal">{template.name}</h3>
             <p className="text-sm text-stone mt-1 truncate">{template.subject}</p>
             <div className="flex items-center gap-2 mt-4">
@@ -239,7 +239,7 @@ export default function EmailTemplatesPage() {
       {/* Editor Modal */}
       {showEditor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-cream-warm rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-stone/10">
               <h2 className="text-lg font-semibold text-charcoal">
                 {editingTemplate ? 'Edit Template' : 'New Template'}
@@ -286,7 +286,7 @@ export default function EmailTemplatesPage() {
       {/* Preview Modal */}
       {preview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-cream-warm rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-stone/10 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-charcoal">Preview</h2>
               <button onClick={() => setPreview(null)} className="text-stone hover:text-charcoal text-sm">Close</button>

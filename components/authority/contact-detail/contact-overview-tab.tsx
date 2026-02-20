@@ -58,7 +58,7 @@ export function ContactOverviewTab({
       {/* Left column: Contact Info + Notes */}
       <div className="lg:col-span-2 space-y-6">
         {/* Contact Info Card */}
-        <div className="bg-white border border-stone/10 rounded-xl p-5">
+        <div className="bg-cream-warm border border-stone/10 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-charcoal mb-4">Contact Information</h3>
           <div className="grid grid-cols-2 gap-4">
             <InfoField label="Email" value={contact.email} icon={EnvelopeIcon} />
@@ -73,7 +73,7 @@ export function ContactOverviewTab({
         </div>
 
         {/* Notes */}
-        <div className="bg-white border border-stone/10 rounded-xl p-5">
+        <div className="bg-cream-warm border border-stone/10 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-charcoal mb-3">Notes</h3>
           <textarea
             value={notes}
@@ -94,7 +94,7 @@ export function ContactOverviewTab({
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white border border-stone/10 rounded-xl p-5">
+        <div className="bg-cream-warm border border-stone/10 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-charcoal mb-3">Recent Activity</h3>
           {recentActivity.length === 0 ? (
             <p className="text-xs text-stone text-center py-4">No activity yet</p>
@@ -130,7 +130,7 @@ export function ContactOverviewTab({
 
       {/* Right column: Quick Stats */}
       <div className="space-y-6">
-        <div className="bg-white border border-stone/10 rounded-xl p-5">
+        <div className="bg-cream-warm border border-stone/10 rounded-xl p-5">
           <h3 className="text-sm font-semibold text-charcoal mb-4">Quick Stats</h3>
           <div className="space-y-3">
             <StatItem icon={EnvelopeIcon} label="Total Emails" value={stats.totalEmails} />

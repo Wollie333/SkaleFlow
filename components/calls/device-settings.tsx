@@ -154,7 +154,7 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
             <select
               value={selectedVideo}
               onChange={(e) => setSelectedVideo(e.target.value)}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal/30"
+              className="w-full px-3 py-2 bg-cream-warm/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal/30"
             >
               {videoDevices.length === 0 && <option value="">No cameras found</option>}
               {videoDevices.map(d => (
@@ -169,7 +169,7 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
             <select
               value={selectedAudio}
               onChange={(e) => setSelectedAudio(e.target.value)}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal/30"
+              className="w-full px-3 py-2 bg-cream-warm/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal/30"
             >
               {audioDevices.length === 0 && <option value="">No microphones found</option>}
               {audioDevices.map(d => (
@@ -181,7 +181,7 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
           {/* Audio level indicator */}
           <div className="mb-6">
             <label className="block text-white/60 text-xs font-medium mb-1.5">Mic Level</label>
-            <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-cream-warm/5 rounded-full overflow-hidden">
               <div
                 className="h-full bg-teal rounded-full transition-all duration-75"
                 style={{ width: `${audioLevel * 100}%` }}
@@ -194,7 +194,7 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 py-2.5 rounded-lg border border-white/10 text-white/60 text-sm font-medium hover:bg-white/5"
+              className="flex-1 py-2.5 rounded-lg border border-white/10 text-white/60 text-sm font-medium hover:bg-cream-warm/5"
             >
               Cancel
             </button>
