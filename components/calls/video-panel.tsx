@@ -60,18 +60,18 @@ export function VideoPanel({ localStream, participants, localUserId, localPartic
 
   if (!callActive) {
     return (
-      <div className="h-full flex flex-col items-center justify-center">
+      <div className="h-full flex flex-col items-center justify-center px-4">
         <div className="text-center">
-          <div className="w-24 h-24 rounded-full bg-cream-warm/5 flex items-center justify-center mx-auto mb-6">
-            <svg className="w-12 h-12 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-cream-warm/5 flex items-center justify-center mx-auto mb-4 md:mb-6">
+            <svg className="w-10 h-10 md:w-12 md:h-12 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
             </svg>
           </div>
           <h2 className="text-white text-lg font-medium mb-2">Ready to join?</h2>
-          <p className="text-white/50 text-sm mb-6">Click below to enable your camera and microphone</p>
+          <p className="text-white/50 text-xs md:text-sm mb-6">Tap below to enable your camera and microphone</p>
           <button
             onClick={onStartMedia}
-            className="px-4 py-2 md:px-6 md:py-3 rounded-lg bg-[#1E6B63] hover:bg-[#1E6B63]/80 text-white font-medium text-sm md:text-base transition-colors"
+            className="px-6 py-3 md:px-8 md:py-3.5 rounded-lg bg-[#1E6B63] hover:bg-[#1E6B63]/80 active:bg-[#1E6B63]/70 text-white font-medium text-base transition-colors"
           >
             Join Call
           </button>

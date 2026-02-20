@@ -66,8 +66,10 @@ export function GuestJoinForm({ roomCode, callId, callTitle }: GuestJoinFormProp
                 type="text"
                 value={guestName}
                 onChange={(e) => setGuestName(e.target.value)}
-                className="w-full px-3 py-2 border border-stone/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
+                className="w-full px-3 py-3 border border-stone/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
+                style={{ fontSize: '16px' }}
                 placeholder="Full Name"
+                autoComplete="name"
                 required
               />
             </div>
@@ -77,18 +79,21 @@ export function GuestJoinForm({ roomCode, callId, callTitle }: GuestJoinFormProp
                 type="email"
                 value={guestEmail}
                 onChange={(e) => setGuestEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-stone/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
+                className="w-full px-3 py-3 border border-stone/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E6B63]/30 focus:border-[#1E6B63]"
+                style={{ fontSize: '16px' }}
                 placeholder="your@email.com"
+                autoComplete="email"
+                inputMode="email"
                 required
               />
             </div>
 
-            <label className="flex items-start gap-2 cursor-pointer">
+            <label className="flex items-start gap-3 cursor-pointer py-1">
               <input
                 type="checkbox"
                 checked={consent}
                 onChange={(e) => setConsent(e.target.checked)}
-                className="mt-0.5 rounded border-stone/20 text-[#1E6B63] focus:ring-[#1E6B63]"
+                className="mt-0.5 w-5 h-5 rounded border-stone/20 text-[#1E6B63] focus:ring-[#1E6B63] flex-shrink-0"
               />
               <span className="text-xs text-[#8A8A7A]">
                 I consent to this call being recorded and transcribed for quality and coaching purposes.
@@ -98,7 +103,7 @@ export function GuestJoinForm({ roomCode, callId, callTitle }: GuestJoinFormProp
             <button
               onClick={handleJoin}
               disabled={!guestName || !guestEmail || !consent}
-              className="w-full py-3 rounded-lg bg-[#1E6B63] text-white font-medium text-sm hover:bg-[#1E6B63]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3.5 rounded-lg bg-[#1E6B63] text-white font-medium text-base hover:bg-[#1E6B63]/90 active:bg-[#1E6B63]/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Enter Waiting Room
             </button>

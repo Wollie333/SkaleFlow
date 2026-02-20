@@ -72,16 +72,16 @@ export function AttendeesPanel({ participants, isHost, hostUserId, roomCode, onA
                     <span className="text-white text-sm truncate">{p.name}</span>
                   </div>
                   {isHost && (
-                    <div className="flex gap-1 flex-shrink-0 ml-2">
+                    <div className="flex gap-1.5 flex-shrink-0 ml-2">
                       <button
                         onClick={() => onAdmit?.(p.id)}
-                        className="px-2 py-1 text-xs rounded bg-[#1E6B63] text-white hover:bg-[#1E6B63]/80"
+                        className="px-3 py-1.5 text-xs rounded-lg bg-[#1E6B63] text-white hover:bg-[#1E6B63]/80 active:bg-[#1E6B63]/70 transition-colors"
                       >
                         Admit
                       </button>
                       <button
                         onClick={() => onDeny?.(p.id)}
-                        className="px-2 py-1 text-xs rounded bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                        className="px-3 py-1.5 text-xs rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 active:bg-red-500/40 transition-colors"
                       >
                         Deny
                       </button>
@@ -115,7 +115,7 @@ export function AttendeesPanel({ participants, isHost, hostUserId, roomCode, onA
                     {isHost && !isSelf && p.role !== 'host' && (
                       <button
                         onClick={() => onKick?.(p.id)}
-                        className="opacity-0 group-hover:opacity-100 px-2 py-0.5 text-xs rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-opacity"
+                        className="md:opacity-0 md:group-hover:opacity-100 px-2.5 py-1 text-xs rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 active:bg-red-500/40 transition-all"
                         title="Remove from call"
                       >
                         Kick

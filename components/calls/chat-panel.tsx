@@ -104,7 +104,7 @@ export function ChatPanel({ messages, onSendMessage, localParticipantId }: ChatP
       </div>
 
       {/* Input */}
-      <div className="px-3 py-3 border-t border-white/10">
+      <div className="px-3 py-3 border-t border-white/10 pb-safe">
         <div className="flex items-end gap-2">
           <textarea
             value={input}
@@ -112,15 +112,15 @@ export function ChatPanel({ messages, onSendMessage, localParticipantId }: ChatP
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             rows={1}
-            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 resize-none focus:outline-none focus:border-teal/50 max-h-24 overflow-y-auto"
-            style={{ minHeight: '38px' }}
+            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/30 resize-none focus:outline-none focus:border-teal/50 max-h-24 overflow-y-auto"
+            style={{ minHeight: '42px', fontSize: '16px' }}
           />
           <button
             onClick={handleSend}
             disabled={!input.trim()}
-            className="p-2 rounded-lg bg-teal/20 text-teal hover:bg-teal/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+            className="p-2.5 rounded-lg bg-teal/20 text-teal hover:bg-teal/30 active:bg-teal/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex-shrink-0"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </button>
