@@ -418,25 +418,15 @@ export function CallRoom({
     setIsJoining(true);
     setJoinStep('Requesting camera & microphone...');
 
-    // Helper: getUserMedia with a 5-second timeout to prevent long hangs
-    const getMediaWithTimeout = (constraints: MediaStreamConstraints, timeoutMs = 5000) => {
-      return Promise.race([
-        navigator.mediaDevices.getUserMedia(constraints),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Media request timed out')), timeoutMs)
-        ),
-      ]);
-    };
-
-    // Try video + audio first
+    // Try video + audio first (no timeout — let browser permission dialog complete)
     try {
-      const stream = await getMediaWithTimeout({
+      const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user' },
         audio: { echoCancellation: true, noiseSuppression: true },
       });
       localStreamRef.current = stream;
       setJoinStep('Connected! Entering room...');
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 400));
       setCallActive(true);
       setIsJoining(false);
       return;
@@ -447,13 +437,13 @@ export function CallRoom({
     // Fallback: audio only
     setJoinStep('Trying audio only...');
     try {
-      const audioStream = await getMediaWithTimeout({
+      const audioStream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true },
       });
       localStreamRef.current = audioStream;
       setIsCameraOff(true);
       setJoinStep('Audio connected! Entering room...');
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 400));
       setCallActive(true);
       setIsJoining(false);
       return;
@@ -464,13 +454,13 @@ export function CallRoom({
     // Fallback: video only
     setJoinStep('Trying video only...');
     try {
-      const videoStream = await getMediaWithTimeout({
+      const videoStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user' },
       });
       localStreamRef.current = videoStream;
       setIsMuted(true);
       setJoinStep('Video connected! Entering room...');
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 400));
       setCallActive(true);
       setIsJoining(false);
       return;
@@ -483,7 +473,7 @@ export function CallRoom({
     setMediaError('Could not access camera or microphone. Check browser permissions and try again.');
     setIsCameraOff(true);
     setIsMuted(true);
-    await new Promise(r => setTimeout(r, 300));
+    await new Promise(r => setTimeout(r, 400));
     setCallActive(true);
     setIsJoining(false);
   }, []);
