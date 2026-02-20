@@ -416,64 +416,108 @@ export function CallRoom({
   const startMedia = useCallback(async () => {
     setMediaError(null);
     setIsJoining(true);
-    setJoinStep('Requesting camera & microphone...');
 
-    // Try video + audio first (no timeout — let browser permission dialog complete)
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user' },
-        audio: { echoCancellation: true, noiseSuppression: true },
-      });
-      localStreamRef.current = stream;
-      setJoinStep('Connected! Entering room...');
-      await new Promise(r => setTimeout(r, 400));
-      setCallActive(true);
-      setIsJoining(false);
-      return;
-    } catch (err) {
-      console.warn('Video+audio failed, trying audio only:', err);
-    }
-
-    // Fallback: audio only
-    setJoinStep('Trying audio only...');
-    try {
-      const audioStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true },
-      });
-      localStreamRef.current = audioStream;
+    // Check if mediaDevices API is available (requires HTTPS)
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setMediaError('Media devices not available. Make sure you are on HTTPS and using a supported browser.');
       setIsCameraOff(true);
-      setJoinStep('Audio connected! Entering room...');
-      await new Promise(r => setTimeout(r, 400));
-      setCallActive(true);
-      setIsJoining(false);
-      return;
-    } catch (err) {
-      console.warn('Audio only failed, trying video only:', err);
-    }
-
-    // Fallback: video only
-    setJoinStep('Trying video only...');
-    try {
-      const videoStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user' },
-      });
-      localStreamRef.current = videoStream;
       setIsMuted(true);
-      setJoinStep('Video connected! Entering room...');
-      await new Promise(r => setTimeout(r, 400));
       setCallActive(true);
       setIsJoining(false);
       return;
-    } catch (err) {
-      console.error('All media attempts failed:', err);
     }
 
-    // All failed — join anyway without media
-    setJoinStep('Joining without media...');
-    setMediaError('Could not access camera or microphone. Check browser permissions and try again.');
+    // Enumerate available devices to give better error messages
+    setJoinStep('Checking available devices...');
+    let hasAudio = false;
+    let hasVideo = false;
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      hasAudio = devices.some(d => d.kind === 'audioinput');
+      hasVideo = devices.some(d => d.kind === 'videoinput');
+      console.log('Available devices:', { hasAudio, hasVideo, count: devices.length, devices: devices.map(d => `${d.kind}: ${d.label || 'unlabeled'}`) });
+    } catch (err) {
+      console.warn('enumerateDevices failed:', err);
+      // Continue anyway — enumerateDevices might fail but getUserMedia could still work
+      hasAudio = true;
+      hasVideo = true;
+    }
+
+    // Step 1: Try video + audio (simplest constraints — no facingMode which can fail on desktop)
+    if (hasVideo && hasAudio) {
+      setJoinStep('Requesting camera & microphone...');
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        localStreamRef.current = stream;
+        setJoinStep('Connected! Entering room...');
+        await new Promise(r => setTimeout(r, 400));
+        setCallActive(true);
+        setIsJoining(false);
+        return;
+      } catch (err: any) {
+        console.warn('Video+audio failed:', err?.name, err?.message);
+      }
+    }
+
+    // Step 2: Audio only
+    if (hasAudio) {
+      setJoinStep('Trying audio only...');
+      try {
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        localStreamRef.current = audioStream;
+        setIsCameraOff(true);
+        setJoinStep('Audio connected! Entering room...');
+        await new Promise(r => setTimeout(r, 400));
+        setCallActive(true);
+        setIsJoining(false);
+        return;
+      } catch (err: any) {
+        console.warn('Audio only failed:', err?.name, err?.message);
+      }
+    }
+
+    // Step 3: Video only
+    if (hasVideo) {
+      setJoinStep('Trying video only...');
+      try {
+        const videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        localStreamRef.current = videoStream;
+        setIsMuted(true);
+        setJoinStep('Video connected! Entering room...');
+        await new Promise(r => setTimeout(r, 400));
+        setCallActive(true);
+        setIsJoining(false);
+        return;
+      } catch (err: any) {
+        console.warn('Video only failed:', err?.name, err?.message);
+      }
+    }
+
+    // Step 4: Last resort — try { audio: true, video: true } even if enumerateDevices found nothing
+    // (some browsers don't show devices until permission is granted)
+    if (!hasAudio && !hasVideo) {
+      setJoinStep('Requesting media access...');
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        localStreamRef.current = stream;
+        setJoinStep('Connected! Entering room...');
+        await new Promise(r => setTimeout(r, 400));
+        setCallActive(true);
+        setIsJoining(false);
+        return;
+      } catch (err: any) {
+        console.warn('Last resort media failed:', err?.name, err?.message);
+      }
+    }
+
+    // All attempts failed — join without media but show specific error
+    const errorHint = !hasAudio && !hasVideo
+      ? 'No camera or microphone detected on this device.'
+      : 'Camera/microphone access was denied. Click the lock icon in your browser address bar to allow access, then retry.';
+
+    setMediaError(errorHint);
     setIsCameraOff(true);
     setIsMuted(true);
-    await new Promise(r => setTimeout(r, 400));
     setCallActive(true);
     setIsJoining(false);
   }, []);
