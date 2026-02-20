@@ -106,7 +106,7 @@ export default function OffersPage() {
         <div className={`mb-4 px-4 py-3 rounded-lg text-sm ${
           syncMessage.success
             ? 'bg-teal/10 border border-teal/20 text-teal'
-            : 'bg-red-50 border border-red-200 text-red-700'
+            : 'bg-red-50 border border-red-200 text-red-400'
         }`}>
           {syncMessage.text}
         </div>
@@ -134,7 +134,7 @@ export default function OffersPage() {
                       <span className="px-2 py-0.5 text-xs bg-gold/10 text-gold rounded-full">{offer.tier}</span>
                     )}
                     {!offer.is_active && (
-                      <span className="px-2 py-0.5 text-xs bg-red-100 text-red-600 rounded-full">Inactive</span>
+                      <span className="px-2 py-0.5 text-xs bg-red-500/10 text-red-600 rounded-full">Inactive</span>
                     )}
                   </div>
                   {offer.description && <p className="text-sm text-stone mt-1">{offer.description}</p>}

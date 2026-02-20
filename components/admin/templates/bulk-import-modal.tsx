@@ -208,7 +208,7 @@ export function BulkImportModal({ onClose, onSaved }: Props) {
         {/* Body */}
         <div className="px-6 py-4">
           {error && (
-            <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg mb-4">{error}</div>
+            <div className="p-3 bg-red-50 text-red-400 text-sm rounded-lg mb-4">{error}</div>
           )}
 
           {/* Step 1: Upload */}

@@ -53,8 +53,8 @@ type ViewMode = 'list' | 'calendar';
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; dot: string }> = {
   pending: { label: 'Pending', color: 'text-amber-700', bg: 'bg-amber-100', dot: 'bg-amber-400' },
   scheduled: { label: 'Scheduled', color: 'text-teal', bg: 'bg-teal/10', dot: 'bg-teal' },
-  completed: { label: 'Completed', color: 'text-green-700', bg: 'bg-green-100', dot: 'bg-green-500' },
-  cancelled: { label: 'Cancelled', color: 'text-red-700', bg: 'bg-red-100', dot: 'bg-red-500' },
+  completed: { label: 'Completed', color: 'text-green-400', bg: 'bg-green-500/10', dot: 'bg-green-500' },
+  cancelled: { label: 'Cancelled', color: 'text-red-400', bg: 'bg-red-500/10', dot: 'bg-red-500' },
   no_show: { label: 'No Show', color: 'text-amber-700', bg: 'bg-amber-100', dot: 'bg-amber-400' },
 };
 
@@ -397,7 +397,7 @@ export default function MeetingsPage() {
                         <button
                           onClick={() => updateStatus(meeting.id, 'completed')}
                           disabled={!!actionLoading}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-50 text-green-700 hover:bg-green-100 transition-colors disabled:opacity-40"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-50 text-green-400 hover:bg-green-500/10 transition-colors disabled:opacity-40"
                         >
                           <CheckCircleIcon className="w-3.5 h-3.5" />
                           Done
@@ -413,7 +413,7 @@ export default function MeetingsPage() {
                         <button
                           onClick={() => updateStatus(meeting.id, 'cancelled')}
                           disabled={!!actionLoading}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 text-red-700 hover:bg-red-100 transition-colors disabled:opacity-40"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-40"
                         >
                           <XCircleIcon className="w-3.5 h-3.5" />
                           Cancel
@@ -522,7 +522,7 @@ export default function MeetingsPage() {
                           <button
                             onClick={() => updateStatus(meeting.id, 'completed')}
                             disabled={!!actionLoading}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-50 text-green-700 hover:bg-green-100 transition-colors disabled:opacity-40"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-50 text-green-400 hover:bg-green-500/10 transition-colors disabled:opacity-40"
                           >
                             <CheckCircleIcon className="w-3.5 h-3.5" />
                             Completed
@@ -538,7 +538,7 @@ export default function MeetingsPage() {
                           <button
                             onClick={() => updateStatus(meeting.id, 'cancelled')}
                             disabled={!!actionLoading}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 text-red-700 hover:bg-red-100 transition-colors disabled:opacity-40"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-40"
                           >
                             <XCircleIcon className="w-3.5 h-3.5" />
                             Cancel

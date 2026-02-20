@@ -67,7 +67,7 @@ export function RunDetail({ run, onClose }: RunDetailProps) {
 
       {run.error_message && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-          <p className="text-sm text-red-700">{run.error_message}</p>
+          <p className="text-sm text-red-400">{run.error_message}</p>
         </div>
       )}
 
@@ -87,9 +87,9 @@ export function RunDetail({ run, onClose }: RunDetailProps) {
                   {stepTypeLabels[log.automation_steps?.step_type || ''] || log.automation_steps?.step_type || 'Unknown'}
                 </p>
                 <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-full',
-                  log.status === 'completed' ? 'bg-green-100 text-green-700' :
-                  log.status === 'failed' ? 'bg-red-100 text-red-700' :
-                  log.status === 'waiting' ? 'bg-yellow-100 text-yellow-700' :
+                  log.status === 'completed' ? 'bg-green-500/10 text-green-400' :
+                  log.status === 'failed' ? 'bg-red-500/10 text-red-400' :
+                  log.status === 'waiting' ? 'bg-yellow-100 text-gold' :
                   'bg-stone/10 text-stone'
                 )}>
                   {log.status}

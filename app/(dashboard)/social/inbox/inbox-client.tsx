@@ -924,10 +924,10 @@ function SentimentDot({ sentiment }: { sentiment: string }) {
 
 function SentimentBadge({ sentiment }: { sentiment: string }) {
   const config: Record<string, { label: string; className: string }> = {
-    positive: { label: 'Positive', className: 'bg-green-50 text-green-700 border-green-100' },
+    positive: { label: 'Positive', className: 'bg-green-50 text-green-400 border-green-100' },
     neutral: { label: 'Neutral', className: 'bg-stone/8 text-stone/70 border-stone/10' },
-    negative: { label: 'Negative', className: 'bg-red-50 text-red-700 border-red-100' },
-    question: { label: 'Question', className: 'bg-blue-50 text-blue-700 border-blue-100' },
+    negative: { label: 'Negative', className: 'bg-red-50 text-red-400 border-red-100' },
+    question: { label: 'Question', className: 'bg-blue-50 text-blue-400 border-blue-100' },
   };
   const c = config[sentiment];
   if (!c) return null;

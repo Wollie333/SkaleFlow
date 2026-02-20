@@ -178,7 +178,7 @@ export function UserBillingTab({
                   <Button
                     onClick={onCancelSubscription}
                     disabled={actionLoading}
-                    className="bg-red-50 hover:bg-red-100 text-red-600 text-sm px-4 py-2 flex items-center gap-1.5"
+                    className="bg-red-50 hover:bg-red-500/10 text-red-600 text-sm px-4 py-2 flex items-center gap-1.5"
                   >
                     <XMarkIcon className="w-4 h-4" />
                     Cancel
@@ -198,7 +198,7 @@ export function UserBillingTab({
                   <Button
                     onClick={onCancelSubscription}
                     disabled={actionLoading}
-                    className="bg-red-50 hover:bg-red-100 text-red-600 text-sm px-4 py-2 flex items-center gap-1.5"
+                    className="bg-red-50 hover:bg-red-500/10 text-red-600 text-sm px-4 py-2 flex items-center gap-1.5"
                   >
                     <XMarkIcon className="w-4 h-4" />
                     Cancel

@@ -42,8 +42,8 @@ export default function InsightsPage() {
   };
 
   const insightTypeColors: Record<string, string> = {
-    pain_point: 'bg-red-100 text-red-700', language_pattern: 'bg-blue-100 text-blue-700', objection: 'bg-orange-100 text-orange-700',
-    budget_signal: 'bg-green-100 text-green-700', need: 'bg-purple-100 text-purple-700', competitor_mention: 'bg-yellow-100 text-yellow-700', value_perception: 'bg-teal-100 text-teal-700',
+    pain_point: 'bg-red-500/10 text-red-400', language_pattern: 'bg-blue-500/10 text-blue-400', objection: 'bg-orange-100 text-orange-700',
+    budget_signal: 'bg-green-500/10 text-green-400', need: 'bg-purple-100 text-purple-700', competitor_mention: 'bg-yellow-100 text-gold', value_perception: 'bg-teal-100 text-teal-700',
   };
 
   return (
@@ -94,7 +94,7 @@ export default function InsightsPage() {
                   <div className="flex gap-2 ml-4 flex-shrink-0">
                     <button
                       onClick={() => handleAction(insight.id, 'accept')}
-                      className="px-3 py-1.5 text-xs font-medium bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
+                      className="px-3 py-1.5 text-xs font-medium bg-green-500/10 text-green-400 rounded-lg hover:bg-green-200"
                     >
                       Accept
                     </button>

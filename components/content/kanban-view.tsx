@@ -34,8 +34,8 @@ const KANBAN_COLUMNS: { status: ContentStatus; label: string; color: string }[] 
 ];
 
 const FUNNEL_COLORS: Record<string, string> = {
-  awareness: 'bg-green-100 text-green-800',
-  consideration: 'bg-blue-100 text-blue-800',
+  awareness: 'bg-green-500/10 text-green-400',
+  consideration: 'bg-blue-500/10 text-blue-400',
   conversion: 'bg-orange-100 text-orange-800',
 };
 

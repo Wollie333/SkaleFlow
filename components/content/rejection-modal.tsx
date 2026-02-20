@@ -73,7 +73,7 @@ export function RejectionModal({ isOpen, onClose, onConfirm, isLoading }: Reject
               className={cn(
                 'px-3 py-1.5 rounded-full text-xs font-medium border transition-colors',
                 selectedTags.has(tag.value)
-                  ? 'bg-red-50 border-red-300 text-red-700'
+                  ? 'bg-red-50 border-red-300 text-red-400'
                   : 'bg-stone/5 border-stone/15 text-stone hover:border-stone/30'
               )}
             >

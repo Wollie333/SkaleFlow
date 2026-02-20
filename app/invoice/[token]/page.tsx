@@ -82,8 +82,8 @@ export default function PublicInvoicePage() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Invoice Not Found</h1>
-          <p className="text-gray-600">{error || 'The invoice you are looking for does not exist or has been removed.'}</p>
+          <h1 className="text-2xl font-bold text-charcoal mb-2">Invoice Not Found</h1>
+          <p className="text-stone">{error || 'The invoice you are looking for does not exist or has been removed.'}</p>
         </div>
       </div>
     );
@@ -118,34 +118,34 @@ export default function PublicInvoicePage() {
                   className="h-12 mb-4"
                 />
               )}
-              <h1 className="text-3xl font-bold text-gray-900">{invoice.organization.name}</h1>
+              <h1 className="text-3xl font-bold text-charcoal">{invoice.organization.name}</h1>
             </div>
             <div className="text-right">
-              <p className="text-sm text-gray-600">Invoice Number</p>
-              <p className="text-xl font-semibold text-gray-900">{invoice.invoice_number}</p>
+              <p className="text-sm text-stone">Invoice Number</p>
+              <p className="text-xl font-semibold text-charcoal">{invoice.invoice_number}</p>
             </div>
           </div>
 
           {/* Billing Info */}
           <div className="grid grid-cols-2 gap-8 mb-8">
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Bill To:</h3>
-              <p className="text-gray-900 font-medium">
+              <h3 className="text-sm font-semibold text-charcoal mb-2">Bill To:</h3>
+              <p className="text-charcoal font-medium">
                 {invoice.contact.first_name} {invoice.contact.last_name}
               </p>
               {invoice.contact.company && (
-                <p className="text-gray-600">{invoice.contact.company.name}</p>
+                <p className="text-stone">{invoice.contact.company.name}</p>
               )}
-              <p className="text-gray-600">{invoice.contact.email}</p>
+              <p className="text-stone">{invoice.contact.email}</p>
             </div>
             <div className="text-right">
               <div className="mb-2">
-                <p className="text-sm text-gray-600">Issue Date</p>
-                <p className="text-gray-900">{formatDate(invoice.issue_date)}</p>
+                <p className="text-sm text-stone">Issue Date</p>
+                <p className="text-charcoal">{formatDate(invoice.issue_date)}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Due Date</p>
-                <p className="text-gray-900 font-semibold">{formatDate(invoice.due_date)}</p>
+                <p className="text-sm text-stone">Due Date</p>
+                <p className="text-charcoal font-semibold">{formatDate(invoice.due_date)}</p>
               </div>
             </div>
           </div>
@@ -155,19 +155,19 @@ export default function PublicInvoicePage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b-2 border-stone/10">
-                  <th className="text-left py-3 text-sm font-semibold text-gray-700">Description</th>
-                  <th className="text-right py-3 text-sm font-semibold text-gray-700">Quantity</th>
-                  <th className="text-right py-3 text-sm font-semibold text-gray-700">Unit Price</th>
-                  <th className="text-right py-3 text-sm font-semibold text-gray-700">Amount</th>
+                  <th className="text-left py-3 text-sm font-semibold text-charcoal">Description</th>
+                  <th className="text-right py-3 text-sm font-semibold text-charcoal">Quantity</th>
+                  <th className="text-right py-3 text-sm font-semibold text-charcoal">Unit Price</th>
+                  <th className="text-right py-3 text-sm font-semibold text-charcoal">Amount</th>
                 </tr>
               </thead>
               <tbody>
                 {invoice.line_items.map((item) => (
                   <tr key={item.id} className="border-b border-stone/10">
-                    <td className="py-4 text-gray-900">{item.description}</td>
-                    <td className="py-4 text-right text-gray-900">{item.quantity}</td>
-                    <td className="py-4 text-right text-gray-900">{formatCurrency(item.unit_price)}</td>
-                    <td className="py-4 text-right text-gray-900 font-medium">{formatCurrency(item.amount)}</td>
+                    <td className="py-4 text-charcoal">{item.description}</td>
+                    <td className="py-4 text-right text-charcoal">{item.quantity}</td>
+                    <td className="py-4 text-right text-charcoal">{formatCurrency(item.unit_price)}</td>
+                    <td className="py-4 text-right text-charcoal font-medium">{formatCurrency(item.amount)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -178,16 +178,16 @@ export default function PublicInvoicePage() {
           <div className="flex justify-end mb-8">
             <div className="w-64">
               <div className="flex justify-between py-2">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="text-gray-900">{formatCurrency(invoice.subtotal)}</span>
+                <span className="text-stone">Subtotal</span>
+                <span className="text-charcoal">{formatCurrency(invoice.subtotal)}</span>
               </div>
               <div className="flex justify-between py-2">
-                <span className="text-gray-600">Tax</span>
-                <span className="text-gray-900">{formatCurrency(invoice.tax)}</span>
+                <span className="text-stone">Tax</span>
+                <span className="text-charcoal">{formatCurrency(invoice.tax)}</span>
               </div>
               <div className="flex justify-between py-3 border-t-2 border-stone/10">
-                <span className="text-lg font-bold text-gray-900">Total</span>
-                <span className="text-lg font-bold text-gray-900">{formatCurrency(invoice.total)}</span>
+                <span className="text-lg font-bold text-charcoal">Total</span>
+                <span className="text-lg font-bold text-charcoal">{formatCurrency(invoice.total)}</span>
               </div>
             </div>
           </div>
@@ -195,8 +195,8 @@ export default function PublicInvoicePage() {
           {/* Notes */}
           {invoice.notes && (
             <div className="mb-8">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Notes</h3>
-              <p className="text-gray-600 whitespace-pre-wrap">{invoice.notes}</p>
+              <h3 className="text-sm font-semibold text-charcoal mb-2">Notes</h3>
+              <p className="text-stone whitespace-pre-wrap">{invoice.notes}</p>
             </div>
           )}
 

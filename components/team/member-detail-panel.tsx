@@ -465,7 +465,7 @@ export function MemberDetailPanel({
 
               {confirmRemove ? (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                  <p className="text-sm text-red-700 font-medium mb-1">
+                  <p className="text-sm text-red-400 font-medium mb-1">
                     Remove {displayName}?
                   </p>
                   <p className="text-xs text-red-600 mb-3">

@@ -250,7 +250,7 @@ export function AdBatchTracker({ batchId, onComplete, onCancel }: AdBatchTracker
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-2">
-          <p className="text-xs text-red-700">{error}</p>
+          <p className="text-xs text-red-400">{error}</p>
         </div>
       )}
 

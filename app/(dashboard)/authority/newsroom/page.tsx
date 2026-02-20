@@ -177,7 +177,7 @@ export default function NewsroomManagePage() {
                   {!inq.is_processed && (
                     <button
                       onClick={() => handleMarkProcessed(inq.id)}
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-500/10 transition-colors"
                     >
                       <CheckCircleIcon className="w-3.5 h-3.5" />
                       Done

@@ -553,7 +553,7 @@ export default function AdminUsersPage() {
                           <button
                             onClick={() => setConfirmDelete(user.id)}
                             disabled={user.role === 'super_admin'}
-                            className="text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="text-xs font-medium text-red-600 hover:text-red-400 bg-red-50 hover:bg-red-500/10 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             Delete
                           </button>

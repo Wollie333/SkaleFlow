@@ -72,7 +72,7 @@ export default function BrandGuidePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-gray-400 animate-pulse">Loading brand guide...</div>
+        <div className="text-stone/60 animate-pulse">Loading brand guide...</div>
       </div>
     );
   }
@@ -81,8 +81,8 @@ export default function BrandGuidePage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Brand Guide Not Found</h1>
-          <p className="text-gray-500">This brand guide does not exist or is not public.</p>
+          <h1 className="text-2xl font-bold text-charcoal mb-2">Brand Guide Not Found</h1>
+          <p className="text-stone">This brand guide does not exist or is not public.</p>
         </div>
       </div>
     );
@@ -163,7 +163,7 @@ export default function BrandGuidePage() {
                   <img src={logoUrl} alt="Logo on dark" className="max-h-24 object-contain" />
                 </div>
               </div>
-              <p className="text-sm text-gray-500 mt-4">
+              <p className="text-sm text-stone mt-4">
                 Always maintain clear space around the logo. Do not stretch, rotate, or alter the logo colours.
               </p>
             </section>
@@ -192,10 +192,10 @@ export default function BrandGuidePage() {
                       className="w-full h-20 rounded-lg border border-stone/10"
                       style={{ backgroundColor: c.hex }}
                     />
-                    <p className="text-xs font-semibold text-gray-900 capitalize">{c.name.replace(/_/g, ' ')}</p>
-                    <p className="text-[10px] text-gray-500 font-mono">{c.hex}</p>
-                    {c.rgb && <p className="text-[10px] text-gray-400 font-mono">{c.rgb}</p>}
-                    {c.usage && <p className="text-[10px] text-gray-500">{c.usage}</p>}
+                    <p className="text-xs font-semibold text-charcoal capitalize">{c.name.replace(/_/g, ' ')}</p>
+                    <p className="text-[10px] text-stone font-mono">{c.hex}</p>
+                    {c.rgb && <p className="text-[10px] text-stone/60 font-mono">{c.rgb}</p>}
+                    {c.usage && <p className="text-[10px] text-stone">{c.usage}</p>}
                   </div>
                 ))}
               </div>
@@ -214,34 +214,34 @@ export default function BrandGuidePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {typography.heading_font && (
                   <div className="p-6 rounded-xl border border-stone/10">
-                    <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-3">Heading Font</p>
+                    <p className="text-[10px] uppercase tracking-wider text-stone/60 mb-3">Heading Font</p>
                     <p className="text-3xl font-bold mb-2" style={{ fontFamily: headingFont }}>
                       {typography.heading_font}
                     </p>
-                    <p className="text-sm text-gray-400" style={{ fontFamily: headingFont }}>
+                    <p className="text-sm text-stone/60" style={{ fontFamily: headingFont }}>
                       Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm
                     </p>
-                    <p className="text-sm text-gray-400" style={{ fontFamily: headingFont }}>
+                    <p className="text-sm text-stone/60" style={{ fontFamily: headingFont }}>
                       Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz
                     </p>
-                    <p className="text-sm text-gray-400 mt-1" style={{ fontFamily: headingFont }}>
+                    <p className="text-sm text-stone/60 mt-1" style={{ fontFamily: headingFont }}>
                       0 1 2 3 4 5 6 7 8 9
                     </p>
                   </div>
                 )}
                 {typography.body_font && (
                   <div className="p-6 rounded-xl border border-stone/10">
-                    <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-3">Body Font</p>
+                    <p className="text-[10px] uppercase tracking-wider text-stone/60 mb-3">Body Font</p>
                     <p className="text-3xl font-bold mb-2" style={{ fontFamily: bodyFont }}>
                       {typography.body_font}
                     </p>
-                    <p className="text-sm text-gray-400" style={{ fontFamily: bodyFont }}>
+                    <p className="text-sm text-stone/60" style={{ fontFamily: bodyFont }}>
                       Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm
                     </p>
-                    <p className="text-sm text-gray-400" style={{ fontFamily: bodyFont }}>
+                    <p className="text-sm text-stone/60" style={{ fontFamily: bodyFont }}>
                       Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz
                     </p>
-                    <p className="text-sm text-gray-400 mt-1" style={{ fontFamily: bodyFont }}>
+                    <p className="text-sm text-stone/60 mt-1" style={{ fontFamily: bodyFont }}>
                       0 1 2 3 4 5 6 7 8 9
                     </p>
                   </div>
@@ -250,7 +250,7 @@ export default function BrandGuidePage() {
 
               {/* Type Scale */}
               <div className="mt-8 space-y-4">
-                <p className="text-[10px] uppercase tracking-wider text-gray-400">Type Scale</p>
+                <p className="text-[10px] uppercase tracking-wider text-stone/60">Type Scale</p>
                 {[
                   { label: 'H1', size: '2.5rem', weight: 700 },
                   { label: 'H2', size: '2rem', weight: 700 },
@@ -259,7 +259,7 @@ export default function BrandGuidePage() {
                   { label: 'Small', size: '0.875rem', weight: 400 },
                 ].map((t) => (
                   <div key={t.label} className="flex items-baseline gap-4 pb-3 border-b border-gray-50">
-                    <span className="text-[10px] font-mono text-gray-400 w-10">{t.label}</span>
+                    <span className="text-[10px] font-mono text-stone/60 w-10">{t.label}</span>
                     <span
                       style={{
                         fontFamily: t.label.startsWith('H') ? headingFont : bodyFont,
@@ -270,7 +270,7 @@ export default function BrandGuidePage() {
                     >
                       The quick brown fox
                     </span>
-                    <span className="text-[10px] font-mono text-gray-300 ml-auto">{t.size}</span>
+                    <span className="text-[10px] font-mono text-stone/40 ml-auto">{t.size}</span>
                   </div>
                 ))}
               </div>
@@ -289,24 +289,24 @@ export default function BrandGuidePage() {
               <div className="space-y-6">
                 {brand.visual_mood && (
                   <div className="p-5 rounded-xl border border-stone/10">
-                    <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-2">Visual Mood</p>
-                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                    <p className="text-[10px] uppercase tracking-wider text-stone/60 mb-2">Visual Mood</p>
+                    <p className="text-sm text-charcoal leading-relaxed whitespace-pre-line">
                       {typeof brand.visual_mood === 'string' ? brand.visual_mood : JSON.stringify(brand.visual_mood)}
                     </p>
                   </div>
                 )}
                 {brand.imagery_direction && (
                   <div className="p-5 rounded-xl border border-stone/10">
-                    <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-2">Imagery Direction</p>
-                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                    <p className="text-[10px] uppercase tracking-wider text-stone/60 mb-2">Imagery Direction</p>
+                    <p className="text-sm text-charcoal leading-relaxed whitespace-pre-line">
                       {typeof brand.imagery_direction === 'string' ? brand.imagery_direction : JSON.stringify(brand.imagery_direction)}
                     </p>
                   </div>
                 )}
                 {brand.brand_elements && (
                   <div className="p-5 rounded-xl border border-stone/10">
-                    <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-2">Brand Elements</p>
-                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                    <p className="text-[10px] uppercase tracking-wider text-stone/60 mb-2">Brand Elements</p>
+                    <p className="text-sm text-charcoal leading-relaxed whitespace-pre-line">
                       {typeof brand.brand_elements === 'string' ? brand.brand_elements : JSON.stringify(brand.brand_elements)}
                     </p>
                   </div>
@@ -318,7 +318,7 @@ export default function BrandGuidePage() {
 
         {/* Footer */}
         <footer className="py-8 px-6 text-center border-t border-stone/10">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-stone/60">
             Powered by <span className="font-semibold">SkaleFlow</span>
           </p>
         </footer>
@@ -352,7 +352,7 @@ function ColorSwatch({ name, hex }: { name: string; hex: string }) {
           {hex}
         </span>
       </div>
-      <p className="text-xs font-semibold text-gray-900 capitalize">{name.replace(/_/g, ' ')}</p>
+      <p className="text-xs font-semibold text-charcoal capitalize">{name.replace(/_/g, ' ')}</p>
     </div>
   );
 }

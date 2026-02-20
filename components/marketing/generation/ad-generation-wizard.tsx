@@ -32,14 +32,14 @@ const FUNNEL_STAGES = [
     key: 'awareness',
     label: 'Awareness',
     description: 'Introduce your brand to new audiences',
-    color: 'bg-green-100 text-green-800 border-green-200',
+    color: 'bg-green-500/10 text-green-400 border-green-200',
     selectedColor: 'bg-green-500 text-white border-green-500',
   },
   {
     key: 'consideration',
     label: 'Consideration',
     description: 'Educate and build interest in your offer',
-    color: 'bg-blue-100 text-blue-800 border-blue-200',
+    color: 'bg-blue-500/10 text-blue-400 border-blue-200',
     selectedColor: 'bg-blue-500 text-white border-blue-500',
   },
   {
@@ -441,7 +441,7 @@ export function AdGenerationWizard({
         {/* Error */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <p className="text-xs text-red-700">{error}</p>
+            <p className="text-xs text-red-400">{error}</p>
           </div>
         )}
       </div>

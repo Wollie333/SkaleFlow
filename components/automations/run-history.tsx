@@ -17,10 +17,10 @@ interface RunHistoryProps {
 }
 
 const statusColors: Record<string, string> = {
-  completed: 'bg-green-100 text-green-700',
-  running: 'bg-blue-100 text-blue-700',
-  failed: 'bg-red-100 text-red-700',
-  waiting: 'bg-yellow-100 text-yellow-700',
+  completed: 'bg-green-500/10 text-green-400',
+  running: 'bg-blue-500/10 text-blue-400',
+  failed: 'bg-red-500/10 text-red-400',
+  waiting: 'bg-yellow-100 text-gold',
 };
 
 export function RunHistory({ runs, onViewRun }: RunHistoryProps) {

@@ -128,7 +128,7 @@ export function TrendingHashtagsWidget({ organizationId }: TrendingHashtagsWidge
                       <div
                         className={cn(
                           'w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold',
-                          index === 0 && 'bg-yellow-100 text-yellow-700',
+                          index === 0 && 'bg-yellow-100 text-gold',
                           index === 1 && 'bg-cream text-charcoal',
                           index === 2 && 'bg-orange-100 text-orange-700',
                           index > 2 && 'bg-cream text-stone'

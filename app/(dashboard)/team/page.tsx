@@ -417,7 +417,7 @@ export default function MyTeamPage() {
                       <button
                         onClick={() => handleCancelInvite(invite.id)}
                         disabled={actionLoading === invite.id}
-                        className="text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+                        className="text-xs font-medium text-red-600 hover:text-red-400 bg-red-50 hover:bg-red-500/10 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
                       >
                         {actionLoading === invite.id ? 'Cancelling...' : 'Cancel'}
                       </button>

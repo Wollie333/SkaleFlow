@@ -75,9 +75,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   hook: 'bg-indigo-100 text-indigo-800',
   cta: 'bg-cyan-100 text-cyan-800',
   social_framework: 'bg-teal/15 text-teal',
-  seo_content: 'bg-green-100 text-green-800',
+  seo_content: 'bg-green-500/10 text-green-400',
   email_outreach: 'bg-amber-100 text-amber-800',
-  web_copy: 'bg-blue-100 text-blue-800',
+  web_copy: 'bg-blue-500/10 text-blue-400',
 };
 
 const TIER_COLORS: Record<string, string> = {
@@ -447,7 +447,7 @@ Visual/structural rules for the output.
 
       {/* Error */}
       {error && (
-        <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg">{error}</div>
+        <div className="p-3 bg-red-50 text-red-400 text-sm rounded-lg">{error}</div>
       )}
 
       {/* Loading */}
@@ -574,7 +574,7 @@ Visual/structural rules for the output.
 
                     {template.when_to_use && template.when_to_use.length > 0 && (
                       <div>
-                        <h4 className="text-xs font-semibold text-green-700 uppercase mb-1">When to Use</h4>
+                        <h4 className="text-xs font-semibold text-green-400 uppercase mb-1">When to Use</h4>
                         <ul className="text-sm text-charcoal space-y-0.5">
                           {template.when_to_use.map((item, i) => (
                             <li key={i} className="flex items-start gap-1.5">
@@ -588,7 +588,7 @@ Visual/structural rules for the output.
 
                     {template.when_not_to_use && template.when_not_to_use.length > 0 && (
                       <div>
-                        <h4 className="text-xs font-semibold text-red-700 uppercase mb-1">When NOT to Use</h4>
+                        <h4 className="text-xs font-semibold text-red-400 uppercase mb-1">When NOT to Use</h4>
                         <ul className="text-sm text-charcoal space-y-0.5">
                           {template.when_not_to_use.map((item, i) => (
                             <li key={i} className="flex items-start gap-1.5">

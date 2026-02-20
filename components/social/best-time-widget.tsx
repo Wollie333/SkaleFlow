@@ -210,7 +210,7 @@ export function BestTimeWidget({
                               className={cn(
                                 'px-2 py-1 rounded text-xs font-medium',
                                 index === 0 && 'bg-purple-100 text-purple-700',
-                                index === 1 && 'bg-blue-100 text-blue-700',
+                                index === 1 && 'bg-blue-500/10 text-blue-400',
                                 index === 2 && 'bg-indigo-100 text-indigo-700'
                               )}
                             >

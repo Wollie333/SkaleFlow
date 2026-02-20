@@ -86,7 +86,7 @@ export function PushToCampaignModal({
               </p>
 
               {isEmbargoed && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-400">
                   Embargo is active until {new Date(embargoDate!).toLocaleDateString()}. Amplification posts cannot be published until the embargo lifts.
                 </div>
               )}

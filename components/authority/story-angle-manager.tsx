@@ -427,7 +427,7 @@ export function StoryAngleManager({ angles, organizationId, onRefresh, defaultMo
                       </div>
                       <button
                         onClick={() => handleAcceptSuggestion(s)}
-                        className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 border border-green-200 transition-colors"
+                        className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-green-400 bg-green-50 rounded-lg hover:bg-green-500/10 border border-green-200 transition-colors"
                       >
                         <CheckIcon className="w-3.5 h-3.5" />
                         Add

@@ -629,7 +629,7 @@ export default function BillingPage() {
                     <td className="px-4 py-3">
                       <span className={`text-xs font-medium px-2 py-1 rounded-full capitalize ${
                         inv.status === 'paid' ? 'bg-teal/10 text-teal' :
-                        inv.status === 'failed' ? 'bg-red-100 text-red-600' :
+                        inv.status === 'failed' ? 'bg-red-500/10 text-red-600' :
                         'bg-stone/10 text-stone'
                       }`}>
                         {inv.status}
@@ -679,21 +679,21 @@ export default function BillingPage() {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
                   <div>
-                    <p className="text-xs text-red-700">Last 30 Days</p>
+                    <p className="text-xs text-red-400">Last 30 Days</p>
                     <p className="text-2xl font-bold text-red-900">${(balance.apiCostUSD30d || 0).toFixed(4)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-red-700">All Time</p>
+                    <p className="text-xs text-red-400">All Time</p>
                     <p className="text-2xl font-bold text-red-900">${(balance.apiCostUSDAllTime || 0).toFixed(4)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-red-700">Avg Per Day</p>
+                    <p className="text-xs text-red-400">Avg Per Day</p>
                     <p className="text-2xl font-bold text-red-900">
                       ${((balance.apiCostUSD30d || 0) / 30).toFixed(4)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-red-700">Projected/Month</p>
+                    <p className="text-xs text-red-400">Projected/Month</p>
                     <p className="text-2xl font-bold text-red-900">
                       ${((balance.apiCostUSD30d || 0) * 1).toFixed(2)}
                     </p>
@@ -855,7 +855,7 @@ export default function BillingPage() {
                   <span className="text-xl">ℹ️</span>
                   <div className="flex-1">
                     <h5 className="text-sm font-semibold text-blue-900 mb-1">Quick Reference</h5>
-                    <div className="text-xs text-blue-800 space-y-1">
+                    <div className="text-xs text-blue-400 space-y-1">
                       <p>• <strong>1 credit</strong> = 1 ZAR cent = $0.000556 (sales price)</p>
                       <p>• <strong>1,800 credits</strong> = R18.00 = $1.00 (sales price)</p>
                       <p>• <strong>Actual API cost</strong> = sales price ÷ 2</p>

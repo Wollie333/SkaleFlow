@@ -272,7 +272,7 @@ export function TemplateEditModal({ template, onClose, onSaved }: Props) {
               {isCreate ? 'Add Template' : `Edit: ${template.name}`}
             </h2>
             {isStandardised ? (
-              <span className="px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-[10px] font-medium">
+              <span className="px-2 py-0.5 rounded-full bg-green-50 text-green-400 text-[10px] font-medium">
                 Standardised
               </span>
             ) : (
@@ -313,7 +313,7 @@ export function TemplateEditModal({ template, onClose, onSaved }: Props) {
         {/* Body */}
         <div className="px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
           {error && (
-            <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg">{error}</div>
+            <div className="p-3 bg-red-50 text-red-400 text-sm rounded-lg">{error}</div>
           )}
 
           {/* ── Tab: Basics ── */}
@@ -442,7 +442,7 @@ export function TemplateEditModal({ template, onClose, onSaved }: Props) {
               <div className="flex items-center justify-between">
                 <div className="flex gap-1.5">
                   {sectionFields.map(s => (
-                    <span key={s.label} className={`px-2 py-0.5 rounded text-[10px] font-medium ${s.filled ? 'bg-green-50 text-green-700' : 'bg-stone/10 text-stone/50'}`}>
+                    <span key={s.label} className={`px-2 py-0.5 rounded text-[10px] font-medium ${s.filled ? 'bg-green-50 text-green-400' : 'bg-stone/10 text-stone/50'}`}>
                       {s.label}
                     </span>
                   ))}
@@ -505,7 +505,7 @@ export function TemplateEditModal({ template, onClose, onSaved }: Props) {
           {activeTab === 'ai' && (
             <div className="space-y-4">
               {isStandardised && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-xs text-green-700">
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-xs text-green-400">
                   This template is standardised. The AI prompt will be auto-assembled from the 5 sections.
                   The field below serves as additional instructions appended after the standardised prompt.
                 </div>

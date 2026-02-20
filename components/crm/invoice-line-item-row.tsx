@@ -153,7 +153,7 @@ export function InvoiceLineItemRow({
           variant="ghost"
           size="sm"
           onClick={() => onRemove(index)}
-          className="mt-6 text-red-600 hover:text-red-700 hover:bg-red-50"
+          className="mt-6 text-red-600 hover:text-red-400 hover:bg-red-50"
         >
           <TrashIcon className="h-4 w-4" />
         </Button>

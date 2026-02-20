@@ -92,7 +92,7 @@ export function GenerationModal({
           ) : prepError ? (
             <div className="space-y-3">
               <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-sm text-red-700">{prepError}</p>
+                <p className="text-sm text-red-400">{prepError}</p>
               </div>
               <button
                 onClick={onCancel}

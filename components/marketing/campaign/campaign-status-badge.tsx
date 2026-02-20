@@ -9,11 +9,11 @@ interface CampaignStatusBadgeProps {
 
 const statusStyles: Record<string, string> = {
   draft: 'bg-stone/10 text-stone',
-  active: 'bg-green-100 text-green-800',
-  paused: 'bg-yellow-100 text-yellow-800',
-  pending_review: 'bg-blue-100 text-blue-800',
+  active: 'bg-green-500/10 text-green-400',
+  paused: 'bg-yellow-100 text-gold',
+  pending_review: 'bg-blue-500/10 text-blue-400',
   completed: 'bg-charcoal/10 text-charcoal',
-  rejected: 'bg-red-100 text-red-800',
+  rejected: 'bg-red-500/10 text-red-400',
   archived: 'bg-stone/10 text-stone/60',
 };
 

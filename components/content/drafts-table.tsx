@@ -17,7 +17,7 @@ const PLATFORM_LABELS: Record<string, string> = {
 };
 
 const PLATFORM_COLORS: Record<string, string> = {
-  linkedin: 'bg-blue-100 text-blue-700',
+  linkedin: 'bg-blue-500/10 text-blue-400',
   facebook: 'bg-blue-50 text-blue-600',
   instagram: 'bg-pink-50 text-pink-600',
   twitter: 'bg-cream text-charcoal',

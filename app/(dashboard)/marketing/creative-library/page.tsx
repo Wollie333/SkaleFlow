@@ -513,7 +513,7 @@ export default function CreativeLibraryPage() {
                 {/* Rejection Reason */}
                 {selectedCreative.rejection_reason && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-xs font-medium text-red-700 mb-1">Rejection Reason</p>
+                    <p className="text-xs font-medium text-red-400 mb-1">Rejection Reason</p>
                     <p className="text-sm text-red-600">{selectedCreative.rejection_reason}</p>
                   </div>
                 )}
@@ -521,7 +521,7 @@ export default function CreativeLibraryPage() {
                 {/* Compliance Issues */}
                 {selectedCreative.compliance_issues && Array.isArray(selectedCreative.compliance_issues) && (selectedCreative.compliance_issues as any[]).length > 0 && (
                   <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-xs font-medium text-yellow-700 mb-1">Compliance Issues</p>
+                    <p className="text-xs font-medium text-gold mb-1">Compliance Issues</p>
                     <ul className="text-sm text-yellow-600 space-y-1">
                       {(selectedCreative.compliance_issues as any[]).map((issue: any, i: number) => (
                         <li key={i} className="flex items-start gap-1.5">

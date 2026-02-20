@@ -295,7 +295,7 @@ export default function ContentReviewsPage() {
           {(() => {
             const contentCount = notifications.filter(n => ['content_approved', 'content_rejected', 'revision_requested'].includes(n.type)).length;
             return contentCount > 0 ? (
-              <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
+              <span className="bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full text-xs font-medium">
                 {contentCount} Updates
               </span>
             ) : null;

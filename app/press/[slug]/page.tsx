@@ -81,7 +81,7 @@ export default function PressPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-400 animate-pulse">Loading press room...</div>
+        <div className="text-stone/60 animate-pulse">Loading press room...</div>
       </div>
     );
   }
@@ -90,8 +90,8 @@ export default function PressPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-serif font-bold text-gray-900 mb-2">Press Room Not Found</h1>
-          <p className="text-gray-500">This press room does not exist or is not public.</p>
+          <h1 className="text-2xl font-serif font-bold text-charcoal mb-2">Press Room Not Found</h1>
+          <p className="text-stone">This press room does not exist or is not public.</p>
         </div>
       </div>
     );
@@ -139,7 +139,7 @@ export default function PressPage() {
 
       {/* Footer */}
       <footer className="py-8 px-6 text-center border-t border-stone/10">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-stone/60">
           Powered by <span className="font-semibold">SkaleFlow</span>
         </p>
       </footer>

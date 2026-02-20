@@ -48,7 +48,7 @@ export function LatestNews({ placements, pressReleases, primaryColor = '#14b8a6'
         {/* Press Releases */}
         {pressReleases.length > 0 && (
           <div className="mb-10">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Press Releases</h3>
+            <h3 className="text-sm font-semibold text-stone/60 uppercase tracking-wider mb-4">Press Releases</h3>
             <div className="space-y-4">
               {pressReleases.map((pr) => (
                 <article key={pr.id} className="p-5 bg-cream-warm border border-stone/10 rounded-xl hover:border-stone/10 transition-colors">
@@ -56,7 +56,7 @@ export function LatestNews({ placements, pressReleases, primaryColor = '#14b8a6'
                   {pr.subtitle && <p className="text-sm text-stone mb-2">{pr.subtitle}</p>}
                   <p className="text-sm text-stone line-clamp-3">{pr.body_content}</p>
                   {pr.published_at && (
-                    <p className="text-xs text-gray-400 mt-2">{new Date(pr.published_at).toLocaleDateString()}</p>
+                    <p className="text-xs text-stone/60 mt-2">{new Date(pr.published_at).toLocaleDateString()}</p>
                   )}
                 </article>
               ))}
@@ -67,7 +67,7 @@ export function LatestNews({ placements, pressReleases, primaryColor = '#14b8a6'
         {/* Media Placements */}
         {placements.length > 0 && (
           <div>
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Media Coverage</h3>
+            <h3 className="text-sm font-semibold text-stone/60 uppercase tracking-wider mb-4">Media Coverage</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {placements.map((p) => (
                 <article key={p.id} className="p-4 bg-cream-warm border border-stone/10 rounded-xl hover:border-stone/10 transition-colors">
@@ -106,7 +106,7 @@ export function LatestNews({ placements, pressReleases, primaryColor = '#14b8a6'
                     )}
                   </div>
                   {p.published_at && (
-                    <p className="text-[10px] text-gray-400 mt-2">{new Date(p.published_at).toLocaleDateString()}</p>
+                    <p className="text-[10px] text-stone/60 mt-2">{new Date(p.published_at).toLocaleDateString()}</p>
                   )}
                 </article>
               ))}

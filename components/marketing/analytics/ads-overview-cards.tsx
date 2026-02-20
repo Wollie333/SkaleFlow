@@ -36,7 +36,7 @@ export function AdsOverviewCards({ metrics }: AdsOverviewCardsProps) {
       label: 'Total Impressions',
       value: formatNumber(metrics.totalImpressions),
       icon: EyeIcon,
-      iconBg: 'bg-blue-100',
+      iconBg: 'bg-blue-500/10',
       iconColor: 'text-blue-600',
     },
     {
@@ -50,7 +50,7 @@ export function AdsOverviewCards({ metrics }: AdsOverviewCardsProps) {
       label: 'Total Conversions',
       value: formatNumber(metrics.totalConversions),
       icon: ShoppingCartIcon,
-      iconBg: 'bg-green-100',
+      iconBg: 'bg-green-500/10',
       iconColor: 'text-green-600',
     },
   ];

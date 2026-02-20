@@ -42,8 +42,8 @@ const STATUSES: Array<{ value: ContentStatus; label: string }> = [
 ];
 
 const FUNNEL_STAGES: Array<{ value: FunnelStage; label: string; color: string }> = [
-  { value: 'awareness', label: 'Awareness', color: 'bg-green-100 text-green-700 border-green-200' },
-  { value: 'consideration', label: 'Consideration', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  { value: 'awareness', label: 'Awareness', color: 'bg-green-500/10 text-green-400 border-green-200' },
+  { value: 'consideration', label: 'Consideration', color: 'bg-blue-500/10 text-blue-400 border-blue-200' },
   { value: 'conversion', label: 'Conversion', color: 'bg-orange-100 text-orange-700 border-orange-200' },
 ];
 

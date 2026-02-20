@@ -43,7 +43,7 @@ export function ComplianceIssuesPanel({ issues, onRevalidate }: ComplianceIssues
   if (issues.length === 0) {
     return (
       <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-        <p className="text-sm text-green-700 font-medium">
+        <p className="text-sm text-green-400 font-medium">
           No compliance issues found
         </p>
         <p className="text-xs text-green-600 mt-1">
@@ -87,12 +87,12 @@ export function ComplianceIssuesPanel({ issues, onRevalidate }: ComplianceIssues
                   onClick={() => issue.recommendation ? toggleExpand(id) : undefined}
                   className={cn(
                     'w-full flex items-start gap-2 px-3 py-2.5 text-left',
-                    issue.recommendation && 'cursor-pointer hover:bg-red-100/50'
+                    issue.recommendation && 'cursor-pointer hover:bg-red-500/10/50'
                   )}
                 >
                   <ExclamationCircleIcon className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-red-700 capitalize">
+                    <p className="text-xs font-semibold text-red-400 capitalize">
                       {issue.field}
                     </p>
                     <p className="text-xs text-red-600 mt-0.5">{issue.message}</p>
@@ -108,7 +108,7 @@ export function ComplianceIssuesPanel({ issues, onRevalidate }: ComplianceIssues
                 {isExpanded && issue.recommendation && (
                   <div className="px-3 pb-2.5 ml-6">
                     <div className="bg-cream-warm/60 rounded-lg p-2 border border-red-100">
-                      <p className="text-[11px] text-red-700 font-medium mb-0.5">
+                      <p className="text-[11px] text-red-400 font-medium mb-0.5">
                         Recommendation:
                       </p>
                       <p className="text-xs text-red-600">{issue.recommendation}</p>
@@ -142,7 +142,7 @@ export function ComplianceIssuesPanel({ issues, onRevalidate }: ComplianceIssues
                 >
                   <ExclamationTriangleIcon className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-yellow-700 capitalize">
+                    <p className="text-xs font-semibold text-gold capitalize">
                       {issue.field}
                     </p>
                     <p className="text-xs text-yellow-600 mt-0.5">{issue.message}</p>
@@ -158,7 +158,7 @@ export function ComplianceIssuesPanel({ issues, onRevalidate }: ComplianceIssues
                 {isExpanded && issue.recommendation && (
                   <div className="px-3 pb-2.5 ml-6">
                     <div className="bg-cream-warm/60 rounded-lg p-2 border border-yellow-100">
-                      <p className="text-[11px] text-yellow-700 font-medium mb-0.5">
+                      <p className="text-[11px] text-gold font-medium mb-0.5">
                         Recommendation:
                       </p>
                       <p className="text-xs text-yellow-600">{issue.recommendation}</p>

@@ -200,7 +200,7 @@ export function PostActionPopup({
               <div className="flex items-center gap-3">
                 <div className={cn(
                   'shrink-0 p-2 rounded-lg',
-                  selectedAction === 'schedule' ? 'bg-blue-100' : 'bg-stone/5'
+                  selectedAction === 'schedule' ? 'bg-blue-500/10' : 'bg-stone/5'
                 )}>
                   <CalendarDaysIcon className={cn('w-5 h-5', selectedAction === 'schedule' ? 'text-blue-600' : 'text-stone')} />
                 </div>

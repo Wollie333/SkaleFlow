@@ -214,13 +214,13 @@ export default function CreateCampaignPage() {
           <div className="flex items-start gap-3">
             <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-yellow-800">No ad accounts connected</p>
-              <p className="text-sm text-yellow-700 mt-1">
+              <p className="text-sm font-medium text-gold">No ad accounts connected</p>
+              <p className="text-sm text-gold mt-1">
                 You need to connect at least one ad account before creating a campaign.
               </p>
               <Link
                 href="/marketing/settings"
-                className="inline-block mt-2 text-sm font-medium text-yellow-800 underline hover:text-yellow-900"
+                className="inline-block mt-2 text-sm font-medium text-gold underline hover:text-yellow-900"
               >
                 Go to Ad Account Settings
               </Link>

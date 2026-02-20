@@ -46,7 +46,7 @@ function renderObjectDiff(
                 className={cn(
                   'px-2 py-1 rounded text-xs font-mono break-words',
                   changed
-                    ? 'bg-red-50 text-red-700 line-through'
+                    ? 'bg-red-50 text-red-400 line-through'
                     : 'bg-stone/5 text-stone'
                 )}
               >
@@ -56,7 +56,7 @@ function renderObjectDiff(
                 className={cn(
                   'px-2 py-1 rounded text-xs font-mono break-words',
                   changed
-                    ? 'bg-green-50 text-green-700 font-semibold'
+                    ? 'bg-green-50 text-green-400 font-semibold'
                     : 'bg-stone/5 text-stone'
                 )}
               >
@@ -92,7 +92,7 @@ export function BrandChangeDiff({
         <>
           <div className="grid grid-cols-2 gap-3 mb-1">
             <p className="text-xs font-semibold text-red-600">Current</p>
-            <p className="text-xs font-semibold text-green-700">Proposed</p>
+            <p className="text-xs font-semibold text-green-400">Proposed</p>
           </div>
           {renderObjectDiff(
             currentValue as Record<string, unknown>,
@@ -104,17 +104,17 @@ export function BrandChangeDiff({
           {/* Current value */}
           <div className="rounded-lg border border-red-200 bg-red-50/60 p-4">
             <p className="text-xs font-semibold text-red-600 mb-2">Current</p>
-            <pre className="text-sm text-red-800 whitespace-pre-wrap break-words font-mono leading-relaxed">
+            <pre className="text-sm text-red-400 whitespace-pre-wrap break-words font-mono leading-relaxed">
               {formatValue(currentValue)}
             </pre>
           </div>
 
           {/* Proposed value */}
           <div className="rounded-lg border border-green-200 bg-green-50/60 p-4">
-            <p className="text-xs font-semibold text-green-700 mb-2">
+            <p className="text-xs font-semibold text-green-400 mb-2">
               Proposed
             </p>
-            <pre className="text-sm text-green-800 whitespace-pre-wrap break-words font-mono leading-relaxed">
+            <pre className="text-sm text-green-400 whitespace-pre-wrap break-words font-mono leading-relaxed">
               {formatValue(proposedValue)}
             </pre>
           </div>

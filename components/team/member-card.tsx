@@ -197,7 +197,7 @@ export function MemberCard({
               className={cn(
                 'p-2 rounded-lg transition-colors',
                 confirmRemove
-                  ? 'text-red-600 bg-red-50 hover:bg-red-100'
+                  ? 'text-red-600 bg-red-50 hover:bg-red-500/10'
                   : 'text-stone hover:text-red-500 hover:bg-red-50'
               )}
               title={confirmRemove ? 'Click again to confirm removal' : 'Remove member'}

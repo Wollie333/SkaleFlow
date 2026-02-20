@@ -143,9 +143,9 @@ export function PlacementPreviewCard({
                 'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
                 item.status === 'idea' ? 'bg-stone/10 text-stone' :
                 item.status === 'scripted' ? 'bg-teal/10 text-teal' :
-                item.status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
+                item.status === 'scheduled' ? 'bg-blue-500/10 text-blue-400' :
                 item.status === 'published' ? 'bg-emerald-100 text-emerald-700' :
-                item.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                item.status === 'rejected' ? 'bg-red-500/10 text-red-400' :
                 'bg-stone/10 text-stone'
               )}>
                 {item.status}

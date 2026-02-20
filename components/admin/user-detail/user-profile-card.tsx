@@ -68,7 +68,7 @@ function getInitials(name: string) {
 
 const roleBadge: Record<string, { label: string; classes: string }> = {
   super_admin: { label: 'Super Admin', classes: 'bg-purple-100 text-purple-700' },
-  team_member: { label: 'Team Member', classes: 'bg-blue-100 text-blue-700' },
+  team_member: { label: 'Team Member', classes: 'bg-blue-500/10 text-blue-400' },
   client: { label: 'Client', classes: 'bg-teal/10 text-teal' },
 };
 
@@ -215,7 +215,7 @@ export function UserProfileCard({
                       <button
                         onClick={onCancelSubscription}
                         disabled={actionLoading}
-                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
+                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-400 bg-red-50 hover:bg-red-500/10 px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
                       >
                         <XMarkIcon className="w-3.5 h-3.5" />
                         Cancel
@@ -239,7 +239,7 @@ export function UserProfileCard({
                       <button
                         onClick={onCancelSubscription}
                         disabled={actionLoading}
-                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
+                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-400 bg-red-50 hover:bg-red-500/10 px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
                       >
                         <XMarkIcon className="w-3.5 h-3.5" />
                         Cancel

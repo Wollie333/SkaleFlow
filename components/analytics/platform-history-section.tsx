@@ -122,10 +122,10 @@ export function PlatformHistorySection({ platform, onPostClick }: PlatformHistor
         <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg border border-red-100">
           <ExclamationTriangleIcon className="w-5 h-5 text-red-500 flex-shrink-0" />
           <div>
-            <p className="text-sm text-red-700">{error}</p>
+            <p className="text-sm text-red-400">{error}</p>
             <button
               onClick={fetchPosts}
-              className="text-xs text-red-600 hover:text-red-800 underline mt-1"
+              className="text-xs text-red-600 hover:text-red-400 underline mt-1"
             >
               Try again
             </button>
@@ -240,7 +240,7 @@ export function PlatformHistorySection({ platform, onPostClick }: PlatformHistor
                   className={cn(
                     'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold',
                     post.engagementRate > 5
-                      ? 'bg-green-50 text-green-700'
+                      ? 'bg-green-50 text-green-400'
                       : post.engagementRate >= 2
                       ? 'bg-teal/10 text-teal'
                       : 'bg-amber-50 text-amber-700'

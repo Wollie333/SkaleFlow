@@ -11,7 +11,7 @@ export function TriggerNode({ data, selected }: NodeProps) {
           ⚡
         </div>
         <div>
-          <p className="text-xs font-semibold text-green-800 uppercase tracking-wider">Trigger</p>
+          <p className="text-xs font-semibold text-green-400 uppercase tracking-wider">Trigger</p>
           <p className="text-sm font-medium text-green-900">{(data as Record<string, unknown>).label as string || 'Select trigger...'}</p>
         </div>
       </div>

@@ -885,7 +885,7 @@ export default function BrandPhaseDetailPage() {
       {creditError && (
         <div className="mx-1 mb-3 flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex-shrink-0">
           <ExclamationTriangleIcon className="w-5 h-5 text-red-500 flex-shrink-0" />
-          <p className="text-sm text-red-700 flex-1">{creditError}</p>
+          <p className="text-sm text-red-400 flex-1">{creditError}</p>
           <button
             onClick={() => setShowTopupModal(true)}
             className="text-teal hover:text-teal-light text-xs font-semibold mr-2"

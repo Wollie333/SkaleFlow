@@ -83,7 +83,7 @@ export function CreditBalanceCard({
                 ${Math.abs(systemTotalCostUSD).toFixed(2)}
               </span>
               {systemTotalCostUSD < 0 && (
-                <Badge variant="default" className="bg-red-100 text-red-700">
+                <Badge variant="default" className="bg-red-500/10 text-red-400">
                   Negative
                 </Badge>
               )}
@@ -97,7 +97,7 @@ export function CreditBalanceCard({
             <span className="text-xl">ℹ️</span>
             <div className="flex-1">
               <h5 className="text-sm font-semibold text-blue-900 mb-1">What This Means</h5>
-              <div className="text-xs text-blue-800 space-y-1">
+              <div className="text-xs text-blue-400 space-y-1">
                 <p>• <strong>Available Credits:</strong> Sum of all credits across all organizations in the system</p>
                 <p>• <strong>USD Value:</strong> Actual API cost value of these credits (what you'd pay providers)</p>
                 <p>• <strong>Real-Time:</strong> Updates every 30 seconds as users consume credits</p>
@@ -134,11 +134,11 @@ export function CreditBalanceCard({
             </h4>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-red-700">Last 30 Days</p>
+                <p className="text-xs text-red-400">Last 30 Days</p>
                 <p className="text-xl font-bold text-red-900">${(apiCostUSD30d || 0).toFixed(4)}</p>
               </div>
               <div>
-                <p className="text-xs text-red-700">All Time</p>
+                <p className="text-xs text-red-400">All Time</p>
                 <p className="text-xl font-bold text-red-900">${(apiCostUSDAllTime || 0).toFixed(4)}</p>
               </div>
             </div>
@@ -197,7 +197,7 @@ export function CreditBalanceCard({
             {totalRemaining.toLocaleString()}
           </span>
           {totalRemaining < 0 && isSuperAdmin && (
-            <Badge variant="default" className="bg-red-100 text-red-700 text-xs">
+            <Badge variant="default" className="bg-red-500/10 text-red-400 text-xs">
               Negative
             </Badge>
           )}

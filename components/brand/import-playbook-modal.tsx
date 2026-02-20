@@ -108,7 +108,7 @@ export function ImportPlaybookModal({
 
               {result.errors.length > 0 && (
                 <div className="bg-red-50 rounded-lg p-3 space-y-1">
-                  <p className="text-xs font-medium text-red-700">Some batches had issues:</p>
+                  <p className="text-xs font-medium text-red-400">Some batches had issues:</p>
                   {result.errors.map((e, i) => (
                     <p key={i} className="text-xs text-red-600">{e}</p>
                   ))}

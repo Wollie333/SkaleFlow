@@ -64,8 +64,8 @@ function getFeatureBadgeVariant(
 function getStatusBadge(status: string) {
   const styles: Record<string, string> = {
     pending: 'bg-amber-100 text-amber-800',
-    approved: 'bg-green-100 text-green-800',
-    rejected: 'bg-red-100 text-red-800',
+    approved: 'bg-green-500/10 text-green-400',
+    rejected: 'bg-red-500/10 text-red-400',
     revision_requested: 'bg-amber-100 text-amber-800',
   };
 
@@ -222,7 +222,7 @@ export function ReviewItemCard({
                   <p className="text-xs font-semibold text-red-600 mb-2">
                     Current
                   </p>
-                  <pre className="text-sm text-red-800 whitespace-pre-wrap break-words font-mono leading-relaxed max-h-60 overflow-auto">
+                  <pre className="text-sm text-red-400 whitespace-pre-wrap break-words font-mono leading-relaxed max-h-60 overflow-auto">
                     {item.current_value
                       ? typeof item.current_value === 'string'
                         ? item.current_value
@@ -233,10 +233,10 @@ export function ReviewItemCard({
 
                 {/* Proposed value card */}
                 <div className="rounded-lg border border-green-200 bg-green-50/60 p-4">
-                  <p className="text-xs font-semibold text-green-700 mb-2">
+                  <p className="text-xs font-semibold text-green-400 mb-2">
                     Proposed
                   </p>
-                  <pre className="text-sm text-green-800 whitespace-pre-wrap break-words font-mono leading-relaxed max-h-60 overflow-auto">
+                  <pre className="text-sm text-green-400 whitespace-pre-wrap break-words font-mono leading-relaxed max-h-60 overflow-auto">
                     {item.proposed_value
                       ? typeof item.proposed_value === 'string'
                         ? item.proposed_value

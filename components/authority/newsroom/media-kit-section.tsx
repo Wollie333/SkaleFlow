@@ -26,7 +26,7 @@ export function MediaKitSection({ pressKit, logoUrl, primaryColor = '#14b8a6' }:
           {/* About */}
           {pressKit.company_overview && (
             <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
-              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">About</h3>
+              <h3 className="text-sm font-semibold text-stone/60 uppercase tracking-wider mb-3">About</h3>
               <p className="text-sm text-stone leading-relaxed whitespace-pre-line">
                 {pressKit.company_overview}
               </p>
@@ -36,7 +36,7 @@ export function MediaKitSection({ pressKit, logoUrl, primaryColor = '#14b8a6' }:
           {/* Founder Bio */}
           {pressKit.founder_bio && (
             <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
-              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Founder</h3>
+              <h3 className="text-sm font-semibold text-stone/60 uppercase tracking-wider mb-3">Founder</h3>
               <p className="text-sm text-stone leading-relaxed whitespace-pre-line line-clamp-6">
                 {pressKit.founder_bio}
               </p>
@@ -46,7 +46,7 @@ export function MediaKitSection({ pressKit, logoUrl, primaryColor = '#14b8a6' }:
           {/* Speaking Topics */}
           {speakingTopics.length > 0 && (
             <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
-              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Speaking Topics</h3>
+              <h3 className="text-sm font-semibold text-stone/60 uppercase tracking-wider mb-3">Speaking Topics</h3>
               <ul className="space-y-2">
                 {speakingTopics.map((topic, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm text-stone">
@@ -63,7 +63,7 @@ export function MediaKitSection({ pressKit, logoUrl, primaryColor = '#14b8a6' }:
 
           {/* Downloads */}
           <div className="bg-cream-warm rounded-xl border border-stone/10 p-6">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Downloads</h3>
+            <h3 className="text-sm font-semibold text-stone/60 uppercase tracking-wider mb-3">Downloads</h3>
             <div className="space-y-3">
               {logoUrl && (
                 <a

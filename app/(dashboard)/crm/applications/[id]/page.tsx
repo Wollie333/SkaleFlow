@@ -74,8 +74,8 @@ interface Meeting {
 }
 
 const STAGE_CONFIG: Record<PipelineStage, { label: string; color: string; bg: string }> = {
-  application: { label: 'Application', color: 'text-blue-700', bg: 'bg-blue-100' },
-  declined: { label: 'Declined', color: 'text-red-700', bg: 'bg-red-100' },
+  application: { label: 'Application', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+  declined: { label: 'Declined', color: 'text-red-400', bg: 'bg-red-500/10' },
   approved: { label: 'Approved', color: 'text-purple-700', bg: 'bg-purple-100' },
   booking_made: { label: 'Booking Made', color: 'text-indigo-700', bg: 'bg-indigo-100' },
   lost: { label: 'Lost', color: 'text-stone', bg: 'bg-stone/10' },
@@ -476,7 +476,7 @@ export default function ApplicationDetailPage() {
                     action.variant === 'primary'
                       ? 'bg-teal text-cream hover:bg-teal-light'
                       : action.variant === 'danger'
-                        ? 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
+                        ? 'bg-red-50 text-red-400 border border-red-200 hover:bg-red-500/10'
                         : 'bg-cream text-charcoal border border-stone/15 hover:bg-stone/5'
                   }`}
                 >
@@ -533,8 +533,8 @@ export default function ApplicationDetailPage() {
                   <span className="text-stone">Status:</span>
                   <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
                     meeting.status === 'scheduled' ? 'text-teal bg-teal/10'
-                    : meeting.status === 'completed' ? 'text-green-700 bg-green-100'
-                    : meeting.status === 'cancelled' ? 'text-red-700 bg-red-100'
+                    : meeting.status === 'completed' ? 'text-green-400 bg-green-500/10'
+                    : meeting.status === 'cancelled' ? 'text-red-400 bg-red-500/10'
                     : meeting.status === 'no_show' ? 'text-amber-700 bg-amber-100'
                     : 'text-stone bg-stone/10'
                   }`}>
@@ -638,7 +638,7 @@ export default function ApplicationDetailPage() {
 
               {/* Error */}
               {bookingError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-400">
                   {bookingError}
                 </div>
               )}

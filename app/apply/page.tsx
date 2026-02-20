@@ -177,7 +177,7 @@ export default function ApplyPage() {
               <h2 className="font-serif text-[clamp(24px,3vw,32px)] font-bold text-center mb-8">Tell us about your business.</h2>
 
               {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-400">
                   {error}
                 </div>
               )}

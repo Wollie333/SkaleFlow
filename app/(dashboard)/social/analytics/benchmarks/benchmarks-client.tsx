@@ -166,8 +166,8 @@ export function BenchmarksClient({ benchmarks, orgMetrics, industry }: Benchmark
                   <div className="grid grid-cols-3 gap-4">
                     {/* 25th Percentile */}
                     <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
-                      <p className="text-xs text-red-700 mb-1">25th Percentile</p>
-                      <p className="text-lg font-bold text-red-700">
+                      <p className="text-xs text-red-400 mb-1">25th Percentile</p>
+                      <p className="text-lg font-bold text-red-400">
                         {p25.toFixed(2)}
                         {metric.unit}
                       </p>
@@ -186,8 +186,8 @@ export function BenchmarksClient({ benchmarks, orgMetrics, industry }: Benchmark
 
                     {/* 75th Percentile */}
                     <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-                      <p className="text-xs text-green-700 mb-1">75th Percentile</p>
-                      <p className="text-lg font-bold text-green-700">
+                      <p className="text-xs text-green-400 mb-1">75th Percentile</p>
+                      <p className="text-lg font-bold text-green-400">
                         {p75.toFixed(2)}
                         {metric.unit}
                       </p>

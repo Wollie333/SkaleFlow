@@ -989,7 +989,7 @@ export default function ContentEnginePage() {
 
             {error && (
               <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700">{error}</p>
+                <p className="text-sm text-red-400">{error}</p>
               </div>
             )}
           </Card>

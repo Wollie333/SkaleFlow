@@ -244,7 +244,7 @@ export default function AdAccountSettingsPage() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-green-500" />
-                  <span className="text-xs text-green-700 font-medium">Active</span>
+                  <span className="text-xs text-green-400 font-medium">Active</span>
                 </div>
               </div>
 
@@ -284,8 +284,8 @@ export default function AdAccountSettingsPage() {
               <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <ExclamationTriangleIcon className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-medium text-yellow-800">Token expiring soon</p>
-                  <p className="text-xs text-yellow-700 mt-0.5">
+                  <p className="text-xs font-medium text-gold">Token expiring soon</p>
+                  <p className="text-xs text-gold mt-0.5">
                     Reconnect your account to refresh the access token and prevent campaign sync interruption.
                   </p>
                 </div>
@@ -409,7 +409,7 @@ export default function AdAccountSettingsPage() {
               <p className="text-sm text-red-600">{error}</p>
               <button
                 onClick={() => setError(null)}
-                className="text-xs text-red-700 font-medium underline mt-1"
+                className="text-xs text-red-400 font-medium underline mt-1"
               >
                 Dismiss
               </button>

@@ -594,8 +594,8 @@ export default function PostEditPage() {
 
       {item.status === 'rejected' && item.rejection_reason && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <p className="text-sm font-medium text-red-800">Rejected</p>
-          <p className="text-sm text-red-700 mt-1">{item.rejection_reason}</p>
+          <p className="text-sm font-medium text-red-400">Rejected</p>
+          <p className="text-sm text-red-400 mt-1">{item.rejection_reason}</p>
         </div>
       )}
 
@@ -812,7 +812,7 @@ export default function PostEditPage() {
               {/* Error display */}
               {generateError && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-700">{generateError}</p>
+                  <p className="text-sm text-red-400">{generateError}</p>
                 </div>
               )}
             </>

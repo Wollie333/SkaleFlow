@@ -239,7 +239,7 @@ export default function CampaignDetailPage() {
             <p className="text-sm text-red-600">{error}</p>
             <button
               onClick={() => router.push('/marketing/campaigns')}
-              className="mt-3 text-sm font-medium text-red-700 underline"
+              className="mt-3 text-sm font-medium text-red-400 underline"
             >
               Back to campaigns
             </button>

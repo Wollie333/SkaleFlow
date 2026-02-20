@@ -300,7 +300,7 @@ export function PipelineAudienceConfig({
             <div className="flex items-center gap-2">
               <UsersIcon className={cn('w-5 h-5', belowMinimum ? 'text-yellow-600' : 'text-teal')} />
               <div>
-                <p className={cn('text-sm font-semibold', belowMinimum ? 'text-yellow-800' : 'text-charcoal')}>
+                <p className={cn('text-sm font-semibold', belowMinimum ? 'text-gold' : 'text-charcoal')}>
                   ~{estimatedSize.toLocaleString()} contacts
                 </p>
                 <p className={cn('text-xs', belowMinimum ? 'text-yellow-600' : 'text-stone')}>
@@ -311,7 +311,7 @@ export function PipelineAudienceConfig({
             {belowMinimum && (
               <div className="flex items-start gap-1.5 mt-2">
                 <ExclamationTriangleIcon className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-yellow-700">
+                <p className="text-xs text-gold">
                   {platform === 'meta' ? 'Meta' : 'TikTok'} requires a minimum of{' '}
                   {minAudienceSize.toLocaleString()} contacts for custom audiences.
                   Add more contacts or broaden your filters.
@@ -355,7 +355,7 @@ export function PipelineAudienceConfig({
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <p className="text-xs text-red-700">{error}</p>
+            <p className="text-xs text-red-400">{error}</p>
           </div>
         )}
 

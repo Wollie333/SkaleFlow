@@ -55,8 +55,8 @@ interface CalendarViewProps {
 const TIME_SLOT_ORDER: TimeSlot[] = ['AM', 'PM', 'MID', 'EVE'];
 
 const FUNNEL_COLORS: Record<FunnelStage, string> = {
-  awareness: 'bg-green-100 text-green-800 hover:bg-green-200',
-  consideration: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
+  awareness: 'bg-green-500/10 text-green-400 hover:bg-green-200',
+  consideration: 'bg-blue-500/10 text-blue-400 hover:bg-blue-200',
   conversion: 'bg-orange-100 text-orange-800 hover:bg-orange-200',
 };
 
@@ -131,7 +131,7 @@ function DraggablePost({
   const getStatusColor = (status: ContentStatus) => {
     switch (status) {
       case 'published': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-      case 'scheduled': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'scheduled': return 'bg-blue-500/10 text-blue-400 border-blue-200';
       case 'approved': return 'bg-purple-100 text-purple-700 border-purple-200';
       case 'pending_review': return 'bg-amber-100 text-amber-700 border-amber-200';
       default: return 'bg-cream text-charcoal border-stone/10';
@@ -486,11 +486,11 @@ export function CalendarView({ items, onItemClick, onMonthChange, onMovePost, on
         {/* Legend */}
         <div className="px-6 py-3 border-t border-stone/10 flex gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-green-100" />
+            <div className="w-3 h-3 rounded bg-green-500/10" />
             <span className="text-xs text-stone">Awareness</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-blue-100" />
+            <div className="w-3 h-3 rounded bg-blue-500/10" />
             <span className="text-xs text-stone">Consideration</span>
           </div>
           <div className="flex items-center gap-2">

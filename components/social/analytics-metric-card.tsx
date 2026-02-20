@@ -20,7 +20,7 @@ const COLOR_CLASSES = {
   },
   blue: {
     icon: 'text-blue-600',
-    bg: 'bg-blue-100',
+    bg: 'bg-blue-500/10',
     gradient: 'from-blue-50 to-indigo-50',
     border: 'border-blue/20',
   },
@@ -44,7 +44,7 @@ const COLOR_CLASSES = {
   },
   green: {
     icon: 'text-green-600',
-    bg: 'bg-green-100',
+    bg: 'bg-green-500/10',
     gradient: 'from-green-50 to-teal-50',
     border: 'border-green/20',
   },
@@ -79,8 +79,8 @@ export function AnalyticsMetricCard({
             className={cn(
               'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold',
               isPositive
-                ? 'bg-green-100 text-green-700'
-                : 'bg-red-100 text-red-700'
+                ? 'bg-green-500/10 text-green-400'
+                : 'bg-red-500/10 text-red-400'
             )}
           >
             {isPositive ? (

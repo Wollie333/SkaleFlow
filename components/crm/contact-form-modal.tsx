@@ -148,7 +148,7 @@ export function ContactFormModal({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-400 text-sm">
               {error}
             </div>
           )}

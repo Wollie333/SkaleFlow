@@ -4,11 +4,11 @@ import { cn } from '@/lib/utils';
 import type { CrmLifecycleStage } from '@/types/database';
 
 const stageStyles: Record<CrmLifecycleStage, string> = {
-  lead: 'bg-gray-100 text-gray-700',
-  prospect: 'bg-blue-100 text-blue-700',
-  opportunity: 'bg-yellow-100 text-yellow-800',
+  lead: 'bg-stone/10 text-stone',
+  prospect: 'bg-blue-500/10 text-blue-400',
+  opportunity: 'bg-gold/10 text-gold',
   customer: 'bg-teal/10 text-teal',
-  churned: 'bg-red-100 text-red-700',
+  churned: 'bg-red-500/10 text-red-400',
 };
 
 const stageLabels: Record<CrmLifecycleStage, string> = {

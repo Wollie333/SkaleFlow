@@ -36,11 +36,11 @@ export default function DealCard({ deal }: DealCardProps) {
   function getStatusBadgeColor(status: string) {
     switch (status) {
       case 'open':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-500/10 text-blue-400 border-blue-200';
       case 'won':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-500/10 text-green-400 border-green-200';
       case 'lost':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-500/10 text-red-400 border-red-200';
       default:
         return 'bg-cream text-charcoal border-stone/10';
     }

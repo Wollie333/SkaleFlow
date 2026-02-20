@@ -144,7 +144,7 @@ export function AiBetaTab() {
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-400">
           {error}
         </div>
       )}
@@ -200,7 +200,7 @@ export function AiBetaTab() {
                     <button
                       onClick={() => handleDelete(provider.id)}
                       disabled={isDeleting}
-                      className="text-xs font-medium text-red-600 hover:text-red-700 transition-colors disabled:opacity-50 flex items-center gap-1"
+                      className="text-xs font-medium text-red-600 hover:text-red-400 transition-colors disabled:opacity-50 flex items-center gap-1"
                     >
                       <TrashIcon className="w-3.5 h-3.5" />
                       {isDeleting ? 'Removing...' : 'Remove'}

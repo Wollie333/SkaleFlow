@@ -12,8 +12,8 @@ export function SendEmailNode({ data, selected }: NodeProps) {
           ✉
         </div>
         <div>
-          <p className="text-xs font-semibold text-blue-800 uppercase tracking-wider">Send Email</p>
-          <p className="text-sm text-blue-700 truncate max-w-[140px]">{(data as Record<string, unknown>).label as string || 'Select template...'}</p>
+          <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Send Email</p>
+          <p className="text-sm text-blue-400 truncate max-w-[140px]">{(data as Record<string, unknown>).label as string || 'Select template...'}</p>
         </div>
       </div>
     </div>

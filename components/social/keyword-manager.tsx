@@ -97,7 +97,7 @@ export function KeywordManager({ keywords: initialKeywords, organizationId, onCl
     const colors: Record<string, string> = {
       brand: 'bg-teal-100 text-teal-700 border-teal-200',
       competitor: 'bg-orange-100 text-orange-700 border-orange-200',
-      industry: 'bg-blue-100 text-blue-700 border-blue-200',
+      industry: 'bg-blue-500/10 text-blue-400 border-blue-200',
       hashtag: 'bg-purple-100 text-purple-700 border-purple-200',
     };
     return colors[type] || 'bg-cream text-charcoal border-stone/10';

@@ -66,7 +66,7 @@ export function PlaybookToolbar({ isPublicView, shareUrl, organizationId, sideba
         {!isPublicView ? (
           <button
             onClick={() => window.close()}
-            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            className="flex items-center gap-2 text-sm text-stone hover:text-charcoal transition-colors"
           >
             <ArrowLeftIcon className="w-4 h-4" />
             Back to Brand Engine
@@ -81,7 +81,7 @@ export function PlaybookToolbar({ isPublicView, shareUrl, organizationId, sideba
           {!isPublicView && shareUrl && (
             <button
               onClick={handleCopyLink}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-charcoal hover:text-charcoal rounded-lg hover:bg-gray-100 transition-colors"
             >
               {copied ? (
                 <>
@@ -102,7 +102,7 @@ export function PlaybookToolbar({ isPublicView, shareUrl, organizationId, sideba
             <button
               onClick={handleDownloadHtml}
               disabled={downloading}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-charcoal hover:text-charcoal rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
             >
               <ArrowDownTrayIcon className="w-4 h-4" />
               {downloading ? 'Exporting...' : 'Download HTML'}

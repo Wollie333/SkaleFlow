@@ -57,12 +57,12 @@ const emailStatusBadge: Record<string, { label: string; classes: string }> = {
   sent: { label: 'Sent', classes: 'bg-emerald-50 text-emerald-600' },
   failed: { label: 'Failed', classes: 'bg-red-50 text-red-600' },
   delivered: { label: 'Delivered', classes: 'bg-teal/10 text-teal' },
-  bounced: { label: 'Bounced', classes: 'bg-red-100 text-red-700' },
+  bounced: { label: 'Bounced', classes: 'bg-red-500/10 text-red-400' },
 };
 
 const roleBadge: Record<string, { label: string; classes: string }> = {
   owner: { label: 'Owner', classes: 'bg-purple-100 text-purple-700' },
-  admin: { label: 'Admin', classes: 'bg-blue-100 text-blue-700' },
+  admin: { label: 'Admin', classes: 'bg-blue-500/10 text-blue-400' },
   member: { label: 'Member', classes: 'bg-teal/10 text-teal' },
   viewer: { label: 'Viewer', classes: 'bg-stone/10 text-stone' },
 };
@@ -310,7 +310,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
                         <button
                           onClick={() => handleCancelInvite(invite.id)}
                           disabled={actionLoading === invite.id}
-                          className="text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-40 flex items-center gap-1"
+                          className="text-xs font-medium text-red-600 hover:text-red-400 bg-red-50 hover:bg-red-500/10 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-40 flex items-center gap-1"
                         >
                           <XMarkIcon className="w-3.5 h-3.5" />
                           Cancel

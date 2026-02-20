@@ -10,11 +10,11 @@ export interface BadgeProps {
 const variantStyles = {
   default: 'bg-stone/10 text-stone',
   primary: 'bg-teal/10 text-teal',
-  success: 'bg-green-100 text-green-800',
-  warning: 'bg-yellow-100 text-yellow-800',
-  danger: 'bg-red-100 text-red-800',
-  awareness: 'bg-green-100 text-green-800',
-  consideration: 'bg-blue-100 text-blue-800',
+  success: 'bg-green-500/10 text-green-400',
+  warning: 'bg-yellow-100 text-gold',
+  danger: 'bg-red-500/10 text-red-400',
+  awareness: 'bg-green-500/10 text-green-400',
+  consideration: 'bg-blue-500/10 text-blue-400',
   conversion: 'bg-orange-100 text-orange-800',
 };
 

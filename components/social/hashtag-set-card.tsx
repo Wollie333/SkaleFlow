@@ -37,10 +37,10 @@ export function HashtagSetCard({ set, onEdit, onDelete, onCopy }: HashtagSetCard
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      industry: 'bg-blue-100 text-blue-700 border-blue-200',
+      industry: 'bg-blue-500/10 text-blue-400 border-blue-200',
       trending: 'bg-pink-100 text-pink-700 border-pink-200',
       branded: 'bg-purple-100 text-purple-700 border-purple-200',
-      campaign: 'bg-green-100 text-green-700 border-green-200',
+      campaign: 'bg-green-500/10 text-green-400 border-green-200',
     };
     return colors[category?.toLowerCase()] || 'bg-cream text-charcoal border-stone/10';
   };

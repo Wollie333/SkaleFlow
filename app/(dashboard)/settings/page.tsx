@@ -964,7 +964,7 @@ export default function SettingsPage() {
                   </div>
                 )}
                 {socialStatus === 'error' && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-400">
                     Failed to connect social account. Please try again.
                   </div>
                 )}
@@ -997,7 +997,7 @@ export default function SettingsPage() {
                   </div>
                 )}
                 {driveStatus === 'error' && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-400">
                     Failed to connect Google Drive. Please try again.
                   </div>
                 )}
@@ -1023,7 +1023,7 @@ export default function SettingsPage() {
                   </div>
                 )}
                 {canvaStatus === 'error' && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-400">
                     Failed to connect Canva. {searchParams.get('message') || 'Please try again.'}
                   </div>
                 )}
@@ -1049,7 +1049,7 @@ export default function SettingsPage() {
                 </div>
               )}
               {gmailStatus === 'error' && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-400">
                   Failed to connect Gmail. {gmailErrorMessage && <span className="block mt-1 text-xs text-red-500">{gmailErrorMessage}</span>}
                 </div>
               )}
@@ -1071,7 +1071,7 @@ export default function SettingsPage() {
                   </div>
                 )}
                 {googleStatus === 'error' && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-400">
                     Failed to connect Google Calendar. Please try again.
                   </div>
                 )}

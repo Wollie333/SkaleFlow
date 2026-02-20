@@ -212,7 +212,7 @@ export function ReviewDashboard() {
       {/* Error state */}
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-          <p className="text-sm text-red-700">{error}</p>
+          <p className="text-sm text-red-400">{error}</p>
         </div>
       )}
 

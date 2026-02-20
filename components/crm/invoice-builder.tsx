@@ -327,10 +327,10 @@ export function InvoiceBuilder({
                 status === 'draft'
                   ? 'bg-cream text-stone-700'
                   : status === 'sent'
-                  ? 'bg-blue-100 text-blue-700'
+                  ? 'bg-blue-500/10 text-blue-400'
                   : status === 'paid'
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-red-100 text-red-700'
+                  ? 'bg-green-500/10 text-green-400'
+                  : 'bg-red-500/10 text-red-400'
               }
             >
               {status}

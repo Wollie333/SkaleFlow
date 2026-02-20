@@ -17,20 +17,20 @@ interface ComplianceBadgeProps {
 const statusConfig: Record<string, { icon: React.ElementType; bg: string; text: string; label: string }> = {
   passed: {
     icon: CheckCircleIcon,
-    bg: 'bg-green-100',
-    text: 'text-green-700',
+    bg: 'bg-green-500/10',
+    text: 'text-green-400',
     label: 'Passed',
   },
   flagged: {
     icon: ExclamationTriangleIcon,
     bg: 'bg-yellow-100',
-    text: 'text-yellow-700',
+    text: 'text-gold',
     label: 'Flagged',
   },
   rejected: {
     icon: XCircleIcon,
-    bg: 'bg-red-100',
-    text: 'text-red-700',
+    bg: 'bg-red-500/10',
+    text: 'text-red-400',
     label: 'Rejected',
   },
   pending: {

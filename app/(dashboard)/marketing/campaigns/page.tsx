@@ -196,7 +196,7 @@ export default function CampaignListPage() {
           <p className="text-sm text-red-600">{error}</p>
           <button
             onClick={loadCampaigns}
-            className="text-sm text-red-700 font-medium underline mt-1"
+            className="text-sm text-red-400 font-medium underline mt-1"
           >
             Retry
           </button>

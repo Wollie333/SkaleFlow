@@ -15,7 +15,7 @@ interface AudienceCardProps {
 const typeStyles: Record<string, { bg: string; text: string }> = {
   saved: { bg: 'bg-teal/10', text: 'text-teal' },
   custom: { bg: 'bg-gold/10', text: 'text-gold' },
-  lookalike: { bg: 'bg-blue-100', text: 'text-blue-700' },
+  lookalike: { bg: 'bg-blue-500/10', text: 'text-blue-400' },
 };
 
 const typeLabels: Record<string, string> = {

@@ -187,7 +187,7 @@ export function AIProviderConnections() {
                   </Badge>
                 )}
                 {balance.status === 'error' && (
-                  <Badge variant="default" className="bg-red-100 text-red-700 flex items-center gap-1">
+                  <Badge variant="default" className="bg-red-500/10 text-red-400 flex items-center gap-1">
                     <ExclamationTriangleIcon className="w-3 h-3" />
                     Error
                   </Badge>
@@ -252,16 +252,16 @@ export function AIProviderConnections() {
                         <p className="text-xs font-semibold text-blue-900 mb-1">{balance.pricing.model}</p>
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div>
-                            <span className="text-blue-700">Reading (Input):</span>
+                            <span className="text-blue-400">Reading (Input):</span>
                             <span className="font-bold text-blue-900 ml-1">${balance.pricing.inputCostPer1M}/1M</span>
                           </div>
                           <div>
-                            <span className="text-blue-700">Writing (Output):</span>
+                            <span className="text-blue-400">Writing (Output):</span>
                             <span className="font-bold text-blue-900 ml-1">${balance.pricing.outputCostPer1M}/1M</span>
                           </div>
                         </div>
                       </div>
-                      <p className="text-xs text-blue-800 italic leading-relaxed">
+                      <p className="text-xs text-blue-400 italic leading-relaxed">
                         📚 {balance.pricing.simpleExplanation}
                       </p>
                     </div>

@@ -57,7 +57,7 @@ const PLATFORM_OPTIONS = [
 ];
 
 const PLATFORM_COLORS: Record<string, string> = {
-  linkedin: 'bg-blue-100 text-blue-700',
+  linkedin: 'bg-blue-500/10 text-blue-400',
   facebook: 'bg-blue-50 text-blue-600',
   instagram: 'bg-pink-50 text-pink-600',
   twitter: 'bg-sky-50 text-sky-600',
@@ -68,7 +68,7 @@ const STATUS_CONFIG: Record<PublishStatus, { icon: React.ComponentType<{ classNa
   queued: { icon: ClockIcon, color: 'bg-stone/10 text-stone', label: 'Queued' },
   publishing: { icon: SignalIcon, color: 'bg-amber-50 text-amber-700', label: 'Publishing' },
   published: { icon: CheckCircleIcon, color: 'bg-emerald-50 text-emerald-700', label: 'Published' },
-  failed: { icon: ExclamationTriangleIcon, color: 'bg-red-50 text-red-700', label: 'Failed' },
+  failed: { icon: ExclamationTriangleIcon, color: 'bg-red-50 text-red-400', label: 'Failed' },
 };
 
 function formatDateTime(dateStr: string | null): string {

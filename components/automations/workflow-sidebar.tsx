@@ -1,13 +1,13 @@
 'use client';
 
 const nodeTypes = [
-  { type: 'trigger', label: 'Trigger', color: 'bg-green-100 border-green-300 text-green-800', icon: '⚡' },
-  { type: 'send_email', label: 'Send Email', color: 'bg-blue-100 border-blue-300 text-blue-800', icon: '✉' },
+  { type: 'trigger', label: 'Trigger', color: 'bg-green-500/10 border-green-300 text-green-400', icon: '⚡' },
+  { type: 'send_email', label: 'Send Email', color: 'bg-blue-500/10 border-blue-300 text-blue-400', icon: '✉' },
   { type: 'move_stage', label: 'Move Stage', color: 'bg-purple-100 border-purple-300 text-purple-800', icon: '→' },
   { type: 'add_tag', label: 'Add Tag', color: 'bg-orange-100 border-orange-300 text-orange-800', icon: '+' },
   { type: 'remove_tag', label: 'Remove Tag', color: 'bg-orange-100 border-orange-300 text-orange-700', icon: '−' },
   { type: 'webhook', label: 'Webhook', color: 'bg-cream border-stone/10 text-charcoal', icon: '🌐' },
-  { type: 'delay', label: 'Delay', color: 'bg-yellow-100 border-yellow-300 text-yellow-800', icon: '⏱' },
+  { type: 'delay', label: 'Delay', color: 'bg-yellow-100 border-yellow-300 text-gold', icon: '⏱' },
   { type: 'condition', label: 'Condition', color: 'bg-indigo-100 border-indigo-300 text-indigo-800', icon: '?' },
 ];
 

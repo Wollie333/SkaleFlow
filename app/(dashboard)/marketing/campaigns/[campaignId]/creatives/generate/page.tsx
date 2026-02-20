@@ -240,7 +240,7 @@ export default function GenerateCreativesPage() {
           <div className="py-8 text-center">
             <ExclamationTriangleIcon className="w-12 h-12 text-red-400 mx-auto mb-3" />
             <p className="text-sm text-red-600">{error || 'Campaign not found'}</p>
-            <Link href="/marketing/campaigns" className="mt-3 text-sm font-medium text-red-700 underline">
+            <Link href="/marketing/campaigns" className="mt-3 text-sm font-medium text-red-400 underline">
               Back to campaigns
             </Link>
           </div>

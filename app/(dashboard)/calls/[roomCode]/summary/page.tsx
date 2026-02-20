@@ -172,8 +172,8 @@ export default function PostCallSummaryPage({ params }: { params: Promise<{ room
                     {insight.insight_type.replace('_', ' ')}
                   </span>
                   <span className={`px-2 py-0.5 text-xs rounded-full ${
-                    insight.status === 'accepted' ? 'bg-green-100 text-green-700' :
-                    insight.status === 'dismissed' ? 'bg-red-100 text-red-700' :
+                    insight.status === 'accepted' ? 'bg-green-500/10 text-green-400' :
+                    insight.status === 'dismissed' ? 'bg-red-500/10 text-red-400' :
                     'bg-cream text-charcoal'
                   }`}>
                     {insight.status}

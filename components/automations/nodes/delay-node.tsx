@@ -12,8 +12,8 @@ export function DelayNode({ data, selected }: NodeProps) {
           ⏱
         </div>
         <div>
-          <p className="text-xs font-semibold text-yellow-800 uppercase tracking-wider">Delay</p>
-          <p className="text-sm text-yellow-700">{(data as Record<string, unknown>).label as string || 'Set duration...'}</p>
+          <p className="text-xs font-semibold text-gold uppercase tracking-wider">Delay</p>
+          <p className="text-sm text-gold">{(data as Record<string, unknown>).label as string || 'Set duration...'}</p>
         </div>
       </div>
     </div>

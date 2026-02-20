@@ -102,8 +102,8 @@ const FORMAT_OPTIONS = Object.entries(FORMAT_LABELS).map(([value, label]) => ({
 }));
 
 const FUNNEL_COLORS: Record<FunnelStage, string> = {
-  awareness: 'bg-green-100 text-green-800',
-  consideration: 'bg-blue-100 text-blue-800',
+  awareness: 'bg-green-500/10 text-green-400',
+  consideration: 'bg-blue-500/10 text-blue-400',
   conversion: 'bg-orange-100 text-orange-800',
 };
 
@@ -1162,7 +1162,7 @@ export default function ContentCreatePage() {
       {/* Error display */}
       {generateError && (
         <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-700">{generateError}</p>
+          <p className="text-sm text-red-400">{generateError}</p>
         </div>
       )}
     </Card>
@@ -1368,7 +1368,7 @@ export default function ContentCreatePage() {
 
               {generateError && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-700">{generateError}</p>
+                  <p className="text-sm text-red-400">{generateError}</p>
                 </div>
               )}
             </>

@@ -302,8 +302,8 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
       {/* Rejection reason */}
       {formData.status === 'rejected' && formData.rejection_reason && (
         <div className="mx-6 mt-4 p-3 rounded-lg bg-red-50 border border-red-200">
-          <p className="text-sm font-medium text-red-800">Rejected</p>
-          <p className="text-sm text-red-700 mt-1">{formData.rejection_reason}</p>
+          <p className="text-sm font-medium text-red-400">Rejected</p>
+          <p className="text-sm text-red-400 mt-1">{formData.rejection_reason}</p>
         </div>
       )}
 
@@ -798,13 +798,13 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
             )}>
               <h3 className={cn(
                 'text-sm font-medium mb-1',
-                formData.status === 'revision_requested' ? 'text-amber-800' : 'text-red-800'
+                formData.status === 'revision_requested' ? 'text-amber-800' : 'text-red-400'
               )}>
                 {formData.status === 'revision_requested' ? 'Revisions Requested' : 'Rejected'}
               </h3>
               <p className={cn(
                 'text-sm',
-                formData.status === 'revision_requested' ? 'text-amber-700' : 'text-red-700'
+                formData.status === 'revision_requested' ? 'text-amber-700' : 'text-red-400'
               )}>
                 {formData.review_comment}
               </p>
@@ -885,7 +885,7 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
             {publishResults.length > 0 && (
               <div className="space-y-2">
                 {publishResults.map((result, i) => (
-                  <div key={i} className={cn('p-3 rounded-lg text-sm', result.success ? 'bg-teal/10 border border-teal/20 text-teal' : 'bg-red-50 border border-red-200 text-red-700')}>
+                  <div key={i} className={cn('p-3 rounded-lg text-sm', result.success ? 'bg-teal/10 border border-teal/20 text-teal' : 'bg-red-50 border border-red-200 text-red-400')}>
                     <span className="font-medium">{PLATFORM_CONFIG[result.platform as SocialPlatform]?.name || result.platform}:</span>{' '}
                     {result.success ? (
                       <>Published successfully

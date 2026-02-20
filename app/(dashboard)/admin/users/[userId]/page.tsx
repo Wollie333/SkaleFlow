@@ -433,7 +433,7 @@ export default function AdminUserDetailPage() {
               ) : (
                 <button
                   onClick={() => setConfirmDelete(true)}
-                  className="flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-400 bg-red-50 hover:bg-red-500/10 px-3 py-2 rounded-lg transition-colors"
                 >
                   <TrashIcon className="w-4 h-4" />
                   Delete

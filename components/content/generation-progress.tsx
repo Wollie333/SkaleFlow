@@ -89,11 +89,11 @@ export function GenerationProgress({
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
           <ExclamationTriangleIcon className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-red-700">{errorMessage}</p>
+            <p className="text-sm text-red-400">{errorMessage}</p>
             {onRetry && (
               <button
                 onClick={onRetry}
-                className="text-sm font-medium text-red-600 hover:text-red-800 mt-1 underline"
+                className="text-sm font-medium text-red-600 hover:text-red-400 mt-1 underline"
               >
                 Retry from where it stopped
               </button>

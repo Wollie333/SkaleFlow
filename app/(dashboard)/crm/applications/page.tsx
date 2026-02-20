@@ -16,8 +16,8 @@ interface Application {
 }
 
 const STAGES: { key: PipelineStage; label: string; color: string; bgColor: string }[] = [
-  { key: 'application', label: 'Application', color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200' },
-  { key: 'declined', label: 'Declined', color: 'text-red-700', bgColor: 'bg-red-50 border-red-200' },
+  { key: 'application', label: 'Application', color: 'text-blue-400', bgColor: 'bg-blue-50 border-blue-200' },
+  { key: 'declined', label: 'Declined', color: 'text-red-400', bgColor: 'bg-red-50 border-red-200' },
   { key: 'approved', label: 'Approved', color: 'text-purple-700', bgColor: 'bg-purple-50 border-purple-200' },
   { key: 'booking_made', label: 'Booking Made', color: 'text-indigo-700', bgColor: 'bg-indigo-50 border-indigo-200' },
   { key: 'lost', label: 'Lost', color: 'text-stone', bgColor: 'bg-stone/5 border-stone/20' },

@@ -224,7 +224,7 @@ export default function AdminModelsPage() {
     return (
       <div className="p-8">
         <PageHeader title="AI Models" icon={SparklesIcon} subtitle="Manage model access per tier and user" />
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">{error}</div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-400 text-sm">{error}</div>
       </div>
     );
   }

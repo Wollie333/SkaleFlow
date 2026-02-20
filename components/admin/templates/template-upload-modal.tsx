@@ -351,7 +351,7 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
     }
     if (classificationSource === 'frontmatter') {
       return (
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-xs font-medium">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 text-green-400 text-xs font-medium">
           <CheckCircleIcon className="w-3.5 h-3.5" />
           From front matter
         </div>
@@ -390,7 +390,7 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
         {/* Body */}
         <div className="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
           {error && (
-            <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg">{error}</div>
+            <div className="p-3 bg-red-50 text-red-400 text-sm rounded-lg">{error}</div>
           )}
 
           {/* Input mode toggle */}
@@ -542,12 +542,12 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
               {/* Missing sections — blocks creation */}
               {parsed.missing_sections.length > 0 && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-xs font-semibold text-red-800 mb-1">
+                  <p className="text-xs font-semibold text-red-400 mb-1">
                     Missing required sections ({parsed.missing_sections.length}):
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {parsed.missing_sections.map(s => (
-                      <span key={s} className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-medium">
+                      <span key={s} className="px-2 py-0.5 bg-red-500/10 text-red-400 rounded text-[10px] font-medium">
                         {s}
                       </span>
                     ))}
@@ -561,7 +561,7 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
               {parsed.missing_sections.length === 0 && (
                 <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
                   <CheckCircleIcon className="w-4 h-4 text-green-600" />
-                  <span className="text-xs font-medium text-green-700">All standardised sections present — template is fully standardised</span>
+                  <span className="text-xs font-medium text-green-400">All standardised sections present — template is fully standardised</span>
                 </div>
               )}
 
