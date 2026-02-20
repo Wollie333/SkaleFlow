@@ -18,7 +18,6 @@ import {
   ClockIcon,
 } from '@heroicons/react/24/solid';
 import { useCreditBalance } from '@/hooks/useCreditBalance';
-import { formatCreditsToUSD } from '@/lib/ai';
 import { UserAvatar } from '@/components/ui';
 import type { NotificationType } from '@/types/database';
 
@@ -197,35 +196,25 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
         {/* Right side */}
         <div className="flex items-center gap-3">
           {/* Credit Balance */}
-          {creditBalance && (
+          {creditBalance && !creditBalance.isSuperAdmin && (
             <Link
               href="/billing"
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                creditBalance.isSuperAdmin
-                  ? 'bg-teal/20 text-teal-300 hover:bg-teal/30'
-                  : !creditBalance.hasCredits
-                    ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
-                    : creditBalance.totalRemaining < 2000
-                      ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25'
-                      : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'
+                !creditBalance.hasCredits
+                  ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
+                  : creditBalance.totalRemaining < 2000
+                    ? 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25'
+                    : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'
               }`}
-              title={creditBalance.isSuperAdmin
-                ? `System Total: ${(creditBalance.systemTotalCredits || 0).toLocaleString()} credits | API Cost: $${(creditBalance.systemTotalCostUSD || 0).toFixed(2)} | Credits tracked, never blocked`
-                : `Monthly: ${creditBalance.monthlyRemaining.toLocaleString()} / ${creditBalance.monthlyTotal.toLocaleString()} | Top-up: ${creditBalance.topupRemaining.toLocaleString()}`
-              }
+              title={`Used: ${(creditBalance.monthlyTotal - creditBalance.monthlyRemaining).toLocaleString()} credits this period | Available: ${creditBalance.totalRemaining.toLocaleString()} credits (monthly + top-up)`}
             >
               <BoltIcon className="w-3.5 h-3.5" />
-              {creditBalance.isSuperAdmin ? (
-                <>
-                  <span className="hidden sm:inline">{(creditBalance.systemTotalCredits || 0).toLocaleString()} cr | ${(creditBalance.systemTotalCostUSD || 0).toFixed(2)}</span>
-                  <span className="sm:hidden">{Math.floor((creditBalance.systemTotalCredits || 0) / 1000)}k cr</span>
-                </>
-              ) : (
-                <>
-                  <span className="hidden sm:inline">{creditBalance.totalRemaining.toLocaleString()} cr | {formatCreditsToUSD(creditBalance.totalRemaining)}</span>
-                  <span className="sm:hidden">{Math.floor(creditBalance.totalRemaining / 1000)}k cr</span>
-                </>
-              )}
+              <span className="hidden sm:inline">
+                {(creditBalance.monthlyTotal - creditBalance.monthlyRemaining).toLocaleString()} used
+                <span className="mx-1 opacity-40">|</span>
+                {creditBalance.totalRemaining.toLocaleString()} available
+              </span>
+              <span className="sm:hidden">{creditBalance.totalRemaining.toLocaleString()} avail</span>
             </Link>
           )}
 
