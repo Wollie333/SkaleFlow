@@ -85,6 +85,24 @@ export async function runPostCallPipeline(callId: string, orgId: string, hostUse
       });
     }
 
+    // Brand Audit extraction: if call is linked to a brand_audit, extract data
+    try {
+      const { data: linkedAudit } = await supabase
+        .from('brand_audits')
+        .select('id, status')
+        .eq('call_id', callId)
+        .single();
+
+      if (linkedAudit && ['draft', 'call_scheduled', 'call_in_progress'].includes(linkedAudit.status)) {
+        console.log(`[PostCall] Running brand audit extraction for audit ${linkedAudit.id}`);
+        const { extractBrandAuditData } = await import('@/lib/brand-audit/call-extraction');
+        await extractBrandAuditData(callId, orgId, hostUserId);
+      }
+    } catch (auditError) {
+      // Non-fatal — brand audit extraction is optional
+      console.error('[PostCall] Brand audit extraction failed:', auditError);
+    }
+
     console.log(`[PostCall] Pipeline complete for call ${callId}`);
   } catch (error) {
     console.error('[PostCall] Pipeline error:', error);

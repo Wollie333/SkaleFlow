@@ -133,6 +133,11 @@ const socialLibraryNav: NavItem[] = [
   { name: 'Competitors', href: '/social/library/competitors', icon: UsersIcon },
 ];
 
+const brandAuditNavigation: NavItem[] = [
+  { name: 'All Audits', href: '/brand-audit', icon: ClipboardDocumentCheckIcon },
+  { name: 'Drafts', href: '/brand-audit?status=draft', icon: DocumentTextIcon },
+];
+
 const callsNavigation: NavItem[] = [
   { name: 'Dashboard', href: '/calls', icon: VideoCameraIcon },
   { name: 'Templates', href: '/calls/templates', icon: DocumentTextIcon },
@@ -202,6 +207,7 @@ export function Sidebar({
   const [authorityExpanded, setAuthorityExpanded] = useState(false);
   const [socialEngineExpanded, setSocialEngineExpanded] = useState(false);
   const [adsEngineExpanded, setAdsEngineExpanded] = useState(false);
+  const [brandAuditExpanded, setBrandAuditExpanded] = useState(false);
   const [callsExpanded, setCallsExpanded] = useState(false);
   const [crmExpanded, setCrmExpanded] = useState(false);
   const [adminExpanded, setAdminExpanded] = useState(false);
@@ -709,6 +715,51 @@ export function Sidebar({
                 })}
                 {isSuperAdmin && crmAdminNavigation.map((item) => {
                   const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
+                        isActive
+                          ? 'bg-teal/10 text-teal'
+                          : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                      )}
+                    >
+                      <item.icon className="w-4 h-4" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Brand Audit Section */}
+        {(isOwnerOrAdmin || isSuperAdmin) && (
+          <div className="mt-6">
+            <div className="flex items-center">
+              <button
+                onClick={() => setBrandAuditExpanded(!brandAuditExpanded)}
+                className="flex-1 flex items-center justify-between px-3 py-1 group"
+              >
+                <h4 className="text-xs font-semibold text-teal-dark dark:text-gold uppercase tracking-wider flex items-center gap-2">
+                  Brand Audit
+                </h4>
+                {brandAuditExpanded ? (
+                  <ChevronDownIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
+                ) : (
+                  <ChevronRightIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
+                )}
+              </button>
+            </div>
+            {brandAuditExpanded && (
+              <div className="space-y-1 mt-2">
+                {brandAuditNavigation.map((item) => {
+                  const isActive = item.href === '/brand-audit'
+                    ? pathname === '/brand-audit' || (pathname.startsWith('/brand-audit') && !pathname.includes('?'))
+                    : pathname === item.href || pathname.startsWith(item.href);
                   return (
                     <Link
                       key={item.name}

@@ -53,7 +53,7 @@ export type PlacementType =
   | 'tiktok_video' | 'tiktok_story'
   | 'youtube_video' | 'youtube_short' | 'youtube_community_post';
 export type PublishStatus = 'queued' | 'publishing' | 'published' | 'failed';
-export type NotificationType = 'content_submitted' | 'content_approved' | 'content_rejected' | 'revision_requested' | 'generation_completed' | 'change_request_submitted' | 'change_request_approved' | 'change_request_rejected' | 'change_request_revision' | 'credits_allocated' | 'credits_low' | 'call_booked' | 'call_reminder' | 'call_completed' | 'call_summary_ready';
+export type NotificationType = 'content_submitted' | 'content_approved' | 'content_rejected' | 'revision_requested' | 'generation_completed' | 'change_request_submitted' | 'change_request_approved' | 'change_request_rejected' | 'change_request_revision' | 'credits_allocated' | 'credits_low' | 'call_booked' | 'call_reminder' | 'call_completed' | 'call_summary_ready' | 'brand_audit_completed';
 export type FeatureType = 'brand_engine' | 'content_engine' | 'pipeline' | 'ad_campaigns';
 export type ChangeRequestStatus = 'pending' | 'approved' | 'rejected' | 'revision_requested';
 export type ChangeType = 'create' | 'update' | 'delete';
@@ -130,6 +130,14 @@ export type BookingStatus = 'confirmed' | 'rescheduled' | 'cancelled' | 'complet
 export type ActionItemStatus = 'pending' | 'in_progress' | 'completed';
 export type InviteMethod = 'link' | 'email' | 'calendar' | 'direct';
 export type OfferBillingFrequency = 'once' | 'monthly' | 'quarterly' | 'annual';
+
+// Brand Audit types
+export type BrandAuditStatus = 'draft' | 'in_progress' | 'call_scheduled' | 'call_in_progress' | 'call_complete' | 'review' | 'scoring' | 'complete' | 'report_generated' | 'delivered' | 'abandoned';
+export type BrandAuditSource = 'manual' | 'call' | 'hybrid' | 'website';
+export type BrandAuditSectionKey = 'company_overview' | 'brand_foundation' | 'visual_identity' | 'messaging' | 'digital_presence' | 'customer_experience' | 'competitive_landscape' | 'goals_challenges';
+export type BrandAuditCategory = 'brand_foundation' | 'message_consistency' | 'visual_identity' | 'digital_presence' | 'customer_perception' | 'competitive_differentiation';
+export type BrandAuditRating = 'red' | 'amber' | 'green';
+export type BrandAuditDataSource = 'manual' | 'call_extracted' | 'website_extracted' | 'ai_refined';
 
 export interface Database {
   public: {
@@ -6325,6 +6333,7 @@ export interface Database {
           is_active: boolean;
           sort_order: number;
           source: string;
+          service_tags: string[];
           created_at: string;
           updated_at: string;
         };
@@ -6347,6 +6356,7 @@ export interface Database {
           is_active?: boolean;
           sort_order?: number;
           source?: string;
+          service_tags?: string[];
           created_at?: string;
           updated_at?: string;
         };
@@ -6369,6 +6379,7 @@ export interface Database {
           is_active?: boolean;
           sort_order?: number;
           source?: string;
+          service_tags?: string[];
           created_at?: string;
           updated_at?: string;
         };
@@ -7201,6 +7212,329 @@ export interface Database {
             columns: ["form_id"];
             isOneToOne: false;
             referencedRelation: "pipeline_forms";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      // ============ Brand Audit Tables ============
+      brand_audits: {
+        Row: {
+          id: string;
+          organization_id: string;
+          contact_id: string | null;
+          call_id: string | null;
+          created_by: string;
+          status: BrandAuditStatus;
+          source: BrandAuditSource;
+          overall_score: number | null;
+          overall_rating: BrandAuditRating | null;
+          executive_summary: string | null;
+          priority_roadmap: Json;
+          sections_completed: number;
+          total_sections: number;
+          previous_audit_id: string | null;
+          comparison_data: Json;
+          settings: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          contact_id?: string | null;
+          call_id?: string | null;
+          created_by: string;
+          status?: BrandAuditStatus;
+          source?: BrandAuditSource;
+          overall_score?: number | null;
+          overall_rating?: BrandAuditRating | null;
+          executive_summary?: string | null;
+          priority_roadmap?: Json;
+          sections_completed?: number;
+          total_sections?: number;
+          previous_audit_id?: string | null;
+          comparison_data?: Json;
+          settings?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          contact_id?: string | null;
+          call_id?: string | null;
+          created_by?: string;
+          status?: BrandAuditStatus;
+          source?: BrandAuditSource;
+          overall_score?: number | null;
+          overall_rating?: BrandAuditRating | null;
+          executive_summary?: string | null;
+          priority_roadmap?: Json;
+          sections_completed?: number;
+          total_sections?: number;
+          previous_audit_id?: string | null;
+          comparison_data?: Json;
+          settings?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "brand_audits_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "brand_audits_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "crm_contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "brand_audits_call_id_fkey";
+            columns: ["call_id"];
+            isOneToOne: false;
+            referencedRelation: "calls";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "brand_audits_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
+      brand_audit_sections: {
+        Row: {
+          id: string;
+          audit_id: string;
+          section_key: BrandAuditSectionKey;
+          data: Json;
+          is_complete: boolean;
+          data_source: BrandAuditDataSource;
+          extraction_confidence: number | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          audit_id: string;
+          section_key: BrandAuditSectionKey;
+          data?: Json;
+          is_complete?: boolean;
+          data_source?: BrandAuditDataSource;
+          extraction_confidence?: number | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          audit_id?: string;
+          section_key?: BrandAuditSectionKey;
+          data?: Json;
+          is_complete?: boolean;
+          data_source?: BrandAuditDataSource;
+          extraction_confidence?: number | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "brand_audit_sections_audit_id_fkey";
+            columns: ["audit_id"];
+            isOneToOne: false;
+            referencedRelation: "brand_audits";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
+      brand_audit_scores: {
+        Row: {
+          id: string;
+          audit_id: string;
+          category: BrandAuditCategory;
+          score: number;
+          rating: BrandAuditRating;
+          weight: number;
+          analysis: string | null;
+          key_finding: string | null;
+          actionable_insight: string | null;
+          evidence: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          audit_id: string;
+          category: BrandAuditCategory;
+          score?: number;
+          rating?: BrandAuditRating;
+          weight?: number;
+          analysis?: string | null;
+          key_finding?: string | null;
+          actionable_insight?: string | null;
+          evidence?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          audit_id?: string;
+          category?: BrandAuditCategory;
+          score?: number;
+          rating?: BrandAuditRating;
+          weight?: number;
+          analysis?: string | null;
+          key_finding?: string | null;
+          actionable_insight?: string | null;
+          evidence?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "brand_audit_scores_audit_id_fkey";
+            columns: ["audit_id"];
+            isOneToOne: false;
+            referencedRelation: "brand_audits";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
+      brand_audit_reports: {
+        Row: {
+          id: string;
+          audit_id: string;
+          organization_id: string;
+          version: number;
+          storage_path: string;
+          file_size_bytes: number | null;
+          share_token: string | null;
+          share_expires_at: string | null;
+          delivered_at: string | null;
+          delivered_via: string | null;
+          delivered_to: string | null;
+          view_count: number;
+          last_viewed_at: string | null;
+          brand_snapshot: Json;
+          include_pricing: boolean;
+          include_comparison: boolean;
+          about_text: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          audit_id: string;
+          organization_id: string;
+          version?: number;
+          storage_path: string;
+          file_size_bytes?: number | null;
+          share_token?: string | null;
+          share_expires_at?: string | null;
+          delivered_at?: string | null;
+          delivered_via?: string | null;
+          delivered_to?: string | null;
+          view_count?: number;
+          last_viewed_at?: string | null;
+          brand_snapshot?: Json;
+          include_pricing?: boolean;
+          include_comparison?: boolean;
+          about_text?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          audit_id?: string;
+          organization_id?: string;
+          version?: number;
+          storage_path?: string;
+          file_size_bytes?: number | null;
+          share_token?: string | null;
+          share_expires_at?: string | null;
+          delivered_at?: string | null;
+          delivered_via?: string | null;
+          delivered_to?: string | null;
+          view_count?: number;
+          last_viewed_at?: string | null;
+          brand_snapshot?: Json;
+          include_pricing?: boolean;
+          include_comparison?: boolean;
+          about_text?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "brand_audit_reports_audit_id_fkey";
+            columns: ["audit_id"];
+            isOneToOne: false;
+            referencedRelation: "brand_audits";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "brand_audit_reports_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
+      brand_audit_offer_matches: {
+        Row: {
+          id: string;
+          audit_id: string;
+          audit_category: BrandAuditCategory;
+          offer_id: string | null;
+          priority: number;
+          relevance_description: string | null;
+          is_user_override: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          audit_id: string;
+          audit_category: BrandAuditCategory;
+          offer_id?: string | null;
+          priority?: number;
+          relevance_description?: string | null;
+          is_user_override?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          audit_id?: string;
+          audit_category?: BrandAuditCategory;
+          offer_id?: string | null;
+          priority?: number;
+          relevance_description?: string | null;
+          is_user_override?: boolean;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "brand_audit_offer_matches_audit_id_fkey";
+            columns: ["audit_id"];
+            isOneToOne: false;
+            referencedRelation: "brand_audits";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "brand_audit_offer_matches_offer_id_fkey";
+            columns: ["offer_id"];
+            isOneToOne: false;
+            referencedRelation: "offers";
             referencedColumns: ["id"];
           }
         ];

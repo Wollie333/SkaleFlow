@@ -1,4 +1,4 @@
-export type AIFeature = 'brand_chat' | 'brand_import' | 'content_generation' | 'logo_generation' | 'ad_generation' | 'video_call_copilot';
+export type AIFeature = 'brand_chat' | 'brand_import' | 'content_generation' | 'logo_generation' | 'ad_generation' | 'video_call_copilot' | 'brand_audit';
 export type AIProvider = 'anthropic' | 'google' | 'groq' | 'openai';
 
 export interface AICompletionRequest {

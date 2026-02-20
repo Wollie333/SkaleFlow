@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { ContactDetailHeader } from '@/components/crm/contact-detail-header';
 import { ContactDetailTabs } from '@/components/crm/contact-detail-tabs';
 import { ContactFormModal } from '@/components/crm/contact-form-modal';
+import { ContactAuditWidget } from '@/components/brand-audit/contact-audit-widget';
 
 interface Contact {
   id: string;
@@ -93,6 +94,11 @@ export default function ContactDetailPage() {
         onEdit={() => setShowEditModal(true)}
         organizationId={organizationId}
       />
+
+      {/* Brand Audit Widget */}
+      <div className="mt-4">
+        <ContactAuditWidget contactId={contactId} organizationId={organizationId} />
+      </div>
 
       <div className="mt-6">
         <ContactDetailTabs contactId={contactId} organizationId={organizationId} />
