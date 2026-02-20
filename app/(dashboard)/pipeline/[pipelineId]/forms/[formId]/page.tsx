@@ -59,15 +59,23 @@ const MAPPING_OPTIONS = [
   { value: 'company', label: 'Company' },
 ];
 
-function newField(sortOrder: number): FormField {
+function inferMapping(fieldType: string): string {
+  switch (fieldType) {
+    case 'email': return 'email';
+    case 'phone': return 'phone';
+    default: return 'full_name';
+  }
+}
+
+function newField(sortOrder: number, fieldType = 'text'): FormField {
   return {
     id: crypto.randomUUID(),
     label: '',
-    field_type: 'text',
+    field_type: fieldType,
     placeholder: null,
     is_required: false,
     options: null,
-    mapping: 'full_name',
+    mapping: inferMapping(fieldType),
     sort_order: sortOrder,
   };
 }
@@ -402,7 +410,10 @@ export default function FormBuilderPage() {
                           <label className="block text-xs font-medium text-stone mb-1">Type</label>
                           <select
                             value={field.field_type}
-                            onChange={(e) => updateField(index, { field_type: e.target.value })}
+                            onChange={(e) => {
+                              const newType = e.target.value;
+                              updateField(index, { field_type: newType, mapping: inferMapping(newType) });
+                            }}
                             className="w-full px-2.5 py-1.5 text-sm border border-cream-warm rounded-md focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-white"
                           >
                             {FIELD_TYPES.map((t) => (

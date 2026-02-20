@@ -90,6 +90,7 @@ export async function POST(
   }
 
   // Map fields to contact data
+  // Use effective mapping: prefer field_type for email/phone if mapping was misconfigured
   let fullName = '';
   let email: string | null = null;
   let phone: string | null = null;
@@ -100,7 +101,12 @@ export async function POST(
     const value = submissions[field.id] || '';
     if (!value) continue;
 
-    switch (field.mapping) {
+    // Resolve mapping: field_type overrides stored mapping for email/phone
+    let effectiveMapping = field.mapping;
+    if (field.field_type === 'email') effectiveMapping = 'email';
+    if (field.field_type === 'phone') effectiveMapping = 'phone';
+
+    switch (effectiveMapping) {
       case 'full_name':
         fullName = value;
         break;
@@ -114,11 +120,11 @@ export async function POST(
         company = value;
         break;
       default:
-        if (field.mapping.startsWith('custom:')) {
-          const key = field.mapping.slice(7);
+        if (effectiveMapping.startsWith('custom:')) {
+          const key = effectiveMapping.slice(7);
           customFields[key] = value;
         } else {
-          customFields[field.mapping] = value;
+          customFields[effectiveMapping] = value;
         }
         break;
     }
