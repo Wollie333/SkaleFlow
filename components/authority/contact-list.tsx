@@ -34,7 +34,7 @@ export function ContactList({ contacts, onContactClick }: ContactListProps) {
     return (
       <div className="text-center py-16">
         <p className="text-sm text-stone">No contacts found</p>
-        <p className="text-xs text-stone/60 mt-1">Add a new contact or import from CSV</p>
+        <p className="text-xs text-stone/60 mt-1">Contacts appear here after you reach out via the PR Directory</p>
       </div>
     );
   }

@@ -149,8 +149,8 @@ const callsNavigation: NavItem[] = [
 
 const authorityNavigation: NavItem[] = [
   { name: 'Pipeline', href: '/authority', icon: NewspaperIcon },
-  { name: 'Contacts', href: '/authority/contacts', icon: UsersIcon },
   { name: 'PR Directory', href: '/authority/directory', icon: BookOpenIcon },
+  { name: 'My Contacts', href: '/authority/contacts', icon: UsersIcon },
   { name: 'Press Kit', href: '/authority/press-kit', icon: DocumentTextIcon },
   { name: 'Press Releases', href: '/authority/press-releases', icon: DocumentTextIcon },
   { name: 'PR Calendar', href: '/authority/calendar', icon: CalendarDaysIcon },

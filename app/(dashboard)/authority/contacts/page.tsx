@@ -67,7 +67,7 @@ export default function AuthorityContactsPage() {
     if (!organizationId) return;
     setLoading(true);
 
-    const params = new URLSearchParams({ organizationId });
+    const params = new URLSearchParams({ organizationId, hasPipelineCard: 'true' });
     if (search) params.set('search', search);
     if (warmthFilter) params.set('warmth', warmthFilter);
     if (roleFilter) params.set('role', roleFilter);
@@ -121,7 +121,7 @@ export default function AuthorityContactsPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <UsersIcon className="w-6 h-6 text-teal" />
-          <h1 className="text-2xl font-serif font-bold text-charcoal">Media Contacts</h1>
+          <h1 className="text-2xl font-serif font-bold text-charcoal">My Contacts</h1>
           {!loading && (
             <span className="text-xs text-stone bg-stone/5 px-2 py-1 rounded-full">
               {contacts.length} contacts

@@ -16,11 +16,31 @@ export async function GET(request: NextRequest) {
   if (!access.authorized) return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
   const db = access.queryClient;
 
+  // hasPipelineCard filter — only return contacts that have pipeline cards
+  const hasPipelineCard = searchParams.get('hasPipelineCard');
+  let pipelineContactIds: string[] | null = null;
+  if (hasPipelineCard === 'true') {
+    const { data: cards } = await db
+      .from('authority_pipeline_cards')
+      .select('contact_id')
+      .eq('organization_id', organizationId)
+      .not('contact_id', 'is', null);
+
+    pipelineContactIds = Array.from(new Set((cards || []).map((c: { contact_id: string | null }) => c.contact_id).filter(Boolean) as string[]));
+    if (pipelineContactIds.length === 0) {
+      return NextResponse.json([]);
+    }
+  }
+
   // Build query
   let query = db
     .from('authority_contacts')
     .select('*')
     .eq('organization_id', organizationId);
+
+  if (pipelineContactIds) {
+    query = query.in('id', pipelineContactIds);
+  }
 
   // Search filter
   const search = searchParams.get('search');
@@ -119,6 +139,27 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Auto-create pipeline card so contact appears in My Contacts
+  if (contact) {
+    const { data: firstStage } = await db
+      .from('authority_pipeline_stages')
+      .select('id')
+      .eq('organization_id', organizationId)
+      .order('position', { ascending: true })
+      .limit(1)
+      .single();
+
+    if (firstStage) {
+      await db.from('authority_pipeline_cards').insert({
+        organization_id: organizationId,
+        contact_id: contact.id,
+        stage_id: firstStage.id,
+        opportunity_name: full_name,
+        category: 'media_placement',
+      });
+    }
+  }
 
   return NextResponse.json(contact, { status: 201 });
 }
