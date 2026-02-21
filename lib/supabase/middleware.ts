@@ -38,7 +38,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Define public routes that don't require authentication
-  const publicRoutes = ['/login', '/register', '/auth/callback', '/invite', '/forgot-password', '/reset-password', '/api/auth/register', '/api/webhooks', '/apply', '/api/applications', '/problems', '/results', '/blog', '/about', '/skaleflow', '/homepage', '/book', '/api/bookings', '/book-a-call', '/api/book-a-call', '/call', '/features', '/sitemap.xml', '/robots.txt'];
+  const publicRoutes = ['/login', '/register', '/auth/callback', '/invite', '/forgot-password', '/reset-password', '/api/auth/register', '/api/webhooks', '/apply', '/api/applications', '/problems', '/results', '/blog', '/about', '/skaleflow', '/homepage', '/book', '/api/bookings', '/book-a-call', '/api/book-a-call', '/call', '/features', '/sitemap.xml', '/robots.txt', '/api/cron', '/api/content/publish/scheduled', '/api/content/analytics/sync', '/api/content/generate/queue/process', '/api/billing/credit-reset', '/api/automations/process', '/api/social/inbox/sync', '/api/marketing/analytics/sync', '/api/authority/notifications/process', '/api/authority/email/sync', '/api/calls/reminders', '/api/calls/pre-call-briefs'];
   const isPublicRoute =
     request.nextUrl.pathname === '/' ||
     publicRoutes.some(route =>
