@@ -617,35 +617,58 @@ export function CallRoom({
       setLocalStream(null);
     }
 
+    // Wait briefly for any previous camera release to complete
+    await new Promise(r => setTimeout(r, 500));
+
+    // Strategy: get audio first (fast), then add video separately.
+    // This avoids simultaneous audio+video requests that cause
+    // "Timeout starting video source" on some Windows camera drivers.
+    let audioTrack: MediaStreamTrack | null = null;
+    let videoTrack: MediaStreamTrack | null = null;
+
+    // Step 1: Audio (reliable, fast)
     try {
-      // Use explicit constraints — helps Windows camera drivers avoid timeouts
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
-        audio: { echoCancellation: true, noiseSuppression: true },
-      });
-      localStreamRef.current = stream;
-      setLocalStream(stream);
-      setIsCameraOff(false);
-      return;
+      const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioTrack = audioStream.getAudioTracks()[0] || null;
     } catch (err) {
-      console.error('[CallRoom] getUserMedia (video+audio) failed:', (err as Error).name, (err as Error).message);
+      console.error('[CallRoom] Audio acquisition failed:', (err as Error).name, (err as Error).message);
     }
 
-    // Fallback: try audio-only
-    try {
-      const audioStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true },
-      });
-      localStreamRef.current = audioStream;
-      setLocalStream(audioStream);
-      setIsCameraOff(true);
+    // Step 2: Video — try up to 2 times with a delay between attempts
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        if (attempt > 1) {
+          console.log('[CallRoom] Video retry attempt', attempt);
+          await new Promise(r => setTimeout(r, 1000));
+        }
+        const videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        videoTrack = videoStream.getVideoTracks()[0] || null;
+        break; // Success — exit retry loop
+      } catch (err) {
+        console.error(`[CallRoom] Video attempt ${attempt} failed:`, (err as Error).name, (err as Error).message);
+        if (attempt === 2 && (err as Error).name === 'AbortError') {
+          console.warn('[CallRoom] Camera timed out. Check if another app is using it.');
+        }
+      }
+    }
+
+    // Build combined stream from whatever tracks we got
+    if (audioTrack || videoTrack) {
+      const combinedStream = new MediaStream();
+      if (audioTrack) combinedStream.addTrack(audioTrack);
+      if (videoTrack) combinedStream.addTrack(videoTrack);
+      localStreamRef.current = combinedStream;
+      setLocalStream(combinedStream);
+      setIsCameraOff(!videoTrack);
       return;
-    } catch (err2) {
-      console.error('[CallRoom] getUserMedia (audio-only) failed:', (err2 as Error).name, (err2 as Error).message);
     }
 
-    // Both failed — show error
-    setMediaError('Could not access camera or microphone. Make sure no other app is using them, then click Retry.');
+    // Nothing worked
+    setMediaError(
+      'Could not access camera or microphone. ' +
+      'Make sure no other app (Zoom, Teams, OBS) is using the camera, ' +
+      'and check that camera access is allowed in your browser settings.'
+    );
   }, []);
 
   // Auto-acquire media on mount so user sees a live preview before joining
@@ -692,7 +715,7 @@ export function CallRoom({
     }
   }, [isScreenSharing]);
 
-  // Switch media devices
+  // Switch media devices — acquire audio and video separately to avoid driver timeouts
   const handleDeviceChange = useCallback(async (audioDeviceId: string | null, videoDeviceId: string | null) => {
     try {
       // Stop old tracks FIRST to release the camera before acquiring new one
@@ -702,21 +725,35 @@ export function CallRoom({
         setLocalStream(null);
       }
 
-      // Small delay to let driver fully release
-      await new Promise(r => setTimeout(r, 300));
+      // Wait for driver to fully release
+      await new Promise(r => setTimeout(r, 500));
 
-      const constraints: MediaStreamConstraints = {};
-      if (audioDeviceId) constraints.audio = { deviceId: { exact: audioDeviceId } };
-      else constraints.audio = { echoCancellation: true, noiseSuppression: true };
-      if (videoDeviceId) constraints.video = { deviceId: { exact: videoDeviceId }, width: { ideal: 1280 }, height: { ideal: 720 } };
-      else constraints.video = { width: { ideal: 1280 }, height: { ideal: 720 } };
+      const combinedStream = new MediaStream();
 
-      const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+      // Audio first
+      try {
+        const audioConstraint = audioDeviceId ? { deviceId: { exact: audioDeviceId } } : true;
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraint });
+        audioStream.getAudioTracks().forEach(t => combinedStream.addTrack(t));
+      } catch (err) {
+        console.error('Failed to get audio device:', err);
+      }
 
-      localStreamRef.current = newStream;
-      setLocalStream(newStream);
-      setIsCameraOff(false);
-      setIsMuted(false);
+      // Video second
+      try {
+        const videoConstraint = videoDeviceId ? { deviceId: { exact: videoDeviceId } } : true;
+        const videoStream = await navigator.mediaDevices.getUserMedia({ video: videoConstraint });
+        videoStream.getVideoTracks().forEach(t => combinedStream.addTrack(t));
+      } catch (err) {
+        console.error('Failed to get video device:', err);
+      }
+
+      if (combinedStream.getTracks().length > 0) {
+        localStreamRef.current = combinedStream;
+        setLocalStream(combinedStream);
+        setIsCameraOff(combinedStream.getVideoTracks().length === 0);
+        setIsMuted(combinedStream.getAudioTracks().length === 0);
+      }
     } catch (err) {
       console.error('Failed to switch devices:', err);
     }
