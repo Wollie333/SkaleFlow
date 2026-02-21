@@ -40,10 +40,10 @@ interface ContentBriefProps {
 
 export function ContentBrief({ item, organizationId }: ContentBriefProps) {
   const [orgName, setOrgName] = useState('');
-  const supabase = createClient();
 
   useEffect(() => {
     async function load() {
+      const supabase = createClient();
       const { data } = await supabase
         .from('organizations')
         .select('name')
@@ -52,7 +52,7 @@ export function ContentBrief({ item, organizationId }: ContentBriefProps) {
       if (data) setOrgName(data.name);
     }
     load();
-  }, [organizationId, supabase]);
+  }, [organizationId]);
 
   const handleExportBrief = () => {
     const w = window.open('', '_blank');

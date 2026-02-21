@@ -148,6 +148,7 @@ export async function generateContentForItems(
           maxTokens,
           temperature,
           modelId: resolvedModel.modelId,
+          jsonMode: true,
         });
 
         const parsed = parseEnhancedResponse(response.text, framework.formatCategory);
@@ -943,6 +944,7 @@ export async function generateSingleItem(
         maxTokens,
         temperature,
         modelId: resolvedModel.modelId,
+        jsonMode: true,
       });
 
       const aiElapsed = Date.now() - aiStartTime;

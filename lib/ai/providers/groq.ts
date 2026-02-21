@@ -58,7 +58,7 @@ export function createGroqComplete(client: Groq) {
             model: request.modelId || 'llama-3.3-70b-versatile',
             max_tokens: request.maxTokens || 4096,
             messages,
-            response_format: { type: 'json_object' },
+            ...(request.jsonMode ? { response_format: { type: 'json_object' as const } } : {}),
             ...(request.temperature !== undefined ? { temperature: request.temperature } : {}),
           }),
           AI_TIMEOUT_MS,
@@ -91,7 +91,13 @@ export function createGroqComplete(client: Groq) {
   };
 }
 
+let _groqClient: Groq | null = null;
+function getLazyClient() {
+  if (!_groqClient) _groqClient = getClient();
+  return _groqClient;
+}
+
 export const groqAdapter: AIProviderAdapter = {
   provider: 'groq',
-  complete: createGroqComplete(getClient()),
+  complete: (request) => createGroqComplete(getLazyClient())(request),
 };

@@ -62,6 +62,7 @@ export class LiveCopilot implements CopilotProvider {
         maxTokens: 300,
         temperature: 0.3,
         modelId: resolved.modelId,
+        jsonMode: true,
       });
 
       // Track AI usage + deduct credits

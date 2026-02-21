@@ -44,6 +44,7 @@ export async function refineSection(
     maxTokens: 1500,
     temperature: 0.4,
     modelId: resolved.modelId,
+    jsonMode: true,
   });
 
   if (!usingUserKey && !isAdmin) {

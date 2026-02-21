@@ -188,6 +188,7 @@ export async function generateAdCreative(
         maxTokens,
         temperature,
         modelId: resolvedModel.modelId,
+        jsonMode: true,
       });
 
       const parsed = parseAdCopyResponse(response.text);

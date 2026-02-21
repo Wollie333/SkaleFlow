@@ -65,6 +65,7 @@ export async function extractBrandAuditData(callId: string, orgId: string, userI
     maxTokens: 4000,
     temperature: 0.3,
     modelId: resolved.modelId,
+    jsonMode: true,
   });
 
   if (!usingUserKey && !isAdmin) {

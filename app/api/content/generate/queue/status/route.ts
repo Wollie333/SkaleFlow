@@ -22,7 +22,15 @@ export async function GET(request: NextRequest) {
   const action = request.nextUrl.searchParams.get('action');
   console.log(`[QUEUE-STATUS] batchId=${batchId}, action=${action || 'none'}, user=${user.id}`);
 
+  // Verify user belongs to the batch's org
   const serviceClient = createServiceClient();
+  const { data: batch } = await serviceClient.from('generation_batches').select('organization_id').eq('id', batchId).single();
+  if (batch) {
+    const { data: member } = await supabase.from('org_members').select('id').eq('user_id', user.id).eq('organization_id', batch.organization_id).single();
+    if (!member) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+  }
 
   // When the tracker requests processing, generate ONE item synchronously
   // before returning the updated status. This ensures the AI call completes

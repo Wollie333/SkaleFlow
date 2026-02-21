@@ -23,12 +23,13 @@ export async function GET(
     return NextResponse.json({ error: 'Call not found' }, { status: 404 });
   }
 
-  // Exclude left/denied/kicked — only show active or pending participants
+  // Exclude left/denied — only show active or pending participants
   const { data: participants, error } = await serviceClient
     .from('call_participants')
     .select('id, call_id, user_id, guest_name, guest_email, role, status, joined_at, left_at, consent_given, invite_method, created_at')
     .eq('call_id', call.id)
-    .not('status', 'in', '("left","denied")')
+    .neq('status', 'left')
+    .neq('status', 'denied')
     .order('created_at', { ascending: true });
 
   if (error) {

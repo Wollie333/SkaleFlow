@@ -78,6 +78,7 @@ export async function generateRoadmap(auditId: string, orgId: string, userId: st
     maxTokens: 2000,
     temperature: 0.4,
     modelId: resolved.modelId,
+    jsonMode: true,
   });
 
   if (!usingUserKey && !isAdmin) {

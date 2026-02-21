@@ -170,6 +170,7 @@ Write the caption in the brand's voice. Be specific — reference actual brand o
     maxTokens: 2000,
     temperature: 0.8,
     modelId: resolvedModel.modelId,
+    jsonMode: true,
   });
 
   // Deduct credits for paid models (skip when using user's own key)

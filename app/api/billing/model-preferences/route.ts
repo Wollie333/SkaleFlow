@@ -17,6 +17,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
     }
 
+    const { data: member } = await supabase.from('org_members').select('id').eq('user_id', user.id).eq('organization_id', organizationId).single();
+    if (!member) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { data: preferences } = await supabase
       .from('ai_model_preferences')
       .select('*')

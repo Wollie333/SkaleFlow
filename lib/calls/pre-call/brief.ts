@@ -71,6 +71,7 @@ export async function generatePreCallBrief(callId: string, orgId: string, hostUs
       maxTokens: 1000,
       temperature: 0.3,
       modelId: resolved.modelId,
+      jsonMode: true,
     });
 
     if (!usingUserKey) {

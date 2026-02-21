@@ -6659,6 +6659,49 @@ export interface Database {
         ];
       };
 
+      call_messages: {
+        Row: {
+          id: string;
+          call_id: string;
+          participant_id: string | null;
+          sender_name: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          call_id: string;
+          participant_id?: string | null;
+          sender_name: string;
+          content: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          call_id?: string;
+          participant_id?: string | null;
+          sender_name?: string;
+          content?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "call_messages_call_id_fkey";
+            columns: ["call_id"];
+            isOneToOne: false;
+            referencedRelation: "calls";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "call_messages_participant_id_fkey";
+            columns: ["participant_id"];
+            isOneToOne: false;
+            referencedRelation: "call_participants";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
       call_transcripts: {
         Row: {
           id: string;

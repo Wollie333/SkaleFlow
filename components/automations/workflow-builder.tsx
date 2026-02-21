@@ -55,9 +55,6 @@ interface WorkflowBuilderProps {
   onPublish: () => Promise<void>;
 }
 
-let nodeId = 0;
-const getNodeId = () => `node_${nodeId++}`;
-
 export function WorkflowBuilder({
   initialNodes = [],
   initialEdges = [],
@@ -71,6 +68,8 @@ export function WorkflowBuilder({
   onPublish,
 }: WorkflowBuilderProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const nodeIdRef = useRef(0);
+  const getNodeId = useCallback(() => `node_${nodeIdRef.current++}`, []);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);

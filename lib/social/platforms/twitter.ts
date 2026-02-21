@@ -1,21 +1,26 @@
+import crypto from 'crypto';
 import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData } from '../types';
 
 const TWITTER_API_BASE = 'https://api.twitter.com/2';
+
+function computeS256Challenge(verifier: string): string {
+  return crypto.createHash('sha256').update(verifier).digest('base64url');
+}
 
 export const twitterAdapter: PlatformAdapter = {
   platform: 'twitter',
 
   getAuthUrl(state: string, redirectUri: string): string {
-    // Twitter OAuth 2.0 with PKCE
-    // Note: code_challenge should be generated per request and stored alongside state
+    // Twitter OAuth 2.0 with PKCE (S256)
+    // state doubles as code_verifier — it's a random string stored by the caller
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: process.env.TWITTER_CLIENT_ID!,
       redirect_uri: redirectUri,
       scope: 'tweet.read tweet.write users.read offline.access',
       state,
-      code_challenge: state, // In production, use a proper PKCE challenge
-      code_challenge_method: 'plain',
+      code_challenge: computeS256Challenge(state),
+      code_challenge_method: 'S256',
     });
     return `https://twitter.com/i/oauth2/authorize?${params}`;
   },
@@ -35,7 +40,7 @@ export const twitterAdapter: PlatformAdapter = {
         code,
         grant_type: 'authorization_code',
         redirect_uri: redirectUri,
-        code_verifier: codeVerifier || code, // Must match the code_challenge from getAuthUrl (using plain method)
+        code_verifier: codeVerifier || code, // codeVerifier should be the original state value used in getAuthUrl
       }),
     });
 

@@ -61,6 +61,7 @@ export async function analyzeWebsite(
     maxTokens: 3000,
     temperature: 0.3,
     modelId: resolved.modelId,
+    jsonMode: true,
   });
 
   if (!usingUserKey && !isAdmin) {

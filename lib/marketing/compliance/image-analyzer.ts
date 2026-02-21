@@ -46,6 +46,7 @@ If you cannot analyze the image, return:
     maxTokens: 200,
     temperature: 0.1,
     modelId: model.modelId,
+    jsonMode: true,
   };
 
   try {

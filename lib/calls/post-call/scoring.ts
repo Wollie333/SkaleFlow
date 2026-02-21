@@ -84,6 +84,7 @@ export async function scoreCall(callId: string, orgId: string, userId: string) {
       maxTokens: 800,
       temperature: 0.2,
       modelId: resolved.modelId,
+      jsonMode: true,
     });
 
     // Track AI usage with call_id

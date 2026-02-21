@@ -121,7 +121,7 @@ export default function AuthorityPressKitPage() {
     loadData();
   };
 
-  if (loading) {
+  if (loading || !organizationId) {
     return (
       <div className="p-6">
         <div className="flex items-center gap-3 mb-6">
@@ -156,7 +156,7 @@ export default function AuthorityPressKitPage() {
           <div className="bg-cream-warm border border-stone/10 rounded-xl p-6 shadow-sm">
             <PressKitBuilder
               pressKit={pressKit as Parameters<typeof PressKitBuilder>[0]['pressKit']}
-              organizationId={organizationId!}
+              organizationId={organizationId}
               brandData={brandData}
               onSave={handleSavePressKit}
               selectedModelId={selectedModelId}
@@ -170,7 +170,7 @@ export default function AuthorityPressKitPage() {
           <div className="bg-cream-warm border border-stone/10 rounded-xl p-6 shadow-sm">
             <StoryAngleManager
               angles={storyAngles}
-              organizationId={organizationId!}
+              organizationId={organizationId}
               onRefresh={loadData}
               defaultModelId={selectedModelId}
             />

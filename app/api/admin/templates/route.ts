@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { sanitizeSearch } from '@/lib/sanitize-search';
 import type { TemplateCategory, TemplateTier } from '@/types/database';
 
 export async function GET(request: Request) {
@@ -45,7 +46,8 @@ export async function GET(request: Request) {
       query = query.eq('is_active', false);
     }
     if (search) {
-      query = query.or(`name.ilike.%${search}%,template_key.ilike.%${search}%,description.ilike.%${search}%`);
+      const s = sanitizeSearch(search);
+      query = query.or(`name.ilike.%${s}%,template_key.ilike.%${s}%,description.ilike.%${s}%`);
     }
 
     const { data: templates, error } = await query;

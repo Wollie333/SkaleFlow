@@ -62,7 +62,7 @@ export function ChatPanel({ messages, onSendMessage, localParticipantId }: ChatP
       {/* Header */}
       <div className="px-4 py-3 border-b border-white/10">
         <h3 className="text-white text-sm font-semibold">Chat</h3>
-        <p className="text-white/40 text-[10px] mt-0.5">Messages are not saved after the call</p>
+        <p className="text-white/40 text-[10px] mt-0.5">Messages are saved with the call</p>
       </div>
 
       {/* Messages */}

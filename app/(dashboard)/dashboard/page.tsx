@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { Card, CardContent, Badge } from '@/components/ui';
 import {
@@ -20,11 +21,12 @@ export default async function DashboardPage() {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) { redirect('/login'); }
 
   const { data: membership } = await supabase
     .from('org_members')
     .select('organization_id, role, organizations(name, brand_engine_status, content_engine_enabled)')
-    .eq('user_id', user!.id)
+    .eq('user_id', user.id)
     .single();
 
   const organization = membership?.organizations as { name: string; brand_engine_status: string; content_engine_enabled: boolean } | null;
@@ -35,7 +37,7 @@ export default async function DashboardPage() {
   const { data: userData } = await supabase
     .from('users')
     .select('full_name, role')
-    .eq('id', user!.id)
+    .eq('id', user.id)
     .single();
 
   const firstName = userData?.full_name?.split(' ')[0] || 'there';
@@ -150,7 +152,7 @@ export default async function DashboardPage() {
       supabase
         .from('notifications')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         .eq('is_read', false),
 
       // 9. Connected social platforms

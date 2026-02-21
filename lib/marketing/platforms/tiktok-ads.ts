@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import type {
   AdPlatformAdapter,
   AdTokenData,
@@ -727,10 +728,10 @@ export class TikTokAdsAdapter implements AdPlatformAdapter {
 
     for (const user of users) {
       if (user.email) {
-        emails.push(user.email.trim().toLowerCase());
+        emails.push(crypto.createHash('sha256').update(user.email.trim().toLowerCase()).digest('hex'));
       }
       if (user.phone) {
-        phones.push(user.phone.replace(/\D/g, ''));
+        phones.push(crypto.createHash('sha256').update(user.phone.replace(/\D/g, '')).digest('hex'));
       }
     }
 

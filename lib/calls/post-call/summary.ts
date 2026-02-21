@@ -45,6 +45,7 @@ export async function generateCallSummary(callId: string, orgId: string, userId:
       maxTokens: 2000,
       temperature: 0.2,
       modelId: resolved.modelId,
+      jsonMode: true,
     });
 
     let credits = 0;

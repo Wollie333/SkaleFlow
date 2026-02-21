@@ -52,6 +52,7 @@ export async function draftFollowUpEmail(callId: string, orgId: string, userId: 
       maxTokens: 800,
       temperature: 0.4,
       modelId: resolved.modelId,
+      jsonMode: true,
     });
 
     let credits = 0;

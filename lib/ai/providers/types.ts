@@ -11,6 +11,8 @@ export interface AICompletionRequest {
   temperature?: number;
   /** The actual model ID to send to the API (e.g. 'claude-sonnet-4-5-20250929') */
   modelId?: string;
+  /** When true, instruct the provider to return JSON. Defaults to false. */
+  jsonMode?: boolean;
 }
 
 export interface AICompletionResponse {

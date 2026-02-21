@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { sanitizeSearch } from '@/lib/sanitize-search';
 
 // GET /api/social/inbox - Fetch interactions with filtering
 export async function GET(request: NextRequest) {
@@ -66,7 +67,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      query = query.or(`message.ilike.%${search}%,author_name.ilike.%${search}%,author_username.ilike.%${search}%`);
+      const s = sanitizeSearch(search);
+      query = query.or(`message.ilike.%${s}%,author_name.ilike.%${s}%,author_username.ilike.%${s}%`);
     }
 
     const { data: interactions, error, count } = await query;

@@ -127,6 +127,7 @@ The script should expand on the post's message — go deeper, provide more value
     maxTokens: 3000,
     temperature: 0.7,
     modelId: resolvedModel.modelId,
+    jsonMode: true,
   });
 
   // Deduct credits (skip when using user's own key)

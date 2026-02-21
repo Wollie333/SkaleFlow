@@ -1,6 +1,10 @@
 import crypto from 'crypto';
 
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY!;
+function getSecretKey(): string {
+  const key = process.env.PAYSTACK_SECRET_KEY;
+  if (!key) throw new Error('PAYSTACK_SECRET_KEY environment variable is not set');
+  return key;
+}
 const PAYSTACK_BASE_URL = 'https://api.paystack.co';
 
 export interface PaystackCustomer {
@@ -48,7 +52,7 @@ async function paystackRequest<T>(
   const response = await fetch(`${PAYSTACK_BASE_URL}${endpoint}`, {
     method,
     headers: {
-      Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+      Authorization: `Bearer ${getSecretKey()}`,
       'Content-Type': 'application/json',
     },
     body: body ? JSON.stringify(body) : undefined,
@@ -161,10 +165,14 @@ export function verifyWebhookSignature(
   signature: string
 ): boolean {
   const hash = crypto
-    .createHmac('sha512', PAYSTACK_SECRET_KEY)
+    .createHmac('sha512', getSecretKey())
     .update(body)
     .digest('hex');
-  return hash === signature;
+  try {
+    return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
+  } catch {
+    return false;
+  }
 }
 
 /**

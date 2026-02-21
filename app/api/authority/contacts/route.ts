@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { checkAuthorityAccess } from '@/lib/authority/auth';
+import { sanitizeSearch } from '@/lib/sanitize-search';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -45,7 +46,8 @@ export async function GET(request: NextRequest) {
   // Search filter
   const search = searchParams.get('search');
   if (search) {
-    query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,outlet.ilike.%${search}%`);
+    const s = sanitizeSearch(search);
+    query = query.or(`full_name.ilike.%${s}%,email.ilike.%${s}%,outlet.ilike.%${s}%`);
   }
 
   // Warmth filter

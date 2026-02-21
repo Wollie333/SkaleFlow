@@ -41,6 +41,7 @@ export async function extractBrandInsights(callId: string, orgId: string, userId
       maxTokens: 1000,
       temperature: 0.3,
       modelId: resolved.modelId,
+      jsonMode: true,
     });
 
     let credits = 0;

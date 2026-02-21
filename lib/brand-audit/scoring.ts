@@ -67,6 +67,7 @@ export async function scoreAudit(auditId: string, orgId: string, userId: string)
     maxTokens: 4000,
     temperature: 0.3,
     modelId: resolved.modelId,
+    jsonMode: true,
   });
 
   // 3. Deduct credits

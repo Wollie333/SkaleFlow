@@ -1,5 +1,10 @@
 import { Resend } from 'resend';
 
+/** Escape HTML special characters to prevent injection in email templates */
+function escHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 let _resend: Resend | null = null;
 
 function getResend() {
@@ -51,7 +56,7 @@ export async function sendBookingEmail({
           <tr>
             <td style="padding:40px 36px;">
               <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:bold;color:#2A2A28;margin:0 0 16px 0;">
-                Congratulations, ${applicantName}!
+                Congratulations, ${escHtml(applicantName)}!
               </h1>
               <p style="font-size:15px;line-height:1.7;color:#555;margin:0 0 24px 0;">
                 Your application has been approved. The next step is to book a short onboarding call with our team so we can learn more about your business and get you set up.
@@ -178,7 +183,7 @@ export async function sendTeamInviteEmail({
   const { data, error } = await getResend().emails.send({
     from: FROM_ADDRESS,
     to,
-    subject: `You've been invited to join ${organizationName} on SkaleFlow`,
+    subject: `You've been invited to join ${escHtml(organizationName)} on SkaleFlow`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -209,7 +214,7 @@ export async function sendTeamInviteEmail({
                 You're invited!
               </h1>
               <p style="font-size:15px;line-height:1.7;color:#555;margin:0 0 8px 0;">
-                <strong>${inviterName}</strong> has invited you to join <strong>${organizationName}</strong> on SkaleFlow.
+                <strong>${escHtml(inviterName)}</strong> has invited you to join <strong>${escHtml(organizationName)}</strong> on SkaleFlow.
               </p>
               <p style="font-size:15px;line-height:1.7;color:#555;margin:0 0 32px 0;">
                 Click the button below to accept your invitation and set up your account. This link expires in 7 days.
@@ -298,10 +303,10 @@ export async function sendNotificationEmail({
           <tr>
             <td style="padding:40px 36px;">
               <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:bold;color:#2A2A28;margin:0 0 16px 0;">
-                ${title}
+                ${escHtml(title)}
               </h1>
               <p style="font-size:15px;line-height:1.7;color:#555;margin:0 0 32px 0;">
-                ${body}
+                ${escHtml(body)}
               </p>
               ${link ? `
               <table cellpadding="0" cellspacing="0" width="100%">

@@ -70,7 +70,7 @@ export type RecordingState = 'idle' | 'recording' | 'stopping';
 export function CallRoom({
   roomCode, callId, callTitle, organizationId, userId, isHost, guestName, guestEmail, showOpenInTab, templateId
 }: CallRoomProps) {
-  const [activePanel, setActivePanel] = useState<PanelView>(isHost ? 'insights' : 'attendees');
+  const [activePanel, setActivePanel] = useState<PanelView>(isHost ? 'insights' : 'none');
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [transcripts, setTranscripts] = useState<TranscriptChunk[]>([]);
   const [guidance, setGuidance] = useState<GuidanceItem[]>([]);
@@ -113,6 +113,7 @@ export function CallRoom({
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [unreadChat, setUnreadChat] = useState(0);
   const chatCounterRef = useRef(0);
+  const chatLoadedRef = useRef(false);
 
   // Waiting room visibility
   const prevWaitingCountRef = useRef(0);
@@ -517,9 +518,32 @@ export function CallRoom({
     }
   }, [roomCode]);
 
-  // Send a chat message via signaling
+  // Load existing chat messages from DB on mount
+  useEffect(() => {
+    if (chatLoadedRef.current) return;
+    chatLoadedRef.current = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/calls/${roomCode}/messages`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const loaded: ChatMessage[] = data.map((m: { id: string; participant_id: string | null; sender_name: string; content: string; created_at: string }) => ({
+            id: m.id,
+            senderId: m.participant_id || '',
+            senderName: m.sender_name,
+            content: m.content,
+            timestamp: new Date(m.created_at).getTime(),
+          }));
+          setChatMessages(loaded);
+        }
+      } catch { /* ignore load error */ }
+    })();
+  }, [roomCode]);
+
+  // Send a chat message via signaling + persist to DB
   const sendChatMessage = useCallback((content: string) => {
-    if (!signalingRef.current || !participantIdRef.current) return;
+    if (!participantIdRef.current) return;
     const senderName = isHost ? 'Host' : (guestName || 'Guest');
     const msg: ChatMessage = {
       id: `chat-${++chatCounterRef.current}`,
@@ -530,13 +554,23 @@ export function CallRoom({
     };
     // Add to local messages immediately
     setChatMessages(prev => [...prev, msg]);
-    // Broadcast to others
-    signalingRef.current.send('chat-message', {
+    // Broadcast to others via signaling
+    signalingRef.current?.send('chat-message', {
       senderName,
       content,
       timestamp: msg.timestamp,
     });
-  }, [isHost, guestName]);
+    // Persist to DB (non-blocking)
+    fetch(`/api/calls/${roomCode}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        participantId: participantIdRef.current,
+        senderName,
+        content,
+      }),
+    }).catch(() => {});
+  }, [isHost, guestName, roomCode]);
 
   // Start transcription when call is active (host only)
   useEffect(() => {
@@ -1107,7 +1141,7 @@ export function CallRoom({
           )}
         </div>
         <div className="flex items-center gap-1.5 md:gap-2">
-          {(isHost ? ['attendees', 'insights', 'offers', 'chat'] : ['attendees', 'chat']).map((panel) => (
+          {(isHost ? ['attendees', 'insights', 'offers', 'chat'] : (localStatus === 'in_call' ? ['chat'] : [])).map((panel) => (
             <button
               key={panel}
               onClick={() => setActivePanel(activePanel === panel ? 'none' : panel as PanelView)}

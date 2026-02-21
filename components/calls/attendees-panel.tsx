@@ -14,9 +14,12 @@ interface AttendeesPanelProps {
   onKick?: (participantId: string) => void;
 }
 
-function Avatar({ participant, size = 'md' }: { participant: Participant; size?: 'sm' | 'md' }) {
-  const dim = size === 'sm' ? 'w-7 h-7' : 'w-8 h-8';
-  const textSize = size === 'sm' ? 'text-xs' : 'text-sm';
+function Avatar({ participant, size = 'md' }: { participant: Participant; size?: 'sm' | 'md' | 'lg' }) {
+  const dims = { sm: 'w-7 h-7', md: 'w-8 h-8', lg: 'w-12 h-12' };
+  const textSizes = { sm: 'text-xs', md: 'text-sm', lg: 'text-lg' };
+  const pixels = { sm: 28, md: 32, lg: 48 };
+  const dim = dims[size];
+  const textSize = textSizes[size];
   const initial = participant.name.charAt(0).toUpperCase();
 
   if (participant.avatarUrl) {
@@ -24,8 +27,8 @@ function Avatar({ participant, size = 'md' }: { participant: Participant; size?:
       <Image
         src={participant.avatarUrl}
         alt={participant.name}
-        width={size === 'sm' ? 28 : 32}
-        height={size === 'sm' ? 28 : 32}
+        width={pixels[size]}
+        height={pixels[size]}
         className={`${dim} rounded-full object-cover flex-shrink-0`}
       />
     );
@@ -56,32 +59,53 @@ export function AttendeesPanel({ participants, isHost, hostUserId, roomCode, onA
   return (
     <div className="flex flex-col h-full">
       <div className="px-3 md:px-4 py-3 border-b border-white/10">
-        <h3 className="text-white text-sm font-semibold">Attendees ({inCall.length})</h3>
+        <h3 className="text-white text-sm font-semibold">
+          Attendees ({inCall.length})
+          {waiting.length > 0 && (
+            <span className="ml-2 text-amber-400 text-xs font-normal">
+              {waiting.length} waiting
+            </span>
+          )}
+        </h3>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-4">
-        {/* Waiting room */}
+        {/* Waiting room — prominent cards */}
         {waiting.length > 0 && (
           <div>
-            <h4 className="text-white/50 text-xs font-medium uppercase tracking-wider mb-2">Waiting Room</h4>
-            <div className="space-y-1">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <h4 className="text-amber-400 text-xs font-semibold uppercase tracking-wider">
+                Waiting Room ({waiting.length})
+              </h4>
+            </div>
+            <div className="space-y-2">
               {waiting.map(p => (
-                <div key={p.id} className="flex items-center justify-between p-2 rounded-lg bg-yellow-500/10">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Avatar participant={p} size="sm" />
-                    <span className="text-white text-sm truncate">{p.name}</span>
+                <div
+                  key={p.id}
+                  className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <Avatar participant={p} size="lg" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white font-medium text-sm truncate">{p.name}</p>
+                      {p.email && (
+                        <p className="text-white/50 text-xs truncate">{p.email}</p>
+                      )}
+                      <p className="text-amber-400/70 text-[10px] mt-0.5">Waiting to be admitted</p>
+                    </div>
                   </div>
                   {isHost && (
-                    <div className="flex gap-1.5 flex-shrink-0 ml-2">
+                    <div className="flex gap-2">
                       <button
                         onClick={() => onAdmit?.(p.id)}
-                        className="px-3 py-1.5 text-xs rounded-lg bg-[#1E6B63] text-white hover:bg-[#1E6B63]/80 active:bg-[#1E6B63]/70 transition-colors"
+                        className="flex-1 py-2 text-sm font-medium rounded-lg bg-[#1E6B63] text-white hover:bg-[#1E6B63]/80 active:bg-[#1E6B63]/70 transition-colors"
                       >
                         Admit
                       </button>
                       <button
                         onClick={() => onDeny?.(p.id)}
-                        className="px-3 py-1.5 text-xs rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 active:bg-red-500/40 transition-colors"
+                        className="px-4 py-2 text-sm font-medium rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30 active:bg-red-500/40 transition-colors"
                       >
                         Deny
                       </button>
@@ -136,10 +160,18 @@ export function AttendeesPanel({ participants, isHost, hostUserId, roomCode, onA
               {invited.map(p => (
                 <div key={p.id} className="flex items-center gap-2 p-2 rounded-lg">
                   <Avatar participant={p} size="sm" />
-                  <span className="text-white/50 text-sm">{p.name}</span>
+                  <span className="text-white/60 text-sm">{p.name}</span>
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {waiting.length === 0 && inCall.length === 0 && invited.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-32 text-center">
+            <p className="text-white/30 text-xs">No attendees yet</p>
+            <p className="text-white/20 text-[10px] mt-1">Share the invite link below</p>
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { sanitizeSearch } from '@/lib/sanitize-search';
 import type { Json } from '@/types/database';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ pipelineId: string }> }) {
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .order('created_at', { ascending: false });
 
   if (stageId) query = query.eq('stage_id', stageId);
-  if (search) query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,company.ilike.%${search}%`);
+  if (search) { const s = sanitizeSearch(search); query = query.or(`full_name.ilike.%${s}%,email.ilike.%${s}%,company.ilike.%${s}%`); }
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

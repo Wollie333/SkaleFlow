@@ -78,6 +78,7 @@ export async function generateStrategicInsights(
       maxTokens: 1500,
       temperature: 0.3,
       modelId: resolved.modelId,
+      jsonMode: true,
     });
 
     // Track AI usage with call_id

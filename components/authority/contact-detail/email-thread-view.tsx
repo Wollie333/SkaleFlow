@@ -114,9 +114,11 @@ export function EmailThreadView({ thread, onReply }: EmailThreadViewProps) {
               {/* Message body */}
               <div className="mt-2">
                 {msg.email_body_html ? (
-                  <div
-                    className="text-xs text-charcoal leading-relaxed prose prose-xs max-w-none [&_*]:text-xs"
-                    dangerouslySetInnerHTML={{ __html: msg.email_body_html }}
+                  <iframe
+                    srcDoc={msg.email_body_html}
+                    sandbox=""
+                    className="w-full min-h-[120px] border-0 text-xs"
+                    title="Email content"
                   />
                 ) : (
                   <pre className="text-xs text-charcoal leading-relaxed whitespace-pre-wrap font-sans">

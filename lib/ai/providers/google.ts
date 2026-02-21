@@ -48,7 +48,7 @@ export function createGoogleComplete(genAI: GoogleGenerativeAI) {
       history,
       generationConfig: {
         maxOutputTokens: request.maxTokens || 4096,
-        responseMimeType: 'application/json',
+        ...(request.jsonMode ? { responseMimeType: 'application/json' } : {}),
         ...(request.temperature !== undefined ? { temperature: request.temperature } : {}),
       },
     });
@@ -102,7 +102,13 @@ export function createGoogleComplete(genAI: GoogleGenerativeAI) {
   };
 }
 
+let _googleClient: GoogleGenerativeAI | null = null;
+function getLazyClient() {
+  if (!_googleClient) _googleClient = getClient();
+  return _googleClient;
+}
+
 export const googleAdapter: AIProviderAdapter = {
   provider: 'google',
-  complete: createGoogleComplete(getClient()),
+  complete: (request) => createGoogleComplete(getLazyClient())(request),
 };

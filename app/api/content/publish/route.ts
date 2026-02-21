@@ -103,6 +103,11 @@ export async function POST(request: NextRequest) {
       .select('id')
       .single();
 
+    if (!publishedPost) {
+      results.push({ platform: connection.platform as SocialPlatform, success: false, error: 'Failed to create publish record' });
+      continue;
+    }
+
     // Publish
     const publishResult = await publishToConnection(
       connection as unknown as ConnectionWithTokens,
@@ -123,7 +128,7 @@ export async function POST(request: NextRequest) {
           published_at: new Date().toISOString(),
           metadata: (publishResult.result.metadata || {}) as unknown as Json,
         })
-        .eq('id', publishedPost!.id);
+        .eq('id', publishedPost.id);
 
       results.push({
         platform: connection.platform,
@@ -139,7 +144,7 @@ export async function POST(request: NextRequest) {
           error_message: publishResult.result.error || 'Unknown error',
           retry_count: 0,
         })
-        .eq('id', publishedPost!.id);
+        .eq('id', publishedPost.id);
 
       results.push({
         platform: connection.platform,
