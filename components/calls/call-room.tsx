@@ -98,6 +98,8 @@ export function CallRoom({
     billing_frequency: string | null; deliverables: string[]; value_propositions: string[];
   } | null>(null);
   const [offerResponses, setOfferResponses] = useState<OfferResponseMap>({});
+  // Track participant registration as state so effects re-run when it changes
+  const [registeredParticipantId, setRegisteredParticipantId] = useState<string | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const participantIdRef = useRef<string | null>(null);
@@ -302,6 +304,7 @@ export function CallRoom({
         if (res.ok && !cancelled) {
           const data = await res.json();
           participantIdRef.current = data.id;
+          setRegisteredParticipantId(data.id);
         }
       } catch (err) {
         console.error('Failed to register participant:', err);
@@ -312,13 +315,20 @@ export function CallRoom({
     return () => { cancelled = true; };
   }, [roomCode, userId, guestName, guestEmail, isHost]);
 
-  // Poll participants every 5s
+  // Poll participants every 3s (fast enough for waiting room responsiveness)
   useEffect(() => {
     const fetchParticipants = async () => {
       try {
         const res = await fetch(`/api/calls/${roomCode}/participants`);
-        if (!res.ok) return;
+        if (!res.ok) {
+          console.warn('[CallRoom] Participant poll failed:', res.status);
+          return;
+        }
         const data = await res.json();
+        if (!Array.isArray(data)) {
+          console.warn('[CallRoom] Unexpected participant response:', data);
+          return;
+        }
         const mapped: Participant[] = data.map((p: Record<string, unknown>) => ({
           id: p.id as string,
           userId: p.user_id as string | null,
@@ -339,13 +349,13 @@ export function CallRoom({
             setLocalStatus('in_call');
           }
         }
-      } catch {
-        // Ignore polling errors
+      } catch (err) {
+        console.warn('[CallRoom] Participant poll error:', err);
       }
     };
 
     fetchParticipants();
-    pollRef.current = setInterval(fetchParticipants, 5000);
+    pollRef.current = setInterval(fetchParticipants, 3000);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
@@ -360,6 +370,13 @@ export function CallRoom({
     prevWaitingCountRef.current = waitingCount;
   }, [waitingCount, isHost]);
 
+  // Auto-join for guests once admitted (skip the pre-call lobby)
+  useEffect(() => {
+    if (!isHost && localStatus === 'in_call' && !callActive) {
+      joinCall();
+    }
+  }, [isHost, localStatus, callActive, joinCall]);
+
   // Clear unread chat count when chat panel is open
   useEffect(() => {
     if (activePanel === 'chat') {
@@ -367,11 +384,11 @@ export function CallRoom({
     }
   }, [activePanel]);
 
-  // Signaling connection
+  // Signaling connection — waits for participant registration to complete
   useEffect(() => {
-    if (!participantIdRef.current) return;
+    if (!registeredParticipantId) return;
 
-    const signaling = new CallSignaling(roomCode, participantIdRef.current);
+    const signaling = new CallSignaling(roomCode, registeredParticipantId);
     signalingRef.current = signaling;
 
     // Handle recording signals (non-host side)
@@ -389,7 +406,7 @@ export function CallRoom({
 
     // Handle admit signal (guest side — transition from waiting to in_call)
     signaling.on('admit-participant', (msg) => {
-      if (msg.payload.participantId === participantIdRef.current) {
+      if (msg.payload.participantId === registeredParticipantId) {
         setLocalStatus('in_call');
       }
     });
@@ -485,7 +502,7 @@ export function CallRoom({
       signalingRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomCode, isHost, participantIdRef.current]);
+  }, [roomCode, isHost, registeredParticipantId]);
 
   // Save a final transcript chunk to the database
   const saveTranscriptToDb = useCallback(async (speakerLabel: string, content: string, timestampStart: number) => {
@@ -1137,7 +1154,7 @@ export function CallRoom({
             localStream={localStream}
             participants={participants}
             localUserId={userId || null}
-            localParticipantId={participantIdRef.current}
+            localParticipantId={registeredParticipantId}
             isCameraOff={isCameraOff}
             isScreenSharing={isScreenSharing}
             callActive={callActive}
@@ -1149,7 +1166,7 @@ export function CallRoom({
           />
 
           {/* Floating waiting room banner — host sees when guests are waiting */}
-          {isHost && waitingCount > 0 && callActive && (
+          {isHost && waitingCount > 0 && (
             <div
               className="absolute top-2 left-2 right-2 md:top-3 md:left-3 md:right-3 z-10 cursor-pointer"
               onClick={() => setActivePanel('attendees')}
@@ -1224,11 +1241,15 @@ export function CallRoom({
             )}
             {activePanel === 'insights' && (
               <div className="flex flex-col h-full">
-                {/* Transcript — top section */}
-                <div className={brandAuditId ? 'h-[35%] min-h-0 border-b border-white/10' : 'flex-1 min-h-0 border-b border-white/10'}>
-                  <TranscriptPanel
-                    transcripts={transcripts}
-                    onExtract={brandAuditId ? handleAuditExtract : undefined}
+                {/* Copilot — top section (most useful for host) */}
+                <div className={brandAuditId ? 'h-[30%] min-h-0 border-b border-white/10' : 'flex-1 min-h-0 border-b border-white/10'}>
+                  <CopilotPanel
+                    guidance={guidance}
+                    callActive={callActive}
+                    transcriptCount={transcripts.length}
+                    brandAuditMode={!!brandAuditId}
+                    auditNextQuestion={auditNextQuestion}
+                    templatePhases={templatePhases}
                   />
                 </div>
                 {/* Brand Audit extraction panel (shown when audit mode) */}
@@ -1244,15 +1265,11 @@ export function CallRoom({
                     />
                   </div>
                 )}
-                {/* Copilot — bottom section */}
-                <div className={brandAuditId ? 'h-[30%] min-h-0' : 'flex-1 min-h-0'}>
-                  <CopilotPanel
-                    guidance={guidance}
-                    callActive={callActive}
-                    transcriptCount={transcripts.length}
-                    brandAuditMode={!!brandAuditId}
-                    auditNextQuestion={auditNextQuestion}
-                    templatePhases={templatePhases}
+                {/* Transcript — bottom section */}
+                <div className={brandAuditId ? 'h-[35%] min-h-0' : 'flex-1 min-h-0'}>
+                  <TranscriptPanel
+                    transcripts={transcripts}
+                    onExtract={brandAuditId ? handleAuditExtract : undefined}
                   />
                 </div>
               </div>
@@ -1271,7 +1288,7 @@ export function CallRoom({
               <ChatPanel
                 messages={chatMessages}
                 onSendMessage={sendChatMessage}
-                localParticipantId={participantIdRef.current}
+                localParticipantId={registeredParticipantId}
               />
             )}
           </div>

@@ -59,28 +59,25 @@ export async function GET(
     avatar_url: userMap[p.user_id || '']?.avatar_url || null,
   }));
 
-  // Deduplicate: keep one entry per user_id (prefer in_call > waiting > invited)
+  // Simple dedup: keep one entry per user_id (highest-priority status wins)
   const statusPriority: Record<string, number> = { in_call: 3, waiting: 2, invited: 1 };
-  const seen = new Map<string, typeof enriched[0]>();
-  const deduped: typeof enriched = [];
+  const seenUserIds = new Map<string, number>();
+  const result: typeof enriched = [];
 
   for (const p of enriched) {
     if (p.user_id) {
-      const prev = seen.get(p.user_id);
-      if (prev) {
-        // Keep the one with higher-priority status
-        if ((statusPriority[p.status] || 0) > (statusPriority[prev.status] || 0)) {
-          seen.set(p.user_id, p);
+      const prevIdx = seenUserIds.get(p.user_id);
+      if (prevIdx !== undefined) {
+        // Replace if this entry has higher priority
+        if ((statusPriority[p.status] || 0) > (statusPriority[result[prevIdx].status] || 0)) {
+          result[prevIdx] = p;
         }
         continue;
       }
-      seen.set(p.user_id, p);
+      seenUserIds.set(p.user_id, result.length);
     }
-    deduped.push(p);
+    result.push(p);
   }
-
-  // Replace any swapped entries
-  const result = deduped.map(p => p.user_id && seen.has(p.user_id) ? seen.get(p.user_id)! : p);
 
   return NextResponse.json(result);
 }
