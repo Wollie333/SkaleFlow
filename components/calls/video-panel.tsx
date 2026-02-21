@@ -14,28 +14,17 @@ interface VideoPanelProps {
   isWaiting?: boolean;
   displayName?: string;
   onStartMedia: () => void;
+  mediaError?: string | null;
 }
 
-export function VideoPanel({ localStream, participants, localUserId, localParticipantId, isCameraOff, callActive, isWaiting, displayName, onStartMedia }: VideoPanelProps) {
+export function VideoPanel({ localStream, participants, localUserId, localParticipantId, isCameraOff, callActive, isWaiting, displayName, onStartMedia, mediaError }: VideoPanelProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
 
-  console.log('[VideoPanel] Render — callActive:', callActive, 'localStream:', !!localStream, 'isCameraOff:', isCameraOff, 'isWaiting:', isWaiting);
-
   useEffect(() => {
-    console.log('[VideoPanel] useEffect[localStream] — localStream:', !!localStream, 'localVideoRef:', !!localVideoRef.current);
     if (localVideoRef.current && localStream) {
-      console.log('[VideoPanel] Setting srcObject on video element');
-      console.log('[VideoPanel] Stream active:', localStream.active, 'tracks:', localStream.getTracks().length);
       localVideoRef.current.srcObject = localStream;
-
-      // Force play in case autoplay is blocked
-      localVideoRef.current.play().then(() => {
-        console.log('[VideoPanel] Video play() succeeded');
-      }).catch((err) => {
-        console.warn('[VideoPanel] Video play() failed:', err.name, err.message);
-      });
+      localVideoRef.current.play().catch(() => {});
     } else if (localVideoRef.current && !localStream) {
-      console.log('[VideoPanel] Clearing srcObject (no stream)');
       localVideoRef.current.srcObject = null;
     }
   }, [localStream]);
@@ -76,23 +65,41 @@ export function VideoPanel({ localStream, participants, localUserId, localPartic
   if (!callActive) {
     return (
       <div className="h-full flex flex-col items-center justify-center">
-        <div className="text-center">
-          <div className="w-24 h-24 rounded-full bg-cream-warm/5 flex items-center justify-center mx-auto mb-6">
-            <svg className="w-12 h-12 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
-            </svg>
+        <div className="text-center max-w-md px-4">
+          <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 ${mediaError ? 'bg-red-500/10' : 'bg-cream-warm/5'}`}>
+            {mediaError ? (
+              <svg className="w-12 h-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+            ) : (
+              <svg className="w-12 h-12 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+            )}
           </div>
-          <h2 className="text-white text-lg font-medium mb-2">Ready to join?</h2>
-          <p className="text-white/50 text-sm mb-6">Click below to enable your camera and microphone</p>
-          <button
-            onClick={() => {
-              console.log('[VideoPanel] Join Call button clicked');
-              onStartMedia();
-            }}
-            className="px-4 py-2 md:px-6 md:py-3 rounded-lg bg-[#1E6B63] hover:bg-[#1E6B63]/80 text-white font-medium text-sm md:text-base transition-colors"
-          >
-            Join Call
-          </button>
+          {mediaError ? (
+            <>
+              <h2 className="text-white text-lg font-medium mb-2">Could not access devices</h2>
+              <p className="text-red-300/80 text-sm mb-6">{mediaError}</p>
+              <button
+                onClick={onStartMedia}
+                className="px-4 py-2 md:px-6 md:py-3 rounded-lg bg-[#1E6B63] hover:bg-[#1E6B63]/80 text-white font-medium text-sm md:text-base transition-colors"
+              >
+                Try Again
+              </button>
+            </>
+          ) : (
+            <>
+              <h2 className="text-white text-lg font-medium mb-2">Ready to join?</h2>
+              <p className="text-white/50 text-sm mb-6">Click below to enable your camera and microphone</p>
+              <button
+                onClick={onStartMedia}
+                className="px-4 py-2 md:px-6 md:py-3 rounded-lg bg-[#1E6B63] hover:bg-[#1E6B63]/80 text-white font-medium text-sm md:text-base transition-colors"
+              >
+                Join Call
+              </button>
+            </>
+          )}
         </div>
       </div>
     );
@@ -125,9 +132,6 @@ export function VideoPanel({ localStream, participants, localUserId, localPartic
             playsInline
             muted
             className="w-full h-full object-cover"
-            onLoadedMetadata={() => console.log('[VideoPanel] Video loadedmetadata event fired')}
-            onPlay={() => console.log('[VideoPanel] Video play event fired')}
-            onError={(e) => console.error('[VideoPanel] Video error event:', e)}
           />
         )}
         <div className="absolute bottom-2 left-2 md:bottom-3 md:left-3 px-2 py-1 bg-black/50 rounded text-white text-[10px] md:text-xs">

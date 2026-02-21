@@ -88,6 +88,7 @@ export function CallRoom({
   const [isSaving, setIsSaving] = useState(false);
   const [showDeviceSettings, setShowDeviceSettings] = useState(false);
   const [showCaptions, setShowCaptions] = useState(true);
+  const [mediaError, setMediaError] = useState<string | null>(null);
 
   // Offer presentation state
   const [presentedOfferId, setPresentedOfferId] = useState<string | null>(null);
@@ -598,54 +599,50 @@ export function CallRoom({
 
   // Initialize local media
   const startMedia = useCallback(async () => {
-    console.log('[CallRoom] startMedia called');
-    console.log('[CallRoom] navigator.mediaDevices available:', !!navigator.mediaDevices);
-    console.log('[CallRoom] getUserMedia available:', !!navigator.mediaDevices?.getUserMedia);
+    setMediaError(null);
 
-    // Check if running in secure context (required for getUserMedia)
-    console.log('[CallRoom] isSecureContext:', window.isSecureContext);
-    console.log('[CallRoom] location.protocol:', window.location.protocol);
+    // Check secure context
+    if (!window.isSecureContext) {
+      setMediaError('Camera/mic requires HTTPS. Open this page via https:// or localhost.');
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setMediaError('Your browser does not support camera/mic access.');
+      return;
+    }
 
     try {
-      // First enumerate devices to check what's available
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoInputs = devices.filter(d => d.kind === 'videoinput');
-      const audioInputs = devices.filter(d => d.kind === 'audioinput');
-      console.log('[CallRoom] Available video devices:', videoInputs.length, videoInputs.map(d => d.label || d.deviceId));
-      console.log('[CallRoom] Available audio devices:', audioInputs.length, audioInputs.map(d => d.label || d.deviceId));
-
-      console.log('[CallRoom] Requesting getUserMedia({ video: true, audio: true })');
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true
-      });
-
-      console.log('[CallRoom] getUserMedia SUCCESS');
-      console.log('[CallRoom] Stream id:', stream.id);
-      console.log('[CallRoom] Stream active:', stream.active);
-      console.log('[CallRoom] Video tracks:', stream.getVideoTracks().map(t => ({ id: t.id, label: t.label, enabled: t.enabled, readyState: t.readyState, muted: t.muted })));
-      console.log('[CallRoom] Audio tracks:', stream.getAudioTracks().map(t => ({ id: t.id, label: t.label, enabled: t.enabled, readyState: t.readyState, muted: t.muted })));
-
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       localStreamRef.current = stream;
       setLocalStream(stream);
       setCallActive(true);
-      console.log('[CallRoom] State updated: localStream set, callActive=true');
     } catch (err) {
-      console.error('[CallRoom] getUserMedia FAILED (video+audio):', err);
-      console.error('[CallRoom] Error name:', (err as Error).name);
-      console.error('[CallRoom] Error message:', (err as Error).message);
+      const errName = (err as Error).name;
+      console.error('[CallRoom] getUserMedia failed:', errName, (err as Error).message);
+
+      // Try audio-only fallback
       try {
-        console.log('[CallRoom] Falling back to audio-only...');
         const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        console.log('[CallRoom] Audio-only SUCCESS, tracks:', audioStream.getAudioTracks().length);
         localStreamRef.current = audioStream;
         setLocalStream(audioStream);
         setIsCameraOff(true);
         setCallActive(true);
-      } catch (err2) {
-        console.error('[CallRoom] Audio-only also FAILED:', err2);
-        console.error('[CallRoom] Error name:', (err2 as Error).name);
-        console.error('[CallRoom] Error message:', (err2 as Error).message);
+        return;
+      } catch {
+        // Both failed
+      }
+
+      // Show user-friendly error
+      if (errName === 'NotAllowedError' || errName === 'PermissionDeniedError') {
+        setMediaError('Camera/mic permission denied. Check your browser settings and allow access, then try again.');
+      } else if (errName === 'NotFoundError' || errName === 'DevicesNotFoundError') {
+        setMediaError('No camera or microphone found. Please connect a device and try again.');
+      } else if (errName === 'NotReadableError' || errName === 'TrackStartError') {
+        setMediaError('Camera or microphone is in use by another application. Close it and try again.');
+      } else if (errName === 'OverconstrainedError') {
+        setMediaError('Camera/mic constraints could not be satisfied. Try a different device.');
+      } else {
+        setMediaError(`Could not access camera/mic: ${(err as Error).message}`);
       }
     }
   }, []);
@@ -1040,6 +1037,7 @@ export function CallRoom({
             isWaiting={!isHost && localStatus === 'waiting'}
             displayName={displayName}
             onStartMedia={startMedia}
+            mediaError={mediaError}
           />
 
           {/* Floating waiting room banner — host sees when guests are waiting */}

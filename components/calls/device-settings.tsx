@@ -30,10 +30,17 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
 
     async function loadDevices() {
       try {
-        // Need permission first
-        await navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(s => {
-          s.getTracks().forEach(t => t.stop());
-        }).catch(() => {});
+        // Only request a throwaway stream if we don't already have one —
+        // this is needed so enumerateDevices returns labels.
+        // If a stream is already active, permissions are already granted.
+        if (!currentStream) {
+          try {
+            const tempStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+            tempStream.getTracks().forEach(t => t.stop());
+          } catch {
+            // Permission denied — still try to enumerate
+          }
+        }
 
         const devices = await navigator.mediaDevices.enumerateDevices();
         const audio = devices
