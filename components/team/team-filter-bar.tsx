@@ -19,7 +19,7 @@ export function TeamFilterBar({
   onStatusFilterChange,
 }: TeamFilterBarProps) {
   const [searchInput, setSearchInput] = useState('');
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     debounceRef.current = setTimeout(() => {

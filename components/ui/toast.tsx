@@ -42,7 +42,7 @@ const styles: Record<ToastType, string> = {
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
   const Icon = icons[toast.type];
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     timerRef.current = setTimeout(() => onDismiss(toast.id), TOAST_DURATION);
