@@ -597,11 +597,10 @@ export function CallRoom({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callActive, isHost]);
 
-  // Initialize local media
-  const startMedia = useCallback(async () => {
+  // Acquire media stream (does NOT activate the call — just gets the camera/mic)
+  const acquireMedia = useCallback(async () => {
     setMediaError(null);
 
-    // Check secure context
     if (!window.isSecureContext) {
       setMediaError('Camera/mic requires HTTPS. Open this page via https:// or localhost.');
       return;
@@ -611,40 +610,59 @@ export function CallRoom({
       return;
     }
 
+    // Stop any existing tracks first to cleanly release devices
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(t => t.stop());
+      localStreamRef.current = null;
+      setLocalStream(null);
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      // Use explicit constraints — helps Windows camera drivers avoid timeouts
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
+        audio: { echoCancellation: true, noiseSuppression: true },
+      });
       localStreamRef.current = stream;
       setLocalStream(stream);
-      setCallActive(true);
+      setIsCameraOff(false);
+      return;
     } catch (err) {
-      const errName = (err as Error).name;
-      console.error('[CallRoom] getUserMedia failed:', errName, (err as Error).message);
-
-      // Try audio-only fallback
-      try {
-        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        localStreamRef.current = audioStream;
-        setLocalStream(audioStream);
-        setIsCameraOff(true);
-        setCallActive(true);
-        return;
-      } catch {
-        // Both failed
-      }
-
-      // Show user-friendly error
-      if (errName === 'NotAllowedError' || errName === 'PermissionDeniedError') {
-        setMediaError('Camera/mic permission denied. Check your browser settings and allow access, then try again.');
-      } else if (errName === 'NotFoundError' || errName === 'DevicesNotFoundError') {
-        setMediaError('No camera or microphone found. Please connect a device and try again.');
-      } else if (errName === 'NotReadableError' || errName === 'TrackStartError') {
-        setMediaError('Camera or microphone is in use by another application. Close it and try again.');
-      } else if (errName === 'OverconstrainedError') {
-        setMediaError('Camera/mic constraints could not be satisfied. Try a different device.');
-      } else {
-        setMediaError(`Could not access camera/mic: ${(err as Error).message}`);
-      }
+      console.error('[CallRoom] getUserMedia (video+audio) failed:', (err as Error).name, (err as Error).message);
     }
+
+    // Fallback: try audio-only
+    try {
+      const audioStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+      });
+      localStreamRef.current = audioStream;
+      setLocalStream(audioStream);
+      setIsCameraOff(true);
+      return;
+    } catch (err2) {
+      console.error('[CallRoom] getUserMedia (audio-only) failed:', (err2 as Error).name, (err2 as Error).message);
+    }
+
+    // Both failed — show error
+    setMediaError('Could not access camera or microphone. Make sure no other app is using them, then click Retry.');
+  }, []);
+
+  // Auto-acquire media on mount so user sees a live preview before joining
+  useEffect(() => {
+    acquireMedia();
+    // Cleanup: stop tracks on unmount
+    return () => {
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach(t => t.stop());
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Join the call (media already acquired)
+  const joinCall = useCallback(() => {
+    setCallActive(true);
   }, []);
 
   const toggleMute = useCallback(() => {
@@ -677,18 +695,23 @@ export function CallRoom({
   // Switch media devices
   const handleDeviceChange = useCallback(async (audioDeviceId: string | null, videoDeviceId: string | null) => {
     try {
-      const constraints: MediaStreamConstraints = {};
-      if (audioDeviceId) constraints.audio = { deviceId: { exact: audioDeviceId } };
-      else constraints.audio = true;
-      if (videoDeviceId) constraints.video = { deviceId: { exact: videoDeviceId } };
-      else constraints.video = true;
-
-      const newStream = await navigator.mediaDevices.getUserMedia(constraints);
-
-      // Stop old tracks
+      // Stop old tracks FIRST to release the camera before acquiring new one
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(t => t.stop());
+        localStreamRef.current = null;
+        setLocalStream(null);
       }
+
+      // Small delay to let driver fully release
+      await new Promise(r => setTimeout(r, 300));
+
+      const constraints: MediaStreamConstraints = {};
+      if (audioDeviceId) constraints.audio = { deviceId: { exact: audioDeviceId } };
+      else constraints.audio = { echoCancellation: true, noiseSuppression: true };
+      if (videoDeviceId) constraints.video = { deviceId: { exact: videoDeviceId }, width: { ideal: 1280 }, height: { ideal: 720 } };
+      else constraints.video = { width: { ideal: 1280 }, height: { ideal: 720 } };
+
+      const newStream = await navigator.mediaDevices.getUserMedia(constraints);
 
       localStreamRef.current = newStream;
       setLocalStream(newStream);
@@ -1036,7 +1059,8 @@ export function CallRoom({
             callActive={callActive}
             isWaiting={!isHost && localStatus === 'waiting'}
             displayName={displayName}
-            onStartMedia={startMedia}
+            onJoinCall={joinCall}
+            onRetryMedia={acquireMedia}
             mediaError={mediaError}
           />
 

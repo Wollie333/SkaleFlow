@@ -13,13 +13,16 @@ interface VideoPanelProps {
   callActive: boolean;
   isWaiting?: boolean;
   displayName?: string;
-  onStartMedia: () => void;
+  onJoinCall: () => void;
+  onRetryMedia: () => void;
   mediaError?: string | null;
 }
 
-export function VideoPanel({ localStream, participants, localUserId, localParticipantId, isCameraOff, callActive, isWaiting, displayName, onStartMedia, mediaError }: VideoPanelProps) {
+export function VideoPanel({ localStream, participants, localUserId, localParticipantId, isCameraOff, callActive, isWaiting, displayName, onJoinCall, onRetryMedia, mediaError }: VideoPanelProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
+  const previewVideoRef = useRef<HTMLVideoElement>(null);
 
+  // Attach stream to the active call video element
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
@@ -29,8 +32,17 @@ export function VideoPanel({ localStream, participants, localUserId, localPartic
     }
   }, [localStream]);
 
+  // Attach stream to the pre-call preview video element
+  useEffect(() => {
+    if (previewVideoRef.current && localStream) {
+      previewVideoRef.current.srcObject = localStream;
+      previewVideoRef.current.play().catch(() => {});
+    } else if (previewVideoRef.current && !localStream) {
+      previewVideoRef.current.srcObject = null;
+    }
+  }, [localStream]);
+
   // Exclude the local user from remote participant tiles to prevent duplicate
-  // Filter by both userId (auth users) and participant id (guests)
   const activeParticipants = participants.filter(
     p => p.status === 'in_call' && p.id !== localParticipantId && p.userId !== localUserId
   );
@@ -62,51 +74,84 @@ export function VideoPanel({ localStream, participants, localUserId, localPartic
     );
   }
 
+  // Pre-call lobby: show camera preview + Join Call button
   if (!callActive) {
     return (
       <div className="h-full flex flex-col items-center justify-center">
-        <div className="text-center max-w-md px-4">
-          <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 ${mediaError ? 'bg-red-500/10' : 'bg-cream-warm/5'}`}>
-            {mediaError ? (
-              <svg className="w-12 h-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="text-center max-w-lg px-4 w-full">
+          {/* Camera preview */}
+          {localStream && !isCameraOff ? (
+            <div className="relative bg-[#1a1a2e] rounded-xl overflow-hidden mx-auto mb-6 aspect-video max-w-sm">
+              <video
+                ref={previewVideoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover mirror"
+                style={{ transform: 'scaleX(-1)' }}
+              />
+              <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/50 rounded text-white text-[10px]">
+                Camera preview
+              </div>
+            </div>
+          ) : localStream && isCameraOff ? (
+            <div className="relative bg-[#1a1a2e] rounded-xl overflow-hidden mx-auto mb-6 aspect-video max-w-sm flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-[#1E6B63]/30 flex items-center justify-center mx-auto mb-2">
+                  <svg className="w-8 h-8 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
+                </div>
+                <p className="text-white/40 text-xs">Audio only — camera unavailable</p>
+              </div>
+            </div>
+          ) : mediaError ? (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl mx-auto mb-6 p-6 max-w-sm">
+              <svg className="w-10 h-10 text-red-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
               </svg>
-            ) : (
-              <svg className="w-12 h-12 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
-              </svg>
-            )}
-          </div>
-          {mediaError ? (
-            <>
-              <h2 className="text-white text-lg font-medium mb-2">Could not access devices</h2>
-              <p className="text-red-300/80 text-sm mb-6">{mediaError}</p>
-              <button
-                onClick={onStartMedia}
-                className="px-4 py-2 md:px-6 md:py-3 rounded-lg bg-[#1E6B63] hover:bg-[#1E6B63]/80 text-white font-medium text-sm md:text-base transition-colors"
-              >
-                Try Again
-              </button>
-            </>
+              <p className="text-red-300/80 text-sm">{mediaError}</p>
+            </div>
           ) : (
+            <div className="bg-[#1a1a2e] rounded-xl mx-auto mb-6 aspect-video max-w-sm flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-10 h-10 border-2 border-teal/40 border-t-teal rounded-full animate-spin mx-auto mb-3" />
+                <p className="text-white/40 text-xs">Accessing camera &amp; microphone...</p>
+              </div>
+            </div>
+          )}
+
+          <h2 className="text-white text-lg font-medium mb-2">
+            {displayName || 'Call Room'}
+          </h2>
+
+          {localStream ? (
             <>
-              <h2 className="text-white text-lg font-medium mb-2">Ready to join?</h2>
-              <p className="text-white/50 text-sm mb-6">Click below to enable your camera and microphone</p>
+              <p className="text-white/50 text-sm mb-4">Your camera and mic are ready</p>
               <button
-                onClick={onStartMedia}
-                className="px-4 py-2 md:px-6 md:py-3 rounded-lg bg-[#1E6B63] hover:bg-[#1E6B63]/80 text-white font-medium text-sm md:text-base transition-colors"
+                onClick={onJoinCall}
+                className="px-6 py-3 rounded-lg bg-[#1E6B63] hover:bg-[#1E6B63]/80 text-white font-medium text-base transition-colors"
               >
                 Join Call
               </button>
             </>
+          ) : mediaError ? (
+            <button
+              onClick={onRetryMedia}
+              className="px-6 py-3 rounded-lg bg-[#1E6B63] hover:bg-[#1E6B63]/80 text-white font-medium text-base transition-colors"
+            >
+              Retry
+            </button>
+          ) : (
+            <p className="text-white/40 text-sm">Setting up devices...</p>
           )}
         </div>
       </div>
     );
   }
 
-  // Grid layout based on participant count
-  const totalStreams = 1 + activeParticipants.length; // local + remote
+  // Active call: grid layout
+  const totalStreams = 1 + activeParticipants.length;
   const gridClass = totalStreams <= 1
     ? 'grid-cols-1'
     : totalStreams <= 2
