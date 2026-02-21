@@ -35,6 +35,8 @@ export function TemplatesListClient({ templates, isAdmin, isSuperAdmin = false }
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [purging, setPurging] = useState(false);
+  const [confirmPurge, setConfirmPurge] = useState(false);
 
   const canManage = isAdmin || isSuperAdmin;
 
@@ -173,12 +175,53 @@ export function TemplatesListClient({ templates, isAdmin, isSuperAdmin = false }
         </div>
       </div>
 
-      {/* .md format guide for super admin */}
+      {/* Super admin controls */}
       {isSuperAdmin && (
-        <div className="mb-6 px-4 py-3 bg-teal/5 border border-teal/15 rounded-xl text-xs text-charcoal space-y-1">
-          <p className="font-semibold text-teal text-sm">Template .md Format</p>
-          <p>Download the blank .md file for the standardised format. Fill in the sections: Metadata (name, description, call_type), opening_script, Phases (with questions, triggers, AI instructions), closing_script, and objection_bank. Upload back to create a system template.</p>
+        <div className="mb-6 px-4 py-3 bg-teal/5 border border-teal/15 rounded-xl text-xs text-charcoal space-y-2">
+          <p className="font-semibold text-teal text-sm">System Template Management</p>
+          <p>Download the blank .md file for the standardised format. Upload back to create a system template.</p>
           <p className="text-stone">Valid call types: discovery, sales, onboarding, meeting, follow_up, custom</p>
+          <div className="flex items-center gap-2 pt-1">
+            {confirmPurge ? (
+              <div className="flex items-center gap-2">
+                <span className="text-red-600 font-medium">Delete all system templates from DB and re-seed?</span>
+                <button
+                  onClick={async () => {
+                    setPurging(true);
+                    try {
+                      const res = await fetch('/api/calls/templates/seed', { method: 'DELETE' });
+                      const data = await res.json();
+                      if (res.ok) {
+                        alert(`Purged ${data.purged} old templates, re-seeded ${data.seeded} fresh.`);
+                        router.refresh();
+                      } else {
+                        alert(data.error || 'Failed to purge');
+                      }
+                    } catch { alert('Network error'); }
+                    setPurging(false);
+                    setConfirmPurge(false);
+                  }}
+                  disabled={purging}
+                  className="px-3 py-1 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {purging ? 'Purging...' : 'Yes, Purge & Re-seed'}
+                </button>
+                <button
+                  onClick={() => setConfirmPurge(false)}
+                  className="px-3 py-1 text-xs font-medium text-charcoal bg-cream border border-stone/20 rounded-lg hover:bg-stone/10"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmPurge(true)}
+                className="px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+              >
+                Purge & Re-seed System Templates
+              </button>
+            )}
+          </div>
         </div>
       )}
 
