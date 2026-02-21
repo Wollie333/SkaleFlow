@@ -618,94 +618,72 @@ export function CallRoom({
     }
 
     // Wait for any previous camera release to complete
-    await new Promise(r => setTimeout(r, 800));
+    await new Promise(r => setTimeout(r, 500));
 
-    let audioTrack: MediaStreamTrack | null = null;
-    let videoTrack: MediaStreamTrack | null = null;
-
-    // Step 1: Audio first (fast, grants permission for enumeration)
+    // STRATEGY 1: Combined audio+video in a SINGLE call.
+    // This is critical for USB cameras where the mic and camera are on the
+    // same device — separate getUserMedia calls lock the device for audio,
+    // then video fails with NotReadableError.
     try {
-      const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioTrack = audioStream.getAudioTracks()[0] || null;
-      console.log('[CallRoom] Audio acquired:', audioTrack?.label);
+      console.log('[CallRoom] Trying combined audio+video (single call)');
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      console.log('[CallRoom] Combined audio+video SUCCESS');
+      localStreamRef.current = stream;
+      setLocalStream(stream);
+      setIsCameraOff(false);
+      return;
     } catch (err) {
-      console.error('[CallRoom] Audio failed:', (err as Error).name);
+      console.warn('[CallRoom] Combined audio+video failed:', (err as Error).name, (err as Error).message);
     }
 
-    // Step 2: Enumerate to get specific camera device ID
-    let cameraDeviceId: string | null = null;
+    // STRATEGY 2: Try each camera individually (combined with audio).
+    // There are multiple cameras — try each one.
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
       const cameras = devices.filter(d => d.kind === 'videoinput');
-      console.log('[CallRoom] Cameras found:', cameras.map(c => `${c.label} [${c.deviceId.slice(0, 8)}]`));
-      if (cameras.length > 0) {
-        cameraDeviceId = cameras[0].deviceId;
+      console.log('[CallRoom] Cameras found:', cameras.map(c => c.label));
+
+      for (const camera of cameras) {
+        try {
+          console.log(`[CallRoom] Trying camera: ${camera.label}`);
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { deviceId: { exact: camera.deviceId } },
+            audio: true,
+          });
+          console.log(`[CallRoom] Camera "${camera.label}" SUCCESS`);
+          localStreamRef.current = stream;
+          setLocalStream(stream);
+          setIsCameraOff(false);
+          return;
+        } catch (err) {
+          console.warn(`[CallRoom] Camera "${camera.label}" failed:`, (err as Error).name);
+        }
       }
     } catch {
       // Ignore enumeration failure
     }
 
-    // Step 3: Video — try multiple strategies
-    if (cameraDeviceId) {
-      const strategies: Array<{ label: string; constraint: MediaStreamConstraints }> = [
-        // Strategy A: explicit device ID + low resolution (most compatible)
-        {
-          label: 'deviceId+lowRes',
-          constraint: { video: { deviceId: { exact: cameraDeviceId }, width: 640, height: 480 } },
-        },
-        // Strategy B: explicit device ID only
-        {
-          label: 'deviceId',
-          constraint: { video: { deviceId: { exact: cameraDeviceId } } },
-        },
-        // Strategy C: bare minimum
-        {
-          label: 'bare',
-          constraint: { video: true },
-        },
-      ];
-
-      for (const { label, constraint } of strategies) {
-        try {
-          console.log(`[CallRoom] Trying video strategy: ${label}`);
-          const videoStream = await navigator.mediaDevices.getUserMedia(constraint);
-          videoTrack = videoStream.getVideoTracks()[0] || null;
-          console.log(`[CallRoom] Video acquired via ${label}:`, videoTrack?.label);
-          break;
-        } catch (err) {
-          console.warn(`[CallRoom] Video strategy ${label} failed:`, (err as Error).name, (err as Error).message);
-        }
-      }
-    }
-
-    // Build combined stream from whatever tracks we got
-    if (audioTrack || videoTrack) {
-      const combinedStream = new MediaStream();
-      if (audioTrack) combinedStream.addTrack(audioTrack);
-      if (videoTrack) combinedStream.addTrack(videoTrack);
-      localStreamRef.current = combinedStream;
-      setLocalStream(combinedStream);
-      setIsCameraOff(!videoTrack);
-
-      if (!videoTrack) {
-        setMediaError(
-          'Microphone is working but camera could not start. ' +
-          'You can join with audio only, or try: ' +
-          '1) Close all other apps that might use the camera ' +
-          '2) Open Windows Settings → Privacy → Camera → enable "Let desktop apps access your camera" ' +
-          '3) Open the Windows Camera app to verify your camera works'
-        );
-      }
+    // STRATEGY 3: Audio only (last resort — at least we can talk)
+    try {
+      console.log('[CallRoom] Falling back to audio-only');
+      const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log('[CallRoom] Audio-only acquired:', audioStream.getAudioTracks()[0]?.label);
+      localStreamRef.current = audioStream;
+      setLocalStream(audioStream);
+      setIsCameraOff(true);
+      setMediaError(
+        'Camera could not start (all cameras tried). You can join with audio only. ' +
+        'Try closing ALL browser tabs, restart the browser, and try again.'
+      );
       return;
+    } catch (err) {
+      console.error('[CallRoom] Audio-only also failed:', (err as Error).name);
     }
 
-    // Nothing worked
+    // Nothing worked at all
     setMediaError(
-      'Could not access camera or microphone. Try these steps:\n' +
-      '1) Windows Settings → Privacy → Camera → enable "Let desktop apps access your camera"\n' +
-      '2) Click the lock icon in your browser address bar → allow Camera and Microphone\n' +
-      '3) Close any other app that might be using the camera (Zoom, Teams, OBS)\n' +
-      '4) Open the Windows Camera app to check if your camera works at all'
+      'Could not access camera or microphone. ' +
+      'Close ALL browser tabs and restart the browser, then try again.'
     );
   }, []);
 
