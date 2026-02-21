@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import {
   HomeIcon,
@@ -200,19 +200,41 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
 
-  // Collapsible section state
-  const [publishingExpanded, setPublishingExpanded] = useState(true);
-  const [inboxExpanded, setInboxExpanded] = useState(false);
-  const [listeningExpanded, setListeningExpanded] = useState(false);
-  const [analyticsExpanded, setAnalyticsExpanded] = useState(false);
-  const [libraryExpanded, setLibraryExpanded] = useState(false);
-  const [authorityExpanded, setAuthorityExpanded] = useState(false);
-  const [socialEngineExpanded, setSocialEngineExpanded] = useState(false);
-  const [adsEngineExpanded, setAdsEngineExpanded] = useState(false);
-  const [brandAuditExpanded, setBrandAuditExpanded] = useState(false);
-  const [callsExpanded, setCallsExpanded] = useState(false);
-  const [crmExpanded, setCrmExpanded] = useState(false);
-  const [adminExpanded, setAdminExpanded] = useState(false);
+  // Auto-expand sections based on current pathname
+  const isSocialPath = pathname.startsWith('/social/') || pathname.startsWith('/calendar') || pathname.startsWith('/content/');
+  const isAnalyticsPath = pathname.startsWith('/social/analytics') || pathname === '/analytics';
+
+  const [publishingExpanded, setPublishingExpanded] = useState(isSocialPath);
+  const [inboxExpanded, setInboxExpanded] = useState(pathname.startsWith('/social/inbox'));
+  const [listeningExpanded, setListeningExpanded] = useState(pathname.startsWith('/social/listening'));
+  const [analyticsExpanded, setAnalyticsExpanded] = useState(isAnalyticsPath);
+  const [libraryExpanded, setLibraryExpanded] = useState(pathname.startsWith('/social/library'));
+  const [authorityExpanded, setAuthorityExpanded] = useState(pathname.startsWith('/authority'));
+  const [socialEngineExpanded, setSocialEngineExpanded] = useState(isSocialPath);
+  const [adsEngineExpanded, setAdsEngineExpanded] = useState(pathname.startsWith('/marketing'));
+  const [brandAuditExpanded, setBrandAuditExpanded] = useState(pathname.startsWith('/brand-audit'));
+  const [callsExpanded, setCallsExpanded] = useState(pathname.startsWith('/calls'));
+  const [crmExpanded, setCrmExpanded] = useState(pathname.startsWith('/crm') || pathname.startsWith('/pipeline'));
+  const [adminExpanded, setAdminExpanded] = useState(pathname.startsWith('/admin'));
+
+  // Expand relevant sections on navigation
+  useEffect(() => {
+    const social = pathname.startsWith('/social/') || pathname.startsWith('/calendar') || pathname.startsWith('/content/');
+    if (social) {
+      setSocialEngineExpanded(true);
+      if (pathname.startsWith('/calendar') || pathname.startsWith('/content/create') || pathname.startsWith('/content/drafts') || pathname.startsWith('/content/publish-log')) setPublishingExpanded(true);
+      if (pathname.startsWith('/social/inbox')) setInboxExpanded(true);
+      if (pathname.startsWith('/social/listening')) setListeningExpanded(true);
+      if (pathname.startsWith('/social/analytics') || pathname === '/analytics') setAnalyticsExpanded(true);
+      if (pathname.startsWith('/social/library')) setLibraryExpanded(true);
+    }
+    if (pathname.startsWith('/marketing')) setAdsEngineExpanded(true);
+    if (pathname.startsWith('/brand-audit')) setBrandAuditExpanded(true);
+    if (pathname.startsWith('/calls')) setCallsExpanded(true);
+    if (pathname.startsWith('/crm') || pathname.startsWith('/pipeline')) setCrmExpanded(true);
+    if (pathname.startsWith('/admin')) setAdminExpanded(true);
+    if (pathname.startsWith('/authority')) setAuthorityExpanded(true);
+  }, [pathname]);
 
   const isOwnerOrAdmin = orgRole === 'owner' || orgRole === 'admin';
   const isSuperAdmin = userRole === 'super_admin';

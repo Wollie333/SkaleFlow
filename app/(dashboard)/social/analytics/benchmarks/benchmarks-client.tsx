@@ -102,8 +102,8 @@ export function BenchmarksClient({ benchmarks, orgMetrics, industry }: Benchmark
       {/* Benchmark Cards */}
       {platformBenchmarks.length === 0 ? (
         <div className="bg-cream-warm rounded-xl border border-stone/10 p-12 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-stone/10 rounded-full flex items-center justify-center">
-            <ChartBarIcon className="w-8 h-8 text-stone" />
+          <div className="w-16 h-16 mx-auto mb-4 bg-teal/10 rounded-full flex items-center justify-center">
+            <ChartBarIcon className="w-8 h-8 text-teal" />
           </div>
           <h3 className="text-lg font-semibold text-charcoal mb-2">
             No benchmark data available
@@ -123,7 +123,7 @@ export function BenchmarksClient({ benchmarks, orgMetrics, industry }: Benchmark
             return (
               <div key={metric.key} className="bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-stone/10 bg-stone/5">
+                <div className="px-6 py-4 border-b border-stone/10 bg-cream-warm">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-charcoal">{metric.name}</h3>
                     <div className="flex items-center gap-2">
@@ -165,40 +165,40 @@ export function BenchmarksClient({ benchmarks, orgMetrics, industry }: Benchmark
                   {/* Benchmark Percentiles */}
                   <div className="grid grid-cols-3 gap-4">
                     {/* 25th Percentile */}
-                    <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
-                      <p className="text-xs text-red-400 mb-1">25th Percentile</p>
-                      <p className="text-lg font-bold text-red-400">
+                    <div className="text-center p-4 bg-red-600/10 rounded-lg border border-red-600/20">
+                      <p className="text-xs text-red-500 mb-1">25th Percentile</p>
+                      <p className="text-lg font-bold text-red-500">
                         {p25.toFixed(2)}
                         {metric.unit}
                       </p>
-                      <p className="text-xs text-red-600 mt-1">Bottom 25%</p>
+                      <p className="text-xs text-red-500/70 mt-1">Bottom 25%</p>
                     </div>
 
                     {/* 50th Percentile (Median) */}
-                    <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
-                      <p className="text-xs text-orange-700 mb-1">50th Percentile</p>
-                      <p className="text-lg font-bold text-orange-700">
+                    <div className="text-center p-4 bg-gold/10 rounded-lg border border-gold/20">
+                      <p className="text-xs text-gold mb-1">50th Percentile</p>
+                      <p className="text-lg font-bold text-gold">
                         {p50.toFixed(2)}
                         {metric.unit}
                       </p>
-                      <p className="text-xs text-orange-600 mt-1">Median</p>
+                      <p className="text-xs text-gold/70 mt-1">Median</p>
                     </div>
 
                     {/* 75th Percentile */}
-                    <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-                      <p className="text-xs text-green-400 mb-1">75th Percentile</p>
-                      <p className="text-lg font-bold text-green-400">
+                    <div className="text-center p-4 bg-teal/10 rounded-lg border border-teal/20">
+                      <p className="text-xs text-teal mb-1">75th Percentile</p>
+                      <p className="text-lg font-bold text-teal">
                         {p75.toFixed(2)}
                         {metric.unit}
                       </p>
-                      <p className="text-xs text-green-600 mt-1">Top 25%</p>
+                      <p className="text-xs text-teal/70 mt-1">Top 25%</p>
                     </div>
                   </div>
 
                   {/* Recommendation */}
                   {performance.level !== 'excellent' && (
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-xs text-blue-900">
+                    <div className="mt-4 p-4 bg-teal/5 rounded-lg border border-teal/20">
+                      <p className="text-xs text-charcoal">
                         <strong>💡 Recommendation:</strong>{' '}
                         {performance.level === 'below'
                           ? `Focus on improving your ${metric.name.toLowerCase()}. Aim to reach at least the median (${p50.toFixed(2)}${metric.unit}) to match industry standards.`
@@ -214,7 +214,7 @@ export function BenchmarksClient({ benchmarks, orgMetrics, industry }: Benchmark
       )}
 
       {/* Info Box */}
-      <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl border border-purple/20 p-6">
+      <div className="bg-gradient-to-br from-teal/5 to-gold/5 rounded-xl border border-teal/20 p-6">
         <h3 className="font-semibold text-charcoal mb-2">How Benchmarks Work</h3>
         <div className="space-y-2 text-sm text-stone">
           <p>

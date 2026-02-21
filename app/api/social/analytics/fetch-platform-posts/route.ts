@@ -42,28 +42,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'No active social media connections found', posts: [] });
   }
 
-  // For Facebook/Instagram/LinkedIn, only use PAGE-type connections
-  const pageConnections = connections.filter(c => {
-    if (['facebook', 'instagram', 'linkedin'].includes(c.platform)) {
-      return c.account_type === 'page';
-    }
-    return true;
-  });
+  console.log(`[fetch-platform-posts] Active connections: ${connections.map(c => `${c.platform}(type=${c.account_type})`).join(', ')}`);
 
-  if (pageConnections.length === 0) {
-    return NextResponse.json({
-      message: 'No page connections found. Go to Settings → Social Media Accounts and select pages to connect.',
-      posts: [],
-      totalPosts: 0,
-      connectionsProcessed: 0,
-      fetchedCount: 0,
-      failedCount: 0,
-    });
-  }
-
-  // Fetch from all platforms in PARALLEL (not sequential) to avoid timeout
+  // Fetch from all active connections in PARALLEL — let platform APIs handle type-specific errors
   const results = await Promise.allSettled(
-    pageConnections.map(async (connection) => {
+    connections.map(async (connection) => {
       const tokens = await ensureValidToken(connection as unknown as ConnectionWithTokens);
 
       // Limit to 25 posts per platform to keep response times reasonable
@@ -135,7 +118,7 @@ export async function POST(request: NextRequest) {
         : 'No posts found',
     posts: allPosts,
     totalPosts: allPosts.length,
-    connectionsProcessed: pageConnections.length,
+    connectionsProcessed: connections.length,
     fetchedCount,
     failedCount,
     errors: errors.length > 0 ? errors : undefined,

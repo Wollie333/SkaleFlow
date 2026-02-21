@@ -51,17 +51,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ insights: [], connectedPlatforms: [] });
   }
 
-  // Filter to page-type connections for platforms that need it
-  const pageConnections = connections.filter(c => {
-    if (['facebook', 'instagram', 'linkedin'].includes(c.platform)) {
-      return c.account_type === 'page';
-    }
-    return true;
-  });
+  console.log(`[audience-insights] Active connections: ${connections.map(c => `${c.platform}(type=${c.account_type})`).join(', ')}`);
 
   const insights: AudienceInsight[] = [];
 
-  for (const connection of pageConnections) {
+  for (const connection of connections) {
     try {
       const tokens = await ensureValidToken(connection as unknown as ConnectionWithTokens);
       let insight: AudienceInsight | null = null;
@@ -111,7 +105,7 @@ export async function GET(request: NextRequest) {
   }
 
   const connectedPlatforms: SocialPlatform[] = Array.from(
-    new Set(pageConnections.map(c => c.platform as SocialPlatform))
+    new Set(connections.map(c => c.platform as SocialPlatform))
   );
 
   return NextResponse.json({ insights, connectedPlatforms });

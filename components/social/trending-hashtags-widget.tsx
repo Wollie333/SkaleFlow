@@ -74,7 +74,7 @@ export function TrendingHashtagsWidget({ organizationId }: TrendingHashtagsWidge
   }
 
   return (
-    <div className="bg-gradient-to-br from-teal-50 to-gold-50 rounded-xl border border-teal/20 overflow-hidden">
+    <div className="bg-gradient-to-br from-teal/5 to-gold/5 rounded-xl border border-teal/20 overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
