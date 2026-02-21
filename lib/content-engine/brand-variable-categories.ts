@@ -114,66 +114,127 @@ export const AI_GENERATION_VARIABLES: string[] = BRAND_VARIABLE_CATEGORIES.flatM
 
 /**
  * CORE variables — always included in every post (non-negotiable for brand alignment).
- * These 4 define HOW to write and WHO we're writing for.
+ * These 7 define WHO we are, HOW to write, and WHAT we stand for.
  */
 export const CORE_CONTENT_VARIABLES: string[] = [
   'tone_descriptors',
   'vocabulary_preferred',
   'vocabulary_avoided',
   'brand_archetype',
+  'brand_characteristics',
+  'brand_values',
+  'message_core',
 ];
 
 /**
- * ROTATING variables — a random subset is selected per post for variety.
- * Each post gets 3-4 of these, creating diverse content that doesn't repeat the same angles.
+ * ROTATING variables — legacy pool kept for backward compat.
+ * @deprecated Use selectStrategicVariables() instead.
  */
 export const ROTATING_CONTENT_VARIABLES: string[] = [
-  // Audience
   'icp_pains',
   'icp_desires',
   'icp_emotional_triggers',
   'icp_objections',
-  // Enemy
   'enemy_name',
   'enemy_description',
   'enemy_cost',
-  // Messaging
-  'message_core',
   'message_pillars',
   'positioning_statement',
   'content_themes',
   'beliefs_to_teach',
-  // Offer
   'offer_name',
   'offer_outcome',
   'offer_problem',
 ];
 
-/** Total variables per post = CORE (4) + ROTATING pick (3) = 7 */
-const ROTATING_PICK_COUNT = 3;
+// ── Strategic Variable Map ─────────────────────────────────────
+// Maps funnel_stage × storybrand_stage → 5 curated variables per post.
+// Total per post: 7 CORE + 5 strategic = 12 variables.
+
+type StrategicCombo = `${string}_${string}`;
+
+const STRATEGIC_VARIABLE_MAP: Record<StrategicCombo, string[]> = {
+  // ── AWARENESS ──
+  awareness_character:            ['icp_pains', 'icp_desires', 'icp_emotional_triggers', 'enemy_name', 'brand_origin_story'],
+  awareness_external_problem:     ['icp_pains', 'enemy_name', 'enemy_description', 'enemy_cost', 'positioning_statement'],
+  awareness_internal_problem:     ['icp_emotional_triggers', 'icp_internal_dialogue', 'enemy_description', 'beliefs_to_teach', 'brand_origin_story'],
+  awareness_philosophical_problem:['enemy_false_promises', 'enemy_cost', 'beliefs_to_teach', 'brand_purpose', 'positioning_statement'],
+  awareness_guide:                ['brand_origin_story', 'founder_story', 'icp_pains', 'icp_desires', 'content_themes'],
+  awareness_plan:                 ['icp_pains', 'icp_desires', 'content_themes', 'message_pillars', 'offer_outcome'],
+  awareness_call_to_action:       ['icp_desires', 'offer_name', 'offer_outcome', 'lead_magnet_title', 'content_themes'],
+  awareness_failure:              ['icp_pains', 'enemy_cost', 'enemy_false_promises', 'icp_objections', 'beliefs_to_teach'],
+  awareness_success:              ['icp_desires', 'offer_outcome', 'offer_transformation_after', 'brand_origin_story', 'content_themes'],
+
+  // ── CONSIDERATION ──
+  consideration_character:            ['icp_psychographics', 'icp_desires', 'founder_story', 'brand_origin_story', 'content_themes'],
+  consideration_external_problem:     ['icp_pains', 'icp_objections', 'enemy_description', 'positioning_statement', 'differentiation_statement'],
+  consideration_internal_problem:     ['icp_internal_dialogue', 'icp_emotional_triggers', 'icp_objections', 'beliefs_to_teach', 'offer_problem'],
+  consideration_philosophical_problem:['enemy_false_promises', 'beliefs_to_teach', 'competitive_landscape', 'positioning_statement', 'brand_purpose'],
+  consideration_guide:                ['founder_story', 'brand_origin_story', 'competitive_landscape', 'differentiation_statement', 'message_pillars'],
+  consideration_plan:                 ['offer_name', 'offer_inclusions', 'offer_outcome', 'conversion_strategy', 'message_pillars'],
+  consideration_call_to_action:       ['offer_name', 'offer_outcome', 'lead_magnet_title', 'lead_magnet_promise', 'conversion_strategy'],
+  consideration_failure:              ['icp_objections', 'enemy_cost', 'offer_transformation_before', 'competitive_landscape', 'beliefs_to_teach'],
+  consideration_success:              ['offer_outcome', 'offer_transformation_after', 'icp_desires', 'founder_story', 'message_pillars'],
+
+  // ── CONVERSION ──
+  conversion_character:            ['icp_desires', 'icp_buying_triggers', 'offer_name', 'offer_outcome', 'founder_story'],
+  conversion_external_problem:     ['offer_problem', 'offer_outcome', 'icp_objections', 'enemy_cost', 'conversion_strategy'],
+  conversion_internal_problem:     ['icp_internal_dialogue', 'icp_objections', 'offer_transformation_before', 'offer_transformation_after', 'offer_name'],
+  conversion_philosophical_problem:['brand_purpose', 'beliefs_to_teach', 'offer_name', 'offer_outcome', 'positioning_statement'],
+  conversion_guide:                ['founder_story', 'offer_name', 'offer_inclusions', 'differentiation_statement', 'conversion_strategy'],
+  conversion_plan:                 ['offer_name', 'offer_inclusions', 'offer_outcome', 'conversion_funnel', 'conversion_strategy'],
+  conversion_call_to_action:       ['offer_name', 'offer_outcome', 'offer_inclusions', 'lead_magnet_title', 'conversion_strategy'],
+  conversion_failure:              ['enemy_cost', 'icp_objections', 'offer_transformation_before', 'offer_name', 'conversion_strategy'],
+  conversion_success:              ['offer_outcome', 'offer_transformation_after', 'icp_desires', 'offer_name', 'authority_pitch'],
+};
+
+/** Number of strategic variables per post */
+const STRATEGIC_PICK_COUNT = 5;
 
 /**
- * Smart variable selector: picks 7 variables per post.
- * - 4 core (always present for voice consistency)
- * - 3 randomly selected from the rotating pool (for content variety)
+ * Strategic variable selector: picks 12 variables per post.
+ * - 7 CORE (always present for voice/personality consistency)
+ * - 5 strategically mapped based on funnel × storybrand stage
  *
- * This keeps prompt size ~70% smaller than sending all 40+ variables,
- * and creates natural variety across posts in a batch.
+ * Falls back to random selection from the full pool if no strategic
+ * mapping exists for the given combination.
  */
-export function selectSmartVariables(itemIndex?: number): string[] {
-  // Shuffle the rotating pool
-  const pool = [...ROTATING_CONTENT_VARIABLES];
+export function selectStrategicVariables(
+  funnelStage?: string,
+  storybrandStage?: string,
+  _contentAngle?: string,
+  itemIndex?: number
+): string[] {
+  // Try strategic mapping first
+  if (funnelStage && storybrandStage) {
+    const combo: StrategicCombo = `${funnelStage}_${storybrandStage}`;
+    const mapped = STRATEGIC_VARIABLE_MAP[combo];
+    if (mapped) {
+      // Deduplicate: strategic vars might overlap with CORE
+      const merged = [...CORE_CONTENT_VARIABLES];
+      for (const v of mapped) {
+        if (!merged.includes(v)) merged.push(v);
+      }
+      return merged;
+    }
+  }
 
-  // Use itemIndex as a seed offset to ensure different posts in a batch get different variables
-  // (but still randomized so batches don't repeat the same pattern)
+  // Fallback: random selection from the rotating pool (legacy behavior)
+  const pool = [...ROTATING_CONTENT_VARIABLES];
   const seed = (itemIndex || 0) + Date.now();
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.abs((seed * (i + 1) * 2654435761) % (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
-
-  const picked = pool.slice(0, ROTATING_PICK_COUNT);
+  const picked = pool.slice(0, STRATEGIC_PICK_COUNT);
   return [...CORE_CONTENT_VARIABLES, ...picked];
+}
+
+/**
+ * @deprecated Use selectStrategicVariables() instead. Kept for backward compatibility.
+ */
+export function selectSmartVariables(itemIndex?: number): string[] {
+  return selectStrategicVariables(undefined, undefined, undefined, itemIndex);
 }
 
 /**

@@ -19,6 +19,7 @@ import { CanvaDesignPicker } from './canva-design-picker';
 import { CommentThread } from './comment-thread';
 import { TagSelector } from './tag-selector';
 import { ContentBrief } from './content-brief';
+import { IconPicker } from './icon-picker';
 import { getFormatCategory, getAvailableTemplates, type ContentFormat } from '@/config/script-frameworks';
 import { generateUTMParams, buildTrackedUrl, type UTMParams } from '@/lib/utm/generate-utm';
 
@@ -537,7 +538,12 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
               brandCategories={brandCategories}
             />
             <div className="flex items-center justify-between mt-1">
-              <p className="text-xs text-stone">{(formData.caption || '').length} characters</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-stone">{(formData.caption || '').length} characters</p>
+                <IconPicker
+                  onIconSelect={(icon) => updateField('caption', (formData.caption || '') + icon)}
+                />
+              </div>
               <div className="flex gap-2 text-xs text-stone">
                 <span className={(formData.caption || '').length <= 150 ? 'text-teal' : 'text-stone'}>Twitter: 150</span>
                 <span className={(formData.caption || '').length <= 300 ? 'text-teal' : 'text-stone'}>IG/TikTok: 300</span>

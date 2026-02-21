@@ -10,7 +10,7 @@ import { resolveModel, calculateCreditCost, deductCredits, getProviderAdapterFor
 import type { AIFeature } from '@/lib/ai';
 import { MAX_VALIDATION_RETRIES } from './queue-config';
 import { getScriptFrameworkFromDB } from './template-service';
-import { ESSENTIAL_CONTENT_VARIABLES, selectSmartVariables } from './brand-variable-categories';
+import { ESSENTIAL_CONTENT_VARIABLES, selectStrategicVariables } from './brand-variable-categories';
 
 export interface GenerateContentResult {
   results: Array<{
@@ -344,11 +344,43 @@ export function buildSystemPrompt(
 All content MUST align with this direction. Use it as the north star for topic selection, messaging angle, and tone. Every post should clearly serve this directive.\n`
     : '';
 
-  return `You are a content strategist and scriptwriter for ${orgName}. You create original, brand-specific content.
+  return `You are a content strategist and scriptwriter for ${orgName}. You create original, brand-specific content that sounds like the founder wrote it.
 
 ${brandPrompt}
 ${feedbackSection}
 ${directionSection}
+POST FORMATTING RULES (apply to every post description and platform caption):
+Every post follows HOOK → BODY → CTA. No exceptions.
+
+HOOK (first 1-3 lines):
+- Pattern-interrupting opening: bold claim, pain point, or provocative statement
+- Must stop the scroll
+- Separated from body by blank line
+
+BODY:
+- Short sentences: 10-20 words max
+- Each sentence on its own line
+- Double newline between paragraph groups
+- Use "groups of 3" for impact (triplet pattern)
+- NO bullet markers (-, *, •) — use line-grouped statements
+- When checkmarks needed, use ✅ only
+- Conversational, direct "you" language
+- Specific numbers, named examples from brand context
+- Weave in story elements and personal anecdotes
+
+CTA (last 2-3 lines):
+- Short, punchy closing
+- Clear call to action
+- 👉 before links
+- Hashtags BELOW the CTA, never in body
+
+ANTI-PATTERNS (never do these):
+- No generic platitudes ("In today's fast-paced world")
+- No walls of text without line breaks
+- No bullet lists with dashes
+- No hashtags in body text
+- No weak openings ("Hey everyone!")
+
 CRITICAL RULES:
 - Every piece of content you create must be 100% UNIQUE — never repeat a topic, hook, angle, or script structure.
 - Write in the brand's voice using the brand's actual language, terms, and offer names.
@@ -402,25 +434,33 @@ You MUST write about a COMPLETELY DIFFERENT subject. Do NOT reuse any topic, hoo
   // Build platform-specific description guidelines
   const platformGuide = item.platforms.map(p => {
     const guides: Record<string, string> = {
-      linkedin: `📱 LINKEDIN (Professional, Scannable):
-150-600 characters with proper structure
+      linkedin: `📱 LINKEDIN (Authority, Scroll-stopping):
+300-1500 characters with LinkedIn-native formatting
 
 FORMAT REQUIREMENTS:
-- Hook: Bold insight in first 1-2 sentences, then blank line (\\n\\n)
-- Body: 2-3 short paragraphs with blank lines between (\\n\\n)
-- Each paragraph: 2-3 sentences max
-- Each sentence: 10-20 words, punchy and clear
-- End with professional CTA
-- 3-5 industry hashtags
+- Hook: Bold, pattern-interrupting first 1-2 lines (shown before "see more"). Then blank line (\\n\\n)
+- Each sentence on its OWN line — short, punchy, 10-20 words max
+- Double newline (\\n\\n) between paragraph groups
+- Use "triplet pattern" — groups of 3 related statements for impact
+- NO bullet markers (-, *, •) — use line-grouped statements instead
+- When listing wins or points, use ✅ checkmarks only
+- Conversational, direct "you" language — write like the founder talks
+- Specific numbers, named frameworks, real examples from the brand
+- CTA at the end: short, punchy, use 👉 before links
+- Hashtags BELOW the CTA (3-5 industry hashtags), never in body
 
 STRUCTURE:
-[Hook sentence 1-2]
+[Bold hook — stop the scroll]
 
-[Paragraph 1: main point]
+[Sentence on its own line]
+[Sentence on its own line]
+[Sentence on its own line]
 
-[Paragraph 2: supporting idea or example]
+[Next paragraph group]
+[Each sentence on its own line]
 
-[CTA]`,
+[Power close / CTA]
+[👉 link if applicable]`,
 
       facebook: `📘 FACEBOOK (Conversational, Story-driven):
 150-500 characters with storytelling flow
@@ -847,12 +887,17 @@ export async function generateSingleItem(
     ? contentThemes[itemIndex % contentThemes.length]
     : null;
 
-  // Smart variable selection: 7 per post (4 core + 3 random rotating)
+  // Strategic variable selection: 12 per post (7 core + 5 strategically mapped)
   // If user explicitly selected variables, respect their choice
   const effectiveVars = selectedBrandVariables && selectedBrandVariables.length > 0
     ? selectedBrandVariables
-    : selectSmartVariables(previouslyGenerated.length);
-  console.log(`[GEN-SINGLE] Brand variables: ${effectiveVars.length} selected (${selectedBrandVariables ? 'user-chosen' : 'smart-random'}): ${effectiveVars.join(', ')}`);
+    : selectStrategicVariables(
+        item.funnel_stage,
+        item.storybrand_stage,
+        item.angle?.name || undefined,
+        previouslyGenerated.length
+      );
+  console.log(`[GEN-SINGLE] Brand variables: ${effectiveVars.length} selected (${selectedBrandVariables ? 'user-chosen' : 'strategic'}): ${effectiveVars.join(', ')}`);
 
   const systemPrompt = buildSystemPrompt(brandContext, org?.name || 'Your Brand', effectiveVars, rejectionFeedback, creativeDirection);
   console.log(`[GEN-SINGLE] System prompt size: ${systemPrompt.length} chars`);

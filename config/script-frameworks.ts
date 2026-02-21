@@ -771,12 +771,25 @@ export const OUTPUT_FORMATS = {
 // BRAND VARIABLE PROMPT BUILDER
 // ============================================================
 
+// Voice/personality variables that are ALWAYS injected regardless of user selection.
+// These ensure the brand's voice is never lost even when users pick minimal variables.
+const FORCE_INCLUDE_KEYS = new Set([
+  'tone_descriptors',
+  'vocabulary_preferred',
+  'vocabulary_avoided',
+  'brand_archetype',
+  'brand_characteristics',
+  'brand_values',
+  'message_core',
+]);
+
 export function buildBrandContextPrompt(
   brandOutputs: Record<string, unknown>,
   selectedVariableKeys?: string[]
 ): string {
   const get = (key: string) => {
-    if (selectedVariableKeys && !selectedVariableKeys.includes(key)) return null;
+    // Force-include keys bypass the user selection filter
+    if (selectedVariableKeys && !selectedVariableKeys.includes(key) && !FORCE_INCLUDE_KEYS.has(key)) return null;
     const val = brandOutputs[key];
     if (!val) return 'Not specified';
     if (Array.isArray(val)) return val.join(', ');
@@ -818,6 +831,7 @@ export function buildBrandContextPrompt(
     line('brand_characteristics', 'Your brand characteristics: '),
     line('brand_purpose', 'Brand purpose: '),
     line('brand_values', 'Brand values: '),
+    line('message_core', 'Core message (your north star): '),
     line('brand_origin_story', 'Origin story: '),
     line('founder_story', 'Founder story: '),
     line('category', 'Category: '),
