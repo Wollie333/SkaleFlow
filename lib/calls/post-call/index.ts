@@ -9,6 +9,7 @@ import { draftFollowUpEmail } from './follow-up';
 import { recommendDealStage } from './deal-recommendation';
 import { scoreCall } from './scoring';
 import { extractBrandInsights } from './insights';
+import { generateStrategicInsights } from './strategic-insights';
 import { createServiceClient } from '@/lib/supabase/server';
 import { createNotification } from '@/lib/notifications';
 
@@ -24,19 +25,20 @@ export async function runPostCallPipeline(callId: string, orgId: string, hostUse
       return;
     }
 
-    // 2-6 can run in parallel
+    // 2-7 can run in parallel
     const results = await Promise.allSettled([
       extractActionItems(callId, summary.id, orgId, hostUserId),
       draftFollowUpEmail(callId, orgId, hostUserId),
       recommendDealStage(callId, orgId, hostUserId),
       scoreCall(callId, orgId, hostUserId),
       extractBrandInsights(callId, orgId, hostUserId),
+      generateStrategicInsights(callId, orgId, hostUserId),
     ]);
 
     // Log any failures
     results.forEach((r, i) => {
       if (r.status === 'rejected') {
-        const steps = ['action-items', 'follow-up', 'deal-recommendation', 'scoring', 'insights'];
+        const steps = ['action-items', 'follow-up', 'deal-recommendation', 'scoring', 'insights', 'strategic-insights'];
         console.error(`[PostCall] ${steps[i]} failed:`, r.reason);
       }
     });

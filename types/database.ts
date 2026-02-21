@@ -1015,6 +1015,7 @@ export interface Database {
           credits_charged: number;
           provider: string;
           is_free_model: boolean;
+          call_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -1029,6 +1030,7 @@ export interface Database {
           credits_charged?: number;
           provider?: string;
           is_free_model?: boolean;
+          call_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -1043,6 +1045,7 @@ export interface Database {
           credits_charged?: number;
           provider?: string;
           is_free_model?: boolean;
+          call_id?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -1058,6 +1061,13 @@ export interface Database {
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ai_usage_call_id_fkey";
+            columns: ["call_id"];
+            isOneToOne: false;
+            referencedRelation: "calls";
             referencedColumns: ["id"];
           },
         ];

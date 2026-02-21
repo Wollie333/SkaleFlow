@@ -43,10 +43,27 @@ export async function extractBrandInsights(callId: string, orgId: string, userId
       modelId: resolved.modelId,
     });
 
+    let credits = 0;
     if (!usingUserKey) {
       const { calculateCreditCost } = await import('@/lib/ai/credits');
-      const credits = calculateCreditCost(resolved.id, response.inputTokens, response.outputTokens);
-      await deductCredits(orgId, userId || null, credits, null, 'Call brand insights extraction');
+      credits = calculateCreditCost(resolved.id, response.inputTokens, response.outputTokens);
+    }
+
+    const { data: usageRecord } = await supabase.from('ai_usage').insert({
+      organization_id: orgId,
+      user_id: userId,
+      feature: 'call_brand_insights',
+      model: resolved.modelId,
+      input_tokens: response.inputTokens,
+      output_tokens: response.outputTokens,
+      credits_charged: credits,
+      provider: resolved.provider,
+      is_free_model: resolved.isFree || false,
+      call_id: callId,
+    }).select('id').single();
+
+    if (!usingUserKey && credits > 0) {
+      await deductCredits(orgId, userId || null, credits, usageRecord?.id || null, 'Call brand insights extraction');
     }
 
     let insights;
