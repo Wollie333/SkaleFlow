@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getAdapter } from '@/lib/social/auth';
+import { ensureValidToken, type ConnectionWithTokens } from '@/lib/social/token-manager';
 
 // POST /api/social/inbox/reply - Reply to an interaction
 export async function POST(request: NextRequest) {
@@ -44,9 +46,24 @@ export async function POST(request: NextRequest) {
 
     const interaction = { ...interactionRaw, connection: connectionData };
 
-    // TODO: Implement platform-specific reply logic
-    // This would call the appropriate platform adapter method
-    // For now, we'll just mark it as replied and store a local record
+    // Send reply to the actual platform
+    let platformReplyId: string | undefined;
+    if (connectionData) {
+      const adapter = getAdapter(connectionData.platform as import('@/types/database').SocialPlatform);
+      if (adapter.replyToComment) {
+        try {
+          const tokens = await ensureValidToken(connectionData as unknown as ConnectionWithTokens);
+          const replyResult = await adapter.replyToComment(tokens, interactionRaw.platform_interaction_id, message);
+          if (replyResult.success) {
+            platformReplyId = replyResult.platformReplyId;
+          } else {
+            console.warn('Platform reply failed:', replyResult.error);
+          }
+        } catch (err) {
+          console.warn('Platform reply error:', err);
+        }
+      }
+    }
 
     // Create a reply interaction record (for our own tracking)
     const { data: reply, error: replyError } = await supabase
@@ -56,7 +73,7 @@ export async function POST(request: NextRequest) {
         connection_id: interaction.connection_id,
         platform: interaction.platform,
         interaction_type: 'reply',
-        platform_interaction_id: `reply_${Date.now()}`, // Temporary - would be platform ID
+        platform_interaction_id: platformReplyId || `reply_${Date.now()}`,
         parent_interaction_id: interaction.id,
         message,
         author_platform_id: interaction.connection?.platform_user_id ?? 'unknown',

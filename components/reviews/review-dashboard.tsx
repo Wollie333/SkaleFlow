@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/useToast';
 import {
   ReviewItemCard,
   type ChangeRequestItem,
@@ -11,7 +12,7 @@ import {
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 
-type TabKey = 'all_pending' | 'brand' | 'content' | 'resolved';
+type TabKey = 'all_pending' | 'assigned_to_me' | 'brand' | 'content' | 'resolved';
 
 interface Tab {
   key: TabKey;
@@ -20,45 +21,90 @@ interface Tab {
 
 const TABS: Tab[] = [
   { key: 'all_pending', label: 'All Pending' },
+  { key: 'assigned_to_me', label: 'Assigned to Me' },
   { key: 'brand', label: 'Brand Changes' },
   { key: 'content', label: 'Content Reviews' },
   { key: 'resolved', label: 'Resolved' },
 ];
 
+interface OrgAdmin {
+  user_id: string;
+  full_name: string | null;
+  email: string;
+}
+
+const PRIORITY_ORDER: Record<string, number> = {
+  urgent: 0,
+  normal: 1,
+  low: 2,
+};
+
+function sortByPriority(items: ChangeRequestItem[]): ChangeRequestItem[] {
+  return [...items].sort((a, b) => {
+    const pa = PRIORITY_ORDER[a.priority || 'normal'] ?? 1;
+    const pb = PRIORITY_ORDER[b.priority || 'normal'] ?? 1;
+    if (pa !== pb) return pa - pb;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+}
+
 function filterItems(
   items: ChangeRequestItem[],
-  tab: TabKey
+  tab: TabKey,
+  currentUserId?: string
 ): ChangeRequestItem[] {
+  let filtered: ChangeRequestItem[];
+
   switch (tab) {
     case 'all_pending':
-      return items.filter(
+      filtered = items.filter(
         (i) => i.status === 'pending' || i.status === 'revision_requested'
       );
+      break;
+    case 'assigned_to_me':
+      filtered = items.filter(
+        (i) =>
+          (i.status === 'pending' || i.status === 'revision_requested') &&
+          i.assigned_to === currentUserId
+      );
+      break;
     case 'brand':
-      return items.filter(
+      filtered = items.filter(
         (i) =>
           i.feature === 'brand_engine' &&
           (i.status === 'pending' || i.status === 'revision_requested')
       );
+      break;
     case 'content':
-      return items.filter(
+      filtered = items.filter(
         (i) =>
           i.feature === 'content_engine' &&
           (i.status === 'pending' || i.status === 'revision_requested')
       );
+      break;
     case 'resolved':
-      return items.filter(
+      filtered = items.filter(
         (i) => i.status === 'approved' || i.status === 'rejected'
       );
+      break;
     default:
-      return items;
+      filtered = items;
   }
+
+  // Sort pending tabs by priority
+  if (tab !== 'resolved') {
+    return sortByPriority(filtered);
+  }
+
+  return filtered;
 }
 
 function getEmptyMessage(tab: TabKey): string {
   switch (tab) {
     case 'all_pending':
       return 'No pending change requests. All caught up!';
+    case 'assigned_to_me':
+      return 'No items assigned to you.';
     case 'brand':
       return 'No pending brand engine changes to review.';
     case 'content':
@@ -89,11 +135,14 @@ function SkeletonCard() {
 }
 
 export function ReviewDashboard() {
+  const toast = useToast();
   const [items, setItems] = useState<ChangeRequestItem[]>([]);
   const [activeTab, setActiveTab] = useState<TabKey>('all_pending');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>();
+  const [orgAdmins, setOrgAdmins] = useState<OrgAdmin[]>([]);
 
   const fetchItems = useCallback(async () => {
     try {
@@ -105,6 +154,7 @@ export function ReviewDashboard() {
       }
       const data = await res.json();
       setItems(data.changeRequests || []);
+      if (data.currentUserId) setCurrentUserId(data.currentUserId);
     } catch (err) {
       console.error('Failed to fetch reviews:', err);
       setError(
@@ -115,9 +165,30 @@ export function ReviewDashboard() {
     }
   }, []);
 
+  // Fetch org admins for assignment dropdown
+  const fetchAdmins = useCallback(async () => {
+    try {
+      const res = await fetch('/api/team');
+      if (res.ok) {
+        const data = await res.json();
+        const admins: OrgAdmin[] = (data.members || [])
+          .filter((m: { role: string }) => m.role === 'owner' || m.role === 'admin')
+          .map((m: { user_id: string; users: { full_name: string | null; email: string } | null }) => ({
+            user_id: m.user_id,
+            full_name: m.users?.full_name || null,
+            email: m.users?.email || '',
+          }));
+        setOrgAdmins(admins);
+      }
+    } catch {
+      // silent
+    }
+  }, []);
+
   useEffect(() => {
     fetchItems();
-  }, [fetchItems]);
+    fetchAdmins();
+  }, [fetchItems, fetchAdmins]);
 
   const handleReview = useCallback(
     async (id: string, action: string, comment?: string) => {
@@ -129,15 +200,52 @@ export function ReviewDashboard() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
+        toast.error(body.error || 'Review action failed');
         throw new Error(body.error || 'Review action failed');
       }
 
-      // Refresh list after successful review
+      const actionLabels: Record<string, string> = {
+        approve: 'approved',
+        reject: 'rejected',
+        request_revision: 'revision requested',
+      };
+      toast.success(`Change request ${actionLabels[action] || action}`);
+
       await fetchItems();
       setExpandedId(null);
     },
-    [fetchItems]
+    [fetchItems, toast]
   );
+
+  const handleAssign = useCallback(async (id: string, userId: string | null) => {
+    const res = await fetch(`/api/change-requests/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'assign', assignedTo: userId }),
+    });
+
+    if (res.ok) {
+      toast.success(userId ? 'Assigned reviewer' : 'Unassigned reviewer');
+      await fetchItems();
+    } else {
+      toast.error('Failed to assign');
+    }
+  }, [fetchItems, toast]);
+
+  const handleSetPriority = useCallback(async (id: string, priority: string) => {
+    const res = await fetch(`/api/change-requests/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'set_priority', priority }),
+    });
+
+    if (res.ok) {
+      toast.success(`Priority set to ${priority}`);
+      await fetchItems();
+    } else {
+      toast.error('Failed to set priority');
+    }
+  }, [fetchItems, toast]);
 
   const handleToggleExpand = useCallback(
     (id: string) => {
@@ -146,9 +254,14 @@ export function ReviewDashboard() {
     []
   );
 
-  const filteredItems = filterItems(items, activeTab);
+  const filteredItems = filterItems(items, activeTab, currentUserId);
   const pendingCount = items.filter(
     (i) => i.status === 'pending' || i.status === 'revision_requested'
+  ).length;
+  const assignedToMeCount = items.filter(
+    (i) =>
+      (i.status === 'pending' || i.status === 'revision_requested') &&
+      i.assigned_to === currentUserId
   ).length;
 
   return (
@@ -158,6 +271,9 @@ export function ReviewDashboard() {
         <p className="text-sm text-stone">
           <span className="font-semibold text-charcoal">{pendingCount}</span>{' '}
           pending review{pendingCount !== 1 ? 's' : ''}
+          {assignedToMeCount > 0 && (
+            <span className="ml-2 text-teal font-medium">({assignedToMeCount} assigned to you)</span>
+          )}
         </p>
         <button
           type="button"
@@ -178,7 +294,7 @@ export function ReviewDashboard() {
       {/* Tab navigation */}
       <div className="mb-4 flex gap-4 border-b border-stone/10 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
         {TABS.map((tab) => {
-          const count = filterItems(items, tab.key).length;
+          const count = filterItems(items, tab.key, currentUserId).length;
           return (
             <button
               key={tab.key}
@@ -235,6 +351,9 @@ export function ReviewDashboard() {
               onReview={handleReview}
               isExpanded={expandedId === item.id}
               onToggleExpand={() => handleToggleExpand(item.id)}
+              orgAdmins={orgAdmins}
+              onAssign={handleAssign}
+              onSetPriority={handleSetPriority}
             />
           ))}
         </div>

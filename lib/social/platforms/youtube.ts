@@ -1,4 +1,4 @@
-import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData } from '../types';
+import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData, InboxItem, ReplyResult, AccountMetrics } from '../types';
 
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 
@@ -211,6 +211,99 @@ export const youtubeAdapter: PlatformAdapter = {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
+  },
+
+  async fetchComments(tokens: TokenData, postId: string): Promise<InboxItem[]> {
+    try {
+      const res = await fetch(
+        `${YOUTUBE_API_BASE}/commentThreads?videoId=${postId}&part=snippet&maxResults=50`,
+        { headers: { Authorization: `Bearer ${tokens.accessToken}` } }
+      );
+      const data = await res.json();
+      if (data.error || !data.items) return [];
+
+      return (data.items as Array<{
+        id: string;
+        snippet: {
+          topLevelComment: {
+            id: string;
+            snippet: {
+              textDisplay?: string;
+              authorDisplayName?: string;
+              authorChannelId?: { value?: string };
+              authorProfileImageUrl?: string;
+              publishedAt?: string;
+            };
+          };
+        };
+      }>).map((item) => {
+        const c = item.snippet.topLevelComment.snippet;
+        return {
+          platformInteractionId: item.snippet.topLevelComment.id,
+          type: 'comment' as const,
+          message: c.textDisplay || '',
+          authorId: c.authorChannelId?.value || '',
+          authorName: c.authorDisplayName || 'Unknown',
+          authorAvatarUrl: c.authorProfileImageUrl,
+          timestamp: c.publishedAt || new Date().toISOString(),
+          postId,
+        };
+      });
+    } catch {
+      return [];
+    }
+  },
+
+  async replyToComment(tokens: TokenData, commentId: string, message: string): Promise<ReplyResult> {
+    try {
+      const res = await fetch(`${YOUTUBE_API_BASE}/comments?part=snippet`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${tokens.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          snippet: {
+            parentId: commentId,
+            textOriginal: message,
+          },
+        }),
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        return { success: false, error: data.error.message || 'Failed to reply' };
+      }
+
+      return { success: true, platformReplyId: data.id };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Reply failed' };
+    }
+  },
+
+  async fetchAccountMetrics(tokens: TokenData): Promise<AccountMetrics> {
+    try {
+      const res = await fetch(
+        `${YOUTUBE_API_BASE}/channels?mine=true&part=statistics`,
+        { headers: { Authorization: `Bearer ${tokens.accessToken}` } }
+      );
+      const data = await res.json();
+      const stats = data.items?.[0]?.statistics;
+
+      if (!stats) return { followersCount: 0, followingCount: 0, postsCount: 0 };
+
+      return {
+        followersCount: parseInt(stats.subscriberCount || '0', 10),
+        followingCount: 0,
+        postsCount: parseInt(stats.videoCount || '0', 10),
+        metadata: {
+          viewCount: parseInt(stats.viewCount || '0', 10),
+          hiddenSubscriberCount: stats.hiddenSubscriberCount || false,
+        },
+      };
+    } catch {
+      return { followersCount: 0, followingCount: 0, postsCount: 0 };
+    }
   },
 };
 

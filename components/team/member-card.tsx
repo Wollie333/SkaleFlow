@@ -105,13 +105,28 @@ export function MemberCard({
   return (
     <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5 transition-all duration-200 hover:shadow-[0_4px_16px_rgba(15,31,29,0.06)]">
       <div className="flex items-start gap-4">
-        {/* Avatar */}
-        <div className="flex-shrink-0">
+        {/* Avatar with online indicator */}
+        <div className="flex-shrink-0 relative">
           <UserAvatar
             avatarUrl={member.users?.avatar_url}
             userName={displayName}
             size="lg"
           />
+          {member.users?.last_login_at && (
+            <span
+              className={cn(
+                'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-cream-warm',
+                new Date().getTime() - new Date(member.users.last_login_at).getTime() < 15 * 60 * 1000
+                  ? 'bg-green-500'
+                  : 'bg-stone/30'
+              )}
+              title={
+                new Date().getTime() - new Date(member.users.last_login_at).getTime() < 15 * 60 * 1000
+                  ? 'Online'
+                  : 'Offline'
+              }
+            />
+          )}
         </div>
 
         {/* Info */}

@@ -22,6 +22,8 @@ import { ContentBrief } from './content-brief';
 import { IconPicker } from './icon-picker';
 import { getFormatCategory, getAvailableTemplates, type ContentFormat } from '@/config/script-frameworks';
 import { generateUTMParams, buildTrackedUrl, type UTMParams } from '@/lib/utm/generate-utm';
+import { PublishStatusPanel } from './publish-status-panel';
+import { PublishHistory } from './publish-history';
 
 interface ContentItem {
   id: string;
@@ -88,6 +90,17 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
   const [selectedConnectionIds, setSelectedConnectionIds] = useState<string[]>([]);
   const [publishResults, setPublishResults] = useState<Array<{ platform: string; success: boolean; postUrl?: string; error?: string }>>([]);
   const [publishedPosts] = useState<PublishedPost[]>([]);
+  const [publishedPostsData, setPublishedPostsData] = useState<Array<{
+    id: string;
+    platform: import('@/types/database').SocialPlatform;
+    publish_status: 'queued' | 'publishing' | 'published' | 'failed';
+    post_url: string | null;
+    error_message: string | null;
+    retry_count: number;
+    published_at: string | null;
+    connection_id: string;
+  }>>([]);
+  const [isRetrying, setIsRetrying] = useState(false);
   const [reviewComment, setReviewComment] = useState('');
   const [showReschedule, setShowReschedule] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -140,6 +153,23 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
         setCanvaConnected(!!data);
       });
   }, [organizationId]);
+
+  // Load published posts for status panel
+  useEffect(() => {
+    if (!item.id) return;
+    const supabase = createClient();
+    async function loadPublishedPosts() {
+      const { data } = await supabase
+        .from('published_posts')
+        .select('id, platform, publish_status, post_url, error_message, retry_count, published_at, connection_id')
+        .eq('content_item_id', item.id)
+        .order('created_at', { ascending: true });
+      if (data) {
+        setPublishedPostsData(data as typeof publishedPostsData);
+      }
+    }
+    loadPublishedPosts();
+  }, [item.id]);
 
   const handleCreateWithCanva = async () => {
     // Determine platform-appropriate size
@@ -245,6 +275,35 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
       console.error('Publish failed:', error);
     }
     setIsPublishing(false);
+  };
+
+  const handleRetry = async (connectionId: string) => {
+    setIsRetrying(true);
+    try {
+      const res = await fetch('/api/content/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contentItemId: item.id,
+          retry: true,
+          retryConnectionId: connectionId,
+        }),
+      });
+      const json = await res.json();
+      // Refresh published posts data
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('published_posts')
+        .select('id, platform, publish_status, post_url, error_message, retry_count, published_at, connection_id')
+        .eq('content_item_id', item.id)
+        .order('created_at', { ascending: true });
+      if (data) {
+        setPublishedPostsData(data as typeof publishedPostsData);
+      }
+    } catch (err) {
+      console.error('Retry failed:', err);
+    }
+    setIsRetrying(false);
   };
 
   const updateField = <K extends keyof ContentItem>(field: K, value: ContentItem[K]) => {
@@ -909,22 +968,22 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
           </div>
         )}
 
-        {/* Published posts summary */}
-        {formData.status === 'published' && publishedPosts.length > 0 && (
-          <div className="border-t border-stone/10 pt-6 space-y-2">
-            <h3 className="font-medium text-charcoal">Published Posts</h3>
-            {publishedPosts.map((post, i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-cream-warm rounded-lg">
-                <span className="text-sm font-medium text-charcoal">
-                  {PLATFORM_CONFIG[post.platform as SocialPlatform]?.name || post.platform}
-                </span>
-                {post.post_url && (
-                  <a href={post.post_url} target="_blank" rel="noopener noreferrer" className="text-sm text-teal hover:underline inline-flex items-center gap-1">
-                    View <ArrowTopRightOnSquareIcon className="w-3 h-3" />
-                  </a>
-                )}
-              </div>
-            ))}
+        {/* Publish Status Panel — shows for any item with publish attempts */}
+        {publishedPostsData.length > 0 && (
+          <div className="border-t border-stone/10 pt-6">
+            <PublishStatusPanel
+              contentItemId={item.id}
+              posts={publishedPostsData}
+              onRetry={handleRetry}
+              isRetrying={isRetrying}
+            />
+          </div>
+        )}
+
+        {/* Publish History Timeline */}
+        {item.id && (formData.status === 'published' || formData.status === 'scheduled' || publishedPostsData.length > 0) && (
+          <div className="border-t border-stone/10 pt-4">
+            <PublishHistory contentItemId={item.id} />
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui';
 import {
@@ -13,6 +13,7 @@ import {
   PlusIcon,
   MinusIcon,
 } from '@heroicons/react/24/outline';
+import { PermissionTemplateSelector } from './permission-template-selector';
 
 type MemberRole = 'owner' | 'admin' | 'member' | 'viewer';
 
@@ -58,6 +59,7 @@ interface MemberDetailPanelProps {
   onReclaimCredits: (feature: string, amount: number) => Promise<void>;
   onRemove: () => void;
   onRoleChange: (role: MemberRole) => void;
+  onApplyTemplate?: (userId: string, templateId: string) => void;
 }
 
 const ROLE_STYLES: Record<MemberRole, string> = {
@@ -136,11 +138,22 @@ export function MemberDetailPanel({
   onReclaimCredits,
   onRemove,
   onRoleChange,
+  onApplyTemplate,
 }: MemberDetailPanelProps) {
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [creditInputs, setCreditInputs] = useState<Record<string, { mode: 'allocate' | 'reclaim'; amount: number } | null>>({});
   const [creditProcessing, setCreditProcessing] = useState<string | null>(null);
+
+  // Escape key to close
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!member) return null;
 
@@ -288,9 +301,16 @@ export function MemberDetailPanel({
         <div className="flex-1 overflow-y-auto">
           {/* Permissions Section */}
           <div className="px-6 py-5 border-b border-stone/10">
-            <div className="flex items-center gap-2 mb-4">
-              <KeyIcon className="w-4 h-4 text-teal" />
-              <h3 className="text-sm font-semibold text-charcoal">Permissions</h3>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <KeyIcon className="w-4 h-4 text-teal" />
+                <h3 className="text-sm font-semibold text-charcoal">Permissions</h3>
+              </div>
+              {onApplyTemplate && !isOwner && (
+                <PermissionTemplateSelector
+                  onApply={(template) => onApplyTemplate(member.user_id, template.id)}
+                />
+              )}
             </div>
 
             <div className="space-y-4">

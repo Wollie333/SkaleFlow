@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { logTeamActivity } from '@/lib/team-activity';
 import type { OrgMemberRole } from '@/types/database';
 
 const VALID_ROLES: OrgMemberRole[] = ['admin', 'member', 'viewer'];
@@ -79,6 +80,11 @@ export async function PATCH(
       return NextResponse.json({ error: 'Failed to update role' }, { status: 500 });
     }
 
+    logTeamActivity(myMembership.organization_id, user.id, 'role_changed', targetMember.user_id, {
+      previousRole: targetMember.role,
+      newRole: role,
+    }).catch(() => {});
+
     return NextResponse.json({ success: true, role });
   } catch (error) {
     console.error('Team PATCH error:', error);
@@ -150,6 +156,10 @@ export async function DELETE(
       console.error('Failed to remove member:', deleteError);
       return NextResponse.json({ error: 'Failed to remove member' }, { status: 500 });
     }
+
+    logTeamActivity(myMembership.organization_id, user.id, 'member_removed', targetMember.user_id, {
+      removedRole: targetMember.role,
+    }).catch(() => {});
 
     return NextResponse.json({ success: true });
   } catch (error) {

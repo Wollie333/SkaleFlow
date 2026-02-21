@@ -1,4 +1,4 @@
-import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData } from '../types';
+import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData, InboxItem, ReplyResult, AccountMetrics } from '../types';
 
 const LINKEDIN_API_BASE = 'https://api.linkedin.com';
 
@@ -337,6 +337,78 @@ export const linkedinAdapter: PlatformAdapter = {
   async revokeAccess(_tokens: TokenData): Promise<void> {
     // LinkedIn doesn't support programmatic token revocation
     // Token will expire naturally
+  },
+
+  async fetchComments(tokens: TokenData, postId: string): Promise<InboxItem[]> {
+    try {
+      const res = await fetch(
+        `${LINKEDIN_API_BASE}/v2/socialActions/${encodeURIComponent(postId)}/comments`,
+        {
+          headers: {
+            Authorization: `Bearer ${tokens.accessToken}`,
+            'LinkedIn-Version': '202401',
+            'X-Restli-Protocol-Version': '2.0.0',
+          },
+        }
+      );
+
+      if (!res.ok) return [];
+
+      const data = await res.json();
+      const elements = data.elements || [];
+
+      return (elements as Array<{
+        $URN?: string;
+        message?: { text?: string };
+        actor?: string;
+        created?: { time?: number };
+        parentComment?: string;
+      }>).map((c) => ({
+        platformInteractionId: c.$URN || '',
+        type: (c.parentComment ? 'reply' : 'comment') as 'comment' | 'reply',
+        message: c.message?.text || '',
+        authorId: c.actor || '',
+        authorName: 'LinkedIn User',
+        timestamp: c.created?.time ? new Date(c.created.time).toISOString() : new Date().toISOString(),
+        parentId: c.parentComment,
+        postId,
+      }));
+    } catch {
+      return [];
+    }
+  },
+
+  async fetchAccountMetrics(tokens: TokenData): Promise<AccountMetrics> {
+    try {
+      const orgId = tokens.platformPageId;
+      if (orgId) {
+        const res = await fetch(
+          `${LINKEDIN_API_BASE}/v2/organizations/${orgId}?projection=(localizedName,vanityName)`,
+          {
+            headers: {
+              Authorization: `Bearer ${tokens.accessToken}`,
+              'LinkedIn-Version': '202401',
+              'X-Restli-Protocol-Version': '2.0.0',
+            },
+          }
+        );
+
+        if (res.ok) {
+          const data = await res.json();
+          return {
+            followersCount: 0,
+            followingCount: 0,
+            postsCount: 0,
+            metadata: { localizedName: data.localizedName, vanityName: data.vanityName },
+          };
+        }
+      }
+
+      // Personal profile — no easy follower count endpoint without specific scopes
+      return { followersCount: 0, followingCount: 0, postsCount: 0 };
+    } catch {
+      return { followersCount: 0, followingCount: 0, postsCount: 0 };
+    }
   },
 };
 

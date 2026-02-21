@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { sendTeamInviteEmail } from '@/lib/resend';
+import { logTeamActivity } from '@/lib/team-activity';
 import crypto from 'crypto';
 
 // GET — List team members + pending invites for the current user's org
@@ -206,6 +207,13 @@ export async function POST(request: Request) {
         .eq('id', invitation.id);
     }
 
+    // Log activity
+    logTeamActivity(org.id, user.id, 'member_invited', null, {
+      email,
+      role,
+      emailStatus,
+    }).catch(() => {});
+
     return NextResponse.json({
       success: true,
       inviteUrl,
@@ -268,6 +276,10 @@ export async function PATCH(request: Request) {
         console.error('Failed to cancel invitation:', updateError);
         return NextResponse.json({ error: 'Failed to cancel invitation' }, { status: 500 });
       }
+
+      logTeamActivity(membership.organization_id, user.id, 'invite_cancelled', null, {
+        invitationId,
+      }).catch(() => {});
 
       return NextResponse.json({ success: true });
     }
@@ -338,6 +350,11 @@ export async function PATCH(request: Request) {
         })
         .eq('id', invite.id);
     }
+
+    logTeamActivity(membership.organization_id, user.id, 'invite_resent', null, {
+      email: invite.email,
+      invitationId,
+    }).catch(() => {});
 
     return NextResponse.json({ success: true, emailStatus });
   } catch (error) {

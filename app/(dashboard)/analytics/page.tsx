@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { OverviewTabContent } from '@/components/analytics/overview-tab-content';
 import { PlatformTabContent } from '@/components/analytics/platform-tab-content';
 import { DateRangePicker, getDateFromRange, type DateRange } from '@/components/analytics/date-range-picker';
+import { ExportButton } from '@/components/analytics/export-button';
 import type { AnalyticsResponse } from '@/components/analytics/types';
 import type { AudienceInsight } from '@/components/analytics/audience-insights-panel';
 import type { SocialPlatform } from '@/types/database';
@@ -41,6 +42,8 @@ const EMPTY_DATA: AnalyticsResponse = {
   topPosts: [],
   platformSummary: [],
   connectedPlatforms: [],
+  followerGrowth: [],
+  engagementHeatmap: [],
 };
 
 export default function AnalyticsPage() {
@@ -102,6 +105,9 @@ export default function AnalyticsPage() {
     setIsLoading(false);
   }, [dateRange, campaignFilter]);
 
+  const dateFrom = getDateFromRange(dateRange);
+  const dateTo = new Date().toISOString().split('T')[0];
+
   // Fetch audience insights (separate endpoint, fetched once on mount)
   const loadAudienceInsights = useCallback(async () => {
     setAudienceLoading(true);
@@ -155,7 +161,12 @@ export default function AnalyticsPage() {
         icon={ChartBarIcon}
         title="Analytics"
         subtitle="Track your content performance across platforms"
-        action={<DateRangePicker value={dateRange} onChange={setDateRange} />}
+        action={
+          <div className="flex items-center gap-2">
+            <ExportButton dateFrom={dateFrom} dateTo={dateTo} />
+            <DateRangePicker value={dateRange} onChange={setDateRange} />
+          </div>
+        }
       />
 
       {/* Filters row: Tabs + Campaign filter */}

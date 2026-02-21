@@ -3,6 +3,39 @@ import { formatForPlatform, canPublishToPlatform } from './formatters';
 import { ensureValidToken, type ConnectionWithTokens } from './token-manager';
 import type { SocialPlatform, PublishResult } from './types';
 
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxAttempts: number = 3,
+  baseDelayMs: number = 1000,
+): Promise<T> {
+  let lastError: Error | undefined;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < maxAttempts) {
+        const delay = baseDelayMs * Math.pow(2, attempt - 1);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  throw lastError;
+}
+
+async function withConcurrencyLimit<T>(
+  tasks: (() => Promise<T>)[],
+  limit: number = 3,
+): Promise<PromiseSettledResult<T>[]> {
+  const results: PromiseSettledResult<T>[] = [];
+  for (let i = 0; i < tasks.length; i += limit) {
+    const batch = tasks.slice(i, i + limit);
+    const batchResults = await Promise.allSettled(batch.map(t => t()));
+    results.push(...batchResults);
+  }
+  return results;
+}
+
 interface ContentItem {
   id: string;
   topic: string | null;
@@ -40,15 +73,21 @@ export async function publishToConnection(
   }
 
   try {
-    // Ensure token is valid (refresh if needed)
-    const tokens = await ensureValidToken(connection);
-
-    // Format content for the platform (with placement-specific formatting)
+    let tokens = await ensureValidToken(connection);
     const postPayload = formatForPlatform(platform, contentItem, contentItem.placement_type as import('@/types/database').PlacementType | null);
-
-    // Publish via platform adapter
     const adapter = getAdapter(platform);
-    const result = await adapter.publishPost(tokens, postPayload);
+
+    const result = await withRetry(async () => {
+      try {
+        return await adapter.publishPost(tokens, postPayload);
+      } catch (err: unknown) {
+        // Auto-refresh token on 401
+        if (err instanceof Error && err.message.includes('401')) {
+          tokens = await ensureValidToken({ ...connection, token_expires_at: null } as ConnectionWithTokens);
+        }
+        throw err;
+      }
+    });
 
     return { platform, connectionId: connection.id, result };
   } catch (error) {
@@ -67,9 +106,8 @@ export async function publishToMultipleConnections(
   connections: ConnectionWithTokens[],
   contentItem: ContentItem,
 ): Promise<PublishToConnectionResult[]> {
-  const results = await Promise.allSettled(
-    connections.map(conn => publishToConnection(conn, contentItem))
-  );
+  const tasks = connections.map(conn => () => publishToConnection(conn, contentItem));
+  const results = await withConcurrencyLimit(tasks, 3);
 
   return results.map((result, i) => {
     if (result.status === 'fulfilled') {

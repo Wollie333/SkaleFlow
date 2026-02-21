@@ -246,7 +246,7 @@ export async function getPendingChangeRequests(
   const supabase = createServiceClient();
   let query = supabase
     .from('change_requests')
-    .select('*, requester:requested_by(full_name, email), reviewer:reviewed_by(full_name)')
+    .select('*, requester:requested_by(full_name, email), reviewer:reviewed_by(full_name), assignee:assigned_to(full_name, email)')
     .eq('organization_id', orgId)
     .order('created_at', { ascending: false });
 

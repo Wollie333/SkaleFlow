@@ -3,9 +3,10 @@
 import { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui';
-import { ChevronDownIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, ClockIcon, UserCircleIcon, FlagIcon } from '@heroicons/react/24/outline';
 import { BrandChangeDiff } from './brand-change-diff';
 import { ReviewActions } from './review-actions';
+import { ReviewCommentThread } from './review-comment-thread';
 
 export interface ChangeRequestItem {
   id: string;
@@ -19,9 +20,19 @@ export interface ChangeRequestItem {
   metadata: Record<string, unknown>;
   status: string;
   review_comment: string | null;
+  assigned_to: string | null;
+  priority: string;
+  deadline: string | null;
   created_at: string;
   requester?: { full_name: string; email: string };
   reviewer?: { full_name: string };
+  assignee?: { full_name: string; email: string } | null;
+}
+
+interface OrgAdmin {
+  user_id: string;
+  full_name: string | null;
+  email: string;
 }
 
 export interface ReviewItemCardProps {
@@ -29,6 +40,9 @@ export interface ReviewItemCardProps {
   onReview: (id: string, action: string, comment?: string) => void;
   isExpanded: boolean;
   onToggleExpand: () => void;
+  orgAdmins?: OrgAdmin[];
+  onAssign?: (id: string, userId: string | null) => void;
+  onSetPriority?: (id: string, priority: string) => void;
 }
 
 function getRelativeTime(dateString: string): string {
@@ -81,6 +95,21 @@ function getStatusBadge(status: string) {
   );
 }
 
+const PRIORITY_STYLES: Record<string, string> = {
+  urgent: 'bg-red-100 text-red-700',
+  normal: 'bg-stone/10 text-stone',
+  low: 'bg-stone/5 text-stone/60',
+};
+
+function PriorityBadge({ priority }: { priority: string }) {
+  if (priority === 'normal') return null;
+  return (
+    <span className={cn('text-[10px] font-semibold px-1.5 py-0.5 rounded-full uppercase', PRIORITY_STYLES[priority] || PRIORITY_STYLES.normal)}>
+      {priority}
+    </span>
+  );
+}
+
 function getEntityDescription(item: ChangeRequestItem): string {
   const entityType = item.entity_type.replace(/_/g, ' ');
   const changeType = item.change_type;
@@ -107,9 +136,14 @@ export function ReviewItemCard({
   onReview,
   isExpanded,
   onToggleExpand,
+  orgAdmins,
+  onAssign,
+  onSetPriority,
 }: ReviewItemCardProps) {
   const [comment, setComment] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [assignDropdownOpen, setAssignDropdownOpen] = useState(false);
+  const [priorityDropdownOpen, setPriorityDropdownOpen] = useState(false);
 
   const isPending =
     item.status === 'pending' || item.status === 'revision_requested';
@@ -143,7 +177,7 @@ export function ReviewItemCard({
           : 'border-teal/[0.08] hover:border-teal/15'
       )}
     >
-      {/* Header row — always visible */}
+      {/* Header row */}
       <button
         type="button"
         onClick={onToggleExpand}
@@ -166,6 +200,7 @@ export function ReviewItemCard({
             >
               {item.feature.replace(/_/g, ' ')}
             </Badge>
+            <PriorityBadge priority={item.priority || 'normal'} />
           </div>
           <p className="text-sm text-stone mt-0.5 truncate">
             {getEntityDescription(item)}
@@ -174,6 +209,13 @@ export function ReviewItemCard({
 
         {/* Right side */}
         <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Assignee indicator */}
+          {item.assignee && (
+            <div className="hidden sm:flex items-center gap-1 text-xs text-stone" title={`Assigned to ${item.assignee.full_name || item.assignee.email}`}>
+              <UserCircleIcon className="w-3.5 h-3.5" />
+              <span className="truncate max-w-[60px]">{item.assignee.full_name || item.assignee.email}</span>
+            </div>
+          )}
           <div className="flex items-center gap-1.5 text-xs text-stone">
             <ClockIcon className="w-3.5 h-3.5" />
             {getRelativeTime(item.created_at)}
@@ -192,6 +234,88 @@ export function ReviewItemCard({
       {isExpanded && (
         <div className="px-5 pb-5 border-t border-stone/8">
           <div className="pt-4 space-y-4">
+            {/* Assignment & Priority controls (for pending items) */}
+            {isPending && (onAssign || onSetPriority) && (
+              <div className="flex items-center gap-3 flex-wrap">
+                {/* Assign dropdown */}
+                {onAssign && orgAdmins && (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => { setAssignDropdownOpen(!assignDropdownOpen); setPriorityDropdownOpen(false); }}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-stone border border-stone/15 rounded-lg px-2.5 py-1.5 hover:bg-stone/5 transition-colors"
+                    >
+                      <UserCircleIcon className="w-3.5 h-3.5" />
+                      {item.assignee ? (item.assignee.full_name || item.assignee.email) : 'Assign'}
+                      <ChevronDownIcon className="w-3 h-3" />
+                    </button>
+                    {assignDropdownOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setAssignDropdownOpen(false)} />
+                        <div className="absolute left-0 top-full mt-1 z-50 bg-cream-warm rounded-lg border border-stone/10 shadow-lg py-1 min-w-[180px]">
+                          <button
+                            type="button"
+                            onClick={() => { onAssign(item.id, null); setAssignDropdownOpen(false); }}
+                            className="w-full text-left px-3 py-1.5 text-xs text-stone hover:bg-cream transition-colors"
+                          >
+                            Unassign
+                          </button>
+                          {orgAdmins.map(admin => (
+                            <button
+                              key={admin.user_id}
+                              type="button"
+                              onClick={() => { onAssign(item.id, admin.user_id); setAssignDropdownOpen(false); }}
+                              className={cn(
+                                'w-full text-left px-3 py-1.5 text-xs transition-colors',
+                                item.assigned_to === admin.user_id ? 'bg-teal/5 text-teal font-medium' : 'text-charcoal hover:bg-cream'
+                              )}
+                            >
+                              {admin.full_name || admin.email}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Priority dropdown */}
+                {onSetPriority && (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => { setPriorityDropdownOpen(!priorityDropdownOpen); setAssignDropdownOpen(false); }}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-stone border border-stone/15 rounded-lg px-2.5 py-1.5 hover:bg-stone/5 transition-colors"
+                    >
+                      <FlagIcon className="w-3.5 h-3.5" />
+                      Priority: {item.priority || 'normal'}
+                      <ChevronDownIcon className="w-3 h-3" />
+                    </button>
+                    {priorityDropdownOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setPriorityDropdownOpen(false)} />
+                        <div className="absolute left-0 top-full mt-1 z-50 bg-cream-warm rounded-lg border border-stone/10 shadow-lg py-1 min-w-[120px]">
+                          {['urgent', 'normal', 'low'].map(p => (
+                            <button
+                              key={p}
+                              type="button"
+                              onClick={() => { onSetPriority(item.id, p); setPriorityDropdownOpen(false); }}
+                              className={cn(
+                                'w-full text-left px-3 py-1.5 text-xs capitalize transition-colors',
+                                (item.priority || 'normal') === p ? 'bg-teal/5 text-teal font-medium' : 'text-charcoal hover:bg-cream'
+                              )}
+                            >
+                              {p}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Review comment if resolved */}
             {item.review_comment && !isPending && (
               <div className="rounded-lg bg-stone/5 p-3">
@@ -217,7 +341,6 @@ export function ReviewItemCard({
               />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* Current value card */}
                 <div className="rounded-lg border border-red-200 bg-red-50/60 p-4">
                   <p className="text-xs font-semibold text-red-600 mb-2">
                     Current
@@ -231,7 +354,6 @@ export function ReviewItemCard({
                   </pre>
                 </div>
 
-                {/* Proposed value card */}
                 <div className="rounded-lg border border-green-200 bg-green-50/60 p-4">
                   <p className="text-xs font-semibold text-green-400 mb-2">
                     Proposed
@@ -246,6 +368,9 @@ export function ReviewItemCard({
                 </div>
               </div>
             )}
+
+            {/* Comment thread */}
+            <ReviewCommentThread changeRequestId={item.id} />
 
             {/* Action buttons for pending items */}
             {isPending && (

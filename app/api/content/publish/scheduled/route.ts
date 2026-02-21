@@ -10,8 +10,45 @@ export const maxDuration = 60;
 
 const MAX_RETRIES = 3;
 
-// Default timezone offset for South Africa (UTC+2)
-const DEFAULT_TZ_OFFSET = '+02:00';
+function getTimezoneOffset(timezone: string): string {
+  let offset = '+02:00'; // fallback to SA
+  try {
+    const formatter = new Intl.DateTimeFormat('en', {
+      timeZone: timezone,
+      timeZoneName: 'shortOffset',
+    });
+    const parts = formatter.formatToParts(new Date());
+    const tzPart = parts.find(p => p.type === 'timeZoneName');
+    if (tzPart) {
+      // Convert "GMT+2" or "GMT-5" to "+02:00" or "-05:00"
+      const match = tzPart.value.match(/GMT([+-])(\d+)/);
+      if (match) {
+        const sign = match[1];
+        const hours = match[2].padStart(2, '0');
+        offset = `${sign}${hours}:00`;
+      }
+    }
+  } catch {}
+  return offset;
+}
+
+async function notifyPublishFailure(
+  supabase: ReturnType<typeof createServiceClient>,
+  item: { id: string; organization_id: string; created_by: string | null; topic: string | null },
+  platform: string,
+) {
+  try {
+    const { createNotification } = await import('@/lib/notifications');
+    await createNotification(supabase, {
+      user_id: item.created_by || item.organization_id,
+      organization_id: item.organization_id,
+      type: 'publish_failed' as any,
+      title: 'Publishing Failed',
+      body: `Failed to publish "${item.topic || 'Untitled'}" to ${platform} after ${MAX_RETRIES} attempts.`,
+      link: `/content?item=${item.id}`,
+    });
+  } catch {}
+}
 
 async function runScheduledPublish() {
   const supabase = createServiceClient();
@@ -41,20 +78,40 @@ async function runScheduledPublish() {
 
   console.log(`[Scheduled Publish] Found ${scheduledItems.length} candidate items`);
 
-  // Filter items where scheduled datetime (in SA time) has passed
-  const readyItems = scheduledItems.filter(item => {
-    // Build a timezone-aware datetime string
-    // scheduled_time is stored as HH:MM:SS in user's local time (SA = UTC+2)
+  // Cache org settings per organization to avoid repeated queries
+  const orgCache: Record<string, { timezone: string | null; require_approval_before_publish: boolean | null }> = {};
+
+  async function getOrgSettings(orgId: string) {
+    if (orgCache[orgId]) return orgCache[orgId];
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('timezone, require_approval_before_publish')
+      .eq('id', orgId)
+      .single();
+    const settings = {
+      timezone: org?.timezone || null,
+      require_approval_before_publish: org?.require_approval_before_publish || null,
+    };
+    orgCache[orgId] = settings;
+    return settings;
+  }
+
+  // Filter items where scheduled datetime has passed (using org timezone)
+  const readyItems: typeof scheduledItems = [];
+  for (const item of scheduledItems) {
+    const orgSettings = await getOrgSettings(item.organization_id);
+    const tzOffset = getTimezoneOffset(orgSettings.timezone || 'Africa/Johannesburg');
     const timeStr = item.scheduled_time || '00:00:00';
-    const scheduledDateTimeStr = `${item.scheduled_date}T${timeStr}${DEFAULT_TZ_OFFSET}`;
+    const scheduledDateTimeStr = `${item.scheduled_date}T${timeStr}${tzOffset}`;
     const scheduledDate = new Date(scheduledDateTimeStr);
 
     const isReady = scheduledDate <= now;
     if (!isReady) {
       console.log(`[Scheduled Publish] Item ${item.id} not ready yet (scheduled: ${scheduledDateTimeStr}, now: ${nowISO})`);
+    } else {
+      readyItems.push(item);
     }
-    return isReady;
-  });
+  }
 
   if (readyItems.length === 0) {
     console.log('[Scheduled Publish] No items ready to publish yet');
@@ -67,6 +124,27 @@ async function runScheduledPublish() {
   let failedCount = 0;
 
   for (const item of readyItems) {
+    const orgSettings = await getOrgSettings(item.organization_id);
+
+    // Check approval gate
+    if (orgSettings.require_approval_before_publish) {
+      // Check if item has been approved
+      const { data: approvalNotifs } = await supabase
+        .from('notifications')
+        .select('id')
+        .eq('type', 'content_approved')
+        .like('link', `%${item.id}%`)
+        .limit(1);
+
+      if (!approvalNotifs || approvalNotifs.length === 0) {
+        // Also check if status ever was 'approved'
+        if (item.status !== 'approved' && item.status !== 'scheduled') {
+          console.log(`[Scheduled Publish] Item ${item.id} requires approval but hasn't been approved, skipping`);
+          continue;
+        }
+      }
+    }
+
     // Get all active connections for this org
     const { data: connections } = await supabase
       .from('social_media_connections')
@@ -160,6 +238,11 @@ async function runScheduledPublish() {
               })
               .eq('id', newPost.id);
             failedCount++;
+
+            // Notify on failure if this is already at max retries (first attempt = retry_count 1)
+            if (1 >= MAX_RETRIES) {
+              await notifyPublishFailure(supabase, item, connection.platform);
+            }
           }
         } catch (err) {
           console.error(`[Scheduled Publish] Exception publishing item ${item.id} on ${connection.platform}:`, err);
@@ -179,6 +262,8 @@ async function runScheduledPublish() {
           .from('published_posts')
           .update({ publish_status: 'publishing' })
           .eq('id', publishedPostId);
+
+        const newRetryCount = (existing.retry_count || 0) + 1;
 
         try {
           const retryItemForPublish = {
@@ -211,10 +296,15 @@ async function runScheduledPublish() {
               .update({
                 publish_status: 'failed',
                 error_message: result.result.error || 'Unknown error',
-                retry_count: (existing.retry_count || 0) + 1,
+                retry_count: newRetryCount,
               })
               .eq('id', publishedPostId);
             failedCount++;
+
+            // Notify on failure after max retries
+            if (newRetryCount >= MAX_RETRIES) {
+              await notifyPublishFailure(supabase, item, connection.platform);
+            }
           }
         } catch (err) {
           console.error(`[Scheduled Publish] Retry exception for item ${item.id} on ${connection.platform}:`, err);
@@ -223,10 +313,15 @@ async function runScheduledPublish() {
             .update({
               publish_status: 'failed',
               error_message: err instanceof Error ? err.message : 'Unknown exception',
-              retry_count: (existing.retry_count || 0) + 1,
+              retry_count: newRetryCount,
             })
             .eq('id', publishedPostId);
           failedCount++;
+
+          // Notify on failure after max retries
+          if (newRetryCount >= MAX_RETRIES) {
+            await notifyPublishFailure(supabase, item, connection.platform);
+          }
         }
       }
     }

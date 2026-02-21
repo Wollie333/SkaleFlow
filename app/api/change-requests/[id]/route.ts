@@ -52,12 +52,54 @@ export async function PATCH(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { action, comment } = await request.json();
+    const body = await request.json();
+    const { action } = body;
+
+    // Handle assignment
+    if (action === 'assign') {
+      const { assignedTo } = body;
+      const serviceClient = createServiceClient();
+      const { error: updateError } = await serviceClient
+        .from('change_requests')
+        .update({ assigned_to: assignedTo || null })
+        .eq('id', id);
+      if (updateError) return NextResponse.json({ error: 'Failed to assign' }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
+    // Handle priority change
+    if (action === 'set_priority') {
+      const { priority } = body;
+      if (!priority || !['urgent', 'normal', 'low'].includes(priority)) {
+        return NextResponse.json({ error: 'Invalid priority' }, { status: 400 });
+      }
+      const serviceClient = createServiceClient();
+      const { error: updateError } = await serviceClient
+        .from('change_requests')
+        .update({ priority })
+        .eq('id', id);
+      if (updateError) return NextResponse.json({ error: 'Failed to set priority' }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
+    // Handle deadline
+    if (action === 'set_deadline') {
+      const { deadline } = body;
+      const serviceClient = createServiceClient();
+      const { error: updateError } = await serviceClient
+        .from('change_requests')
+        .update({ deadline: deadline || null })
+        .eq('id', id);
+      if (updateError) return NextResponse.json({ error: 'Failed to set deadline' }, { status: 500 });
+      return NextResponse.json({ success: true });
+    }
+
+    // Handle review actions
     if (!action || !['approve', 'reject', 'request_revision'].includes(action)) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    const result = await reviewChangeRequest(id, user.id, action, comment);
+    const result = await reviewChangeRequest(id, user.id, action, body.comment);
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }

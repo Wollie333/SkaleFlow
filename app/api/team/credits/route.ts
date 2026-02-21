@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isOrgOwnerOrAdmin } from '@/lib/permissions';
 import { allocateCredits, reclaimCredits, getTeamCreditSummary } from '@/lib/team-credits';
+import { logTeamActivity } from '@/lib/team-activity';
 import type { FeatureType } from '@/types/database';
 
 export async function GET(request: Request) {
@@ -79,6 +80,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
+    logTeamActivity(orgId, user.id, 'credits_allocated', userId, {
+      feature,
+      amount,
+    }).catch(() => {});
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('POST /api/team/credits error:', error);
@@ -114,6 +120,11 @@ export async function DELETE(request: Request) {
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
+
+    logTeamActivity(orgId, user.id, 'credits_reclaimed', userId, {
+      feature,
+      amount,
+    }).catch(() => {});
 
     return NextResponse.json({ success: true });
   } catch (error) {

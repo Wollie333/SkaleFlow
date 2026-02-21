@@ -1,4 +1,4 @@
-import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData } from '../types';
+import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData, InboxItem, ReplyResult, AccountMetrics } from '../types';
 
 const GRAPH_API_VERSION = 'v22.0';
 const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
@@ -278,6 +278,107 @@ export const facebookAdapter: PlatformAdapter = {
     await fetch(`${GRAPH_API_BASE}/me/permissions?access_token=${tokens.accessToken}`, {
       method: 'DELETE',
     });
+  },
+
+  async fetchComments(tokens: TokenData, postId: string): Promise<InboxItem[]> {
+    try {
+      const res = await fetch(
+        `${GRAPH_API_BASE}/${postId}/comments?fields=id,message,from,created_time,parent&access_token=${tokens.accessToken}`
+      );
+      const data = await res.json();
+      if (data.error || !data.data) return [];
+
+      return (data.data as Array<{
+        id: string;
+        message?: string;
+        from?: { id: string; name: string };
+        created_time?: string;
+        parent?: { id: string };
+      }>).map((c) => ({
+        platformInteractionId: c.id,
+        type: (c.parent ? 'reply' : 'comment') as 'comment' | 'reply',
+        message: c.message || '',
+        authorId: c.from?.id || '',
+        authorName: c.from?.name || 'Unknown',
+        timestamp: c.created_time || new Date().toISOString(),
+        parentId: c.parent?.id,
+        postId,
+      }));
+    } catch {
+      return [];
+    }
+  },
+
+  async fetchMentions(tokens: TokenData): Promise<InboxItem[]> {
+    try {
+      const pageOrUserId = tokens.platformPageId || tokens.platformUserId;
+      if (!pageOrUserId) return [];
+
+      const res = await fetch(
+        `${GRAPH_API_BASE}/${pageOrUserId}/tagged?fields=id,message,from,created_time&access_token=${tokens.accessToken}`
+      );
+      const data = await res.json();
+      if (data.error || !data.data) return [];
+
+      return (data.data as Array<{
+        id: string;
+        message?: string;
+        from?: { id: string; name: string };
+        created_time?: string;
+      }>).map((m) => ({
+        platformInteractionId: m.id,
+        type: 'mention' as const,
+        message: m.message || '',
+        authorId: m.from?.id || '',
+        authorName: m.from?.name || 'Unknown',
+        timestamp: m.created_time || new Date().toISOString(),
+        postId: m.id,
+      }));
+    } catch {
+      return [];
+    }
+  },
+
+  async replyToComment(tokens: TokenData, commentId: string, message: string): Promise<ReplyResult> {
+    try {
+      const res = await fetch(`${GRAPH_API_BASE}/${commentId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, access_token: tokens.accessToken }),
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        return { success: false, error: data.error.message || 'Failed to reply' };
+      }
+
+      return { success: true, platformReplyId: data.id };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Reply failed' };
+    }
+  },
+
+  async fetchAccountMetrics(tokens: TokenData): Promise<AccountMetrics> {
+    try {
+      const pageOrUserId = tokens.platformPageId || tokens.platformUserId;
+      if (!pageOrUserId) return { followersCount: 0, followingCount: 0, postsCount: 0 };
+
+      const res = await fetch(
+        `${GRAPH_API_BASE}/${pageOrUserId}?fields=fan_count,followers_count,name&access_token=${tokens.accessToken}`
+      );
+      const data = await res.json();
+
+      if (data.error) return { followersCount: 0, followingCount: 0, postsCount: 0 };
+
+      return {
+        followersCount: data.followers_count || data.fan_count || 0,
+        followingCount: 0,
+        postsCount: 0,
+        metadata: { name: data.name },
+      };
+    } catch {
+      return { followersCount: 0, followingCount: 0, postsCount: 0 };
+    }
   },
 };
 

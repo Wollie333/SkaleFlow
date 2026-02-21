@@ -24,6 +24,8 @@ interface Organization {
   slug: string;
   brand_engine_enabled: boolean;
   content_engine_enabled: boolean;
+  timezone?: string;
+  require_approval_before_publish?: boolean;
 }
 
 interface Subscription {
@@ -76,6 +78,9 @@ export default function SettingsPage() {
   const [isLoadingCalendars, setIsLoadingCalendars] = useState(false);
   const [approvalSettings, setApprovalSettings] = useState<ApprovalSettings>(DEFAULT_APPROVAL_SETTINGS);
   const [isSavingApproval, setIsSavingApproval] = useState(false);
+  const [orgTimezone, setOrgTimezone] = useState('Africa/Johannesburg');
+  const [requireApprovalPublish, setRequireApprovalPublish] = useState(false);
+  const [isSavingOrgSettings, setIsSavingOrgSettings] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     orgName: '',
@@ -151,6 +156,17 @@ export default function SettingsPage() {
           .single();
         if (orgFull?.settings) {
           setApprovalSettings(getApprovalSettings(orgFull.settings as Record<string, unknown>));
+        }
+
+        // Load org timezone + publish approval setting
+        const { data: orgDetails } = await supabase
+          .from('organizations')
+          .select('timezone, require_approval_before_publish')
+          .eq('id', org.id)
+          .single();
+        if (orgDetails) {
+          setOrgTimezone((orgDetails as Record<string, unknown>).timezone as string || 'Africa/Johannesburg');
+          setRequireApprovalPublish(!!(orgDetails as Record<string, unknown>).require_approval_before_publish);
         }
 
         // Get org member role
@@ -541,6 +557,23 @@ export default function SettingsPage() {
     }
 
     setIsSavingApproval(false);
+  };
+
+  const handleSaveOrgSettings = async (updates: { timezone?: string; require_approval_before_publish?: boolean }) => {
+    if (!organization) return;
+    setIsSavingOrgSettings(true);
+    try {
+      const { error } = await supabase
+        .from('organizations')
+        .update(updates)
+        .eq('id', organization.id);
+      if (error) throw error;
+      if (updates.timezone !== undefined) setOrgTimezone(updates.timezone);
+      if (updates.require_approval_before_publish !== undefined) setRequireApprovalPublish(updates.require_approval_before_publish);
+    } catch (err) {
+      console.error('Failed to save org settings:', err);
+    }
+    setIsSavingOrgSettings(false);
   };
 
   const fetchCalendars = async () => {
@@ -1159,6 +1192,75 @@ export default function SettingsPage() {
         {/* ── Workflow Tab ── */}
         {activeTab === 'workflow' && (
           <div className="space-y-6 max-w-3xl">
+            {/* Publishing Settings Card */}
+            <Card>
+              <div className="flex items-center gap-3 mb-6">
+                <Cog6ToothIcon className="w-6 h-6 text-teal" />
+                <div>
+                  <h2 className="text-heading-md text-charcoal">Publishing Settings</h2>
+                  <p className="text-stone text-sm">Configure how scheduled content gets published.</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {/* Timezone Selector */}
+                <div className="p-4 bg-cream-warm rounded-xl">
+                  <h3 className="font-medium text-charcoal mb-1">Organization Timezone</h3>
+                  <p className="text-sm text-stone mb-3">
+                    Scheduled posts will publish at times in this timezone.
+                  </p>
+                  <select
+                    value={orgTimezone}
+                    onChange={(e) => handleSaveOrgSettings({ timezone: e.target.value })}
+                    disabled={isSavingOrgSettings}
+                    className="w-full px-4 py-2.5 rounded-lg text-sm font-medium border border-stone/20 bg-cream focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                  >
+                    <option value="Africa/Johannesburg">Africa/Johannesburg (SAST, UTC+2)</option>
+                    <option value="Africa/Lagos">Africa/Lagos (WAT, UTC+1)</option>
+                    <option value="Africa/Nairobi">Africa/Nairobi (EAT, UTC+3)</option>
+                    <option value="Africa/Cairo">Africa/Cairo (EET, UTC+2)</option>
+                    <option value="Europe/London">Europe/London (GMT/BST)</option>
+                    <option value="Europe/Paris">Europe/Paris (CET/CEST)</option>
+                    <option value="Europe/Berlin">Europe/Berlin (CET/CEST)</option>
+                    <option value="America/New_York">America/New York (EST/EDT)</option>
+                    <option value="America/Chicago">America/Chicago (CST/CDT)</option>
+                    <option value="America/Denver">America/Denver (MST/MDT)</option>
+                    <option value="America/Los_Angeles">America/Los Angeles (PST/PDT)</option>
+                    <option value="America/Toronto">America/Toronto (EST/EDT)</option>
+                    <option value="America/Sao_Paulo">America/Sao Paulo (BRT)</option>
+                    <option value="Asia/Dubai">Asia/Dubai (GST, UTC+4)</option>
+                    <option value="Asia/Kolkata">Asia/Kolkata (IST, UTC+5:30)</option>
+                    <option value="Asia/Singapore">Asia/Singapore (SGT, UTC+8)</option>
+                    <option value="Asia/Tokyo">Asia/Tokyo (JST, UTC+9)</option>
+                    <option value="Australia/Sydney">Australia/Sydney (AEST/AEDT)</option>
+                    <option value="Pacific/Auckland">Pacific/Auckland (NZST/NZDT)</option>
+                    <option value="UTC">UTC</option>
+                  </select>
+                </div>
+
+                {/* Approval Gate Toggle */}
+                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                  <div>
+                    <h3 className="font-medium text-charcoal">Require Approval Before Publishing</h3>
+                    <p className="text-sm text-stone">
+                      When enabled, scheduled posts won&apos;t publish until they&apos;ve been approved.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleSaveOrgSettings({ require_approval_before_publish: !requireApprovalPublish })}
+                    disabled={isSavingOrgSettings}
+                    className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${
+                      requireApprovalPublish ? 'bg-teal' : 'bg-stone/20'
+                    }`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-cream-warm shadow transition-transform ${
+                      requireApprovalPublish ? 'translate-x-6' : ''
+                    }`} />
+                  </button>
+                </div>
+              </div>
+            </Card>
+
             <Card>
               <div className="flex items-center gap-3 mb-6">
                 <ShieldCheckIcon className="w-6 h-6 text-teal" />

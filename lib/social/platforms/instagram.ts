@@ -1,4 +1,4 @@
-import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData } from '../types';
+import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData, InboxItem, ReplyResult, AccountMetrics } from '../types';
 
 const GRAPH_API_VERSION = 'v22.0';
 const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
@@ -265,6 +265,106 @@ export const instagramAdapter: PlatformAdapter = {
     await fetch(`${GRAPH_API_BASE}/me/permissions?access_token=${tokens.accessToken}`, {
       method: 'DELETE',
     });
+  },
+
+  async fetchComments(tokens: TokenData, postId: string): Promise<InboxItem[]> {
+    try {
+      const res = await fetch(
+        `${GRAPH_API_BASE}/${postId}/comments?fields=id,text,from,timestamp,username&access_token=${tokens.accessToken}`
+      );
+      const data = await res.json();
+      if (data.error || !data.data) return [];
+
+      return (data.data as Array<{
+        id: string;
+        text?: string;
+        from?: { id: string; username?: string };
+        timestamp?: string;
+        username?: string;
+      }>).map((c) => ({
+        platformInteractionId: c.id,
+        type: 'comment' as const,
+        message: c.text || '',
+        authorId: c.from?.id || '',
+        authorName: c.username || c.from?.username || 'Unknown',
+        authorUsername: c.username || c.from?.username,
+        timestamp: c.timestamp || new Date().toISOString(),
+        postId,
+      }));
+    } catch {
+      return [];
+    }
+  },
+
+  async fetchMentions(tokens: TokenData): Promise<InboxItem[]> {
+    try {
+      const igUserId = tokens.platformUserId;
+      if (!igUserId) return [];
+
+      const res = await fetch(
+        `${GRAPH_API_BASE}/${igUserId}/mentioned_media?fields=id,caption,timestamp,media_type&access_token=${tokens.accessToken}`
+      );
+      const data = await res.json();
+      if (data.error || !data.data) return [];
+
+      return (data.data as Array<{
+        id: string;
+        caption?: string;
+        timestamp?: string;
+        media_type?: string;
+      }>).map((m) => ({
+        platformInteractionId: m.id,
+        type: 'mention' as const,
+        message: m.caption || '',
+        authorId: '',
+        authorName: 'Unknown',
+        timestamp: m.timestamp || new Date().toISOString(),
+        postId: m.id,
+      }));
+    } catch {
+      return [];
+    }
+  },
+
+  async replyToComment(tokens: TokenData, commentId: string, message: string): Promise<ReplyResult> {
+    try {
+      const res = await fetch(`${GRAPH_API_BASE}/${commentId}/replies`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, access_token: tokens.accessToken }),
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        return { success: false, error: data.error.message || 'Failed to reply' };
+      }
+
+      return { success: true, platformReplyId: data.id };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Reply failed' };
+    }
+  },
+
+  async fetchAccountMetrics(tokens: TokenData): Promise<AccountMetrics> {
+    try {
+      const igUserId = tokens.platformUserId;
+      if (!igUserId) return { followersCount: 0, followingCount: 0, postsCount: 0 };
+
+      const res = await fetch(
+        `${GRAPH_API_BASE}/${igUserId}?fields=followers_count,follows_count,media_count&access_token=${tokens.accessToken}`
+      );
+      const data = await res.json();
+
+      if (data.error) return { followersCount: 0, followingCount: 0, postsCount: 0 };
+
+      return {
+        followersCount: data.followers_count || 0,
+        followingCount: data.follows_count || 0,
+        postsCount: data.media_count || 0,
+      };
+    } catch {
+      return { followersCount: 0, followingCount: 0, postsCount: 0 };
+    }
   },
 };
 

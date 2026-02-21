@@ -1,14 +1,21 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button, PageHeader } from '@/components/ui';
-import { UserGroupIcon } from '@heroicons/react/24/outline';
+import { useToast } from '@/hooks/useToast';
+import { UserGroupIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { MemberCard } from '@/components/team/member-card';
 import { PermissionsGrid } from '@/components/team/permissions-grid';
 import { CreditAllocator } from '@/components/team/credit-allocator';
 import { MemberDetailPanel } from '@/components/team/member-detail-panel';
 import { TeamCreditSummary } from '@/components/team/team-credit-summary';
+import { TeamStatsBar } from '@/components/team/team-stats-bar';
+import { TeamFilterBar } from '@/components/team/team-filter-bar';
+import { BulkInviteModal } from '@/components/team/bulk-invite-modal';
+import { ActivityTimeline } from '@/components/team/activity-timeline';
+import { MemberCardSkeleton } from '@/components/team/team-skeleton';
+import { TeamEmptyState } from '@/components/team/team-empty-state';
 import { cn } from '@/lib/utils';
 
 type OrgMemberRole = 'owner' | 'admin' | 'member' | 'viewer';
@@ -61,18 +68,12 @@ interface CreditAllocation {
   users?: { full_name: string; email: string } | null;
 }
 
-type TabId = 'members' | 'permissions' | 'credits';
-
-const roleBadgeColors: Record<OrgMemberRole, string> = {
-  owner: 'bg-gold/15 text-gold',
-  admin: 'bg-purple-100 text-purple-700',
-  member: 'bg-teal/10 text-teal',
-  viewer: 'bg-stone/10 text-stone',
-};
+type TabId = 'members' | 'permissions' | 'credits' | 'activity';
 
 export default function MyTeamPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const toast = useToast();
   const tabParam = searchParams.get('tab') as TabId | null;
 
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -87,7 +88,9 @@ export default function MyTeamPage() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<OrgMemberRole>('member');
   const [inviteLoading, setInviteLoading] = useState(false);
-  const [inviteError, setInviteError] = useState('');
+
+  // Bulk invite modal
+  const [bulkInviteOpen, setBulkInviteOpen] = useState(false);
 
   // Action state
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -105,6 +108,11 @@ export default function MyTeamPage() {
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [selectedMemberPerms, setSelectedMemberPerms] = useState<Record<string, FeaturePermissions>>({});
   const [selectedMemberCredits, setSelectedMemberCredits] = useState<CreditAllocation[]>([]);
+
+  // Filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const isAdmin = userRole === 'owner' || userRole === 'admin';
 
@@ -147,13 +155,10 @@ export default function MyTeamPage() {
     } catch { /* silent */ }
   }, []);
 
-  useEffect(() => {
-    fetchTeam();
-  }, [fetchTeam]);
+  useEffect(() => { fetchTeam(); }, [fetchTeam]);
 
-  // Sync activeTab with URL parameter
   useEffect(() => {
-    if (tabParam && ['members', 'permissions', 'credits'].includes(tabParam)) {
+    if (tabParam && ['members', 'permissions', 'credits', 'activity'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
@@ -179,7 +184,6 @@ export default function MyTeamPage() {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
     setInviteLoading(true);
-    setInviteError('');
     try {
       const res = await fetch('/api/team', {
         method: 'POST',
@@ -187,11 +191,12 @@ export default function MyTeamPage() {
         body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
       });
       const data = await res.json();
-      if (!res.ok) { setInviteError(data.error || 'Failed to send invitation'); return; }
+      if (!res.ok) { toast.error(data.error || 'Failed to send invitation'); return; }
       setInviteEmail('');
       setInviteRole('member');
+      toast.success('Invitation sent successfully');
       await fetchTeam();
-    } catch { setInviteError('Failed to send invitation'); }
+    } catch { toast.error('Failed to send invitation'); }
     finally { setInviteLoading(false); }
   };
 
@@ -203,9 +208,10 @@ export default function MyTeamPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ invitationId, action: 'cancel' }),
       });
-      if (!res.ok) { const data = await res.json(); setError(data.error || 'Failed to cancel invitation'); return; }
+      if (!res.ok) { const data = await res.json(); toast.error(data.error || 'Failed to cancel'); return; }
+      toast.success('Invitation cancelled');
       await fetchTeam();
-    } catch { setError('Failed to cancel invitation'); }
+    } catch { toast.error('Failed to cancel invitation'); }
     finally { setActionLoading(null); }
   };
 
@@ -213,10 +219,11 @@ export default function MyTeamPage() {
     setActionLoading(memberId);
     try {
       const res = await fetch(`/api/team/${memberId}`, { method: 'DELETE' });
-      if (!res.ok) { const data = await res.json(); setError(data.error || 'Failed to remove member'); return; }
+      if (!res.ok) { const data = await res.json(); toast.error(data.error || 'Failed to remove member'); return; }
       setSelectedMemberId(null);
+      toast.success('Member removed');
       await fetchTeam();
-    } catch { setError('Failed to remove member'); }
+    } catch { toast.error('Failed to remove member'); }
     finally { setActionLoading(null); }
   };
 
@@ -228,9 +235,10 @@ export default function MyTeamPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole }),
       });
-      if (!res.ok) { const data = await res.json(); setError(data.error || 'Failed to update role'); return; }
+      if (!res.ok) { const data = await res.json(); toast.error(data.error || 'Failed to update role'); return; }
       setMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: newRole } : m));
-    } catch { setError('Failed to update role'); }
+      toast.success(`Role updated to ${newRole}`);
+    } catch { toast.error('Failed to update role'); }
     finally { setRoleChanging(null); }
   };
 
@@ -242,8 +250,30 @@ export default function MyTeamPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, feature, permissions }),
       });
-      if (res.ok) await fetchPermissions();
-    } catch { setError('Failed to update permissions'); }
+      if (res.ok) {
+        await fetchPermissions();
+        toast.success('Permissions updated');
+      }
+    } catch { toast.error('Failed to update permissions'); }
+    finally { setPermsSaving(false); }
+  };
+
+  const handleApplyTemplate = async (userIds: string[], templateId: string) => {
+    setPermsSaving(true);
+    try {
+      const res = await fetch('/api/team/permissions/apply-template', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ templateId, userIds }),
+      });
+      if (res.ok) {
+        await fetchPermissions();
+        toast.success('Template applied successfully');
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to apply template');
+      }
+    } catch { toast.error('Failed to apply template'); }
     finally { setPermsSaving(false); }
   };
 
@@ -254,6 +284,7 @@ export default function MyTeamPage() {
       body: JSON.stringify({ userId, feature, amount }),
     });
     if (!res.ok) { const data = await res.json(); throw new Error(data.error || 'Failed to allocate'); }
+    toast.success(`${amount} credits allocated`);
     await fetchCredits();
   };
 
@@ -264,6 +295,7 @@ export default function MyTeamPage() {
       body: JSON.stringify({ userId, feature, amount }),
     });
     if (!res.ok) { const data = await res.json(); throw new Error(data.error || 'Failed to reclaim'); }
+    toast.success(`${amount} credits reclaimed`);
     await fetchCredits();
   };
 
@@ -276,7 +308,6 @@ export default function MyTeamPage() {
     setSelectedMemberPerms(mp?.permissions || {});
     setSelectedMemberCredits(creditAllocations.filter(a => a.user_id === member.user_id));
 
-    // Fetch if not loaded
     if (memberPermissions.length === 0) fetchPermissions();
     if (creditAllocations.length === 0) fetchCredits();
   };
@@ -287,10 +318,48 @@ export default function MyTeamPage() {
     return new Date(dateStr).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
+  // Client-side filtering
+  const filteredMembers = useMemo(() => {
+    let result = members;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(m =>
+        (m.users?.full_name || '').toLowerCase().includes(q) ||
+        (m.users?.email || '').toLowerCase().includes(q)
+      );
+    }
+    if (roleFilter !== 'all') {
+      result = result.filter(m => m.role === roleFilter);
+    }
+    if (statusFilter !== 'all') {
+      const now = Date.now();
+      result = result.filter(m => {
+        const lastLogin = m.users?.last_login_at;
+        const isActive = lastLogin && (now - new Date(lastLogin).getTime()) < 15 * 60 * 1000;
+        return statusFilter === 'active' ? isActive : !isActive;
+      });
+    }
+    return result;
+  }, [members, searchQuery, roleFilter, statusFilter]);
+
+  // Stats
+  const activeToday = useMemo(() => {
+    const now = Date.now();
+    return members.filter(m => {
+      const lastLogin = m.users?.last_login_at;
+      return lastLogin && (now - new Date(lastLogin).getTime()) < 15 * 60 * 1000;
+    }).length;
+  }, [members]);
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-stone">Loading team...</div>
+      <div>
+        <div className="mb-6">
+          <PageHeader icon={UserGroupIcon} title="My Team" subtitle="Loading team..." />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {[1, 2, 3].map(i => <MemberCardSkeleton key={i} />)}
+        </div>
       </div>
     );
   }
@@ -310,6 +379,7 @@ export default function MyTeamPage() {
     { id: 'members', label: 'Members', adminOnly: false },
     { id: 'permissions', label: 'Permissions', adminOnly: true },
     { id: 'credits', label: 'Credits', adminOnly: true },
+    { id: 'activity', label: 'Activity', adminOnly: true },
   ];
 
   const totalAllocated = creditAllocations.reduce((sum, a) => sum + a.credits_allocated, 0);
@@ -325,7 +395,7 @@ export default function MyTeamPage() {
       )}
 
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-6 flex items-start justify-between flex-wrap gap-4">
         <PageHeader
           icon={UserGroupIcon}
           title={organizationName || 'My Team'}
@@ -333,7 +403,27 @@ export default function MyTeamPage() {
             ? `Manage team members, permissions and credits for ${organizationName}.`
             : 'Manage your team members, permissions and credits.'}
         />
+        {isAdmin && (
+          <Button
+            onClick={() => setBulkInviteOpen(true)}
+            className="bg-charcoal hover:bg-charcoal/90 text-white text-sm"
+            size="sm"
+          >
+            <UsersIcon className="w-4 h-4" />
+            Bulk Invite
+          </Button>
+        )}
       </div>
+
+      {/* Stats Bar */}
+      {isAdmin && (
+        <TeamStatsBar
+          totalMembers={members.length}
+          activeToday={activeToday}
+          pendingInvites={pendingInvites.length}
+          availableCredits={orgBalance.totalRemaining}
+        />
+      )}
 
       {/* Tabs */}
       <div className="mb-4 flex gap-4 border-b border-stone/10 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
@@ -395,7 +485,6 @@ export default function MyTeamPage() {
                   Send Invite
                 </Button>
               </div>
-              {inviteError && <p className="text-sm text-red-600 mt-2">{inviteError}</p>}
             </form>
           )}
 
@@ -428,17 +517,28 @@ export default function MyTeamPage() {
             </div>
           )}
 
+          {/* Filter bar */}
+          <TeamFilterBar
+            onSearchChange={setSearchQuery}
+            roleFilter={roleFilter}
+            onRoleFilterChange={setRoleFilter}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+          />
+
           {/* Members Grid */}
           <h3 className="font-serif text-lg font-bold text-charcoal mb-3">
-            Team Members <span className="text-stone font-normal text-sm">({members.length})</span>
+            Team Members <span className="text-stone font-normal text-sm">({filteredMembers.length})</span>
           </h3>
           {members.length === 0 ? (
-            <div className="bg-cream-warm rounded-xl border border-teal/[0.08] p-8 text-center text-stone">
-              No team members yet. {isAdmin && 'Invite your first team member to get started.'}
+            <TeamEmptyState type="members" isAdmin={isAdmin} />
+          ) : filteredMembers.length === 0 ? (
+            <div className="bg-cream-warm rounded-xl border border-teal/[0.08] p-8 text-center text-stone text-sm">
+              No members match your filters.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {members.map(member => (
+              {filteredMembers.map(member => (
                 <MemberCard
                   key={member.id}
                   member={member}
@@ -459,6 +559,7 @@ export default function MyTeamPage() {
           members={memberPermissions}
           onPermissionChange={handlePermissionChange}
           saving={permsSaving}
+          onApplyTemplate={handleApplyTemplate}
         />
       )}
 
@@ -479,6 +580,10 @@ export default function MyTeamPage() {
             }
           />
         </div>
+      )}
+
+      {activeTab === 'activity' && isAdmin && (
+        <ActivityTimeline />
       )}
 
       {/* Member Detail Panel */}
@@ -502,8 +607,20 @@ export default function MyTeamPage() {
           }}
           onRemove={() => handleRemoveMember(selectedMember.id)}
           onRoleChange={(role) => handleRoleChange(selectedMember.id, role as OrgMemberRole)}
+          onApplyTemplate={(userId, templateId) => handleApplyTemplate([userId], templateId)}
         />
       )}
+
+      {/* Bulk Invite Modal */}
+      <BulkInviteModal
+        isOpen={bulkInviteOpen}
+        onClose={() => setBulkInviteOpen(false)}
+        onInvitesSent={() => {
+          toast.success('Bulk invitations sent');
+          fetchTeam();
+        }}
+        isOwner={userRole === 'owner'}
+      />
     </div>
   );
 }

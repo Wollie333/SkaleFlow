@@ -8,6 +8,7 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
 } from '@heroicons/react/24/outline';
+import { PermissionTemplateSelector } from './permission-template-selector';
 
 export interface FeaturePermissions {
   access?: boolean;
@@ -30,6 +31,7 @@ interface PermissionsGridProps {
   members: MemberPermissions[];
   onPermissionChange: (userId: string, feature: string, permissions: FeaturePermissions) => void;
   saving: boolean;
+  onApplyTemplate?: (userIds: string[], templateId: string) => void;
 }
 
 const FEATURES = ['brand_engine', 'content_engine', 'pipeline', 'ad_campaigns'] as const;
@@ -84,6 +86,7 @@ export function PermissionsGrid({
   members,
   onPermissionChange,
   saving,
+  onApplyTemplate,
 }: PermissionsGridProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
@@ -232,6 +235,15 @@ export function PermissionsGrid({
                   {isExpanded && (
                     <tr className="bg-cream/20">
                       <td colSpan={FEATURES.length + 2} className="px-6 py-4">
+                        {/* Apply template button */}
+                        {onApplyTemplate && (
+                          <div className="flex justify-end mb-3">
+                            <PermissionTemplateSelector
+                              onApply={(template) => onApplyTemplate([member.userId], template.id)}
+                              disabled={saving}
+                            />
+                          </div>
+                        )}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                           {FEATURES.map((feature) => {
                             const featurePerms = member.permissions[feature] || {};

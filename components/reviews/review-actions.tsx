@@ -28,7 +28,7 @@ export function ReviewActions({
   return (
     <div className="space-y-4 pt-4 border-t border-stone/10">
       <Textarea
-        placeholder="Add a comment (optional for approve, recommended for revision/reject)..."
+        placeholder="Add a review comment (optional for approve, recommended for revision/reject)..."
         value={comment}
         onChange={(e) => onCommentChange(e.target.value)}
         rows={3}
@@ -36,7 +36,7 @@ export function ReviewActions({
         className="text-sm"
       />
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Button
           onClick={onApprove}
           disabled={isLoading}

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isOrgOwnerOrAdmin, setTeamPermissions, getTeamPermissions } from '@/lib/permissions';
+import { logTeamActivity } from '@/lib/team-activity';
 import type { FeatureType } from '@/types/database';
 
 export async function GET(request: Request) {
@@ -86,6 +87,12 @@ export async function PUT(request: Request) {
     }
 
     await setTeamPermissions(orgId, userId, feature as FeatureType, permissions);
+
+    logTeamActivity(orgId, user.id, 'permission_updated', userId, {
+      feature,
+      permissions,
+    }).catch(() => {});
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('PUT /api/team/permissions error:', error);

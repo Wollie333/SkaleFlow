@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData } from '../types';
+import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData, InboxItem, ReplyResult, AccountMetrics } from '../types';
 
 const TWITTER_API_BASE = 'https://api.twitter.com/2';
 
@@ -188,6 +188,140 @@ export const twitterAdapter: PlatformAdapter = {
         token_type_hint: 'access_token',
       }),
     });
+  },
+
+  async fetchComments(tokens: TokenData, postId: string): Promise<InboxItem[]> {
+    try {
+      const res = await fetch(
+        `https://api.x.com/2/tweets/search/recent?query=conversation_id:${postId}&tweet.fields=created_at,author_id,in_reply_to_user_id&user.fields=name,username,profile_image_url&expansions=author_id`,
+        { headers: { Authorization: `Bearer ${tokens.accessToken}` } }
+      );
+      const data = await res.json();
+      if (data.errors || !data.data) return [];
+
+      // Build a user lookup map from includes
+      const userMap = new Map<string, { name: string; username: string; profile_image_url?: string }>();
+      if (data.includes?.users) {
+        for (const u of data.includes.users as Array<{ id: string; name: string; username: string; profile_image_url?: string }>) {
+          userMap.set(u.id, u);
+        }
+      }
+
+      return (data.data as Array<{
+        id: string;
+        text: string;
+        author_id?: string;
+        created_at?: string;
+        in_reply_to_user_id?: string;
+      }>).map((t) => {
+        const author = userMap.get(t.author_id || '');
+        return {
+          platformInteractionId: t.id,
+          type: 'reply' as const,
+          message: t.text,
+          authorId: t.author_id || '',
+          authorName: author?.name || 'Unknown',
+          authorUsername: author ? `@${author.username}` : undefined,
+          authorAvatarUrl: author?.profile_image_url,
+          timestamp: t.created_at || new Date().toISOString(),
+          postId,
+        };
+      });
+    } catch {
+      return [];
+    }
+  },
+
+  async fetchMentions(tokens: TokenData): Promise<InboxItem[]> {
+    try {
+      const userId = tokens.platformUserId;
+      if (!userId) return [];
+
+      const res = await fetch(
+        `https://api.x.com/2/users/${userId}/mentions?tweet.fields=created_at,author_id&user.fields=name,username,profile_image_url&expansions=author_id`,
+        { headers: { Authorization: `Bearer ${tokens.accessToken}` } }
+      );
+      const data = await res.json();
+      if (data.errors || !data.data) return [];
+
+      const userMap = new Map<string, { name: string; username: string; profile_image_url?: string }>();
+      if (data.includes?.users) {
+        for (const u of data.includes.users as Array<{ id: string; name: string; username: string; profile_image_url?: string }>) {
+          userMap.set(u.id, u);
+        }
+      }
+
+      return (data.data as Array<{
+        id: string;
+        text: string;
+        author_id?: string;
+        created_at?: string;
+      }>).map((t) => {
+        const author = userMap.get(t.author_id || '');
+        return {
+          platformInteractionId: t.id,
+          type: 'mention' as const,
+          message: t.text,
+          authorId: t.author_id || '',
+          authorName: author?.name || 'Unknown',
+          authorUsername: author ? `@${author.username}` : undefined,
+          authorAvatarUrl: author?.profile_image_url,
+          timestamp: t.created_at || new Date().toISOString(),
+        };
+      });
+    } catch {
+      return [];
+    }
+  },
+
+  async replyToComment(tokens: TokenData, commentId: string, message: string): Promise<ReplyResult> {
+    try {
+      const res = await fetch(`${TWITTER_API_BASE}/tweets`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${tokens.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: message,
+          reply: { in_reply_to_tweet_id: commentId },
+        }),
+      });
+      const data = await res.json();
+
+      if (data.errors || !data.data) {
+        return { success: false, error: data.errors?.[0]?.message || data.detail || 'Failed to reply' };
+      }
+
+      return { success: true, platformReplyId: data.data.id };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Reply failed' };
+    }
+  },
+
+  async fetchAccountMetrics(tokens: TokenData): Promise<AccountMetrics> {
+    try {
+      const userId = tokens.platformUserId;
+      if (!userId) return { followersCount: 0, followingCount: 0, postsCount: 0 };
+
+      const res = await fetch(
+        `https://api.x.com/2/users/${userId}?user.fields=public_metrics`,
+        { headers: { Authorization: `Bearer ${tokens.accessToken}` } }
+      );
+      const data = await res.json();
+
+      if (data.errors || !data.data) return { followersCount: 0, followingCount: 0, postsCount: 0 };
+
+      const metrics = data.data.public_metrics || {};
+      return {
+        followersCount: metrics.followers_count || 0,
+        followingCount: metrics.following_count || 0,
+        postsCount: metrics.tweet_count || 0,
+        metadata: metrics,
+      };
+    } catch {
+      return { followersCount: 0, followingCount: 0, postsCount: 0 };
+    }
   },
 };
 

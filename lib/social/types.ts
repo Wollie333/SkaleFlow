@@ -45,6 +45,33 @@ export interface AnalyticsData {
   metadata?: Record<string, unknown>;
 }
 
+export interface InboxItem {
+  platformInteractionId: string;
+  type: 'comment' | 'mention' | 'reply';
+  message: string;
+  authorId: string;
+  authorName: string;
+  authorUsername?: string;
+  authorAvatarUrl?: string;
+  timestamp: string;
+  parentId?: string;
+  postId?: string;
+  sentiment?: 'positive' | 'negative' | 'neutral' | 'question';
+}
+
+export interface ReplyResult {
+  success: boolean;
+  platformReplyId?: string;
+  error?: string;
+}
+
+export interface AccountMetrics {
+  followersCount: number;
+  followingCount: number;
+  postsCount: number;
+  metadata?: Record<string, unknown>;
+}
+
 export interface PlatformAdapter {
   platform: SocialPlatform;
   getAuthUrl(state: string, redirectUri: string): string;
@@ -53,6 +80,11 @@ export interface PlatformAdapter {
   publishPost(tokens: TokenData, post: PostPayload): Promise<PublishResult>;
   getPostAnalytics(tokens: TokenData, postId: string): Promise<AnalyticsData>;
   revokeAccess(tokens: TokenData): Promise<void>;
+  // Optional inbox methods — not all platforms support all interaction types
+  fetchComments?(tokens: TokenData, postId: string): Promise<InboxItem[]>;
+  fetchMentions?(tokens: TokenData): Promise<InboxItem[]>;
+  replyToComment?(tokens: TokenData, commentId: string, message: string): Promise<ReplyResult>;
+  fetchAccountMetrics?(tokens: TokenData): Promise<AccountMetrics>;
 }
 
 export interface SocialConnection {

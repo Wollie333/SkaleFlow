@@ -30,7 +30,7 @@ export async function GET(request: Request) {
       requestedBy: isAdmin ? undefined : user.id,
     });
 
-    return NextResponse.json({ changeRequests });
+    return NextResponse.json({ changeRequests, currentUserId: user.id });
   } catch (error) {
     console.error('GET /api/change-requests error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

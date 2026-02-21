@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { fetchPostAnalytics } from '@/lib/social/analytics';
+import { getAdapter } from '@/lib/social/auth';
 import type { ConnectionWithTokens } from '@/lib/social/token-manager';
-import type { Json } from '@/types/database';
+import type { Json, SocialPlatform } from '@/types/database';
 
 export async function POST(request: NextRequest) {
   // Verify cron secret
@@ -86,10 +87,65 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Sync account-level metrics for follower growth
+  const processedConnectionIds = new Set(Object.keys(byConnection));
+  for (const connId of Array.from(processedConnectionIds)) {
+    const { data: conn } = await supabase
+      .from('social_media_connections')
+      .select('*')
+      .eq('id', connId)
+      .eq('is_active', true)
+      .single();
+
+    if (!conn) continue;
+
+    const adapter = getAdapter(conn.platform as SocialPlatform);
+    if (!adapter.fetchAccountMetrics) continue;
+
+    try {
+      const connTokens = await import('@/lib/social/token-manager').then(m =>
+        m.ensureValidToken(conn as unknown as ConnectionWithTokens)
+      );
+      const metrics = await adapter.fetchAccountMetrics(connTokens);
+      const today = new Date().toISOString().split('T')[0];
+
+      await supabase
+        .from('social_account_metrics')
+        .upsert({
+          connection_id: connId,
+          organization_id: conn.organization_id,
+          metric_date: today,
+          followers_count: metrics.followersCount,
+          following_count: metrics.followingCount,
+          posts_count: metrics.postsCount,
+          metadata: (metrics.metadata || {}) as unknown as Json,
+        }, {
+          onConflict: 'connection_id,metric_date',
+        });
+    } catch {
+      // Non-critical, continue
+    }
+  }
+
   return NextResponse.json({
     message: 'Analytics sync complete',
     postsProcessed: publishedPosts.length,
     synced,
     failed,
   });
+}
+
+// Vercel crons send GET requests
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    // Also check query param
+    const keyParam = request.nextUrl.searchParams.get('key');
+    if (keyParam !== process.env.CRON_SECRET) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+  }
+
+  // Reuse the same logic as POST
+  return POST(request);
 }

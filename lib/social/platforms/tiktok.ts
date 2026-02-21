@@ -1,4 +1,4 @@
-import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData } from '../types';
+import type { PlatformAdapter, TokenData, PostPayload, PublishResult, AnalyticsData, InboxItem, ReplyResult, AccountMetrics } from '../types';
 
 const TIKTOK_API_BASE = 'https://open.tiktokapis.com/v2';
 
@@ -215,6 +215,84 @@ export const tiktokAdapter: PlatformAdapter = {
         token: tokens.accessToken,
       }),
     });
+  },
+
+  async fetchComments(tokens: TokenData, postId: string): Promise<InboxItem[]> {
+    try {
+      const res = await fetch(`${TIKTOK_API_BASE}/comment/list/`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${tokens.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ video_id: postId, max_count: 50 }),
+      });
+      const data = await res.json();
+      if (data.error?.code !== 'ok' || !data.data?.comments) return [];
+
+      return (data.data.comments as Array<{
+        id: string;
+        text?: string;
+        user?: { user_id?: string; display_name?: string; avatar_url?: string };
+        create_time?: number;
+        parent_comment_id?: string;
+      }>).map((c) => ({
+        platformInteractionId: c.id,
+        type: (c.parent_comment_id ? 'reply' : 'comment') as 'comment' | 'reply',
+        message: c.text || '',
+        authorId: c.user?.user_id || '',
+        authorName: c.user?.display_name || 'Unknown',
+        authorAvatarUrl: c.user?.avatar_url,
+        timestamp: c.create_time ? new Date(c.create_time * 1000).toISOString() : new Date().toISOString(),
+        parentId: c.parent_comment_id,
+        postId,
+      }));
+    } catch {
+      return [];
+    }
+  },
+
+  async replyToComment(tokens: TokenData, commentId: string, message: string): Promise<ReplyResult> {
+    try {
+      const res = await fetch(`${TIKTOK_API_BASE}/comment/reply/`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${tokens.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ video_id: '', comment_id: commentId, text: message }),
+      });
+      const data = await res.json();
+
+      if (data.error?.code !== 'ok') {
+        return { success: false, error: data.error?.message || 'Failed to reply' };
+      }
+
+      return { success: true, platformReplyId: data.data?.comment_id };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Reply failed' };
+    }
+  },
+
+  async fetchAccountMetrics(tokens: TokenData): Promise<AccountMetrics> {
+    try {
+      const res = await fetch(`${TIKTOK_API_BASE}/user/info/?fields=follower_count,following_count,likes_count,video_count`, {
+        headers: { Authorization: `Bearer ${tokens.accessToken}` },
+      });
+      const data = await res.json();
+      const user = data.data?.user;
+
+      if (!user) return { followersCount: 0, followingCount: 0, postsCount: 0 };
+
+      return {
+        followersCount: user.follower_count || 0,
+        followingCount: user.following_count || 0,
+        postsCount: user.video_count || 0,
+        metadata: { likesCount: user.likes_count || 0 },
+      };
+    } catch {
+      return { followersCount: 0, followingCount: 0, postsCount: 0 };
+    }
   },
 };
 

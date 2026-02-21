@@ -43,6 +43,10 @@
     {
       "path": "/api/calls/pre-call-briefs",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/social/inbox/sync",
+      "schedule": "*/15 * * * *"
     }
   ]
 }

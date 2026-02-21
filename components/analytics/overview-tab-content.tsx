@@ -1,11 +1,15 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { PeriodComparisonCards } from './period-comparison-cards';
 import { OverviewCards } from './overview-cards';
 import { PerformanceChart } from './performance-chart';
 import { EngagementDonut } from './engagement-donut';
 import { TopPostsTable, type TopPost } from './top-posts-table';
+import { TopContentTable } from './top-content-table';
 import { PlatformBreakdown } from './platform-breakdown';
+import { FollowerGrowthChart } from './follower-growth-chart';
+import { EngagementHeatmap } from './engagement-heatmap';
 import { PostDetailModal, type PlatformPost } from '@/components/social/post-detail-modal';
 import { PLATFORM_CONFIG } from '@/lib/social/types';
 import type { AnalyticsResponse } from './types';
@@ -48,12 +52,23 @@ export function OverviewTabContent({ data, isLoading }: OverviewTabContentProps)
     setSelectedPost(null);
   }, []);
 
+  const hasComparison = !!data.changes;
+
   return (
     <div className="space-y-6">
-      <OverviewCards
-        data={data.overview}
-        isLoading={isLoading}
-      />
+      {/* Overview Cards with period comparison */}
+      {hasComparison ? (
+        <PeriodComparisonCards
+          data={data.overview}
+          changes={data.changes}
+          isLoading={isLoading}
+        />
+      ) : (
+        <OverviewCards
+          data={data.overview}
+          isLoading={isLoading}
+        />
+      )}
 
       {/* Chart + Donut row */}
       <div className="flex flex-col lg:flex-row gap-6">
@@ -74,10 +89,29 @@ export function OverviewTabContent({ data, isLoading }: OverviewTabContentProps)
         </div>
       </div>
 
-      <TopPostsTable
+      {/* Follower Growth + Best Posting Times row */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex-1 min-w-0">
+          <FollowerGrowthChart
+            data={data.followerGrowth || []}
+            isLoading={isLoading}
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <EngagementHeatmap
+            data={data.engagementHeatmap || []}
+            isLoading={isLoading}
+          />
+        </div>
+      </div>
+
+      {/* Top Content — sortable table */}
+      <TopContentTable
         posts={data.topPosts}
         isLoading={isLoading}
-        onPostClick={handlePostClick}
+        onPostClick={(post) => {
+          handlePostClick(post as unknown as TopPost);
+        }}
       />
 
       <PlatformBreakdown

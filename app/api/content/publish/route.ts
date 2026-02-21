@@ -14,13 +14,15 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { contentItemId, platforms, connectionIds } = body as {
+  const { contentItemId, platforms, connectionIds, retry, retryConnectionId } = body as {
     contentItemId: string;
     platforms?: string[];
     connectionIds?: string[];
+    retry?: boolean;
+    retryConnectionId?: string;
   };
 
-  if (!contentItemId || (!platforms?.length && !connectionIds?.length)) {
+  if (!contentItemId || (!platforms?.length && !connectionIds?.length && !retry)) {
     return NextResponse.json({ error: 'contentItemId and platforms (or connectionIds) are required' }, { status: 400 });
   }
 
@@ -45,6 +47,60 @@ export async function POST(request: NextRequest) {
 
   if (itemError || !contentItem) {
     return NextResponse.json({ error: 'Content item not found' }, { status: 404 });
+  }
+
+  // Handle retry of a specific failed publish
+  if (retry && retryConnectionId) {
+    const { data: failedPost } = await supabase
+      .from('published_posts')
+      .select('*, social_media_connections!inner(*)')
+      .eq('content_item_id', contentItemId)
+      .eq('connection_id', retryConnectionId)
+      .eq('publish_status', 'failed')
+      .single();
+
+    if (!failedPost) {
+      return NextResponse.json({ error: 'No failed publish found for this connection' }, { status: 404 });
+    }
+
+    // Reset and retry
+    await supabase
+      .from('published_posts')
+      .update({ publish_status: 'publishing', retry_count: 0 })
+      .eq('id', failedPost.id);
+
+    const connection = failedPost.social_media_connections as unknown;
+    const publishResult = await publishToConnection(
+      connection as ConnectionWithTokens,
+      { ...contentItem, utm_parameters: (contentItem.utm_parameters || null) as Record<string, string> | null }
+    );
+
+    if (publishResult.result.success) {
+      await supabase
+        .from('published_posts')
+        .update({
+          publish_status: 'published',
+          platform_post_id: publishResult.result.platformPostId || null,
+          post_url: publishResult.result.postUrl || null,
+          published_at: new Date().toISOString(),
+          metadata: (publishResult.result.metadata || {}) as unknown as Json,
+          error_message: null,
+        })
+        .eq('id', failedPost.id);
+
+      return NextResponse.json({ results: [{ platform: failedPost.platform, success: true, postUrl: publishResult.result.postUrl }] });
+    } else {
+      await supabase
+        .from('published_posts')
+        .update({
+          publish_status: 'failed',
+          error_message: publishResult.result.error || 'Retry failed',
+          retry_count: (failedPost.retry_count || 0) + 1,
+        })
+        .eq('id', failedPost.id);
+
+      return NextResponse.json({ results: [{ platform: failedPost.platform, success: false, error: publishResult.result.error }] });
+    }
   }
 
   // Get connections — by specific IDs or by platform

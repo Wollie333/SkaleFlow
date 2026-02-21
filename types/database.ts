@@ -53,7 +53,7 @@ export type PlacementType =
   | 'tiktok_video' | 'tiktok_story'
   | 'youtube_video' | 'youtube_short' | 'youtube_community_post';
 export type PublishStatus = 'queued' | 'publishing' | 'published' | 'failed';
-export type NotificationType = 'content_submitted' | 'content_approved' | 'content_rejected' | 'revision_requested' | 'generation_completed' | 'change_request_submitted' | 'change_request_approved' | 'change_request_rejected' | 'change_request_revision' | 'credits_allocated' | 'credits_low' | 'call_booked' | 'call_reminder' | 'call_completed' | 'call_summary_ready' | 'brand_audit_completed';
+export type NotificationType = 'content_submitted' | 'content_approved' | 'content_rejected' | 'revision_requested' | 'generation_completed' | 'change_request_submitted' | 'change_request_approved' | 'change_request_rejected' | 'change_request_revision' | 'credits_allocated' | 'credits_low' | 'call_booked' | 'call_reminder' | 'call_completed' | 'call_summary_ready' | 'brand_audit_completed' | 'publish_failed';
 export type FeatureType = 'brand_engine' | 'content_engine' | 'pipeline' | 'ad_campaigns';
 export type ChangeRequestStatus = 'pending' | 'approved' | 'rejected' | 'revision_requested';
 export type ChangeType = 'create' | 'update' | 'delete';
@@ -81,6 +81,8 @@ export type TemplateCategory = 'video_script' | 'hook' | 'cta' | 'social_framewo
 export type TemplateTier = 'core_rotation' | 'high_impact' | 'strategic';
 export type TemplateContentType = 'post' | 'script' | 'hook' | 'cta';
 export type ContentFeedbackType = 'rejected' | 'accepted' | 'regenerated';
+export type TeamActivityAction = 'member_invited' | 'member_joined' | 'member_removed' | 'role_changed' | 'permission_updated' | 'credits_allocated' | 'credits_reclaimed' | 'invite_cancelled' | 'invite_resent';
+export type ReviewPriority = 'urgent' | 'normal' | 'low';
 
 // CRM types
 export type CrmLifecycleStage = 'lead' | 'prospect' | 'opportunity' | 'customer' | 'churned';
@@ -243,6 +245,8 @@ export interface Database {
           content_engine_enabled: boolean;
           playbook_share_token: string | null;
           industry: string | null;
+          timezone: string;
+          require_approval_before_publish: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -257,6 +261,8 @@ export interface Database {
           content_engine_enabled?: boolean;
           playbook_share_token?: string | null;
           industry?: string | null;
+          timezone?: string;
+          require_approval_before_publish?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -271,6 +277,8 @@ export interface Database {
           content_engine_enabled?: boolean;
           playbook_share_token?: string | null;
           industry?: string | null;
+          timezone?: string;
+          require_approval_before_publish?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -1331,6 +1339,8 @@ export interface Database {
           is_active: boolean;
           connected_at: string;
           metadata: Json;
+          inbox_last_synced_at: string | null;
+          inbox_sync_cursor: Json;
           created_at: string;
           updated_at: string;
         };
@@ -1351,6 +1361,8 @@ export interface Database {
           is_active?: boolean;
           connected_at?: string;
           metadata?: Json;
+          inbox_last_synced_at?: string | null;
+          inbox_sync_cursor?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -1371,6 +1383,8 @@ export interface Database {
           is_active?: boolean;
           connected_at?: string;
           metadata?: Json;
+          inbox_last_synced_at?: string | null;
+          inbox_sync_cursor?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -3680,6 +3694,9 @@ export interface Database {
           reviewed_by: string | null;
           review_comment: string | null;
           reviewed_at: string | null;
+          assigned_to: string | null;
+          priority: string;
+          deadline: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -3698,6 +3715,9 @@ export interface Database {
           reviewed_by?: string | null;
           review_comment?: string | null;
           reviewed_at?: string | null;
+          assigned_to?: string | null;
+          priority?: string;
+          deadline?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -3716,6 +3736,9 @@ export interface Database {
           reviewed_by?: string | null;
           review_comment?: string | null;
           reviewed_at?: string | null;
+          assigned_to?: string | null;
+          priority?: string;
+          deadline?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -3737,6 +3760,141 @@ export interface Database {
           {
             foreignKeyName: "change_requests_reviewed_by_fkey";
             columns: ["reviewed_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      team_activity_log: {
+        Row: {
+          id: string;
+          organization_id: string;
+          actor_id: string;
+          action: string;
+          target_user_id: string | null;
+          target_email: string | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          actor_id: string;
+          action: string;
+          target_user_id?: string | null;
+          target_email?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          actor_id?: string;
+          action?: string;
+          target_user_id?: string | null;
+          target_email?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "team_activity_log_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "team_activity_log_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "team_activity_log_target_user_id_fkey";
+            columns: ["target_user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      permission_templates: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          permissions: Json;
+          is_system: boolean;
+          organization_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          permissions: Json;
+          is_system?: boolean;
+          organization_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          permissions?: Json;
+          is_system?: boolean;
+          organization_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "permission_templates_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      review_comments: {
+        Row: {
+          id: string;
+          change_request_id: string;
+          user_id: string;
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          change_request_id: string;
+          user_id: string;
+          body: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          change_request_id?: string;
+          user_id?: string;
+          body?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "review_comments_change_request_id_fkey";
+            columns: ["change_request_id"];
+            isOneToOne: false;
+            referencedRelation: "change_requests";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "review_comments_user_id_fkey";
+            columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "users";
             referencedColumns: ["id"];
@@ -5712,11 +5870,13 @@ export interface Database {
           interaction_type: string;
           platform_interaction_id: string;
           parent_interaction_id: string | null;
+          published_post_id: string | null;
           message: string | null;
           author_platform_id: string | null;
           author_name: string | null;
           author_username: string | null;
           author_avatar_url: string | null;
+          sentiment: string | null;
           is_read: boolean;
           is_replied: boolean;
           is_flagged: boolean;
@@ -5735,11 +5895,13 @@ export interface Database {
           interaction_type: string;
           platform_interaction_id: string;
           parent_interaction_id?: string | null;
+          published_post_id?: string | null;
           message?: string | null;
           author_platform_id?: string | null;
           author_name?: string | null;
           author_username?: string | null;
           author_avatar_url?: string | null;
+          sentiment?: string | null;
           is_read?: boolean;
           is_replied?: boolean;
           is_flagged?: boolean;
@@ -5758,11 +5920,13 @@ export interface Database {
           interaction_type?: string;
           platform_interaction_id?: string;
           parent_interaction_id?: string | null;
+          published_post_id?: string | null;
           message?: string | null;
           author_platform_id?: string | null;
           author_name?: string | null;
           author_username?: string | null;
           author_avatar_url?: string | null;
+          sentiment?: string | null;
           is_read?: boolean;
           is_replied?: boolean;
           is_flagged?: boolean;
@@ -5774,6 +5938,57 @@ export interface Database {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      social_account_metrics: {
+        Row: {
+          id: string;
+          connection_id: string;
+          organization_id: string;
+          metric_date: string;
+          followers_count: number;
+          following_count: number;
+          posts_count: number;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          connection_id: string;
+          organization_id: string;
+          metric_date: string;
+          followers_count?: number;
+          following_count?: number;
+          posts_count?: number;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          connection_id?: string;
+          organization_id?: string;
+          metric_date?: string;
+          followers_count?: number;
+          following_count?: number;
+          posts_count?: number;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "social_account_metrics_connection_id_fkey";
+            columns: ["connection_id"];
+            isOneToOne: false;
+            referencedRelation: "social_media_connections";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "social_account_metrics_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       posting_schedule_analysis: {
         Row: {
