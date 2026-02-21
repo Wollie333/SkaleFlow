@@ -5,6 +5,7 @@ import { Header } from '@/components/layout/header';
 import { Sidebar } from '@/components/layout/sidebar';
 import { MobileSidebar } from '@/components/layout/mobile-sidebar';
 import { CreditsWarningBanner } from '@/components/layout';
+import { usePublishCheck } from '@/hooks/usePublishCheck';
 import type { FeaturePermissions } from '@/lib/permissions';
 
 interface DashboardLayoutClientProps {
@@ -46,6 +47,9 @@ export function DashboardLayoutClient({
   creditBalance,
 }: DashboardLayoutClientProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Check for due scheduled posts every 2 minutes while dashboard is open
+  usePublishCheck();
 
   const handleMenuOpen = useCallback(() => {
     setMobileMenuOpen(true);
