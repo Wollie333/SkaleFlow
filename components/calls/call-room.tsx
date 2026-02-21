@@ -370,13 +370,6 @@ export function CallRoom({
     prevWaitingCountRef.current = waitingCount;
   }, [waitingCount, isHost]);
 
-  // Auto-join for guests once admitted (skip the pre-call lobby)
-  useEffect(() => {
-    if (!isHost && localStatus === 'in_call' && !callActive) {
-      joinCall();
-    }
-  }, [isHost, localStatus, callActive, joinCall]);
-
   // Clear unread chat count when chat panel is open
   useEffect(() => {
     if (activePanel === 'chat') {
@@ -742,6 +735,13 @@ export function CallRoom({
       setMediaError('Could not access camera or microphone. Check browser permissions and try again.');
     }
   }, []);
+
+  // Auto-join for guests once admitted (skip the pre-call lobby)
+  useEffect(() => {
+    if (!isHost && localStatus === 'in_call' && !callActive) {
+      joinCall();
+    }
+  }, [isHost, localStatus, callActive, joinCall]);
 
   // Cleanup: stop tracks on unmount
   useEffect(() => {

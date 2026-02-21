@@ -112,7 +112,7 @@ export default function BlogPage() {
                     Why Most Founders Stay Stuck (And How to Break Free)
                   </Link>
                 </h3>
-                <p className="text-sm text-[#666] leading-relaxed mb-5">
+                <p className="text-sm text-charcoal/70 leading-relaxed mb-5">
                   The real reason growth stalls isn&apos;t a lack of effort -- it&apos;s a lack of
                   structure. In this deep-dive, we break down the patterns that keep
                   founder-led brands spinning their wheels and the system that changes
@@ -200,7 +200,7 @@ export default function BlogPage() {
                       {post.title}
                     </Link>
                   </h3>
-                  <p className="text-[14px] text-[#666] leading-relaxed mb-4">
+                  <p className="text-[14px] text-charcoal/70 leading-relaxed mb-4">
                     {post.excerpt}
                   </p>
                   <p className="text-[12px] text-stone">

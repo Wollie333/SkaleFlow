@@ -110,7 +110,7 @@ export default function ApplyPage() {
                   "You've invested in marketing before and been disappointed",
                   "You're ready for a system, not another tactic",
                 ].map((item, i) => (
-                  <li key={i} className="text-sm text-[#555] pl-6 relative">
+                  <li key={i} className="text-sm text-charcoal/80 pl-6 relative">
                     <span className="absolute left-0 text-teal font-bold">&#10003;</span>
                     {item}
                   </li>
@@ -127,7 +127,7 @@ export default function ApplyPage() {
                   "You're looking for someone to blame when things get hard",
                   "You're not willing to invest seriously in your foundation",
                 ].map((item, i) => (
-                  <li key={i} className="text-sm text-[#555] pl-6 relative">
+                  <li key={i} className="text-sm text-charcoal/80 pl-6 relative">
                     <span className="absolute left-0 text-stone font-bold">&times;</span>
                     {item}
                   </li>
@@ -151,7 +151,7 @@ export default function ApplyPage() {
                 </div>
                 <div>
                   <h4 className="text-[15px] font-semibold text-charcoal mb-1">{step.title}</h4>
-                  <p className="text-sm text-[#666] leading-relaxed m-0">{step.desc}</p>
+                  <p className="text-sm text-charcoal/70 leading-relaxed m-0">{step.desc}</p>
                 </div>
               </div>
             ))}
@@ -171,10 +171,12 @@ export default function ApplyPage() {
       )}
 
       {/* FORM */}
-      <section className="py-20 bg-cream-warm">
-        <div className="max-w-[560px] mx-auto px-6">
-            <div className="bg-white rounded-2xl p-8 md:p-12 border border-teal/[0.08] shadow-[0_8px_40px_rgba(15,31,29,0.04)]">
-              <h2 className="font-serif text-[clamp(24px,3vw,32px)] font-bold text-center mb-8">Tell us about your business.</h2>
+      <section className="py-20 bg-cream">
+        <div className="max-w-[720px] mx-auto px-6">
+            <div className="bg-white rounded-2xl p-8 md:p-12 border border-teal/15 shadow-[0_12px_48px_rgba(15,31,29,0.08)] relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-teal to-gold" />
+              <h2 className="font-serif text-[clamp(24px,3vw,32px)] font-bold text-charcoal text-center mb-2">Tell us about your business.</h2>
+              <p className="text-center text-stone text-sm mb-8">Fill in the details below and we&apos;ll get back to you.</p>
 
               {error && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-400">

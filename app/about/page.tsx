@@ -26,7 +26,7 @@ export default function AboutPage() {
           <h2 className="font-serif text-[clamp(28px,4vw,40px)] font-bold text-charcoal leading-[1.2] mb-6">
             I didn&apos;t start in marketing.<br />I started with sawdust.
           </h2>
-          <div className="text-[17px] leading-[1.9] text-[#555] space-y-5">
+          <div className="text-[17px] leading-[1.9] text-charcoal/80 space-y-5">
             <p>My first business was a sawmill. I learned what it means to build something from nothing—the early mornings, the cashflow stress, the weight of making it work when everything depends on you.</p>
             <p>After a decade as a business owner, I transitioned into web design. Then digital marketing. Then brand strategy.</p>
             <p>Each shift came from the same realization: <span className="text-teal font-medium">there was always something deeper missing.</span></p>
@@ -74,7 +74,7 @@ export default function AboutPage() {
           <h2 className="font-serif text-[clamp(28px,4vw,40px)] font-bold text-charcoal leading-[1.2] mb-6">
             I question everything.
           </h2>
-          <div className="text-[17px] leading-[1.9] text-[#555] space-y-5">
+          <div className="text-[17px] leading-[1.9] text-charcoal/80 space-y-5">
             <p>Every &ldquo;best practice.&rdquo; Every trend. Every guru promise.</p>
             <p>Then I hold on to what actually works—the proven principles behind growth—and help founders implement them with structure and simplicity.</p>
             <p><strong className="text-charcoal font-semibold">No fluff. No hype. Just systems that work.</strong></p>
@@ -102,7 +102,7 @@ export default function AboutPage() {
             ].map((value, i) => (
               <div key={i} className="bg-white rounded-[10px] p-8 border border-teal/[0.08]">
                 <h3 className="font-serif text-[18px] font-bold text-teal mb-2.5">{value.title}</h3>
-                <p className="text-[15px] text-[#666] leading-relaxed">{value.desc}</p>
+                <p className="text-[15px] text-charcoal/70 leading-relaxed">{value.desc}</p>
               </div>
             ))}
           </div>
@@ -168,7 +168,7 @@ export default function AboutPage() {
                 </div>
                 <h3 className="font-serif text-[18px] font-bold text-charcoal mb-1">{member.name}</h3>
                 <p className="text-sm text-stone mb-3">{member.role}</p>
-                <p className="text-sm text-[#666] leading-relaxed">{member.desc}</p>
+                <p className="text-sm text-charcoal/70 leading-relaxed">{member.desc}</p>
               </div>
             ))}
           </div>

@@ -22,7 +22,7 @@ function FAQItem({ question, answer, defaultOpen = false }: { question: string; 
       <div
         className={`overflow-hidden transition-all duration-400 ${open ? 'max-h-[400px] mt-3' : 'max-h-0'}`}
       >
-        <div className="text-[15px] text-[#666] leading-relaxed space-y-4">
+        <div className="text-[15px] text-charcoal/70 leading-relaxed space-y-4">
           {answer}
         </div>
       </div>
@@ -111,10 +111,10 @@ export default function SkaleFlowPage() {
             The advice was broken.
           </h2>
           <div className="max-w-[640px] space-y-5">
-            <p className="text-[17px] text-[#555]">The tactics weren&apos;t wrong. The timing was.</p>
-            <p className="text-[17px] text-[#555]">You can&apos;t scale a business on a broken foundation. No amount of ads, content, or agency retainers will fix a message that doesn&apos;t resonate or a brand that blends in.</p>
-            <p className="text-[17px] text-[#555]">The Snake Oil Gurus didn&apos;t fail you because you weren&apos;t smart enough to see through them. They failed you because they sold solutions for problems you didn&apos;t actually have.</p>
-            <p className="text-[17px] text-[#555]">They gave you tactics when you needed clarity. Execution when you needed strategy. Band-aids when you needed surgery.</p>
+            <p className="text-[17px] text-charcoal/80">The tactics weren&apos;t wrong. The timing was.</p>
+            <p className="text-[17px] text-charcoal/80">You can&apos;t scale a business on a broken foundation. No amount of ads, content, or agency retainers will fix a message that doesn&apos;t resonate or a brand that blends in.</p>
+            <p className="text-[17px] text-charcoal/80">The Snake Oil Gurus didn&apos;t fail you because you weren&apos;t smart enough to see through them. They failed you because they sold solutions for problems you didn&apos;t actually have.</p>
+            <p className="text-[17px] text-charcoal/80">They gave you tactics when you needed clarity. Execution when you needed strategy. Band-aids when you needed surgery.</p>
           </div>
 
           <div className="py-7 px-8 bg-dark rounded-[10px] my-9 max-w-[500px]">
@@ -127,8 +127,8 @@ export default function SkaleFlowPage() {
           </div>
 
           <div className="max-w-[640px] space-y-5">
-            <p className="text-[17px] text-[#555]">None of it was going to work—because <strong className="text-charcoal">the foundation was never right.</strong></p>
-            <p className="text-[17px] text-[#555]">And the cost wasn&apos;t just money. It was momentum. Confidence. Trust in outside help.</p>
+            <p className="text-[17px] text-charcoal/80">None of it was going to work—because <strong className="text-charcoal">the foundation was never right.</strong></p>
+            <p className="text-[17px] text-charcoal/80">And the cost wasn&apos;t just money. It was momentum. Confidence. Trust in outside help.</p>
           </div>
         </div>
       </section>
@@ -204,7 +204,7 @@ export default function SkaleFlowPage() {
                 {item.title}
               </div>
               {item.paragraphs.map((p, j) => (
-                <p key={j} className="text-[16px] text-[#555] leading-relaxed mb-4 last:mb-0">
+                <p key={j} className="text-[16px] text-charcoal/80 leading-relaxed mb-4 last:mb-0">
                   {p}
                 </p>
               ))}
@@ -254,7 +254,7 @@ export default function SkaleFlowPage() {
             <h2 className="font-serif text-[clamp(28px,4vw,42px)] font-bold text-charcoal leading-[1.2] mb-4">
               Three phases. One complete system.
             </h2>
-            <p className="text-[16px] text-[#666]">
+            <p className="text-[16px] text-charcoal/70">
               SkaleFlow isn&apos;t a course. It&apos;s not a template. It&apos;s a complete system—built with you, for you.
             </p>
           </div>
@@ -287,7 +287,7 @@ export default function SkaleFlowPage() {
                 <h3 className="font-serif text-[22px] font-bold text-charcoal mb-3">
                   {phase.title}
                 </h3>
-                <p className="text-[15px] text-[#666]">{phase.desc}</p>
+                <p className="text-[15px] text-charcoal/70">{phase.desc}</p>
               </div>
             ))}
           </div>
@@ -303,7 +303,7 @@ export default function SkaleFlowPage() {
           <h2 className="font-serif text-[clamp(28px,4vw,42px)] font-bold text-charcoal leading-[1.2] mb-4">
             Everything built. Everything ready to use.
           </h2>
-          <p className="text-[16px] text-[#666] mb-9">
+          <p className="text-[16px] text-charcoal/70 mb-9">
             This isn&apos;t a strategy session that leaves you with a PDF and a pat on the back.
           </p>
 
@@ -335,7 +335,7 @@ export default function SkaleFlowPage() {
           ].map((item, i) => (
             <div key={i} className="py-7 border-b border-teal/10 first:pt-0 last:border-b-0">
               <h4 className="font-serif text-[20px] font-bold text-charcoal mb-2">{item.title}</h4>
-              <p className="text-[15px] text-[#666]">{item.desc}</p>
+              <p className="text-[15px] text-charcoal/70">{item.desc}</p>
             </div>
           ))}
         </div>
@@ -370,7 +370,7 @@ export default function SkaleFlowPage() {
                   'Team waiting on you for every decision',
                 ].map((item, i) => (
                   <li key={i} className="text-[15px] text-cream/70 pl-5 relative">
-                    <span className="absolute left-0 text-[#666] font-bold">&times;</span>
+                    <span className="absolute left-0 text-stone font-bold">&times;</span>
                     {item}
                   </li>
                 ))}
@@ -417,7 +417,7 @@ export default function SkaleFlowPage() {
             <h3 className="font-serif text-[clamp(22px,3vw,30px)] font-bold text-charcoal mb-2">
               Wholistic Mental Health Care
             </h3>
-            <p className="text-[15px] text-[#666]">
+            <p className="text-[15px] text-charcoal/70">
               Started from zero. No clients. No marketing system. No big budget. Just a clear brand, the right positioning, and a simple strategy.
             </p>
 
@@ -436,7 +436,7 @@ export default function SkaleFlowPage() {
               ))}
             </div>
 
-            <p className="text-[15px] text-[#666] mb-6">
+            <p className="text-[15px] text-charcoal/70 mb-6">
               Not by throwing money at ads. By getting the foundation right first: clear brand positioning, messaging that attracted aligned clients, a website that converted, and consistent organic content with purpose.
             </p>
 
@@ -445,7 +445,7 @@ export default function SkaleFlowPage() {
             </div>
 
             <div className="bg-cream-warm rounded-lg p-6 mt-2">
-              <p className="text-[15px] text-[#555]">
+              <p className="text-[15px] text-charcoal/80">
                 <strong className="text-charcoal">Now imagine what&apos;s possible for your business.</strong> You&apos;re not starting from zero. You already have revenue, a team, and years of experience. What happens when you add the same clarity and system to a business that&apos;s already running?
               </p>
             </div>
@@ -519,7 +519,7 @@ export default function SkaleFlowPage() {
                   "You're not looking for a quick fix—you want a system that lasts",
                   "You're ready to do the work, you just need the right direction",
                 ].map((item, i) => (
-                  <li key={i} className="text-[15px] text-[#555] pl-6 relative">
+                  <li key={i} className="text-[15px] text-charcoal/80 pl-6 relative">
                     <span className="absolute left-0 text-teal font-bold">&#10003;</span>
                     {item}
                   </li>
@@ -536,7 +536,7 @@ export default function SkaleFlowPage() {
                   "You're looking for magic—overnight results, viral hacks, or shortcuts",
                   "You're not willing to invest seriously in your business's foundation",
                 ].map((item, i) => (
-                  <li key={i} className="text-[15px] text-[#555] pl-6 relative">
+                  <li key={i} className="text-[15px] text-charcoal/80 pl-6 relative">
                     <span className="absolute left-0 text-stone font-bold">&times;</span>
                     {item}
                   </li>

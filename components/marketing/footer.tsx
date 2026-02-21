@@ -3,7 +3,7 @@ import Link from 'next/link';
 export function MarketingFooter() {
   return (
     <footer className="py-16 px-6 bg-dark border-t border-teal/[0.08]">
-      <div className="max-w-[1060px] mx-auto grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-12">
+      <div className="max-w-[1060px] mx-auto grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr] gap-12">
         <div>
           <div className="font-serif font-bold text-[17px] text-cream tracking-wide mb-4">
             MANA<span className="font-sans text-xs font-normal text-stone ml-1.5">MARKETING</span>
@@ -20,6 +20,17 @@ export function MarketingFooter() {
             <Link href="/problems" className="text-sm text-stone hover:text-cream transition-colors py-1">Problems We Solve</Link>
             <Link href="/results" className="text-sm text-stone hover:text-cream transition-colors py-1">Results</Link>
             <Link href="/blog" className="text-sm text-stone hover:text-cream transition-colors py-1">Insights</Link>
+          </div>
+        </div>
+        <div>
+          <h4 className="text-[13px] font-semibold text-cream tracking-wider uppercase mb-5">Features</h4>
+          <div className="flex flex-col gap-1.5">
+            <Link href="/features/brand-strategy-engine" className="text-sm text-stone hover:text-cream transition-colors py-1">Brand Engine</Link>
+            <Link href="/features/ai-content-engine" className="text-sm text-stone hover:text-cream transition-colors py-1">Content Engine</Link>
+            <Link href="/features/authority-engine" className="text-sm text-stone hover:text-cream transition-colors py-1">Authority Engine</Link>
+            <Link href="/features/brand-audit" className="text-sm text-stone hover:text-cream transition-colors py-1">Brand Audits</Link>
+            <Link href="/features/ai-sales-calls" className="text-sm text-stone hover:text-cream transition-colors py-1">AI Sales Calls</Link>
+            <Link href="/features/skaleflow-methodology" className="text-sm text-stone hover:text-cream transition-colors py-1">The System</Link>
           </div>
         </div>
         <div>

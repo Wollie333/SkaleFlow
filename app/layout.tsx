@@ -24,7 +24,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="font-sans antialiased bg-cream text-charcoal">
+      <body className="font-sans antialiased bg-cream text-charcoal" suppressHydrationWarning>
         <ThemeProvider>
           <Suspense fallback={null}>
             <NavigationProgress />

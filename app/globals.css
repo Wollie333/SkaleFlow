@@ -35,6 +35,19 @@
   html.dark ::after {
     border-color: rgb(30 107 99 / 0.08);
   }
+
+  /*
+   * On fixed dark/teal backgrounds, reset swappable tokens to their
+   * light-mode values so text stays readable.
+   * Without this, text-cream becomes dark-on-dark and vanishes.
+   */
+  html.dark [class*="bg-dark"],
+  html.dark [class*="bg-teal"] {
+    --color-cream: 240 236 228;
+    --color-cream-warm: 245 241 234;
+    --color-charcoal: 44 44 44;
+    --color-stone: 122 117 109;
+  }
 }
 
 @layer components {
@@ -221,7 +234,7 @@ html.dark textarea,
 html.dark select {
   background-color: rgb(var(--color-cream)) !important;
   color: rgb(var(--color-charcoal)) !important;
-  border-color: rgb(30 107 99 / 0.08) !important;
+  border-color: rgb(30 107 99 / 0.2) !important;
 }
 
 html.dark input::placeholder,
@@ -309,4 +322,16 @@ html.dark [class*="border-gray-"],
 html.dark [class*="border-neutral-"],
 html.dark [class*="border-slate-"] {
   border-color: rgb(30 107 99 / 0.06) !important;
+}
+
+/* ── Dark mode: catch remaining hardcoded text colors ── */
+html.dark .text-\[\#555\] {
+  color: rgb(var(--color-charcoal) / 0.8) !important;
+}
+html.dark .text-\[\#666\] {
+  color: rgb(var(--color-charcoal) / 0.7) !important;
+}
+html.dark .text-\[\#555\] strong,
+html.dark .text-\[\#666\] strong {
+  color: rgb(var(--color-charcoal)) !important;
 }

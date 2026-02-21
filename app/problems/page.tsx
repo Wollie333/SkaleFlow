@@ -117,7 +117,7 @@ export default function ProblemsPage() {
             </div>
 
             {/* Quote heading */}
-            <h2 className="font-serif text-[clamp(24px,3.5vw,34px)] font-bold text-dark mb-6">
+            <h2 className="font-serif text-[clamp(24px,3.5vw,34px)] font-bold text-charcoal mb-6">
               {point.quote}
             </h2>
 
@@ -125,7 +125,7 @@ export default function ProblemsPage() {
             {point.body.map((paragraph, pIndex) => (
               <p
                 key={pIndex}
-                className="text-[17px] text-[#555] max-w-[640px] leading-relaxed mb-4"
+                className="text-[17px] text-charcoal/80 max-w-[640px] leading-relaxed mb-4"
               >
                 {paragraph}
               </p>
