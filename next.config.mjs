@@ -21,12 +21,12 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Allow camera, microphone, and display-capture on call room pages
-        source: '/(call-room|calls)/:path*',
+        // Allow camera, microphone, and display-capture on all call pages
+        source: '/(call-room|calls|call)/:path*',
         headers: [
           {
             key: 'Permissions-Policy',
-            value: 'camera=*, microphone=*, display-capture=*',
+            value: 'camera=(self), microphone=(self), display-capture=(self)',
           },
         ],
       },

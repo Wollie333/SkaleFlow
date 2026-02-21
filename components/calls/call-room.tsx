@@ -664,16 +664,65 @@ export function CallRoom({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callActive, isHost, roomCode, transcripts]);
 
-  // Join the call — single getUserMedia call, no preview, no retries
+  // Join the call — try both devices, fall back to separate if needed
   const joinCall = useCallback(async () => {
     setMediaError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+    // Helper: try getUserMedia and return stream or null
+    const tryMedia = async (constraints: MediaStreamConstraints): Promise<MediaStream | null> => {
+      try {
+        return await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (err) {
+        console.warn('[CallRoom] getUserMedia failed for', constraints, err);
+        return null;
+      }
+    };
+
+    // 1. Try both together
+    let stream = await tryMedia({ video: true, audio: true });
+
+    // 2. If joint call failed, try them separately and merge
+    if (!stream) {
+      const combinedStream = new MediaStream();
+      const audioStream = await tryMedia({ audio: true });
+      const videoStream = await tryMedia({ video: true });
+
+      if (audioStream) audioStream.getAudioTracks().forEach(t => combinedStream.addTrack(t));
+      if (videoStream) videoStream.getVideoTracks().forEach(t => combinedStream.addTrack(t));
+
+      if (combinedStream.getTracks().length > 0) {
+        stream = combinedStream;
+        // Warn the user about partial access
+        if (!audioStream) setMediaError('Could not access microphone — joining with video only.');
+        if (!videoStream) setMediaError('Could not access camera — joining with audio only.');
+      }
+    }
+
+    if (stream && stream.getTracks().length > 0) {
       localStreamRef.current = stream;
       setLocalStream(stream);
+      setIsCameraOff(stream.getVideoTracks().length === 0);
+      setIsMuted(stream.getAudioTracks().length === 0);
       setCallActive(true);
-    } catch {
-      setMediaError('Could not access camera/mic. Check browser permissions and make sure no other app is using them.');
+    } else {
+      // Total failure — check the actual reason
+      try {
+        // One more attempt to get the real error
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (err: unknown) {
+        const name = err instanceof DOMException ? err.name : '';
+        if (name === 'NotAllowedError') {
+          setMediaError('Camera/mic permission denied. Click the camera icon in your browser address bar to allow access, then try again.');
+        } else if (name === 'NotFoundError') {
+          setMediaError('No camera or microphone found. Please connect a device and try again.');
+        } else if (name === 'NotReadableError') {
+          setMediaError('Camera/mic is in use by another app or browser tab. Close it and try again.');
+        } else {
+          setMediaError(`Could not access camera/mic: ${err instanceof Error ? err.message : 'Unknown error'}. Check browser permissions.`);
+        }
+        return;
+      }
+      setMediaError('Could not access camera or microphone. Check browser permissions and try again.');
     }
   }, []);
 
