@@ -275,17 +275,7 @@ function isAuthorized(request: NextRequest): boolean {
 // Vercel crons send GET requests
 export async function GET(request: NextRequest) {
   if (!isAuthorized(request)) {
-    const hasSecret = !!process.env.CRON_SECRET;
-    const keyParam = request.nextUrl.searchParams.get('key');
-    return NextResponse.json({
-      error: 'Unauthorized',
-      debug: {
-        envVarSet: hasSecret,
-        keyParamReceived: !!keyParam,
-        keyLength: keyParam?.length || 0,
-        secretLength: process.env.CRON_SECRET?.length || 0,
-      }
-    }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const result = await runScheduledPublish();
