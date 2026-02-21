@@ -597,111 +597,93 @@ export function CallRoom({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callActive, isHost]);
 
-  // Acquire media stream (does NOT activate the call — just gets the camera/mic)
-  const acquireMedia = useCallback(async () => {
+  // ── AI Copilot Guidance — process transcript turns every ~5s ──
+  const lastProcessedIdxRef = useRef(0);
+  const guidanceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const guidanceInFlightRef = useRef(false);
+
+  useEffect(() => {
+    if (!callActive || !isHost) return;
+
+    const processGuidance = async () => {
+      if (guidanceInFlightRef.current) return;
+
+      // Collect final-only transcript chunks since last processed
+      const finals = transcripts.filter(t => !t.id.startsWith('t-interim-'));
+      if (finals.length <= lastProcessedIdxRef.current) return;
+
+      // Gather unprocessed transcript turns
+      const newChunks = finals.slice(lastProcessedIdxRef.current);
+      if (newChunks.length === 0) return;
+
+      // Combine recent chunks into a single turn for context
+      const combinedTurn = newChunks.map(c => `[${c.speakerLabel}]: ${c.content}`).join('\n');
+      const lastChunk = newChunks[newChunks.length - 1];
+      lastProcessedIdxRef.current = finals.length;
+
+      guidanceInFlightRef.current = true;
+      try {
+        const res = await fetch(`/api/calls/${roomCode}/guidance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            transcriptTurn: combinedTurn,
+            speakerLabel: lastChunk.speakerLabel,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && !data.skip && data.content) {
+            const item: GuidanceItem = {
+              id: data.id || `g-${Date.now()}`,
+              guidanceType: data.guidance_type || data.guidanceType || 'general',
+              content: data.content,
+              frameworkPhase: data.framework_phase || data.frameworkPhase || undefined,
+              frameworkStep: data.framework_step || data.frameworkStep || undefined,
+              wasUsed: false,
+              wasDismissed: false,
+            };
+            setGuidance(prev => [...prev, item]);
+          }
+        }
+      } catch {
+        // Non-blocking — don't break the call if guidance fails
+      } finally {
+        guidanceInFlightRef.current = false;
+      }
+    };
+
+    // Poll every 5 seconds for new transcript chunks to process
+    guidanceTimerRef.current = setInterval(processGuidance, 5000);
+
+    return () => {
+      if (guidanceTimerRef.current) clearInterval(guidanceTimerRef.current);
+    };
+    // transcripts updates frequently — we read it via ref-like access in the closure
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callActive, isHost, roomCode, transcripts]);
+
+  // Join the call — single getUserMedia call, no preview, no retries
+  const joinCall = useCallback(async () => {
     setMediaError(null);
-
-    if (!window.isSecureContext) {
-      setMediaError('Camera/mic requires HTTPS. Open this page via https:// or localhost.');
-      return;
-    }
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setMediaError('Your browser does not support camera/mic access.');
-      return;
-    }
-
-    // Stop any existing tracks first to cleanly release devices
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(t => t.stop());
-      localStreamRef.current = null;
-      setLocalStream(null);
-    }
-
-    // Wait for any previous camera release to complete
-    await new Promise(r => setTimeout(r, 500));
-
-    // STRATEGY 1: Combined audio+video in a SINGLE call.
-    // This is critical for USB cameras where the mic and camera are on the
-    // same device — separate getUserMedia calls lock the device for audio,
-    // then video fails with NotReadableError.
     try {
-      console.log('[CallRoom] Trying combined audio+video (single call)');
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      console.log('[CallRoom] Combined audio+video SUCCESS');
       localStreamRef.current = stream;
       setLocalStream(stream);
-      setIsCameraOff(false);
-      return;
-    } catch (err) {
-      console.warn('[CallRoom] Combined audio+video failed:', (err as Error).name, (err as Error).message);
-    }
-
-    // STRATEGY 2: Try each camera individually (combined with audio).
-    // There are multiple cameras — try each one.
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const cameras = devices.filter(d => d.kind === 'videoinput');
-      console.log('[CallRoom] Cameras found:', cameras.map(c => c.label));
-
-      for (const camera of cameras) {
-        try {
-          console.log(`[CallRoom] Trying camera: ${camera.label}`);
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: { deviceId: { exact: camera.deviceId } },
-            audio: true,
-          });
-          console.log(`[CallRoom] Camera "${camera.label}" SUCCESS`);
-          localStreamRef.current = stream;
-          setLocalStream(stream);
-          setIsCameraOff(false);
-          return;
-        } catch (err) {
-          console.warn(`[CallRoom] Camera "${camera.label}" failed:`, (err as Error).name);
-        }
-      }
+      setCallActive(true);
     } catch {
-      // Ignore enumeration failure
+      setMediaError('Could not access camera/mic. Check browser permissions and make sure no other app is using them.');
     }
-
-    // STRATEGY 3: Audio only (last resort — at least we can talk)
-    try {
-      console.log('[CallRoom] Falling back to audio-only');
-      const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      console.log('[CallRoom] Audio-only acquired:', audioStream.getAudioTracks()[0]?.label);
-      localStreamRef.current = audioStream;
-      setLocalStream(audioStream);
-      setIsCameraOff(true);
-      setMediaError(
-        'Camera could not start (all cameras tried). You can join with audio only. ' +
-        'Try closing ALL browser tabs, restart the browser, and try again.'
-      );
-      return;
-    } catch (err) {
-      console.error('[CallRoom] Audio-only also failed:', (err as Error).name);
-    }
-
-    // Nothing worked at all
-    setMediaError(
-      'Could not access camera or microphone. ' +
-      'Close ALL browser tabs and restart the browser, then try again.'
-    );
   }, []);
 
-  // Auto-acquire media on mount so user sees a live preview before joining
+  // Cleanup: stop tracks on unmount
   useEffect(() => {
-    acquireMedia();
-    // Cleanup: stop tracks on unmount
     return () => {
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(t => t.stop());
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Join the call (media already acquired)
-  const joinCall = useCallback(() => {
-    setCallActive(true);
   }, []);
 
   const toggleMute = useCallback(() => {
@@ -1113,8 +1095,8 @@ export function CallRoom({
             isWaiting={!isHost && localStatus === 'waiting'}
             displayName={displayName}
             onJoinCall={joinCall}
-            onRetryMedia={acquireMedia}
             mediaError={mediaError}
+            isHost={isHost}
           />
 
           {/* Floating waiting room banner — host sees when guests are waiting */}

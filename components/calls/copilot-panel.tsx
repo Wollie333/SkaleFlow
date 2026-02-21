@@ -173,19 +173,29 @@ export function CopilotPanel({ guidance, callActive, transcriptCount = 0, brandA
           </div>
         )}
 
-        {callActive && activeGuidance.length === 0 && !hasPhases && (
-          <div className="text-center py-8">
-            <div className="w-10 h-10 rounded-full bg-[#1E6B63]/20 flex items-center justify-center mx-auto mb-3">
-              <span className="text-[#1E6B63] text-lg">&#x1F3AF;</span>
-            </div>
-            {transcriptCount > 0 ? (
-              <>
-                <p className="text-white/50 text-sm">Transcribing... ({transcriptCount} segments)</p>
-                <p className="text-white/30 text-xs mt-1">AI suggestions will appear as the conversation progresses.</p>
-              </>
-            ) : (
-              <p className="text-white/40 text-sm">Listening... AI suggestions will appear as the conversation progresses.</p>
+        {callActive && activeGuidance.length === 0 && (
+          <div className={hasPhases ? 'py-3' : 'text-center py-8'}>
+            {!hasPhases && (
+              <div className="w-10 h-10 rounded-full bg-[#1E6B63]/20 flex items-center justify-center mx-auto mb-3">
+                <span className="text-[#1E6B63] text-lg">&#x1F3AF;</span>
+              </div>
             )}
+            {transcriptCount > 0 ? (
+              <p className={`text-white/40 text-xs ${hasPhases ? '' : 'text-sm'}`}>
+                Listening... AI suggestions will appear as you talk.
+                {!hasPhases && ` (${transcriptCount} segments)`}
+              </p>
+            ) : (
+              <p className={`text-white/40 ${hasPhases ? 'text-xs' : 'text-sm'}`}>
+                Listening... AI suggestions will appear as the conversation progresses.
+              </p>
+            )}
+          </div>
+        )}
+
+        {activeGuidance.length > 0 && hasPhases && (
+          <div className="pt-1 pb-0.5">
+            <p className="text-[10px] uppercase tracking-wider text-white/30 font-semibold">AI Suggestions</p>
           </div>
         )}
 
