@@ -18,6 +18,20 @@ const nextConfig = {
       },
     ],
   },
+  async headers() {
+    return [
+      {
+        // Allow camera, microphone, and display-capture on call room pages
+        source: '/(call-room|calls)/:path*',
+        headers: [
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=*, microphone=*, display-capture=*',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
