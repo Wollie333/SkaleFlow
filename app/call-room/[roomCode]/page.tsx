@@ -33,14 +33,17 @@ export default async function FullPageCallRoomPage({
   const isHost = call.host_user_id === user.id;
 
   return (
-    <CallRoom
-      roomCode={roomCode}
-      callId={call.id}
-      callTitle={call.title}
-      organizationId={call.organization_id}
-      userId={user.id}
-      isHost={isHost}
-      showOpenInTab={false}
-    />
+    <div className="h-screen">
+      <CallRoom
+        roomCode={roomCode}
+        callId={call.id}
+        callTitle={call.title}
+        organizationId={call.organization_id}
+        userId={user.id}
+        isHost={isHost}
+        showOpenInTab={false}
+        templateId={call.template_id}
+      />
+    </div>
   );
 }

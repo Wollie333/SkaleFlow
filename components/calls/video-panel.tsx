@@ -19,9 +19,24 @@ interface VideoPanelProps {
 export function VideoPanel({ localStream, participants, localUserId, localParticipantId, isCameraOff, callActive, isWaiting, displayName, onStartMedia }: VideoPanelProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
 
+  console.log('[VideoPanel] Render — callActive:', callActive, 'localStream:', !!localStream, 'isCameraOff:', isCameraOff, 'isWaiting:', isWaiting);
+
   useEffect(() => {
+    console.log('[VideoPanel] useEffect[localStream] — localStream:', !!localStream, 'localVideoRef:', !!localVideoRef.current);
     if (localVideoRef.current && localStream) {
+      console.log('[VideoPanel] Setting srcObject on video element');
+      console.log('[VideoPanel] Stream active:', localStream.active, 'tracks:', localStream.getTracks().length);
       localVideoRef.current.srcObject = localStream;
+
+      // Force play in case autoplay is blocked
+      localVideoRef.current.play().then(() => {
+        console.log('[VideoPanel] Video play() succeeded');
+      }).catch((err) => {
+        console.warn('[VideoPanel] Video play() failed:', err.name, err.message);
+      });
+    } else if (localVideoRef.current && !localStream) {
+      console.log('[VideoPanel] Clearing srcObject (no stream)');
+      localVideoRef.current.srcObject = null;
     }
   }, [localStream]);
 
@@ -70,7 +85,10 @@ export function VideoPanel({ localStream, participants, localUserId, localPartic
           <h2 className="text-white text-lg font-medium mb-2">Ready to join?</h2>
           <p className="text-white/50 text-sm mb-6">Click below to enable your camera and microphone</p>
           <button
-            onClick={onStartMedia}
+            onClick={() => {
+              console.log('[VideoPanel] Join Call button clicked');
+              onStartMedia();
+            }}
             className="px-4 py-2 md:px-6 md:py-3 rounded-lg bg-[#1E6B63] hover:bg-[#1E6B63]/80 text-white font-medium text-sm md:text-base transition-colors"
           >
             Join Call
@@ -93,7 +111,7 @@ export function VideoPanel({ localStream, participants, localUserId, localPartic
   return (
     <div className={`h-full p-2 md:p-3 grid gap-2 md:gap-3 ${gridClass}`}>
       {/* Local video */}
-      <div className="relative bg-[#1a1a2e] rounded-xl overflow-hidden">
+      <div className="relative bg-[#1a1a2e] rounded-xl overflow-hidden min-h-[200px]">
         {isCameraOff ? (
           <div className="h-full flex items-center justify-center">
             <div className="w-16 h-16 rounded-full bg-[#1E6B63]/30 flex items-center justify-center">
@@ -107,6 +125,9 @@ export function VideoPanel({ localStream, participants, localUserId, localPartic
             playsInline
             muted
             className="w-full h-full object-cover"
+            onLoadedMetadata={() => console.log('[VideoPanel] Video loadedmetadata event fired')}
+            onPlay={() => console.log('[VideoPanel] Video play event fired')}
+            onError={(e) => console.error('[VideoPanel] Video error event:', e)}
           />
         )}
         <div className="absolute bottom-2 left-2 md:bottom-3 md:left-3 px-2 py-1 bg-black/50 rounded text-white text-[10px] md:text-xs">

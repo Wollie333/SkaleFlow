@@ -29,14 +29,17 @@ export default async function AuthenticatedCallRoomPage({ params }: { params: Pr
   const isHost = call.host_user_id === user.id;
 
   return (
-    <CallRoom
-      roomCode={roomCode}
-      callId={call.id}
-      callTitle={call.title}
-      organizationId={call.organization_id}
-      userId={user.id}
-      isHost={isHost}
-      showOpenInTab={true}
-    />
+    <div className="-m-4 md:-m-6 lg:-m-8 h-[calc(100vh-4rem)]">
+      <CallRoom
+        roomCode={roomCode}
+        callId={call.id}
+        callTitle={call.title}
+        organizationId={call.organization_id}
+        userId={user.id}
+        isHost={isHost}
+        showOpenInTab={true}
+        templateId={call.template_id}
+      />
+    </div>
   );
 }

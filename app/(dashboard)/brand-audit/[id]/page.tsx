@@ -231,7 +231,7 @@ export default function BrandAuditWizardPage() {
       ) : (
         <div className="flex flex-col lg:flex-row h-[calc(100%-3.5rem)]">
           {/* Left panel — Variables */}
-          <div className="lg:w-[42%] border-b lg:border-b-0 lg:border-r border-stone/10 bg-white p-4 overflow-y-auto">
+          <div className="max-h-[40vh] lg:max-h-none lg:w-[42%] border-b lg:border-b-0 lg:border-r border-stone/10 bg-white p-4 overflow-y-auto">
             <AuditVariablePanel
               sections={audit.sections.map(s => ({
                 section_key: s.section_key,
@@ -246,7 +246,7 @@ export default function BrandAuditWizardPage() {
           </div>
 
           {/* Right panel — Section form */}
-          <div className="lg:flex-1 flex flex-col min-h-0">
+          <div className="lg:flex-1 flex flex-col min-h-0 overflow-hidden">
             <AuditSectionForm
               auditId={auditId}
               sectionKey={activeSection}

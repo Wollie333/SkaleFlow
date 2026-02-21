@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { VideoPanel } from './video-panel';
 import { AttendeesPanel } from './attendees-panel';
-import { CopilotPanel } from './copilot-panel';
+import { CopilotPanel, type TemplatePhase } from './copilot-panel';
 import { TranscriptPanel } from './transcript-panel';
 import { ChatPanel, type ChatMessage } from './chat-panel';
 import { ControlsBar } from './controls-bar';
@@ -28,6 +28,7 @@ interface CallRoomProps {
   guestName?: string;
   guestEmail?: string;
   showOpenInTab?: boolean;
+  templateId?: string | null;
 }
 
 export type PanelView = 'copilot' | 'transcript' | 'attendees' | 'offers' | 'insights' | 'chat' | 'none';
@@ -67,7 +68,7 @@ export interface GuidanceItem {
 export type RecordingState = 'idle' | 'recording' | 'stopping';
 
 export function CallRoom({
-  roomCode, callId, callTitle, organizationId, userId, isHost, guestName, guestEmail, showOpenInTab
+  roomCode, callId, callTitle, organizationId, userId, isHost, guestName, guestEmail, showOpenInTab, templateId
 }: CallRoomProps) {
   const [activePanel, setActivePanel] = useState<PanelView>(isHost ? 'insights' : 'attendees');
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -120,6 +121,9 @@ export function CallRoom({
   const [auditCurrentSection, setAuditCurrentSection] = useState<BrandAuditSectionKey | undefined>();
   const auditExtractionCounter = useRef(0);
 
+  // Template phases (loaded from call template)
+  const [templatePhases, setTemplatePhases] = useState<TemplatePhase[]>([]);
+
   const displayName = callTitle || `Room: ${roomCode}`;
   const isRecording = recordingState === 'recording' || isRecordingRemote;
 
@@ -143,33 +147,45 @@ export function CallRoom({
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  // Load template phases from the template API
+  useEffect(() => {
+    if (!templateId) return;
+    (async () => {
+      try {
+        const tplRes = await fetch(`/api/calls/templates/${templateId}`);
+        if (tplRes.ok) {
+          const template = await tplRes.json();
+          if (template.phases && Array.isArray(template.phases)) {
+            console.log('[CallRoom] Template phases loaded:', template.phases.length);
+            setTemplatePhases(template.phases);
+          }
+        }
+      } catch { /* ignore template fetch error */ }
+    })();
+  }, [templateId]);
+
   // Detect brand audit mode — check if call has a linked brand audit
   useEffect(() => {
     if (!callId || !isHost) return;
     (async () => {
       try {
-        const res = await fetch(`/api/calls/${roomCode}`);
+        // Query brand audits linked to this call
+        const res = await fetch(`/api/brand-audits?callId=${callId}`);
         if (!res.ok) return;
-        const callData = await res.json();
-        // Check if call has a linked brand_audit_id or template is Brand Audit Discovery
-        const auditId = callData.brand_audit_id || callData.metadata?.brand_audit_id;
-        if (auditId) {
-          setBrandAuditId(auditId);
-          // Load audit sections
-          const auditRes = await fetch(`/api/brand-audits/${auditId}`);
-          if (auditRes.ok) {
-            const audit = await auditRes.json();
-            setBrandAuditSections(
-              (audit.sections || []).map((s: { section_key: BrandAuditSectionKey; data: Record<string, unknown> }) => ({
-                section_key: s.section_key,
-                data: (s.data || {}) as Record<string, unknown>,
-              }))
-            );
-          }
+        const audits = await res.json();
+        const audit = Array.isArray(audits) ? audits[0] : audits;
+        if (audit?.id) {
+          setBrandAuditId(audit.id);
+          setBrandAuditSections(
+            (audit.sections || []).map((s: { section_key: BrandAuditSectionKey; data: Record<string, unknown> }) => ({
+              section_key: s.section_key,
+              data: (s.data || {}) as Record<string, unknown>,
+            }))
+          );
         }
       } catch { /* ignore */ }
     })();
-  }, [callId, roomCode, isHost]);
+  }, [callId, isHost]);
 
   // Handle transcript extraction for brand audit
   const handleAuditExtract = useCallback(async (chunk: TranscriptChunk) => {
@@ -582,24 +598,54 @@ export function CallRoom({
 
   // Initialize local media
   const startMedia = useCallback(async () => {
+    console.log('[CallRoom] startMedia called');
+    console.log('[CallRoom] navigator.mediaDevices available:', !!navigator.mediaDevices);
+    console.log('[CallRoom] getUserMedia available:', !!navigator.mediaDevices?.getUserMedia);
+
+    // Check if running in secure context (required for getUserMedia)
+    console.log('[CallRoom] isSecureContext:', window.isSecureContext);
+    console.log('[CallRoom] location.protocol:', window.location.protocol);
+
     try {
+      // First enumerate devices to check what's available
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoInputs = devices.filter(d => d.kind === 'videoinput');
+      const audioInputs = devices.filter(d => d.kind === 'audioinput');
+      console.log('[CallRoom] Available video devices:', videoInputs.length, videoInputs.map(d => d.label || d.deviceId));
+      console.log('[CallRoom] Available audio devices:', audioInputs.length, audioInputs.map(d => d.label || d.deviceId));
+
+      console.log('[CallRoom] Requesting getUserMedia({ video: true, audio: true })');
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true
       });
+
+      console.log('[CallRoom] getUserMedia SUCCESS');
+      console.log('[CallRoom] Stream id:', stream.id);
+      console.log('[CallRoom] Stream active:', stream.active);
+      console.log('[CallRoom] Video tracks:', stream.getVideoTracks().map(t => ({ id: t.id, label: t.label, enabled: t.enabled, readyState: t.readyState, muted: t.muted })));
+      console.log('[CallRoom] Audio tracks:', stream.getAudioTracks().map(t => ({ id: t.id, label: t.label, enabled: t.enabled, readyState: t.readyState, muted: t.muted })));
+
       localStreamRef.current = stream;
       setLocalStream(stream);
       setCallActive(true);
+      console.log('[CallRoom] State updated: localStream set, callActive=true');
     } catch (err) {
-      console.error('Failed to access media devices:', err);
+      console.error('[CallRoom] getUserMedia FAILED (video+audio):', err);
+      console.error('[CallRoom] Error name:', (err as Error).name);
+      console.error('[CallRoom] Error message:', (err as Error).message);
       try {
+        console.log('[CallRoom] Falling back to audio-only...');
         const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('[CallRoom] Audio-only SUCCESS, tracks:', audioStream.getAudioTracks().length);
         localStreamRef.current = audioStream;
         setLocalStream(audioStream);
         setIsCameraOff(true);
         setCallActive(true);
-      } catch {
-        console.error('Failed to access any media devices');
+      } catch (err2) {
+        console.error('[CallRoom] Audio-only also FAILED:', err2);
+        console.error('[CallRoom] Error name:', (err2 as Error).name);
+        console.error('[CallRoom] Error message:', (err2 as Error).message);
       }
     }
   }, []);
@@ -914,7 +960,7 @@ export function CallRoom({
   }, [roomCode]);
 
   return (
-    <div className="h-screen flex flex-col bg-[#0F1F1D]">
+    <div className="h-full flex flex-col bg-[#0F1F1D]">
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-2 bg-[#0F1F1D] border-b border-white/10">
         <div className="flex items-center gap-3">
@@ -1061,6 +1107,7 @@ export function CallRoom({
                 transcriptCount={transcripts.length}
                 brandAuditMode={!!brandAuditId}
                 auditNextQuestion={auditNextQuestion}
+                templatePhases={templatePhases}
               />
             )}
             {activePanel === 'transcript' && (
@@ -1099,6 +1146,7 @@ export function CallRoom({
                     transcriptCount={transcripts.length}
                     brandAuditMode={!!brandAuditId}
                     auditNextQuestion={auditNextQuestion}
+                    templatePhases={templatePhases}
                   />
                 </div>
               </div>
