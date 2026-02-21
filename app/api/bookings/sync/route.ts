@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
           // Log activity on the linked application
           await supabase.from('application_activity').insert({
-            application_id: meeting.application_id,
+            application_id: meeting.application_id as string,
             action: 'meeting_cancelled',
             description: 'Meeting cancelled — Google Calendar event was removed',
             metadata: ({

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import type { Json } from '@/types/database';
 
 export async function POST(
   _request: NextRequest,
@@ -157,21 +158,21 @@ export async function POST(
     await serviceSupabase
       .from('pipeline_contacts')
       .update({
-        custom_fields: { ...customFields, activated_user_id: newUserId } as unknown as Record<string, unknown>,
+        custom_fields: { ...customFields, activated_user_id: newUserId } as unknown as Json,
       })
       .eq('id', contactId);
 
     // Log pipeline activity
     await serviceSupabase.from('pipeline_activity').insert({
-      pipeline_id: pipelineId,
       contact_id: contactId,
+      organization_id: pipeline.organization_id,
       event_type: 'contact_updated',
       metadata: {
         action: 'user_activated',
         user_id: newUserId,
-        organization_id: org.id,
+        pipeline_id: pipelineId,
         description: `User account activated by ${userData?.full_name}. Password reset email sent to ${contact.email}.`,
-      },
+      } as unknown as Json,
       performed_by: user.id,
     });
 

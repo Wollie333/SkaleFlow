@@ -16,7 +16,7 @@ export async function POST(
     // Verify pipeline is application type
     const { data: pipeline } = await serviceSupabase
       .from('pipelines')
-      .select('pipeline_type')
+      .select('pipeline_type, organization_id')
       .eq('id', pipelineId)
       .single();
 
@@ -97,11 +97,12 @@ export async function POST(
 
     // Log activity
     await serviceSupabase.from('pipeline_activity').insert({
-      pipeline_id: pipelineId,
       contact_id: contactId,
+      organization_id: pipeline.organization_id,
       event_type: 'contact_updated',
       metadata: {
         action: 'booking_created',
+        pipeline_id: pipelineId,
         booking_token: bookingToken,
       },
       performed_by: user.id,

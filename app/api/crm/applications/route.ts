@@ -232,7 +232,7 @@ export async function PATCH(request: Request) {
       await serviceSupabase.from('application_activity').insert({
         application_id: applicationId,
         action: 'user_activated',
-        description: `User account activated by ${userData.full_name}. Password reset email sent to ${currentApp.email}.`,
+        description: `User account activated by ${userData?.full_name || 'admin'}. Password reset email sent to ${currentApp.email}.`,
         performed_by: user.id,
         metadata: { user_id: newUserId, organization_id: org.id },
       });
@@ -343,7 +343,7 @@ export async function PATCH(request: Request) {
       await serviceSupabase.from('application_activity').insert({
         application_id: applicationId,
         action: 'booking_email_sent',
-        description: `Booking invite emailed to ${currentApp.email} by ${userData.full_name}`,
+        description: `Booking invite emailed to ${currentApp.email} by ${userData?.full_name || 'admin'}`,
         performed_by: user.id,
         metadata: { booking_token: pendingMeeting.booking_token },
       });
@@ -369,7 +369,7 @@ export async function PATCH(request: Request) {
         action: 'stage_changed',
         from_stage: currentApp.pipeline_stage,
         to_stage: pipeline_stage,
-        description: `Moved from ${fromLabel} to ${toLabel} by ${userData.full_name}`,
+        description: `Moved from ${fromLabel} to ${toLabel} by ${userData?.full_name || 'admin'}`,
         performed_by: user.id,
       });
 
@@ -448,7 +448,7 @@ export async function PATCH(request: Request) {
       await serviceSupabase.from('application_activity').insert({
         application_id: applicationId,
         action: 'note_updated',
-        description: `Admin notes updated by ${userData.full_name}`,
+        description: `Admin notes updated by ${userData?.full_name || 'admin'}`,
         performed_by: user.id,
       });
     }

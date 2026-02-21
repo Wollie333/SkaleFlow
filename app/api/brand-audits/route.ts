@@ -47,14 +47,14 @@ export async function GET(request: NextRequest) {
     `);
 
     if (!e1) {
-      audits = d1;
+      audits = d1 as unknown as Record<string, unknown>[] | null;
     } else {
       const { data: d2, error: e2 } = await buildQuery(`
         *,
         crm_contacts (id, first_name, last_name, email, company_id, crm_companies (id, name))
       `);
       if (e2) throw e2;
-      audits = d2;
+      audits = d2 as unknown as Record<string, unknown>[] | null;
     }
 
     // Normalize joins

@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server';
 import { parseBrandOutputs } from '@/lib/playbook/parse-brand-outputs';
 import { extractPlaybookTheme, type PlaybookTheme } from '@/lib/playbook/playbook-theme';
+import type { Json } from '@/types/database';
 
 export async function getFormTheme(organizationId: string): Promise<PlaybookTheme | null> {
   const supabase = createServiceClient();
@@ -12,18 +13,15 @@ export async function getFormTheme(organizationId: string): Promise<PlaybookThem
 
   if (!outputs || outputs.length === 0) return null;
 
-  const parsed = parseBrandOutputs(outputs as Array<{
-    id: string;
-    output_key: string;
-    output_value: unknown;
-    is_locked: boolean;
-    phase_id: string;
-  }>);
+  const parsed = parseBrandOutputs(outputs.map(o => ({
+    ...o,
+    output_value: o.output_value as Json,
+  })));
 
   const theme = extractPlaybookTheme(
-    parsed.colorPalette,
-    parsed.typography,
-    parsed.designSystemColors,
+    parsed.brand_color_palette,
+    parsed.brand_typography,
+    parsed.design_system_colors,
   );
 
   return theme;

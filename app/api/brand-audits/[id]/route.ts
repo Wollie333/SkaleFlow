@@ -55,7 +55,7 @@ export async function GET(
     const { data: membership } = await supabase
       .from('org_members')
       .select('role')
-      .eq('organization_id', audit.organization_id)
+      .eq('organization_id', audit.organization_id as string)
       .eq('user_id', user.id)
       .single();
     if (!membership) return NextResponse.json({ error: 'Access denied' }, { status: 403 });

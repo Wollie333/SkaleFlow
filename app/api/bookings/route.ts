@@ -89,28 +89,26 @@ export async function POST(request: Request) {
       .eq('id', meeting.id);
 
     // Move application to booking_made
-    const applicationId = application?.id || meeting.application_id;
+    const applicationId = (application?.id || meeting.application_id) as string;
     await supabase
       .from('applications')
       .update({ pipeline_stage: 'booking_made' })
       .eq('id', applicationId);
 
     // Log activities
-    await supabase.from('application_activity').insert([
-      {
-        application_id: applicationId,
-        action: 'booking_confirmed',
-        description: `Onboarding call booked for ${new Date(selectedSlot).toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`,
-        metadata: { meeting_id: meeting.id, meet_link: meetLink },
-      },
-      {
-        application_id: applicationId,
-        action: 'stage_changed',
-        from_stage: 'approved',
-        to_stage: 'booking_made',
-        description: 'Automatically moved to Booking Made after call was booked',
-      },
-    ]);
+    await supabase.from('application_activity').insert({
+      application_id: applicationId,
+      action: 'booking_confirmed',
+      description: `Onboarding call booked for ${new Date(selectedSlot).toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`,
+      metadata: { meeting_id: meeting.id, meet_link: meetLink },
+    });
+    await supabase.from('application_activity').insert({
+      application_id: applicationId,
+      action: 'stage_changed',
+      from_stage: 'approved',
+      to_stage: 'booking_made',
+      description: 'Automatically moved to Booking Made after call was booked',
+    });
 
     return NextResponse.json({ success: true, meetLink });
   } catch (error) {

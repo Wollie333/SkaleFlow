@@ -113,6 +113,7 @@ export async function POST(request: Request) {
               const { data: pipelineContact } = await serviceSupabase
                 .from('pipeline_contacts')
                 .insert({
+                  organization_id: adminMembership.organization_id,
                   pipeline_id: appPipeline.id,
                   stage_id: firstStage.id,
                   full_name: full_name.trim(),
@@ -135,12 +136,13 @@ export async function POST(request: Request) {
               if (pipelineContact) {
                 // Log activity
                 await serviceSupabase.from('pipeline_activity').insert({
-                  pipeline_id: appPipeline.id,
                   contact_id: pipelineContact.id,
+                  organization_id: adminMembership.organization_id,
                   event_type: 'contact_created',
                   metadata: {
                     source: 'public_application_form',
                     application_id: application.id,
+                    pipeline_id: appPipeline.id,
                   },
                 });
               }

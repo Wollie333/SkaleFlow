@@ -54,18 +54,22 @@ export async function POST(
 
     if (!audit) return NextResponse.json({ error: 'Audit not found' }, { status: 404 });
 
+    // Cast commonly used fields
+    const auditOrgId = audit.organization_id as string;
+    const auditStatus = audit.status as string;
+
     // Verify access
     const { data: membership } = await supabase
       .from('org_members')
       .select('role')
-      .eq('organization_id', audit.organization_id)
+      .eq('organization_id', auditOrgId)
       .eq('user_id', user.id)
       .single();
     if (!membership || !['owner', 'admin'].includes(membership.role)) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    if (!['complete', 'report_generated', 'delivered'].includes(audit.status)) {
+    if (!['complete', 'report_generated', 'delivered'].includes(auditStatus)) {
       return NextResponse.json({ error: 'Audit must be scored before generating report' }, { status: 400 });
     }
 
@@ -75,7 +79,7 @@ export async function POST(
 
     if (!isAdmin) {
       const { requireCredits } = await import('@/lib/ai/middleware');
-      const creditCheck = await requireCredits(audit.organization_id, 'brand_audit', AUDIT_CREDIT_COSTS.pdf_generation, AUDIT_CREDIT_COSTS.pdf_generation, user.id);
+      const creditCheck = await requireCredits(auditOrgId, 'brand_audit', AUDIT_CREDIT_COSTS.pdf_generation, AUDIT_CREDIT_COSTS.pdf_generation, user.id);
       if (creditCheck) return creditCheck;
     }
 
@@ -83,13 +87,13 @@ export async function POST(
     const { data: org } = await supabase
       .from('organizations')
       .select('name')
-      .eq('id', audit.organization_id)
+      .eq('id', auditOrgId)
       .single();
 
     const { data: brandOutputs } = await supabase
       .from('brand_outputs')
       .select('output_key, output_value')
-      .eq('organization_id', audit.organization_id)
+      .eq('organization_id', auditOrgId)
       .in('output_key', ['brand_color_palette', 'brand_logo_url']);
 
     const colorPalette = brandOutputs?.find((b) => b.output_key === 'brand_color_palette');
@@ -118,9 +122,9 @@ export async function POST(
       auditId: id,
       contactName: contact ? `${contact.first_name} ${contact.last_name}` : 'Unknown',
       companyName: contact?.crm_companies?.name || '',
-      overallScore: audit.overall_score || 0,
-      overallRating: (audit.overall_rating || 'red') as BrandAuditRating,
-      executiveSummary: audit.executive_summary || '',
+      overallScore: (audit.overall_score as number) || 0,
+      overallRating: ((audit.overall_rating as string) || 'red') as BrandAuditRating,
+      executiveSummary: (audit.executive_summary as string) || '',
       categories: CATEGORY_ORDER.map((cat) => {
         const s = scores.find((sc) => sc.category === cat);
         return {
@@ -192,7 +196,7 @@ export async function POST(
       .from('brand_audit_reports')
       .insert({
         audit_id: id,
-        organization_id: audit.organization_id,
+        organization_id: auditOrgId,
         version: nextVersion,
         storage_path: storagePath,
         file_size_bytes: pdfBuffer.length,
@@ -214,7 +218,7 @@ export async function POST(
     // Deduct credits
     if (!isAdmin) {
       const { deductCredits } = await import('@/lib/ai/server');
-      await deductCredits(audit.organization_id, user.id, AUDIT_CREDIT_COSTS.pdf_generation, null, 'Brand audit PDF generation');
+      await deductCredits(auditOrgId, user.id, AUDIT_CREDIT_COSTS.pdf_generation, null, 'Brand audit PDF generation');
     }
 
     return NextResponse.json({
