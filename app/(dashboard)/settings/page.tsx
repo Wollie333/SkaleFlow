@@ -718,11 +718,11 @@ export default function SettingsPage() {
                     <div className="flex items-center gap-3 mb-2">
                       <SparklesIcon className="w-5 h-5 text-teal" />
                       <span className="font-semibold text-charcoal">
-                        {subscription.tier.name}
+                        {subscription.tier?.name ?? 'Free'}
                       </span>
                     </div>
                     <p className="text-2xl font-bold text-charcoal">
-                      R{subscription.tier.price_monthly.toLocaleString()}
+                      R{(subscription.tier?.price_monthly ?? 0).toLocaleString()}
                       <span className="text-sm font-normal text-stone">/month</span>
                     </p>
                     {subscription.current_period_end && (

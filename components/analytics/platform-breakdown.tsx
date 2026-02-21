@@ -63,9 +63,9 @@ export function PlatformBreakdown({ data, isLoading }: PlatformBreakdownProps) {
             metricRows.push({ label: 'Reach', value: formatCompact(platform.totalReach) });
           }
           metricRows.push(
-            { label: 'Likes', value: platform.totalLikes.toLocaleString() },
-            { label: 'Comments', value: platform.totalComments.toLocaleString() },
-            { label: 'Shares', value: platform.totalShares.toLocaleString() },
+            { label: 'Likes', value: (platform.totalLikes ?? 0).toLocaleString() },
+            { label: 'Comments', value: (platform.totalComments ?? 0).toLocaleString() },
+            { label: 'Shares', value: (platform.totalShares ?? 0).toLocaleString() },
           );
           if (platform.totalSaves > 0) {
             metricRows.push({ label: 'Saves', value: formatCompact(platform.totalSaves) });

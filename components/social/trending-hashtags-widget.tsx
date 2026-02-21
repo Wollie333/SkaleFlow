@@ -147,7 +147,7 @@ export function TrendingHashtagsWidget({ organizationId }: TrendingHashtagsWidge
                         </div>
                       </div>
                       <p className="text-xs text-stone">
-                        {item.mentions.toLocaleString()} mentions
+                        {(item.mentions ?? 0).toLocaleString()} mentions
                       </p>
                     </div>
                   </div>

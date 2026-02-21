@@ -749,7 +749,7 @@ export function SocialPreviewTabs({ platforms, caption, hashtags, mediaUrls, tar
       {/* Char limit indicator */}
       <div className="text-xs text-stone text-center">
         {PLATFORM_LABELS[currentPlatform]}
-        {currentPlacement ? ` ${PLACEMENT_LABELS[currentPlacement] || ''}` : ''} limit: {PLATFORM_CHAR_LIMITS[currentPlatform].toLocaleString()} characters
+        {currentPlacement ? ` ${PLACEMENT_LABELS[currentPlacement] || ''}` : ''} limit: {(PLATFORM_CHAR_LIMITS[currentPlatform] ?? 0).toLocaleString()} characters
       </div>
     </div>
   );

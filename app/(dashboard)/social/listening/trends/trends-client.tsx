@@ -257,7 +257,7 @@ export function TrendsClient({ trends24h, trends7d, trends30d, organizationId }:
                       <div className="flex items-center gap-4 flex-shrink-0">
                         {/* Mention Count */}
                         <div className="text-right">
-                          <p className="text-lg font-bold text-charcoal">{trend.mention_count.toLocaleString()}</p>
+                          <p className="text-lg font-bold text-charcoal">{(trend.mention_count ?? 0).toLocaleString()}</p>
                           <p className="text-[10px] text-stone">mentions</p>
                         </div>
 
