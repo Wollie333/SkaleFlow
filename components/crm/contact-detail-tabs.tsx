@@ -1,13 +1,45 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { TagManager } from '@/components/crm/tag-manager';
 import { ActivityTimeline } from '@/components/crm/activity-timeline';
+import { CALL_TYPE_LABELS, CALL_STATUS_LABELS, CALL_STATUS_COLORS } from '@/lib/calls/helpers';
+import type { CallType, CallStatus } from '@/types/database';
 
 interface ContactDetailTabsProps {
   contactId: string;
   organizationId: string;
+}
+
+interface CallSummary {
+  id: string;
+  summary_text: string | null;
+  overall_score: number | null;
+  deal_stage_recommendation: string | null;
+}
+
+interface CallParticipant {
+  id: string;
+  guest_name: string | null;
+  user_id: string | null;
+  role: string;
+}
+
+interface Call {
+  id: string;
+  title: string;
+  call_type: string;
+  call_status: string;
+  room_code: string;
+  scheduled_start: string | null;
+  actual_start: string | null;
+  actual_end: string | null;
+  scheduled_duration_min: number | null;
+  created_at: string;
+  call_summaries: CallSummary[];
+  call_participants: CallParticipant[];
 }
 
 interface Deal {
@@ -41,12 +73,14 @@ export function ContactDetailTabs({
   contactId,
   organizationId,
 }: ContactDetailTabsProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'deals' | 'invoices' | 'activity'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'deals' | 'calls' | 'invoices' | 'activity'>('overview');
   const [contact, setContact] = useState<any>(null);
   const [deals, setDeals] = useState<Deal[]>([]);
+  const [calls, setCalls] = useState<Call[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loadingDeals, setLoadingDeals] = useState(false);
+  const [loadingCalls, setLoadingCalls] = useState(false);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
   const [loadingActivities, setLoadingActivities] = useState(false);
 
@@ -63,6 +97,8 @@ export function ContactDetailTabs({
   useEffect(() => {
     if (activeTab === 'deals') {
       fetchDeals();
+    } else if (activeTab === 'calls') {
+      fetchCalls();
     } else if (activeTab === 'invoices') {
       fetchInvoices();
     } else if (activeTab === 'activity') {
@@ -78,6 +114,20 @@ export function ContactDetailTabs({
       setContact(data.contact);
     } catch (error) {
       console.error('Error fetching contact:', error);
+    }
+  };
+
+  const fetchCalls = async () => {
+    setLoadingCalls(true);
+    try {
+      const response = await fetch(`/api/crm/contacts/${contactId}/calls`);
+      if (!response.ok) return;
+      const data = await response.json();
+      setCalls(data.calls || []);
+    } catch (error) {
+      console.error('Error fetching calls:', error);
+    } finally {
+      setLoadingCalls(false);
     }
   };
 
@@ -158,6 +208,7 @@ export function ContactDetailTabs({
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'deals', label: 'Deals' },
+    { id: 'calls', label: 'Calls' },
     { id: 'invoices', label: 'Invoices' },
     { id: 'activity', label: 'Activity' },
   ] as const;
@@ -274,6 +325,66 @@ export function ContactDetailTabs({
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'calls' && (
+          <div>
+            <h3 className="text-lg font-bold text-charcoal mb-4">Calls</h3>
+            {loadingCalls ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal"></div>
+              </div>
+            ) : calls.length === 0 ? (
+              <p className="text-stone text-center py-8">No calls yet</p>
+            ) : (
+              <div className="space-y-3">
+                {calls.map((call) => {
+                  const hasSummary = call.call_summaries && call.call_summaries.length > 0;
+                  const href = hasSummary
+                    ? `/calls/${call.room_code}/summary`
+                    : `/calls/${call.room_code}`;
+                  const displayDate = call.actual_end
+                    ? new Date(call.actual_end).toLocaleDateString()
+                    : call.scheduled_start
+                      ? new Date(call.scheduled_start).toLocaleString()
+                      : new Date(call.created_at).toLocaleDateString();
+                  // Calculate duration from actual times
+                  let durationText = '';
+                  if (call.actual_start && call.actual_end) {
+                    const mins = Math.round(
+                      (new Date(call.actual_end).getTime() - new Date(call.actual_start).getTime()) / 60_000
+                    );
+                    durationText = mins < 60 ? `${mins}min` : `${Math.floor(mins / 60)}h ${mins % 60}min`;
+                  } else if (call.scheduled_duration_min) {
+                    durationText = `${call.scheduled_duration_min}min (scheduled)`;
+                  }
+
+                  return (
+                    <Link
+                      key={call.id}
+                      href={href}
+                      className="block bg-cream rounded-xl border border-stone/10 hover:border-teal/20 transition-colors p-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium text-charcoal">{call.title}</h3>
+                          <div className="flex items-center gap-3 mt-1 text-sm text-stone">
+                            <span>{CALL_TYPE_LABELS[call.call_type as CallType] || call.call_type}</span>
+                            <span>{displayDate}</span>
+                            {durationText && <span>{durationText}</span>}
+                            {hasSummary && <span className="text-teal">Summary available</span>}
+                          </div>
+                        </div>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${CALL_STATUS_COLORS[call.call_status as CallStatus] || 'bg-gray-100 text-gray-700'}`}>
+                          {CALL_STATUS_LABELS[call.call_status as CallStatus] || call.call_status}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
