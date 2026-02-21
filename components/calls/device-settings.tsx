@@ -20,7 +20,6 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
   const [selectedAudio, setSelectedAudio] = useState<string>('');
   const [selectedVideo, setSelectedVideo] = useState<string>('');
   const [audioLevel, setAudioLevel] = useState(0);
-  const [previewStatus, setPreviewStatus] = useState<'loading' | 'active' | 'failed' | 'none'>('none');
   const previewRef = useRef<HTMLVideoElement>(null);
   const previewStreamRef = useRef<MediaStream | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -100,9 +99,6 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
     if (currentStream && previewRef.current) {
       previewRef.current.srcObject = currentStream;
       previewRef.current.play().catch(() => {});
-      setPreviewStatus(currentStream.getVideoTracks().length > 0 ? 'active' : 'none');
-    } else {
-      setPreviewStatus('none');
     }
 
     // Audio level meter from current stream
@@ -179,9 +175,6 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
                   </svg>
                   <p className="text-white/40 text-xs">Camera not active</p>
-                  {previewStatus === 'failed' && (
-                    <p className="text-red-400/60 text-xs mt-1">Could not start camera</p>
-                  )}
                 </div>
               </div>
             )}
