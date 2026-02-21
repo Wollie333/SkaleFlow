@@ -19,6 +19,9 @@ import type {
   AuthorityNotificationChannel,
   AuthorityDeclineReason,
   AuthorityConfirmedFormat,
+  PRDirectoryCategory,
+  PRDirectoryStatus,
+  PRDirectoryFlagReason,
   Tables,
 } from '@/types/database';
 
@@ -91,6 +94,11 @@ export interface AssetKeyQuote {
   attribution: string;
 }
 
+// PR Directory row types
+export type PRDirectoryContact = Tables<'pr_directory_contacts'>;
+export type PRDirectoryFlag = Tables<'pr_directory_flags'>;
+export type PRDirectorySave = Tables<'pr_directory_saves'>;
+
 // Re-export type aliases for convenience
 export type {
   AuthorityCategory,
@@ -113,4 +121,7 @@ export type {
   AuthorityNotificationChannel,
   AuthorityDeclineReason,
   AuthorityConfirmedFormat,
+  PRDirectoryCategory,
+  PRDirectoryStatus,
+  PRDirectoryFlagReason,
 };

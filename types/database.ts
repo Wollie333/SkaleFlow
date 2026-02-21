@@ -103,7 +103,12 @@ export type FormFieldType = 'text' | 'email' | 'phone' | 'number' | 'textarea' |
 export type FormFieldMapping = 'full_name' | 'email' | 'phone' | 'company' | string;
 export type AuthorityContactRole = 'journalist' | 'editor' | 'podcast_host' | 'event_organiser' | 'pr_agent' | 'other';
 export type AuthorityContactWarmth = 'cold' | 'warm' | 'hot' | 'active' | 'published';
-export type AuthorityContactSource = 'manual' | 'press_page_inquiry' | 'email_capture' | 'csv_import' | 'referral';
+export type AuthorityContactSource = 'manual' | 'press_page_inquiry' | 'email_capture' | 'csv_import' | 'referral' | 'directory_import';
+
+// PR Directory types
+export type PRDirectoryCategory = 'news' | 'magazine' | 'radio' | 'podcasts' | 'live_events' | 'tv' | 'digital_online' | 'blogs_influencers' | 'speaking_conferences' | 'awards';
+export type PRDirectoryStatus = 'active' | 'under_review' | 'removed';
+export type PRDirectoryFlagReason = 'incorrect_info' | 'duplicate' | 'spam' | 'no_longer_active' | 'inappropriate' | 'other';
 export type AuthorityCorrespondenceType = 'email' | 'phone_call' | 'meeting' | 'note' | 'other';
 export type AuthorityCorrespondenceDirection = 'inbound' | 'outbound';
 export type AuthorityAssetType = 'clipping_screenshot' | 'clipping_pdf' | 'clipping_url' | 'publication_logo' | 'headshot' | 'product_image' | 'brand_logo' | 'document' | 'attachment' | 'other';
@@ -7547,6 +7552,157 @@ export interface Database {
             referencedRelation: "offers";
             referencedColumns: ["id"];
           }
+        ];
+      };
+
+      pr_directory_contacts: {
+        Row: {
+          id: string;
+          full_name: string;
+          company: string | null;
+          job_title: string | null;
+          email: string | null;
+          phone: string | null;
+          photo_url: string | null;
+          description: string | null;
+          website_url: string | null;
+          social_links: Json | null;
+          category: PRDirectoryCategory;
+          industry_types: string[] | null;
+          country: string | null;
+          city: string | null;
+          province_state: string | null;
+          status: PRDirectoryStatus;
+          flag_count: number;
+          added_by: string | null;
+          added_by_org_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          full_name: string;
+          company?: string | null;
+          job_title?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          photo_url?: string | null;
+          description?: string | null;
+          website_url?: string | null;
+          social_links?: Json | null;
+          category: PRDirectoryCategory;
+          industry_types?: string[] | null;
+          country?: string | null;
+          city?: string | null;
+          province_state?: string | null;
+          status?: PRDirectoryStatus;
+          flag_count?: number;
+          added_by?: string | null;
+          added_by_org_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          full_name?: string;
+          company?: string | null;
+          job_title?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          photo_url?: string | null;
+          description?: string | null;
+          website_url?: string | null;
+          social_links?: Json | null;
+          category?: PRDirectoryCategory;
+          industry_types?: string[] | null;
+          country?: string | null;
+          city?: string | null;
+          province_state?: string | null;
+          status?: PRDirectoryStatus;
+          flag_count?: number;
+          added_by?: string | null;
+          added_by_org_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      pr_directory_flags: {
+        Row: {
+          id: string;
+          contact_id: string;
+          flagged_by: string;
+          reason: PRDirectoryFlagReason;
+          details: string | null;
+          resolved: boolean;
+          resolved_by: string | null;
+          resolved_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          contact_id: string;
+          flagged_by: string;
+          reason: PRDirectoryFlagReason;
+          details?: string | null;
+          resolved?: boolean;
+          resolved_by?: string | null;
+          resolved_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          contact_id?: string;
+          flagged_by?: string;
+          reason?: PRDirectoryFlagReason;
+          details?: string | null;
+          resolved?: boolean;
+          resolved_by?: string | null;
+          resolved_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pr_directory_flags_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "pr_directory_contacts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      pr_directory_saves: {
+        Row: {
+          id: string;
+          contact_id: string;
+          user_id: string;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          contact_id: string;
+          user_id: string;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          contact_id?: string;
+          user_id?: string;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pr_directory_saves_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "pr_directory_contacts";
+            referencedColumns: ["id"];
+          },
         ];
       };
     };
