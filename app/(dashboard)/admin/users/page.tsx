@@ -283,7 +283,7 @@ export default function AdminUsersPage() {
               placeholder="Organization name"
               autoFocus
               onKeyDown={(e) => e.key === 'Enter' && handleAssignOrg()}
-              className="w-full px-4 py-2.5 border border-cream rounded-lg text-charcoal placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal mb-4"
+              className="w-full px-4 py-2.5 border border-stone/10 rounded-lg text-charcoal placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal mb-4"
             />
             <div className="flex items-center justify-end gap-3">
               <button
@@ -342,7 +342,7 @@ export default function AdminUsersPage() {
           <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-cream">
+                <tr className="border-b border-stone/10">
                   <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Name</th>
                   <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Email</th>
                   <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Organization</th>
@@ -355,7 +355,7 @@ export default function AdminUsersPage() {
                   <tr
                     key={user.id}
                     onClick={() => router.push(`/admin/users/${user.id}`)}
-                    className="border-b border-cream/50 last:border-0 bg-amber-50/30 cursor-pointer hover:bg-amber-50/60 transition-colors"
+                    className="border-b border-stone/10 last:border-0 bg-amber-50/30 cursor-pointer hover:bg-amber-50/60 transition-colors"
                   >
                     <td className="px-6 py-4">
                       <span className="font-medium text-charcoal">{user.full_name}</span>
@@ -438,7 +438,7 @@ export default function AdminUsersPage() {
           <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-cream">
+                <tr className="border-b border-stone/10">
                   <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Name</th>
                   <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Email</th>
                   <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Organization</th>
@@ -454,7 +454,7 @@ export default function AdminUsersPage() {
                   <tr
                     key={user.id}
                     onClick={() => router.push(`/admin/users/${user.id}`)}
-                    className="border-b border-cream/50 last:border-0 cursor-pointer hover:bg-cream-warm/40 transition-colors"
+                    className="border-b border-stone/10 last:border-0 cursor-pointer hover:bg-cream-warm/40 transition-colors"
                   >
                     <td className="px-6 py-4">
                       <span className="font-medium text-charcoal">{user.full_name}</span>
@@ -484,7 +484,7 @@ export default function AdminUsersPage() {
                           value={getUserTier(user)?.id || ''}
                           onChange={(e) => handleTierChange(user.id, e.target.value)}
                           disabled={tierLoading === user.id}
-                          className="text-sm border border-cream rounded-lg px-2.5 py-1.5 bg-cream-warm text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal disabled:opacity-50 cursor-pointer"
+                          className="text-sm border border-stone/10 rounded-lg px-2.5 py-1.5 bg-cream-warm text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal disabled:opacity-50 cursor-pointer"
                         >
                           <option value="">No tier</option>
                           {tiers.map(tier => (

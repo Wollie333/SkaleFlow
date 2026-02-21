@@ -155,7 +155,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
     <div className="space-y-6">
       {/* Team Members */}
       <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
-        <div className="px-5 py-4 border-b border-cream">
+        <div className="px-5 py-4 border-b border-stone/10">
           <h3 className="font-serif text-lg font-bold text-charcoal">
             Team Members
             <span className="text-stone font-normal text-sm ml-2">({teamMembers.length})</span>
@@ -173,7 +173,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
               return (
                 <div
                   key={member.id}
-                  className="border border-cream rounded-lg p-4 hover:border-teal/20 transition-colors"
+                  className="border border-stone/10 rounded-lg p-4 hover:border-teal/20 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="min-w-0">
@@ -202,7 +202,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
                           placeholder="e.g. Accounting"
                           autoFocus
                           onKeyDown={(e) => e.key === 'Enter' && handleUpdateTeamRole(member.id)}
-                          className="text-xs border border-cream rounded px-2 py-1 flex-1 focus:outline-none focus:ring-1 focus:ring-teal/20"
+                          className="text-xs border border-stone/10 rounded px-2 py-1 flex-1 focus:outline-none focus:ring-1 focus:ring-teal/20"
                         />
                         <button
                           onClick={() => handleUpdateTeamRole(member.id)}
@@ -253,7 +253,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
 
       {/* Pending Invitations */}
       <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
-        <div className="px-5 py-4 border-b border-cream">
+        <div className="px-5 py-4 border-b border-stone/10">
           <h3 className="font-serif text-lg font-bold text-charcoal">
             Pending Invitations
             <span className="text-stone font-normal text-sm ml-2">({pendingInvitations.length})</span>
@@ -265,7 +265,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="border-b border-cream">
+              <tr className="border-b border-stone/10">
                 <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Email</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Email Status</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Invited</th>
@@ -279,7 +279,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
                 const isExpired = new Date(invite.expires_at) < new Date();
 
                 return (
-                  <tr key={invite.id} className="border-b border-cream/50 last:border-0">
+                  <tr key={invite.id} className="border-b border-stone/10 last:border-0">
                     <td className="px-5 py-3 text-sm text-charcoal">{invite.email}</td>
                     <td className="px-5 py-3">
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${esBadge.classes}`}>
@@ -344,7 +344,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
               onChange={(e) => setInviteEmail(e.target.value)}
               placeholder="Email address"
               onKeyDown={(e) => e.key === 'Enter' && handleSendInvite()}
-              className="w-full px-4 py-2.5 border border-cream rounded-lg text-charcoal placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
+              className="w-full px-4 py-2.5 border border-stone/10 rounded-lg text-charcoal placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
             />
           </div>
           <div className="w-full sm:w-40">
@@ -353,7 +353,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
               value={inviteTeamRole}
               onChange={(e) => setInviteTeamRole(e.target.value)}
               placeholder="Team role (optional)"
-              className="w-full px-4 py-2.5 border border-cream rounded-lg text-charcoal placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
+              className="w-full px-4 py-2.5 border border-stone/10 rounded-lg text-charcoal placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
             />
           </div>
           <Button

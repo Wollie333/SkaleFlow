@@ -309,7 +309,7 @@ export default function AdminCostsPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-cream">
+                  <tr className="border-b border-stone/10">
                     <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Model</th>
                     <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Provider</th>
                     <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Type</th>
@@ -318,7 +318,7 @@ export default function AdminCostsPage() {
                 </thead>
                 <tbody>
                   {adminModels.map((m) => (
-                    <tr key={m.id} className="border-b border-cream/50 last:border-0">
+                    <tr key={m.id} className="border-b border-stone/10 last:border-0">
                       <td className="px-6 py-4 font-medium text-charcoal">{m.name}</td>
                       <td className="px-6 py-4 text-stone capitalize">{m.provider}</td>
                       <td className="px-6 py-4">
@@ -348,7 +348,7 @@ export default function AdminCostsPage() {
                 </tbody>
               </table>
             </div>
-            <div className="px-6 py-3 bg-cream-warm/30 border-t border-cream">
+            <div className="px-6 py-3 bg-cream-warm/30 border-t border-stone/10">
               <p className="text-xs text-stone">Disabled models are hidden from all users across the platform.</p>
             </div>
           </div>
@@ -365,7 +365,7 @@ export default function AdminCostsPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-cream">
+                  <tr className="border-b border-stone/10">
                     <th
                       className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider cursor-pointer hover:text-charcoal"
                       onClick={() => handleOrgSort('orgName')}
@@ -403,7 +403,7 @@ export default function AdminCostsPage() {
                 </thead>
                 <tbody>
                   {sortedOrgs.map((org) => (
-                    <tr key={org.orgId} className="border-b border-cream/50 last:border-0">
+                    <tr key={org.orgId} className="border-b border-stone/10 last:border-0">
                       <td className="px-6 py-4 font-medium text-charcoal">{org.orgName}</td>
                       <td className="px-6 py-4">
                         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-teal/10 text-teal">
@@ -433,7 +433,7 @@ export default function AdminCostsPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-cream">
+                  <tr className="border-b border-stone/10">
                     <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Model</th>
                     <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Provider</th>
                     <th className="text-right px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Requests</th>
@@ -445,7 +445,7 @@ export default function AdminCostsPage() {
                 </thead>
                 <tbody>
                   {data.byModel.map((m) => (
-                    <tr key={m.model} className="border-b border-cream/50 last:border-0">
+                    <tr key={m.model} className="border-b border-stone/10 last:border-0">
                       <td className="px-6 py-4">
                         <span className="font-medium text-charcoal">{m.model}</span>
                         {m.isFree && (
@@ -479,7 +479,7 @@ export default function AdminCostsPage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-cream">
+                  <tr className="border-b border-stone/10">
                     <th className="text-left px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Feature</th>
                     <th className="text-right px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Requests</th>
                     <th className="text-right px-6 py-4 text-xs font-semibold text-stone uppercase tracking-wider">Credits</th>
@@ -488,7 +488,7 @@ export default function AdminCostsPage() {
                 </thead>
                 <tbody>
                   {data.byFeature.map((f) => (
-                    <tr key={f.feature} className="border-b border-cream/50 last:border-0">
+                    <tr key={f.feature} className="border-b border-stone/10 last:border-0">
                       <td className="px-6 py-4 font-medium text-charcoal">
                         {FEATURE_LABELS[f.feature] || f.feature}
                       </td>

@@ -296,7 +296,7 @@ export default function FormBuilderPage() {
         {/* Left: Config */}
         <div className="space-y-6">
           {/* Form Settings */}
-          <div className="bg-white rounded-xl border border-cream-warm p-6">
+          <div className="bg-white rounded-xl border border-stone/10 p-6">
             <h2 className="text-sm font-semibold text-charcoal mb-4 uppercase tracking-wide">Form Settings</h2>
             <div className="space-y-4">
               <div>
@@ -305,7 +305,7 @@ export default function FormBuilderPage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-cream-warm rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                  className="w-full px-3 py-2 text-sm border border-stone/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
                   placeholder="e.g. Contact Us"
                 />
               </div>
@@ -314,7 +314,7 @@ export default function FormBuilderPage() {
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-cream-warm rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                  className="w-full px-3 py-2 text-sm border border-stone/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
                   rows={2}
                   placeholder="Shown above the form fields"
                 />
@@ -326,7 +326,7 @@ export default function FormBuilderPage() {
                     type="text"
                     value={submitText}
                     onChange={(e) => setSubmitText(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-cream-warm rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                    className="w-full px-3 py-2 text-sm border border-stone/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
                   />
                 </div>
                 <div>
@@ -334,7 +334,7 @@ export default function FormBuilderPage() {
                   <select
                     value={stageId}
                     onChange={(e) => setStageId(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-cream-warm rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-white"
+                    className="w-full px-3 py-2 text-sm border border-stone/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-white"
                   >
                     {stages.map((s) => (
                       <option key={s.id} value={s.id}>{s.name}</option>
@@ -347,7 +347,7 @@ export default function FormBuilderPage() {
                 <textarea
                   value={successMessage}
                   onChange={(e) => setSuccessMessage(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-cream-warm rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                  className="w-full px-3 py-2 text-sm border border-stone/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
                   rows={2}
                   placeholder="Shown after successful submission"
                 />
@@ -356,7 +356,7 @@ export default function FormBuilderPage() {
           </div>
 
           {/* Fields */}
-          <div className="bg-white rounded-xl border border-cream-warm p-6">
+          <div className="bg-white rounded-xl border border-stone/10 p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-charcoal uppercase tracking-wide">Form Fields</h2>
               <button
@@ -372,7 +372,7 @@ export default function FormBuilderPage() {
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="border border-cream-warm rounded-lg p-4 bg-cream/30"
+                  className="border border-stone/10 rounded-lg p-4 bg-cream/30"
                 >
                   <div className="flex items-start gap-3">
                     {/* Reorder buttons */}
@@ -402,7 +402,7 @@ export default function FormBuilderPage() {
                             type="text"
                             value={field.label}
                             onChange={(e) => updateField(index, { label: e.target.value })}
-                            className="w-full px-2.5 py-1.5 text-sm border border-cream-warm rounded-md focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                            className="w-full px-2.5 py-1.5 text-sm border border-stone/10 rounded-md focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
                             placeholder="Field label"
                           />
                         </div>
@@ -414,7 +414,7 @@ export default function FormBuilderPage() {
                               const newType = e.target.value;
                               updateField(index, { field_type: newType, mapping: inferMapping(newType) });
                             }}
-                            className="w-full px-2.5 py-1.5 text-sm border border-cream-warm rounded-md focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-white"
+                            className="w-full px-2.5 py-1.5 text-sm border border-stone/10 rounded-md focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-white"
                           >
                             {FIELD_TYPES.map((t) => (
                               <option key={t.value} value={t.value}>{t.label}</option>
@@ -430,7 +430,7 @@ export default function FormBuilderPage() {
                             type="text"
                             value={field.placeholder || ''}
                             onChange={(e) => updateField(index, { placeholder: e.target.value || null })}
-                            className="w-full px-2.5 py-1.5 text-sm border border-cream-warm rounded-md focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                            className="w-full px-2.5 py-1.5 text-sm border border-stone/10 rounded-md focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
                             placeholder="Optional placeholder"
                           />
                         </div>
@@ -445,7 +445,7 @@ export default function FormBuilderPage() {
                                 updateField(index, { mapping: e.target.value });
                               }
                             }}
-                            className="w-full px-2.5 py-1.5 text-sm border border-cream-warm rounded-md focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-white"
+                            className="w-full px-2.5 py-1.5 text-sm border border-stone/10 rounded-md focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal bg-white"
                           >
                             {MAPPING_OPTIONS.map((m) => (
                               <option key={m.value} value={m.value}>{m.label}</option>
@@ -475,7 +475,7 @@ export default function FormBuilderPage() {
                                   addCustomMapping(index);
                                 }
                               }}
-                              className="flex-1 px-2.5 py-1.5 text-sm border border-cream-warm rounded-md focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                              className="flex-1 px-2.5 py-1.5 text-sm border border-stone/10 rounded-md focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
                               placeholder="e.g. budget, industry"
                             />
                           </div>
@@ -493,7 +493,7 @@ export default function FormBuilderPage() {
                                 options: e.target.value.split('\n').filter((o) => o.trim()),
                               })
                             }
-                            className="w-full px-2.5 py-1.5 text-sm border border-cream-warm rounded-md focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+                            className="w-full px-2.5 py-1.5 text-sm border border-stone/10 rounded-md focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
                             rows={3}
                             placeholder="Option A&#10;Option B&#10;Option C"
                           />
@@ -527,7 +527,7 @@ export default function FormBuilderPage() {
 
           {/* Share section */}
           {isPublished && (
-            <div className="bg-white rounded-xl border border-cream-warm p-6">
+            <div className="bg-white rounded-xl border border-stone/10 p-6">
               <h2 className="text-sm font-semibold text-charcoal mb-4 uppercase tracking-wide">Share</h2>
               <div className="space-y-3">
                 <div>
@@ -537,7 +537,7 @@ export default function FormBuilderPage() {
                       type="text"
                       readOnly
                       value={getFormUrl()}
-                      className="flex-1 px-3 py-2 text-sm bg-cream/50 border border-cream-warm rounded-lg text-stone"
+                      className="flex-1 px-3 py-2 text-sm bg-cream/50 border border-stone/10 rounded-lg text-stone"
                     />
                     <button
                       onClick={() => copyToClipboard(getFormUrl(), 'Link')}
@@ -555,7 +555,7 @@ export default function FormBuilderPage() {
                       type="text"
                       readOnly
                       value={getEmbedCode()}
-                      className="flex-1 px-3 py-2 text-sm bg-cream/50 border border-cream-warm rounded-lg text-stone font-mono text-xs"
+                      className="flex-1 px-3 py-2 text-sm bg-cream/50 border border-stone/10 rounded-lg text-stone font-mono text-xs"
                     />
                     <button
                       onClick={() => copyToClipboard(getEmbedCode(), 'Embed code')}
@@ -573,7 +573,7 @@ export default function FormBuilderPage() {
 
         {/* Right: Live Preview */}
         <div className="lg:sticky lg:top-6 lg:self-start">
-          <div className="bg-white rounded-xl border border-cream-warm overflow-hidden">
+          <div className="bg-white rounded-xl border border-stone/10 overflow-hidden">
             <div className="bg-cream-warm/50 px-4 py-2 text-xs font-medium text-stone uppercase tracking-wide">
               Live Preview
             </div>
@@ -621,13 +621,13 @@ function FormPreview({
             {field.field_type === 'textarea' ? (
               <textarea
                 placeholder={field.placeholder || ''}
-                className="w-full px-3 py-2 text-sm border border-cream-warm rounded-lg bg-cream/30"
+                className="w-full px-3 py-2 text-sm border border-stone/10 rounded-lg bg-cream/30"
                 rows={3}
                 disabled
               />
             ) : field.field_type === 'select' ? (
               <select
-                className="w-full px-3 py-2 text-sm border border-cream-warm rounded-lg bg-cream/30"
+                className="w-full px-3 py-2 text-sm border border-stone/10 rounded-lg bg-cream/30"
                 disabled
               >
                 <option>{field.placeholder || 'Select...'}</option>
@@ -644,7 +644,7 @@ function FormPreview({
               <input
                 type={field.field_type}
                 placeholder={field.placeholder || ''}
-                className="w-full px-3 py-2 text-sm border border-cream-warm rounded-lg bg-cream/30"
+                className="w-full px-3 py-2 text-sm border border-stone/10 rounded-lg bg-cream/30"
                 disabled
               />
             )}

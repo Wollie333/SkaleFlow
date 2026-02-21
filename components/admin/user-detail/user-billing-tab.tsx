@@ -154,7 +154,7 @@ export function UserBillingTab({
                 value={subscription.tier_id || ''}
                 onChange={(e) => onChangeTier(e.target.value)}
                 disabled={tierLoading}
-                className="text-sm border border-cream rounded-lg px-2.5 py-2 bg-cream-warm text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal disabled:opacity-50 cursor-pointer"
+                className="text-sm border border-stone/10 rounded-lg px-2.5 py-2 bg-cream-warm text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal disabled:opacity-50 cursor-pointer"
               >
                 <option value="">No tier</option>
                 {tiers.map(tier => (
@@ -164,7 +164,7 @@ export function UserBillingTab({
             </div>
 
             {/* Action buttons */}
-            <div className="flex items-center gap-2 pt-3 border-t border-cream">
+            <div className="flex items-center gap-2 pt-3 border-t border-stone/10">
               {(subStatus === 'active' || subStatus === 'trial') && (
                 <>
                   <Button
@@ -249,7 +249,7 @@ export function UserBillingTab({
 
       {/* Transaction History */}
       <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
-        <div className="px-5 py-4 border-b border-cream">
+        <div className="px-5 py-4 border-b border-stone/10">
           <h3 className="font-serif text-lg font-bold text-charcoal">Transaction History</h3>
         </div>
 
@@ -258,7 +258,7 @@ export function UserBillingTab({
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="border-b border-cream">
+              <tr className="border-b border-stone/10">
                 <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Type</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Description</th>
                 <th className="text-right px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Credits</th>
@@ -271,7 +271,7 @@ export function UserBillingTab({
                 const isPositive = tx.credits_amount > 0;
 
                 return (
-                  <tr key={tx.id} className="border-b border-cream/50 last:border-0">
+                  <tr key={tx.id} className="border-b border-stone/10 last:border-0">
                     <td className="px-5 py-3">
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${txBadge.classes}`}>
                         {txBadge.label}
@@ -294,7 +294,7 @@ export function UserBillingTab({
 
       {/* Invoices */}
       <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
-        <div className="px-5 py-4 border-b border-cream">
+        <div className="px-5 py-4 border-b border-stone/10">
           <h3 className="font-serif text-lg font-bold text-charcoal">Invoices</h3>
         </div>
 
@@ -303,7 +303,7 @@ export function UserBillingTab({
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="border-b border-cream">
+              <tr className="border-b border-stone/10">
                 <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Invoice #</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Type</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Status</th>
@@ -317,7 +317,7 @@ export function UserBillingTab({
                 const invBadge = invoiceStatusBadge[invoice.status] || { label: invoice.status, classes: 'bg-stone/10 text-stone' };
 
                 return (
-                  <tr key={invoice.id} className="border-b border-cream/50 last:border-0">
+                  <tr key={invoice.id} className="border-b border-stone/10 last:border-0">
                     <td className="px-5 py-3 text-sm text-charcoal font-medium">{invoice.invoice_number}</td>
                     <td className="px-5 py-3 text-sm text-stone capitalize">{invoice.type.replace('_', ' ')}</td>
                     <td className="px-5 py-3">

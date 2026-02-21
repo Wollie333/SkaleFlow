@@ -166,7 +166,7 @@ export default function PipelineFormsPage() {
       )}
 
       {forms.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-cream-warm">
+        <div className="text-center py-16 bg-white rounded-xl border border-stone/10">
           <DocumentDuplicateIcon className="w-12 h-12 mx-auto text-stone/40 mb-4" />
           <h3 className="text-lg font-semibold text-charcoal mb-2">No forms yet</h3>
           <p className="text-stone mb-6">Create a form to start collecting submissions into this pipeline.</p>
@@ -184,7 +184,7 @@ export default function PipelineFormsPage() {
           {forms.map((form) => (
             <div
               key={form.id}
-              className="bg-white rounded-xl border border-cream-warm p-6 hover:border-teal/30 transition-colors"
+              className="bg-white rounded-xl border border-stone/10 p-6 hover:border-teal/30 transition-colors"
             >
               <div className="flex items-start justify-between mb-3">
                 <div>

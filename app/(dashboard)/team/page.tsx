@@ -371,7 +371,7 @@ export default function MyTeamPage() {
                     onChange={(e) => setInviteEmail(e.target.value)}
                     placeholder="colleague@company.com"
                     required
-                    className="w-full px-3 py-2 border border-cream rounded-lg text-charcoal placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
+                    className="w-full px-3 py-2 border border-stone/10 rounded-lg text-charcoal placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
                   />
                 </div>
                 <div className="w-36">
@@ -379,7 +379,7 @@ export default function MyTeamPage() {
                   <select
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value as OrgMemberRole)}
-                    className="w-full px-3 py-2 border border-cream rounded-lg text-charcoal bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
+                    className="w-full px-3 py-2 border border-stone/10 rounded-lg text-charcoal bg-cream-warm focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal text-sm"
                   >
                     <option value="member">Member</option>
                     <option value="viewer">Viewer</option>

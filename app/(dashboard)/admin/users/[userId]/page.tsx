@@ -346,7 +346,7 @@ export default function AdminUserDetailPage() {
               placeholder="Organization name"
               autoFocus
               onKeyDown={(e) => e.key === 'Enter' && handleAssignOrg()}
-              className="w-full px-4 py-2.5 border border-cream rounded-lg text-charcoal placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal mb-4"
+              className="w-full px-4 py-2.5 border border-stone/10 rounded-lg text-charcoal placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal mb-4"
             />
             <div className="flex items-center justify-end gap-3">
               <button
@@ -403,7 +403,7 @@ export default function AdminUserDetailPage() {
                 value={currentTierId}
                 onChange={(e) => handleTierChange(e.target.value)}
                 disabled={tierLoading}
-                className="text-sm border border-cream rounded-lg px-2.5 py-2 bg-cream-warm text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal disabled:opacity-50 cursor-pointer"
+                className="text-sm border border-stone/10 rounded-lg px-2.5 py-2 bg-cream-warm text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal disabled:opacity-50 cursor-pointer"
               >
                 <option value="">No tier</option>
                 {tiers.map(tier => (

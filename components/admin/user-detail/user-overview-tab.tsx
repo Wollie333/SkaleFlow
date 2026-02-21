@@ -159,7 +159,7 @@ export function UserOverviewTab({
 
       {/* Recent Content */}
       <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
-        <div className="px-5 py-4 border-b border-cream">
+        <div className="px-5 py-4 border-b border-stone/10">
           <h3 className="font-serif text-lg font-bold text-charcoal">Recent Content</h3>
         </div>
         {recentContent.length === 0 ? (
@@ -167,7 +167,7 @@ export function UserOverviewTab({
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="border-b border-cream">
+              <tr className="border-b border-stone/10">
                 <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Title</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Platform</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Status</th>
@@ -176,7 +176,7 @@ export function UserOverviewTab({
             </thead>
             <tbody>
               {recentContent.slice(0, 5).map((item) => (
-                <tr key={item.id} className="border-b border-cream/50 last:border-0">
+                <tr key={item.id} className="border-b border-stone/10 last:border-0">
                   <td className="px-5 py-3 text-sm text-charcoal font-medium truncate max-w-[200px]">
                     {item.title || 'Untitled'}
                   </td>

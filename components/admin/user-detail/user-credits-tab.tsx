@@ -89,7 +89,7 @@ export function UserCreditsTab({
 
       {/* Feature Breakdown */}
       <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
-        <div className="px-5 py-4 border-b border-cream">
+        <div className="px-5 py-4 border-b border-stone/10">
           <h3 className="font-serif text-lg font-bold text-charcoal">Usage by Feature</h3>
         </div>
         {creditsByFeature.length === 0 ? (
@@ -97,7 +97,7 @@ export function UserCreditsTab({
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="border-b border-cream">
+              <tr className="border-b border-stone/10">
                 <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Feature</th>
                 <th className="text-right px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Credits</th>
                 <th className="text-right px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Requests</th>
@@ -105,7 +105,7 @@ export function UserCreditsTab({
             </thead>
             <tbody>
               {creditsByFeature.map((f) => (
-                <tr key={f.feature} className="border-b border-cream/50 last:border-0">
+                <tr key={f.feature} className="border-b border-stone/10 last:border-0">
                   <td className="px-5 py-3 text-sm font-medium text-charcoal">{f.label}</td>
                   <td className="px-5 py-3 text-sm text-stone text-right">{f.credits_charged.toLocaleString('en-ZA')}</td>
                   <td className="px-5 py-3 text-sm text-stone text-right">{f.request_count.toLocaleString('en-ZA')}</td>
@@ -118,7 +118,7 @@ export function UserCreditsTab({
 
       {/* Recent Transactions */}
       <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
-        <div className="px-5 py-4 border-b border-cream">
+        <div className="px-5 py-4 border-b border-stone/10">
           <h3 className="font-serif text-lg font-bold text-charcoal">Recent Transactions</h3>
         </div>
         {transactions.length === 0 ? (
@@ -126,7 +126,7 @@ export function UserCreditsTab({
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="border-b border-cream">
+              <tr className="border-b border-stone/10">
                 <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Type</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Description</th>
                 <th className="text-right px-5 py-3 text-xs font-semibold text-stone uppercase tracking-wider">Credits</th>
@@ -137,7 +137,7 @@ export function UserCreditsTab({
               {transactions.map((tx) => {
                 const typeInfo = TX_TYPE_LABELS[tx.transaction_type] || { label: tx.transaction_type, color: 'bg-stone/10 text-stone' };
                 return (
-                  <tr key={tx.id} className="border-b border-cream/50 last:border-0">
+                  <tr key={tx.id} className="border-b border-stone/10 last:border-0">
                     <td className="px-5 py-3">
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${typeInfo.color}`}>
                         {typeInfo.label}

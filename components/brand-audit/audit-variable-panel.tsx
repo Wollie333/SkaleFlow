@@ -248,7 +248,7 @@ export function AuditVariablePanel({
                     ? 'border border-dashed border-stone/20 bg-cream-warm'
                     : locked
                       ? 'bg-teal/5 border border-teal/15'
-                      : 'bg-cream-warm border border-cream-warm'
+                      : 'bg-cream-warm border border-stone/10'
               )}
             >
               {/* Header */}

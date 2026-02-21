@@ -89,7 +89,7 @@ export function VariablePreviewCard({
               ? 'border border-dashed border-stone/20 bg-cream-warm'
               : isLocked
                 ? 'bg-teal/5 border border-teal/15'
-                : 'bg-cream-warm border border-cream-warm'
+                : 'bg-cream-warm border border-stone/10'
       )}
     >
       {/* Header with name + action icons */}

@@ -228,7 +228,7 @@ export function AiBetaTab() {
                       }
                     }}
                     placeholder={provider.placeholder}
-                    className="flex-1 px-3 py-2 border border-cream rounded-lg text-sm text-charcoal placeholder:text-stone/40 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal font-mono"
+                    className="flex-1 px-3 py-2 border border-stone/10 rounded-lg text-sm text-charcoal placeholder:text-stone/40 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal font-mono"
                   />
                   <Button
                     onClick={() => handleSave(provider.id)}

@@ -28,6 +28,13 @@
     --color-charcoal: 240 236 228;
     --color-stone: 168 163 155;
   }
+
+  /* Override Tailwind default border-color (#e5e7eb) in dark mode */
+  html.dark *,
+  html.dark ::before,
+  html.dark ::after {
+    border-color: rgb(30 107 99 / 0.08);
+  }
 }
 
 @layer components {

@@ -124,7 +124,7 @@ export function UserProfileCard({
         </div>
 
         {/* Approve / Pause toggle */}
-        <div className="mt-4 pt-4 border-t border-cream">
+        <div className="mt-4 pt-4 border-t border-stone/10">
           {user.approved ? (
             <button
               onClick={onPause}
@@ -198,7 +198,7 @@ export function UserProfileCard({
               )}
 
               {/* Subscription Quick Actions */}
-              <div className="pt-3 mt-2 border-t border-cream flex flex-col gap-2">
+              <div className="pt-3 mt-2 border-t border-stone/10 flex flex-col gap-2">
                 {(organization.subscription.status === 'active' || organization.subscription.status === 'trial') && (
                   <div className="flex items-center gap-2">
                     {onPauseSubscription && (
@@ -278,7 +278,7 @@ export function UserProfileCard({
               <span className="text-stone">Top-up</span>
               <span className="text-charcoal font-medium">{organization.credits.topup_balance.toLocaleString('en-ZA')}</span>
             </div>
-            <div className="flex justify-between pt-2 border-t border-cream">
+            <div className="flex justify-between pt-2 border-t border-stone/10">
               <span className="text-charcoal font-semibold">Total</span>
               <span className="text-charcoal font-bold">{organization.credits.total_balance.toLocaleString('en-ZA')}</span>
             </div>
