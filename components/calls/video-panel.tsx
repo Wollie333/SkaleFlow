@@ -127,13 +127,25 @@ export function VideoPanel({ localStream, participants, localUserId, localPartic
 
           {localStream ? (
             <>
-              <p className="text-white/50 text-sm mb-4">Your camera and mic are ready</p>
-              <button
-                onClick={onJoinCall}
-                className="px-6 py-3 rounded-lg bg-[#1E6B63] hover:bg-[#1E6B63]/80 text-white font-medium text-base transition-colors"
-              >
-                Join Call
-              </button>
+              <p className="text-white/50 text-sm mb-4">
+                {isCameraOff ? 'Microphone is ready (camera could not start)' : 'Your camera and mic are ready'}
+              </p>
+              <div className="flex flex-col gap-2 items-center">
+                <button
+                  onClick={onJoinCall}
+                  className="px-6 py-3 rounded-lg bg-[#1E6B63] hover:bg-[#1E6B63]/80 text-white font-medium text-base transition-colors"
+                >
+                  {isCameraOff ? 'Join with Audio Only' : 'Join Call'}
+                </button>
+                {isCameraOff && (
+                  <button
+                    onClick={onRetryMedia}
+                    className="text-white/40 hover:text-white/60 text-xs underline transition-colors"
+                  >
+                    Retry camera
+                  </button>
+                )}
+              </div>
             </>
           ) : mediaError ? (
             <button

@@ -617,37 +617,63 @@ export function CallRoom({
       setLocalStream(null);
     }
 
-    // Wait briefly for any previous camera release to complete
-    await new Promise(r => setTimeout(r, 500));
+    // Wait for any previous camera release to complete
+    await new Promise(r => setTimeout(r, 800));
 
-    // Strategy: get audio first (fast), then add video separately.
-    // This avoids simultaneous audio+video requests that cause
-    // "Timeout starting video source" on some Windows camera drivers.
     let audioTrack: MediaStreamTrack | null = null;
     let videoTrack: MediaStreamTrack | null = null;
 
-    // Step 1: Audio (reliable, fast)
+    // Step 1: Audio first (fast, grants permission for enumeration)
     try {
       const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioTrack = audioStream.getAudioTracks()[0] || null;
+      console.log('[CallRoom] Audio acquired:', audioTrack?.label);
     } catch (err) {
-      console.error('[CallRoom] Audio acquisition failed:', (err as Error).name, (err as Error).message);
+      console.error('[CallRoom] Audio failed:', (err as Error).name);
     }
 
-    // Step 2: Video — try up to 2 times with a delay between attempts
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        if (attempt > 1) {
-          console.log('[CallRoom] Video retry attempt', attempt);
-          await new Promise(r => setTimeout(r, 1000));
-        }
-        const videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
-        videoTrack = videoStream.getVideoTracks()[0] || null;
-        break; // Success — exit retry loop
-      } catch (err) {
-        console.error(`[CallRoom] Video attempt ${attempt} failed:`, (err as Error).name, (err as Error).message);
-        if (attempt === 2 && (err as Error).name === 'AbortError') {
-          console.warn('[CallRoom] Camera timed out. Check if another app is using it.');
+    // Step 2: Enumerate to get specific camera device ID
+    let cameraDeviceId: string | null = null;
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const cameras = devices.filter(d => d.kind === 'videoinput');
+      console.log('[CallRoom] Cameras found:', cameras.map(c => `${c.label} [${c.deviceId.slice(0, 8)}]`));
+      if (cameras.length > 0) {
+        cameraDeviceId = cameras[0].deviceId;
+      }
+    } catch {
+      // Ignore enumeration failure
+    }
+
+    // Step 3: Video — try multiple strategies
+    if (cameraDeviceId) {
+      const strategies: Array<{ label: string; constraint: MediaStreamConstraints }> = [
+        // Strategy A: explicit device ID + low resolution (most compatible)
+        {
+          label: 'deviceId+lowRes',
+          constraint: { video: { deviceId: { exact: cameraDeviceId }, width: 640, height: 480 } },
+        },
+        // Strategy B: explicit device ID only
+        {
+          label: 'deviceId',
+          constraint: { video: { deviceId: { exact: cameraDeviceId } } },
+        },
+        // Strategy C: bare minimum
+        {
+          label: 'bare',
+          constraint: { video: true },
+        },
+      ];
+
+      for (const { label, constraint } of strategies) {
+        try {
+          console.log(`[CallRoom] Trying video strategy: ${label}`);
+          const videoStream = await navigator.mediaDevices.getUserMedia(constraint);
+          videoTrack = videoStream.getVideoTracks()[0] || null;
+          console.log(`[CallRoom] Video acquired via ${label}:`, videoTrack?.label);
+          break;
+        } catch (err) {
+          console.warn(`[CallRoom] Video strategy ${label} failed:`, (err as Error).name, (err as Error).message);
         }
       }
     }
@@ -660,14 +686,26 @@ export function CallRoom({
       localStreamRef.current = combinedStream;
       setLocalStream(combinedStream);
       setIsCameraOff(!videoTrack);
+
+      if (!videoTrack) {
+        setMediaError(
+          'Microphone is working but camera could not start. ' +
+          'You can join with audio only, or try: ' +
+          '1) Close all other apps that might use the camera ' +
+          '2) Open Windows Settings → Privacy → Camera → enable "Let desktop apps access your camera" ' +
+          '3) Open the Windows Camera app to verify your camera works'
+        );
+      }
       return;
     }
 
     // Nothing worked
     setMediaError(
-      'Could not access camera or microphone. ' +
-      'Make sure no other app (Zoom, Teams, OBS) is using the camera, ' +
-      'and check that camera access is allowed in your browser settings.'
+      'Could not access camera or microphone. Try these steps:\n' +
+      '1) Windows Settings → Privacy → Camera → enable "Let desktop apps access your camera"\n' +
+      '2) Click the lock icon in your browser address bar → allow Camera and Microphone\n' +
+      '3) Close any other app that might be using the camera (Zoom, Teams, OBS)\n' +
+      '4) Open the Windows Camera app to check if your camera works at all'
     );
   }, []);
 

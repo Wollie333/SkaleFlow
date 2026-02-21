@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface DeviceSettingsProps {
   open: boolean;
@@ -20,28 +20,39 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
   const [selectedAudio, setSelectedAudio] = useState<string>('');
   const [selectedVideo, setSelectedVideo] = useState<string>('');
   const [audioLevel, setAudioLevel] = useState(0);
+  const [previewStatus, setPreviewStatus] = useState<'loading' | 'active' | 'failed' | 'none'>('none');
   const previewRef = useRef<HTMLVideoElement>(null);
+  const previewStreamRef = useRef<MediaStream | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
   const animFrameRef = useRef<number | null>(null);
 
-  // Enumerate devices
+  // Cleanup preview stream
+  const stopPreview = useCallback(() => {
+    if (previewStreamRef.current) {
+      previewStreamRef.current.getTracks().forEach(t => t.stop());
+      previewStreamRef.current = null;
+    }
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    if (audioCtxRef.current) {
+      audioCtxRef.current.close().catch(() => {});
+      audioCtxRef.current = null;
+    }
+    setAudioLevel(0);
+  }, []);
+
+  // Enumerate devices on open
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      stopPreview();
+      return;
+    }
 
     async function loadDevices() {
       try {
-        // Only request a throwaway stream if we don't already have one.
-        // IMPORTANT: Never acquire + immediately stop a stream — it causes
-        // "Timeout starting video source" on Windows when the next getUserMedia fires.
-        if (!currentStream) {
-          try {
-            const tempStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            tempStream.getTracks().forEach(t => t.stop());
-          } catch {
-            // Permission denied — still try to enumerate
-          }
-        }
-
         const devices = await navigator.mediaDevices.enumerateDevices();
         const audio = devices
           .filter(d => d.kind === 'audioinput')
@@ -53,17 +64,21 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
         setAudioDevices(audio);
         setVideoDevices(video);
 
-        // Set current selection from active stream
+        // Set current selection from active stream tracks
         if (currentStream) {
           const audioTrack = currentStream.getAudioTracks()[0];
           const videoTrack = currentStream.getVideoTracks()[0];
           if (audioTrack) {
             const settings = audioTrack.getSettings();
             setSelectedAudio(settings.deviceId || audio[0]?.deviceId || '');
+          } else if (audio.length > 0) {
+            setSelectedAudio(audio[0].deviceId);
           }
           if (videoTrack) {
             const settings = videoTrack.getSettings();
             setSelectedVideo(settings.deviceId || video[0]?.deviceId || '');
+          } else if (video.length > 0) {
+            setSelectedVideo(video[0].deviceId);
           }
         } else {
           if (audio.length > 0) setSelectedAudio(audio[0].deviceId);
@@ -75,54 +90,63 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
     }
 
     loadDevices();
-  }, [open, currentStream]);
+  }, [open, currentStream, stopPreview]);
 
-  // Audio level meter
+  // Show preview from the CURRENT stream (don't acquire a new one)
   useEffect(() => {
-    if (!open || !currentStream) return;
+    if (!open) return;
 
-    try {
-      const audioCtx = new AudioContext();
-      const source = audioCtx.createMediaStreamSource(currentStream);
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
-      analyserRef.current = analyser;
-
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-      function tick() {
-        analyser.getByteFrequencyData(dataArray);
-        const avg = dataArray.reduce((sum, val) => sum + val, 0) / dataArray.length;
-        setAudioLevel(Math.min(avg / 128, 1));
-        animFrameRef.current = requestAnimationFrame(tick);
-      }
-      tick();
-
-      return () => {
-        if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-        audioCtx.close();
-      };
-    } catch {
-      // AudioContext not available
+    // Use the existing current stream for preview — no new getUserMedia call
+    if (currentStream && previewRef.current) {
+      previewRef.current.srcObject = currentStream;
+      previewRef.current.play().catch(() => {});
+      setPreviewStatus(currentStream.getVideoTracks().length > 0 ? 'active' : 'none');
+    } else {
+      setPreviewStatus('none');
     }
-  }, [open, currentStream]);
 
-  // Camera preview
-  useEffect(() => {
-    if (!open || !previewRef.current || !currentStream) return;
-    previewRef.current.srcObject = currentStream;
+    // Audio level meter from current stream
+    if (currentStream && currentStream.getAudioTracks().length > 0) {
+      try {
+        const audioCtx = new AudioContext();
+        audioCtxRef.current = audioCtx;
+        const source = audioCtx.createMediaStreamSource(currentStream);
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        analyserRef.current = analyser;
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        function tick() {
+          analyser.getByteFrequencyData(dataArray);
+          const avg = dataArray.reduce((sum, val) => sum + val, 0) / dataArray.length;
+          setAudioLevel(Math.min(avg / 128, 1));
+          animFrameRef.current = requestAnimationFrame(tick);
+        }
+        tick();
+      } catch {
+        // AudioContext not available
+      }
+    }
+
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close().catch(() => {});
+        audioCtxRef.current = null;
+      }
+    };
   }, [open, currentStream]);
 
   function handleApply() {
-    onDeviceChange(
-      selectedAudio || null,
-      selectedVideo || null,
-    );
+    onDeviceChange(selectedAudio || null, selectedVideo || null);
     onClose();
   }
 
   if (!open) return null;
+
+  const hasVideo = currentStream ? currentStream.getVideoTracks().length > 0 : false;
+  const hasAudio = currentStream ? currentStream.getAudioTracks().length > 0 : false;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -148,16 +172,28 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
               muted
               className="w-full h-full object-cover"
             />
-            {!currentStream && (
+            {!hasVideo && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <p className="text-white/40 text-sm">No camera active</p>
+                <div className="text-center">
+                  <svg className="w-8 h-8 text-white/20 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+                  </svg>
+                  <p className="text-white/40 text-xs">Camera not active</p>
+                  {previewStatus === 'failed' && (
+                    <p className="text-red-400/60 text-xs mt-1">Could not start camera</p>
+                  )}
+                </div>
               </div>
             )}
           </div>
 
           {/* Camera selector */}
           <div className="mb-4">
-            <label className="block text-white/60 text-xs font-medium mb-1.5">Camera</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-white/60 text-xs font-medium">Camera</label>
+              {hasVideo && <span className="text-emerald-400 text-[10px]">Active</span>}
+              {!hasVideo && videoDevices.length > 0 && <span className="text-amber-400 text-[10px]">Not started</span>}
+            </div>
             <select
               value={selectedVideo}
               onChange={(e) => setSelectedVideo(e.target.value)}
@@ -172,7 +208,11 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
 
           {/* Microphone selector */}
           <div className="mb-4">
-            <label className="block text-white/60 text-xs font-medium mb-1.5">Microphone</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-white/60 text-xs font-medium">Microphone</label>
+              {hasAudio && <span className="text-emerald-400 text-[10px]">Active</span>}
+              {!hasAudio && audioDevices.length > 0 && <span className="text-amber-400 text-[10px]">Not started</span>}
+            </div>
             <select
               value={selectedAudio}
               onChange={(e) => setSelectedAudio(e.target.value)}
@@ -194,7 +234,11 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
                 style={{ width: `${audioLevel * 100}%` }}
               />
             </div>
-            <p className="text-white/30 text-xs mt-1">Speak to test your microphone</p>
+            {hasAudio ? (
+              <p className="text-white/30 text-xs mt-1">Speak to test your microphone</p>
+            ) : (
+              <p className="text-amber-400/60 text-xs mt-1">Microphone not active — click Apply to start</p>
+            )}
           </div>
 
           {/* Actions */}
