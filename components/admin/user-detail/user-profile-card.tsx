@@ -214,7 +214,7 @@ export function UserProfileCard({
                 <div className="flex justify-between">
                   <span className="text-stone">Monthly Credits</span>
                   <span className="text-charcoal font-medium">
-                    {organization.subscription.tier.monthly_credits.toLocaleString('en-ZA')}
+                    {(organization.subscription.tier.monthly_credits ?? 0).toLocaleString('en-ZA')}
                   </span>
                 </div>
               )}
@@ -294,15 +294,15 @@ export function UserProfileCard({
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-stone">Monthly</span>
-              <span className="text-charcoal font-medium">{organization.credits.monthly_balance.toLocaleString('en-ZA')}</span>
+              <span className="text-charcoal font-medium">{(organization.credits.monthly_balance ?? 0).toLocaleString('en-ZA')}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-stone">Top-up</span>
-              <span className="text-charcoal font-medium">{organization.credits.topup_balance.toLocaleString('en-ZA')}</span>
+              <span className="text-charcoal font-medium">{(organization.credits.topup_balance ?? 0).toLocaleString('en-ZA')}</span>
             </div>
             <div className="flex justify-between pt-2 border-t border-stone/10">
               <span className="text-charcoal font-semibold">Total</span>
-              <span className="text-charcoal font-bold">{organization.credits.total_balance.toLocaleString('en-ZA')}</span>
+              <span className="text-charcoal font-bold">{(organization.credits.total_balance ?? 0).toLocaleString('en-ZA')}</span>
             </div>
             {organization.credits.period_end && (
               <p className="text-xs text-stone mt-1">
