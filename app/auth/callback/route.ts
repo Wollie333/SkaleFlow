@@ -107,6 +107,11 @@ export async function GET(request: Request) {
         }
       }
 
+      // After invite signup verification, redirect to login
+      if (inviteToken) {
+        return NextResponse.redirect(`${origin}/login?verified=true`);
+      }
+
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

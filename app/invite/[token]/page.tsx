@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button, Input } from '@/components/ui';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 export default function InvitePage() {
   const { token } = useParams<{ token: string }>();
@@ -14,6 +15,8 @@ export default function InvitePage() {
     organization_name: string;
   } | null>(null);
   const [fullName, setFullName] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,17 +65,23 @@ export default function InvitePage() {
     fetchInvitation();
   }, [token]);
 
-  const handleAccept = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!invitation || !token) return;
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
 
     setIsSubmitting(true);
     setError(null);
 
     try {
       const supabase = createClient();
-      const { error: authError } = await supabase.auth.signInWithOtp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email: invitation.email,
+        password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback?invite=${token}`,
           data: {
@@ -82,8 +91,8 @@ export default function InvitePage() {
         },
       });
 
-      if (authError) {
-        setError(authError.message);
+      if (signUpError) {
+        setError(signUpError.message);
         setIsSubmitting(false);
         return;
       }
@@ -103,7 +112,7 @@ export default function InvitePage() {
     );
   }
 
-  if (error) {
+  if (error && !invitation) {
     return (
       <div className="min-h-screen bg-dark flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
@@ -129,11 +138,11 @@ export default function InvitePage() {
             </svg>
           </div>
           <h1 className="font-serif text-3xl font-bold text-cream mb-4">
-            Check your email
+            Verify your email
           </h1>
           <p className="text-stone">
-            We&apos;ve sent a login link to <span className="text-cream">{invitation?.email}</span>.
-            Click the link to complete your account setup.
+            We&apos;ve sent a verification link to <span className="text-cream">{invitation?.email}</span>.
+            Click the link in your email to activate your account, then log in.
           </p>
         </div>
       </div>
@@ -161,7 +170,13 @@ export default function InvitePage() {
             </p>
           </div>
 
-          <form onSubmit={handleAccept} className="space-y-6">
+          {error && (
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSignUp} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-cream/70 mb-2">Email</label>
               <Input
@@ -184,15 +199,48 @@ export default function InvitePage() {
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-cream/70 mb-2">Password</label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Create a password (min 6 characters)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="bg-dark border-teal/20 text-cream placeholder:text-stone/50 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone/50 hover:text-cream/70"
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="w-5 h-5" />
+                  ) : (
+                    <EyeIcon className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
             <Button
               type="submit"
               className="w-full"
               size="lg"
               isLoading={isSubmitting}
             >
-              Accept Invitation
+              Create Account
             </Button>
           </form>
+
+          <p className="text-center text-sm text-stone mt-6">
+            Already have an account?{' '}
+            <a href="/login" className="text-teal font-medium hover:text-teal-light">
+              Log in
+            </a>
+          </p>
         </div>
       </div>
     </div>

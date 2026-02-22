@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
@@ -20,6 +20,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const verified = searchParams.get('verified') === 'true';
   const supabase = createClient();
 
   useEffect(() => {
@@ -151,6 +153,12 @@ export default function LoginPage() {
               </h2>
 
               <form onSubmit={handleLogin} className="space-y-5">
+                {verified && !error && (
+                  <div className="p-4 bg-teal/10 border border-teal/20 rounded-lg text-teal text-sm">
+                    Account verified! You can now log in.
+                  </div>
+                )}
+
                 {error && (
                   <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
                     {error}
