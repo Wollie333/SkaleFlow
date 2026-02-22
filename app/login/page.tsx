@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -12,6 +12,18 @@ const REMEMBER_KEY = 'skaleflow_remember_email';
 type FormMode = 'login' | 'forgot' | 'reset-sent';
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-dark flex items-center justify-center">
+        <div className="text-cream/50 text-sm">Loading...</div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginContent() {
   const [mode, setMode] = useState<FormMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
