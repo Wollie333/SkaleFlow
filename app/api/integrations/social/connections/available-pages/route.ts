@@ -147,7 +147,7 @@ async function fetchLinkedInOrganizations(accessToken: string): Promise<PageInfo
 
   const headers = {
     Authorization: `Bearer ${accessToken}`,
-    'LinkedIn-Version': '202501',
+    'LinkedIn-Version': '202601',
     'X-Restli-Protocol-Version': '2.0.0',
   };
 

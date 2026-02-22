@@ -387,9 +387,19 @@ async function fetchLinkedInAudienceInsights(
 ): Promise<AudienceInsight | null> {
   const orgId = tokens.platformPageId;
   if (!orgId || tokens.accountType !== 'page') {
-    // Personal profile connection — skip silently, org page connection will provide data
-    console.log('[audience-insights] Skipping LinkedIn profile connection (no org page)');
-    return null;
+    // Personal profiles can't access audience demographics — show helpful message
+    return {
+      platform: 'linkedin',
+      accountName: connection.platform_username || connection.platform_page_name || 'LinkedIn',
+      followers: null,
+      demographics: { age: [], gender: [] },
+      topCountries: [],
+      topCities: [],
+      onlineFollowers: null,
+      profileViews: null,
+      websiteClicks: null,
+      error: 'Audience demographics are only available for LinkedIn Company Pages. Connect a Company Page in Settings to see follower insights.',
+    };
   }
 
   let followers: number | null = null;
@@ -406,7 +416,7 @@ async function fetchLinkedInAudienceInsights(
       {
         headers: {
           Authorization: `Bearer ${tokens.accessToken}`,
-          'LinkedIn-Version': '202501',
+          'LinkedIn-Version': '202601',
           'X-Restli-Protocol-Version': '2.0.0',
         },
       }
@@ -424,7 +434,7 @@ async function fetchLinkedInAudienceInsights(
       {
         headers: {
           Authorization: `Bearer ${tokens.accessToken}`,
-          'LinkedIn-Version': '202501',
+          'LinkedIn-Version': '202601',
           'X-Restli-Protocol-Version': '2.0.0',
         },
       }

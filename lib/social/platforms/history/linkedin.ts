@@ -1,7 +1,7 @@
 import type { TokenData } from '../../types';
 
 const LINKEDIN_API_BASE = 'https://api.linkedin.com';
-const LINKEDIN_VERSION = '202501';
+const LINKEDIN_VERSION = '202601';
 
 export interface PostAnalytics {
   postId: string;
