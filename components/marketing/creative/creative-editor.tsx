@@ -475,7 +475,7 @@ export function CreativeEditor({
             size="sm"
             onClick={handleValidate}
             isLoading={isValidating}
-            className="border-stone/20 text-charcoal hover:bg-cream-warm/20"
+            className="border-stone/20 text-charcoal hover:bg-cream/20"
           >
             <ShieldCheckIcon className="w-4 h-4 mr-1.5" />
             Validate Compliance

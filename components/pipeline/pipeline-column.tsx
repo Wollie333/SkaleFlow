@@ -88,7 +88,7 @@ export function PipelineColumn({ stage, contacts, onContactClick, onAddContact }
         {/* Add contact button */}
         <button
           onClick={onAddContact}
-          className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs text-stone hover:text-teal hover:bg-cream-warm rounded-lg border border-dashed border-stone/15 hover:border-teal/30 transition-all"
+          className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs text-stone hover:text-teal hover:bg-cream rounded-lg border border-dashed border-stone/15 hover:border-teal/30 transition-all"
         >
           <PlusIcon className="w-3.5 h-3.5" />
           Add contact

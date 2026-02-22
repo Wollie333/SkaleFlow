@@ -284,7 +284,7 @@ export function AdGenerationWizard({
                   <button
                     type="button"
                     onClick={() => toggleCategory(cat.key)}
-                    className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-cream-warm/20 transition-colors"
+                    className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-cream/20 transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <input
@@ -315,7 +315,7 @@ export function AdGenerationWizard({
                       {cat.outputKeys.map((key) => (
                         <label
                           key={key}
-                          className="flex items-center gap-2 px-2 py-1 rounded hover:bg-cream-warm/20 cursor-pointer"
+                          className="flex items-center gap-2 px-2 py-1 rounded hover:bg-cream/20 cursor-pointer"
                         >
                           <input
                             type="checkbox"

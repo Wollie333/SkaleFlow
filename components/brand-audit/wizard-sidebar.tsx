@@ -61,7 +61,7 @@ export function WizardSidebar({
                   ? 'bg-teal/10 text-teal'
                   : isComplete
                     ? 'text-green-600 hover:bg-green-50'
-                    : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                    : 'text-stone hover:bg-cream hover:text-charcoal'
               )}
             >
               <span className={cn(

@@ -87,7 +87,7 @@ export function CreativeLeaderboard({ creatives }: CreativeLeaderboardProps) {
               <tr
                 key={creative.id || idx}
                 className={cn(
-                  'border-b border-stone/5 transition-colors hover:bg-cream-warm/20',
+                  'border-b border-stone/5 transition-colors hover:bg-cream/20',
                   idx === 0 && 'bg-gold/5'
                 )}
               >

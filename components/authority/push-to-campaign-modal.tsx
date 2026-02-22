@@ -59,7 +59,7 @@ export function PushToCampaignModal({
             <RocketLaunchIcon className="w-5 h-5 text-teal" />
             Push to Campaign
           </h2>
-          <button onClick={onClose} className="p-1 hover:bg-cream-warm rounded-lg">
+          <button onClick={onClose} className="p-1 hover:bg-cream rounded-lg">
             <XMarkIcon className="w-5 h-5 text-stone" />
           </button>
         </div>

@@ -133,7 +133,7 @@ export default function ModelUsagePage() {
             className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               period === p.value
                 ? 'bg-teal text-white'
-                : 'text-stone hover:text-charcoal hover:bg-cream-warm'
+                : 'text-stone hover:text-charcoal hover:bg-cream'
             }`}
           >
             {p.label}
@@ -186,7 +186,7 @@ export default function ModelUsagePage() {
                   </thead>
                   <tbody className="divide-y divide-stone/5">
                     {data.byUser.map((u) => (
-                      <tr key={u.userId} className="hover:bg-cream-warm/50">
+                      <tr key={u.userId} className="hover:bg-cream/50">
                         <td className="px-5 py-3 text-sm font-medium text-charcoal">{u.userName}</td>
                         <td className="px-5 py-3 text-sm text-stone text-right">{formatNumber(u.requests)}</td>
                         <td className="px-5 py-3 text-sm text-stone text-right">{formatTokens(u.inputTokens)}</td>
@@ -215,7 +215,7 @@ export default function ModelUsagePage() {
                   </thead>
                   <tbody className="divide-y divide-stone/5">
                     {data.byFeature.map((f) => (
-                      <tr key={f.feature} className="hover:bg-cream-warm/50">
+                      <tr key={f.feature} className="hover:bg-cream/50">
                         <td className="px-5 py-3 text-sm font-medium text-charcoal">
                           {FEATURE_LABELS[f.feature] || f.feature}
                         </td>
@@ -247,7 +247,7 @@ export default function ModelUsagePage() {
                   </thead>
                   <tbody className="divide-y divide-stone/5">
                     {data.recentLogs.map((log) => (
-                      <tr key={log.id} className="hover:bg-cream-warm/50">
+                      <tr key={log.id} className="hover:bg-cream/50">
                         <td className="px-5 py-3 text-xs text-stone">
                           {new Date(log.createdAt).toLocaleString('en-ZA', {
                             month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',

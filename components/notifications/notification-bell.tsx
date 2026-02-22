@@ -74,7 +74,7 @@ export function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-lg hover:bg-cream-warm transition-colors"
+        className="relative p-2 rounded-lg hover:bg-cream transition-colors"
       >
         <BellIcon className="w-5 h-5 text-charcoal" />
         {unreadCount > 0 && (
@@ -108,7 +108,7 @@ export function NotificationBell() {
                 <a
                   key={n.id}
                   href={n.link || '#'}
-                  className={`block px-4 py-3 hover:bg-cream-warm transition-colors border-b border-stone/5 ${
+                  className={`block px-4 py-3 hover:bg-cream transition-colors border-b border-stone/5 ${
                     !n.is_read ? 'bg-teal/5' : ''
                   }`}
                   onClick={() => setIsOpen(false)}

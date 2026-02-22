@@ -131,7 +131,7 @@ export default function AuthorityContactsPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowImportModal(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-charcoal border border-stone/20 rounded-lg hover:bg-cream-warm transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-charcoal border border-stone/20 rounded-lg hover:bg-cream transition-colors"
           >
             <ArrowUpTrayIcon className="w-4 h-4" />
             Import CSV

@@ -43,7 +43,7 @@ export function ModelSelector({ models, selectedModelId, onSelect, compact = fal
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'flex items-center gap-1.5 rounded-lg border border-stone/20 bg-cream-warm hover:bg-cream-warm transition-colors',
+          'flex items-center gap-1.5 rounded-lg border border-stone/20 bg-cream-warm hover:bg-cream transition-colors',
           compact ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
         )}
       >
@@ -83,7 +83,7 @@ export function ModelSelector({ models, selectedModelId, onSelect, compact = fal
                 setIsOpen(false);
               }}
               className={cn(
-                'w-full text-left px-3 py-2 flex items-center justify-between hover:bg-cream-warm transition-colors',
+                'w-full text-left px-3 py-2 flex items-center justify-between hover:bg-cream transition-colors',
                 model.id === selected?.id && 'bg-teal/5'
               )}
             >

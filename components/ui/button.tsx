@@ -16,8 +16,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const variants = {
       primary: 'bg-teal text-cream hover:bg-teal-light focus:ring-teal active:bg-teal-dark',
       secondary: 'bg-gold text-dark hover:bg-gold-light focus:ring-gold',
-      outline: 'bg-transparent border border-stone/25 text-charcoal hover:border-stone/50 hover:bg-cream-warm focus:ring-teal dark:border-teal/15 dark:text-cream dark:hover:bg-cream-warm/5',
-      ghost: 'bg-transparent text-charcoal hover:bg-cream-warm focus:ring-teal dark:text-cream dark:hover:bg-cream-warm/5',
+      outline: 'bg-transparent border border-stone/25 text-charcoal hover:border-stone/50 hover:bg-cream focus:ring-teal dark:border-teal/15 dark:text-cream dark:hover:bg-cream/5',
+      ghost: 'bg-transparent text-charcoal hover:bg-cream focus:ring-teal dark:text-cream dark:hover:bg-cream/5',
       danger: 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500',
     };
 

@@ -351,7 +351,7 @@ export default function ContentReviewsPage() {
               <button
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification)}
-                className={`w-full text-left px-5 py-4 hover:bg-cream-warm/50 transition-colors flex gap-4 ${
+                className={`w-full text-left px-5 py-4 hover:bg-cream/50 transition-colors flex gap-4 ${
                   !notification.is_read ? 'bg-teal/[0.02]' : ''
                 }`}
               >

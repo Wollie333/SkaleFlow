@@ -100,21 +100,21 @@ export function ContactDetailHeader({
               (activityTab as HTMLElement).click();
             }
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-cream text-charcoal rounded-lg hover:bg-cream-warm transition-colors text-sm font-medium"
+          className="flex items-center gap-2 px-4 py-2 bg-cream text-charcoal rounded-lg hover:bg-cream transition-colors text-sm font-medium"
         >
           <ChatBubbleLeftIcon className="w-4 h-4" />
           Log Activity
         </button>
         <button
           onClick={() => router.push(`/crm/deals?contactId=${contact.id}`)}
-          className="flex items-center gap-2 px-4 py-2 bg-cream text-charcoal rounded-lg hover:bg-cream-warm transition-colors text-sm font-medium"
+          className="flex items-center gap-2 px-4 py-2 bg-cream text-charcoal rounded-lg hover:bg-cream transition-colors text-sm font-medium"
         >
           <CurrencyDollarIcon className="w-4 h-4" />
           Create Deal
         </button>
         <button
           onClick={() => router.push(`/crm/invoices/new?contactId=${contact.id}`)}
-          className="flex items-center gap-2 px-4 py-2 bg-cream text-charcoal rounded-lg hover:bg-cream-warm transition-colors text-sm font-medium"
+          className="flex items-center gap-2 px-4 py-2 bg-cream text-charcoal rounded-lg hover:bg-cream transition-colors text-sm font-medium"
         >
           <DocumentTextIcon className="w-4 h-4" />
           Create Invoice

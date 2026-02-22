@@ -345,7 +345,7 @@ export function AnalyticsOverviewClient({
                 'px-3 py-1.5 rounded text-sm font-medium transition-colors',
                 dateRangePreset === preset
                   ? 'bg-teal text-white'
-                  : 'text-stone hover:bg-cream-warm'
+                  : 'text-stone hover:bg-cream'
               )}
             >
               {preset === '7days' ? '7 days' : preset === '30days' ? '30 days' : '90 days'}

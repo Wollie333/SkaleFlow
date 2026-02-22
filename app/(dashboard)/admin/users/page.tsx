@@ -523,7 +523,7 @@ export default function AdminUsersPage() {
                   <tr
                     key={user.id}
                     onClick={() => router.push(`/admin/users/${user.id}`)}
-                    className="border-b border-stone/10 last:border-0 cursor-pointer hover:bg-cream-warm/40 transition-colors"
+                    className="border-b border-stone/10 last:border-0 cursor-pointer hover:bg-cream/40 transition-colors"
                   >
                     <td className="px-6 py-4">
                       <span className="font-medium text-charcoal">{user.full_name}</span>

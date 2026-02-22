@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { VideoPanel } from './video-panel';
 import { AttendeesPanel } from './attendees-panel';
-import { CopilotPanel, type TemplatePhase } from './copilot-panel';
+import { CopilotPanel } from './copilot-panel';
 import { TranscriptPanel } from './transcript-panel';
-import { ChatPanel, type ChatMessage } from './chat-panel';
 import { ControlsBar } from './controls-bar';
 import { OffersPanel, type Offer, type OfferResponseMap } from './offers-panel';
 import { OfferOverlay } from './offer-overlay';
@@ -13,10 +12,6 @@ import { DeviceSettings } from './device-settings';
 import { CallSignaling } from '@/lib/calls/signaling';
 import { CallRecorder, uploadRecording } from '@/lib/calls/recording';
 import { TranscriptionManager } from '@/lib/calls/transcription';
-import { CopilotAuditPanel, type AuditExtraction } from '@/components/brand-audit/copilot-audit-panel';
-import { getProgressForAudit, getUnfilledFields } from '@/lib/brand-audit/field-registry';
-import { SECTION_ORDER, SECTION_LABELS } from '@/lib/brand-audit/types';
-import type { BrandAuditSectionKey } from '@/types/database';
 
 interface CallRoomProps {
   roomCode: string;
@@ -28,10 +23,9 @@ interface CallRoomProps {
   guestName?: string;
   guestEmail?: string;
   showOpenInTab?: boolean;
-  templateId?: string | null;
 }
 
-export type PanelView = 'copilot' | 'transcript' | 'attendees' | 'offers' | 'insights' | 'chat' | 'none';
+export type PanelView = 'copilot' | 'transcript' | 'attendees' | 'offers' | 'insights' | 'none';
 
 export interface Participant {
   id: string;
@@ -68,9 +62,9 @@ export interface GuidanceItem {
 export type RecordingState = 'idle' | 'recording' | 'stopping';
 
 export function CallRoom({
-  roomCode, callId, callTitle, organizationId, userId, isHost, guestName, guestEmail, showOpenInTab, templateId
+  roomCode, callId, callTitle, organizationId, userId, isHost, guestName, guestEmail, showOpenInTab
 }: CallRoomProps) {
-  const [activePanel, setActivePanel] = useState<PanelView>(isHost ? 'insights' : 'none');
+  const [activePanel, setActivePanel] = useState<PanelView>(isHost ? 'insights' : 'attendees');
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [transcripts, setTranscripts] = useState<TranscriptChunk[]>([]);
   const [guidance, setGuidance] = useState<GuidanceItem[]>([]);
@@ -82,13 +76,10 @@ export function CallRoom({
   const [callActive, setCallActive] = useState(false);
   const [callElapsed, setCallElapsed] = useState(0);
   const [localStatus, setLocalStatus] = useState<string>(isHost ? 'in_call' : 'waiting');
-  // Track the local stream as state so React re-renders when it changes
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
   const [isSaving, setIsSaving] = useState(false);
   const [showDeviceSettings, setShowDeviceSettings] = useState(false);
   const [showCaptions, setShowCaptions] = useState(true);
-  const [mediaError, setMediaError] = useState<string | null>(null);
 
   // Offer presentation state
   const [presentedOfferId, setPresentedOfferId] = useState<string | null>(null);
@@ -98,8 +89,6 @@ export function CallRoom({
     billing_frequency: string | null; deliverables: string[]; value_propositions: string[];
   } | null>(null);
   const [offerResponses, setOfferResponses] = useState<OfferResponseMap>({});
-  // Track participant registration as state so effects re-run when it changes
-  const [registeredParticipantId, setRegisteredParticipantId] = useState<string | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const participantIdRef = useRef<string | null>(null);
@@ -108,25 +97,6 @@ export function CallRoom({
   const pollRef = useRef<NodeJS.Timeout | null>(null);
   const transcriptionRef = useRef<TranscriptionManager | null>(null);
   const transcriptCounterRef = useRef(0);
-
-  // Chat state
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [unreadChat, setUnreadChat] = useState(0);
-  const chatCounterRef = useRef(0);
-  const chatLoadedRef = useRef(false);
-
-  // Waiting room visibility
-  const prevWaitingCountRef = useRef(0);
-
-  // Brand audit mode state
-  const [brandAuditId, setBrandAuditId] = useState<string | null>(null);
-  const [brandAuditSections, setBrandAuditSections] = useState<Array<{ section_key: BrandAuditSectionKey; data: Record<string, unknown> }>>([]);
-  const [auditExtractions, setAuditExtractions] = useState<AuditExtraction[]>([]);
-  const [auditCurrentSection, setAuditCurrentSection] = useState<BrandAuditSectionKey | undefined>();
-  const auditExtractionCounter = useRef(0);
-
-  // Template phases (loaded from call template)
-  const [templatePhases, setTemplatePhases] = useState<TemplatePhase[]>([]);
 
   const displayName = callTitle || `Room: ${roomCode}`;
   const isRecording = recordingState === 'recording' || isRecordingRemote;
@@ -151,140 +121,6 @@ export function CallRoom({
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Load template phases from the template API
-  useEffect(() => {
-    if (!templateId) return;
-    (async () => {
-      try {
-        const tplRes = await fetch(`/api/calls/templates/${templateId}`);
-        if (tplRes.ok) {
-          const template = await tplRes.json();
-          if (template.phases && Array.isArray(template.phases)) {
-            console.log('[CallRoom] Template phases loaded:', template.phases.length);
-            setTemplatePhases(template.phases);
-          }
-        }
-      } catch { /* ignore template fetch error */ }
-    })();
-  }, [templateId]);
-
-  // Detect brand audit mode — check if call has a linked brand audit
-  useEffect(() => {
-    if (!callId || !isHost) return;
-    (async () => {
-      try {
-        // Query brand audits linked to this call
-        const res = await fetch(`/api/brand-audits?callId=${callId}`);
-        if (!res.ok) return;
-        const audits = await res.json();
-        const audit = Array.isArray(audits) ? audits[0] : audits;
-        if (audit?.id) {
-          setBrandAuditId(audit.id);
-          setBrandAuditSections(
-            (audit.sections || []).map((s: { section_key: BrandAuditSectionKey; data: Record<string, unknown> }) => ({
-              section_key: s.section_key,
-              data: (s.data || {}) as Record<string, unknown>,
-            }))
-          );
-        }
-      } catch { /* ignore */ }
-    })();
-  }, [callId, isHost]);
-
-  // Handle transcript extraction for brand audit
-  const handleAuditExtract = useCallback(async (chunk: TranscriptChunk) => {
-    if (!brandAuditId) return;
-
-    try {
-      const res = await fetch(`/api/brand-audits/${brandAuditId}/extract`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transcriptText: chunk.content,
-          sectionKey: auditCurrentSection,
-          context: `Speaker: ${chunk.speakerLabel}`,
-        }),
-      });
-
-      if (!res.ok) {
-        console.error('Extraction failed:', await res.text());
-        return;
-      }
-
-      const data = await res.json();
-      if (data.extractions && data.extractions.length > 0) {
-        const newExtractions: AuditExtraction[] = data.extractions.map((ext: { key: string; value: unknown; section: string; confidence: number; label?: string }) => ({
-          id: `ext-${++auditExtractionCounter.current}`,
-          key: ext.key,
-          value: ext.value,
-          section: ext.section as BrandAuditSectionKey,
-          confidence: ext.confidence,
-          label: ext.label || ext.key,
-          status: 'pending' as const,
-        }));
-        setAuditExtractions(prev => [...prev, ...newExtractions]);
-      }
-    } catch (err) {
-      console.error('Error extracting audit data:', err);
-    }
-  }, [brandAuditId, auditCurrentSection]);
-
-  // Handle accept/reject extraction
-  const handleAcceptExtraction = useCallback(async (extraction: AuditExtraction) => {
-    if (!brandAuditId) return;
-
-    // Save to audit section
-    try {
-      const sectionKey = extraction.section;
-      const currentSection = brandAuditSections.find(s => s.section_key === sectionKey);
-      const currentData = currentSection?.data || {};
-      const updatedData = { ...currentData, [extraction.key]: extraction.value };
-
-      const res = await fetch(`/api/brand-audits/${brandAuditId}/sections/${sectionKey}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: updatedData }),
-      });
-
-      if (res.ok) {
-        // Update local state
-        setAuditExtractions(prev =>
-          prev.map(e => e.id === extraction.id ? { ...e, status: 'accepted' as const } : e)
-        );
-        setBrandAuditSections(prev =>
-          prev.map(s => s.section_key === sectionKey ? { ...s, data: updatedData } : s)
-        );
-      }
-    } catch (err) {
-      console.error('Error accepting extraction:', err);
-    }
-  }, [brandAuditId, brandAuditSections]);
-
-  const handleRejectExtraction = useCallback((extraction: AuditExtraction) => {
-    setAuditExtractions(prev =>
-      prev.map(e => e.id === extraction.id ? { ...e, status: 'rejected' as const } : e)
-    );
-  }, []);
-
-  // Compute audit progress
-  const auditProgress = brandAuditId
-    ? getProgressForAudit(brandAuditSections)
-    : { filled: 0, total: 0, bySection: {} as Record<BrandAuditSectionKey, { filled: number; total: number }> };
-
-  // Compute next audit question for copilot
-  const auditNextQuestion = (() => {
-    if (!brandAuditId) return undefined;
-    // Find first incomplete section and first unfilled field
-    for (const sectionKey of SECTION_ORDER) {
-      const sec = brandAuditSections.find(s => s.section_key === sectionKey);
-      const unfilled = getUnfilledFields(sectionKey, sec?.data || {});
-      if (unfilled.length > 0) {
-        return `Ask about their ${unfilled[0].label.toLowerCase()} (${SECTION_LABELS[sectionKey]})`;
-      }
-    }
-    return undefined;
-  })();
-
   // Register self as participant on mount (guard against double-fire from strict mode)
   useEffect(() => {
     if (participantIdRef.current) return; // Already registered
@@ -305,7 +141,6 @@ export function CallRoom({
         if (res.ok && !cancelled) {
           const data = await res.json();
           participantIdRef.current = data.id;
-          setRegisteredParticipantId(data.id);
         }
       } catch (err) {
         console.error('Failed to register participant:', err);
@@ -316,20 +151,13 @@ export function CallRoom({
     return () => { cancelled = true; };
   }, [roomCode, userId, guestName, guestEmail, isHost]);
 
-  // Poll participants every 3s (fast enough for waiting room responsiveness)
+  // Poll participants every 5s
   useEffect(() => {
     const fetchParticipants = async () => {
       try {
         const res = await fetch(`/api/calls/${roomCode}/participants`);
-        if (!res.ok) {
-          console.warn('[CallRoom] Participant poll failed:', res.status);
-          return;
-        }
+        if (!res.ok) return;
         const data = await res.json();
-        if (!Array.isArray(data)) {
-          console.warn('[CallRoom] Unexpected participant response:', data);
-          return;
-        }
         const mapped: Participant[] = data.map((p: Record<string, unknown>) => ({
           id: p.id as string,
           userId: p.user_id as string | null,
@@ -350,39 +178,23 @@ export function CallRoom({
             setLocalStatus('in_call');
           }
         }
-      } catch (err) {
-        console.warn('[CallRoom] Participant poll error:', err);
+      } catch {
+        // Ignore polling errors
       }
     };
 
     fetchParticipants();
-    pollRef.current = setInterval(fetchParticipants, 3000);
+    pollRef.current = setInterval(fetchParticipants, 5000);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [roomCode]);
 
-  // Waiting room: auto-switch to attendees panel when new guests arrive
-  const waitingCount = participants.filter(p => p.status === 'waiting').length;
+  // Signaling connection
   useEffect(() => {
-    if (isHost && waitingCount > prevWaitingCountRef.current && waitingCount > 0) {
-      setActivePanel('attendees');
-    }
-    prevWaitingCountRef.current = waitingCount;
-  }, [waitingCount, isHost]);
+    if (!participantIdRef.current) return;
 
-  // Clear unread chat count when chat panel is open
-  useEffect(() => {
-    if (activePanel === 'chat') {
-      setUnreadChat(0);
-    }
-  }, [activePanel]);
-
-  // Signaling connection — waits for participant registration to complete
-  useEffect(() => {
-    if (!registeredParticipantId) return;
-
-    const signaling = new CallSignaling(roomCode, registeredParticipantId);
+    const signaling = new CallSignaling(roomCode, participantIdRef.current);
     signalingRef.current = signaling;
 
     // Handle recording signals (non-host side)
@@ -400,7 +212,7 @@ export function CallRoom({
 
     // Handle admit signal (guest side — transition from waiting to in_call)
     signaling.on('admit-participant', (msg) => {
-      if (msg.payload.participantId === registeredParticipantId) {
+      if (msg.payload.participantId === participantIdRef.current) {
         setLocalStatus('in_call');
       }
     });
@@ -473,20 +285,6 @@ export function CallRoom({
       }
     });
 
-    // Handle incoming chat messages
-    signaling.on('chat-message', (msg) => {
-      const chatMsg: ChatMessage = {
-        id: `chat-${++chatCounterRef.current}`,
-        senderId: msg.senderId,
-        senderName: (msg.payload.senderName as string) || 'Unknown',
-        content: (msg.payload.content as string) || '',
-        timestamp: (msg.payload.timestamp as number) || Date.now(),
-      };
-      setChatMessages(prev => [...prev, chatMsg]);
-      // Increment unread if chat panel is not open
-      setUnreadChat(prev => prev + 1);
-    });
-
     signaling.connect().catch(err => {
       console.error('Signaling connection failed:', err);
     });
@@ -496,7 +294,7 @@ export function CallRoom({
       signalingRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomCode, isHost, registeredParticipantId]);
+  }, [roomCode, isHost, participantIdRef.current]);
 
   // Save a final transcript chunk to the database
   const saveTranscriptToDb = useCallback(async (speakerLabel: string, content: string, timestampStart: number) => {
@@ -517,60 +315,6 @@ export function CallRoom({
       // Non-blocking — don't fail the call if transcript save fails
     }
   }, [roomCode]);
-
-  // Load existing chat messages from DB on mount
-  useEffect(() => {
-    if (chatLoadedRef.current) return;
-    chatLoadedRef.current = true;
-    (async () => {
-      try {
-        const res = await fetch(`/api/calls/${roomCode}/messages`);
-        if (!res.ok) return;
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const loaded: ChatMessage[] = data.map((m: { id: string; participant_id: string | null; sender_name: string; content: string; created_at: string }) => ({
-            id: m.id,
-            senderId: m.participant_id || '',
-            senderName: m.sender_name,
-            content: m.content,
-            timestamp: new Date(m.created_at).getTime(),
-          }));
-          setChatMessages(loaded);
-        }
-      } catch { /* ignore load error */ }
-    })();
-  }, [roomCode]);
-
-  // Send a chat message via signaling + persist to DB
-  const sendChatMessage = useCallback((content: string) => {
-    if (!participantIdRef.current) return;
-    const senderName = isHost ? 'Host' : (guestName || 'Guest');
-    const msg: ChatMessage = {
-      id: `chat-${++chatCounterRef.current}`,
-      senderId: participantIdRef.current,
-      senderName,
-      content,
-      timestamp: Date.now(),
-    };
-    // Add to local messages immediately
-    setChatMessages(prev => [...prev, msg]);
-    // Broadcast to others via signaling
-    signalingRef.current?.send('chat-message', {
-      senderName,
-      content,
-      timestamp: msg.timestamp,
-    });
-    // Persist to DB (non-blocking)
-    fetch(`/api/calls/${roomCode}/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        participantId: participantIdRef.current,
-        senderName,
-        content,
-      }),
-    }).catch(() => {});
-  }, [isHost, guestName, roomCode]);
 
   // Start transcription when call is active (host only)
   useEffect(() => {
@@ -641,149 +385,26 @@ export function CallRoom({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callActive, isHost]);
 
-  // ── AI Copilot Guidance — process transcript turns every ~5s ──
-  const lastProcessedIdxRef = useRef(0);
-  const guidanceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const guidanceInFlightRef = useRef(false);
-
-  useEffect(() => {
-    if (!callActive || !isHost) return;
-
-    const processGuidance = async () => {
-      if (guidanceInFlightRef.current) return;
-
-      // Collect final-only transcript chunks since last processed
-      const finals = transcripts.filter(t => !t.id.startsWith('t-interim-'));
-      if (finals.length <= lastProcessedIdxRef.current) return;
-
-      // Gather unprocessed transcript turns
-      const newChunks = finals.slice(lastProcessedIdxRef.current);
-      if (newChunks.length === 0) return;
-
-      // Combine recent chunks into a single turn for context
-      const combinedTurn = newChunks.map(c => `[${c.speakerLabel}]: ${c.content}`).join('\n');
-      const lastChunk = newChunks[newChunks.length - 1];
-      lastProcessedIdxRef.current = finals.length;
-
-      guidanceInFlightRef.current = true;
-      try {
-        const res = await fetch(`/api/calls/${roomCode}/guidance`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            transcriptTurn: combinedTurn,
-            speakerLabel: lastChunk.speakerLabel,
-          }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data && !data.skip && data.content) {
-            const item: GuidanceItem = {
-              id: data.id || `g-${Date.now()}`,
-              guidanceType: data.guidance_type || data.guidanceType || 'general',
-              content: data.content,
-              frameworkPhase: data.framework_phase || data.frameworkPhase || undefined,
-              frameworkStep: data.framework_step || data.frameworkStep || undefined,
-              wasUsed: false,
-              wasDismissed: false,
-            };
-            setGuidance(prev => [...prev, item]);
-          }
-        }
-      } catch {
-        // Non-blocking — don't break the call if guidance fails
-      } finally {
-        guidanceInFlightRef.current = false;
-      }
-    };
-
-    // Poll every 5 seconds for new transcript chunks to process
-    guidanceTimerRef.current = setInterval(processGuidance, 5000);
-
-    return () => {
-      if (guidanceTimerRef.current) clearInterval(guidanceTimerRef.current);
-    };
-    // transcripts updates frequently — we read it via ref-like access in the closure
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [callActive, isHost, roomCode, transcripts]);
-
-  // Join the call — try both devices, fall back to separate if needed
-  const joinCall = useCallback(async () => {
-    setMediaError(null);
-
-    // Helper: try getUserMedia and return stream or null
-    const tryMedia = async (constraints: MediaStreamConstraints): Promise<MediaStream | null> => {
-      try {
-        return await navigator.mediaDevices.getUserMedia(constraints);
-      } catch (err) {
-        console.warn('[CallRoom] getUserMedia failed for', constraints, err);
-        return null;
-      }
-    };
-
-    // 1. Try both together
-    let stream = await tryMedia({ video: true, audio: true });
-
-    // 2. If joint call failed, try them separately and merge
-    if (!stream) {
-      const combinedStream = new MediaStream();
-      const audioStream = await tryMedia({ audio: true });
-      const videoStream = await tryMedia({ video: true });
-
-      if (audioStream) audioStream.getAudioTracks().forEach(t => combinedStream.addTrack(t));
-      if (videoStream) videoStream.getVideoTracks().forEach(t => combinedStream.addTrack(t));
-
-      if (combinedStream.getTracks().length > 0) {
-        stream = combinedStream;
-        // Warn the user about partial access
-        if (!audioStream) setMediaError('Could not access microphone — joining with video only.');
-        if (!videoStream) setMediaError('Could not access camera — joining with audio only.');
-      }
-    }
-
-    if (stream && stream.getTracks().length > 0) {
+  // Initialize local media
+  const startMedia = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true
+      });
       localStreamRef.current = stream;
-      setLocalStream(stream);
-      setIsCameraOff(stream.getVideoTracks().length === 0);
-      setIsMuted(stream.getAudioTracks().length === 0);
       setCallActive(true);
-    } else {
-      // Total failure — check the actual reason
+    } catch (err) {
+      console.error('Failed to access media devices:', err);
       try {
-        // One more attempt to get the real error
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (err: unknown) {
-        const name = err instanceof DOMException ? err.name : '';
-        if (name === 'NotAllowedError') {
-          setMediaError('Camera/mic permission denied. Click the camera icon in your browser address bar to allow access, then try again.');
-        } else if (name === 'NotFoundError') {
-          setMediaError('No camera or microphone found. Please connect a device and try again.');
-        } else if (name === 'NotReadableError') {
-          setMediaError('Camera/mic is in use by another app or browser tab. Close it and try again.');
-        } else {
-          setMediaError(`Could not access camera/mic: ${err instanceof Error ? err.message : 'Unknown error'}. Check browser permissions.`);
-        }
-        return;
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        localStreamRef.current = audioStream;
+        setIsCameraOff(true);
+        setCallActive(true);
+      } catch {
+        console.error('Failed to access any media devices');
       }
-      setMediaError('Could not access camera or microphone. Check browser permissions and try again.');
     }
-  }, []);
-
-  // Auto-join for guests once admitted (skip the pre-call lobby)
-  useEffect(() => {
-    if (!isHost && localStatus === 'in_call' && !callActive) {
-      joinCall();
-    }
-  }, [isHost, localStatus, callActive, joinCall]);
-
-  // Cleanup: stop tracks on unmount
-  useEffect(() => {
-    return () => {
-      if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach(t => t.stop());
-      }
-    };
   }, []);
 
   const toggleMute = useCallback(() => {
@@ -813,45 +434,26 @@ export function CallRoom({
     }
   }, [isScreenSharing]);
 
-  // Switch media devices — acquire audio and video separately to avoid driver timeouts
+  // Switch media devices
   const handleDeviceChange = useCallback(async (audioDeviceId: string | null, videoDeviceId: string | null) => {
     try {
-      // Stop old tracks FIRST to release the camera before acquiring new one
+      const constraints: MediaStreamConstraints = {};
+      if (audioDeviceId) constraints.audio = { deviceId: { exact: audioDeviceId } };
+      else constraints.audio = true;
+      if (videoDeviceId) constraints.video = { deviceId: { exact: videoDeviceId } };
+      else constraints.video = true;
+
+      const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      // Stop old tracks
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(t => t.stop());
-        localStreamRef.current = null;
-        setLocalStream(null);
       }
 
-      // Wait for driver to fully release
-      await new Promise(r => setTimeout(r, 500));
-
-      const combinedStream = new MediaStream();
-
-      // Audio first
-      try {
-        const audioConstraint = audioDeviceId ? { deviceId: { exact: audioDeviceId } } : true;
-        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraint });
-        audioStream.getAudioTracks().forEach(t => combinedStream.addTrack(t));
-      } catch (err) {
-        console.error('Failed to get audio device:', err);
-      }
-
-      // Video second
-      try {
-        const videoConstraint = videoDeviceId ? { deviceId: { exact: videoDeviceId } } : true;
-        const videoStream = await navigator.mediaDevices.getUserMedia({ video: videoConstraint });
-        videoStream.getVideoTracks().forEach(t => combinedStream.addTrack(t));
-      } catch (err) {
-        console.error('Failed to get video device:', err);
-      }
-
-      if (combinedStream.getTracks().length > 0) {
-        localStreamRef.current = combinedStream;
-        setLocalStream(combinedStream);
-        setIsCameraOff(combinedStream.getVideoTracks().length === 0);
-        setIsMuted(combinedStream.getAudioTracks().length === 0);
-      }
+      localStreamRef.current = newStream;
+      // Force re-render by toggling a state
+      setIsCameraOff(false);
+      setIsMuted(false);
     } catch (err) {
       console.error('Failed to switch devices:', err);
     }
@@ -1115,7 +717,7 @@ export function CallRoom({
   }, [roomCode]);
 
   return (
-    <div className="h-full flex flex-col bg-[#0F1F1D]">
+    <div className="h-screen flex flex-col bg-[#0F1F1D]">
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-2 bg-[#0F1F1D] border-b border-white/10">
         <div className="flex items-center gap-3">
@@ -1141,27 +743,17 @@ export function CallRoom({
           )}
         </div>
         <div className="flex items-center gap-1.5 md:gap-2">
-          {(isHost ? ['attendees', 'insights', 'offers', 'chat'] : (localStatus === 'in_call' ? ['chat'] : [])).map((panel) => (
+          {(isHost ? ['attendees', 'insights', 'offers'] : ['attendees']).map((panel) => (
             <button
               key={panel}
               onClick={() => setActivePanel(activePanel === panel ? 'none' : panel as PanelView)}
-              className={`relative px-2 md:px-3 py-1.5 rounded text-[10px] md:text-xs font-medium transition-colors ${
+              className={`px-2 md:px-3 py-1.5 rounded text-[10px] md:text-xs font-medium transition-colors ${
                 activePanel === panel
                   ? 'bg-cream-warm/20 text-white'
                   : 'text-white/50 hover:text-white/80'
               }`}
             >
               {panel.charAt(0).toUpperCase() + panel.slice(1)}
-              {panel === 'chat' && unreadChat > 0 && activePanel !== 'chat' && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-teal text-[9px] text-white flex items-center justify-center">
-                  {unreadChat > 9 ? '9+' : unreadChat}
-                </span>
-              )}
-              {panel === 'attendees' && isHost && waitingCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-[9px] text-white flex items-center justify-center">
-                  {waitingCount}
-                </span>
-              )}
             </button>
           ))}
 
@@ -1185,37 +777,17 @@ export function CallRoom({
         {/* Video Panel (always visible, takes remaining space) */}
         <div className="flex-1 min-w-0 relative">
           <VideoPanel
-            localStream={localStream}
+            localStream={localStreamRef.current}
             participants={participants}
             localUserId={userId || null}
-            localParticipantId={registeredParticipantId}
+            localParticipantId={participantIdRef.current}
             isCameraOff={isCameraOff}
             isScreenSharing={isScreenSharing}
             callActive={callActive}
             isWaiting={!isHost && localStatus === 'waiting'}
             displayName={displayName}
-            onJoinCall={joinCall}
-            mediaError={mediaError}
-            isHost={isHost}
+            onStartMedia={startMedia}
           />
-
-          {/* Floating waiting room banner — host sees when guests are waiting */}
-          {isHost && waitingCount > 0 && (
-            <div
-              className="absolute top-2 left-2 right-2 md:top-3 md:left-3 md:right-3 z-10 cursor-pointer"
-              onClick={() => setActivePanel('attendees')}
-            >
-              <div className="bg-amber-500/90 backdrop-blur-sm rounded-lg px-4 py-2.5 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                  <span className="text-white text-sm font-medium">
-                    {waitingCount} {waitingCount === 1 ? 'person' : 'people'} in waiting room
-                  </span>
-                </div>
-                <span className="text-white/80 text-xs">Click to view</span>
-              </div>
-            </div>
-          )}
 
           {/* Offer overlay moved to fixed position outside video panel */}
 
@@ -1240,7 +812,7 @@ export function CallRoom({
             {/* Mobile close button */}
             <button
               onClick={() => setActivePanel('none')}
-              className="absolute top-3 right-3 z-10 p-1.5 rounded-lg bg-cream-warm/10 text-white/60 hover:text-white hover:bg-cream/20 transition-colors md:hidden"
+              className="absolute top-3 right-3 z-10 p-1.5 rounded-lg bg-cream-warm/10 text-white/60 hover:text-white hover:bg-cream-warm/20 transition-colors md:hidden"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1262,48 +834,25 @@ export function CallRoom({
                 guidance={guidance}
                 callActive={callActive}
                 transcriptCount={transcripts.length}
-                brandAuditMode={!!brandAuditId}
-                auditNextQuestion={auditNextQuestion}
-                templatePhases={templatePhases}
               />
             )}
             {activePanel === 'transcript' && (
               <TranscriptPanel
                 transcripts={transcripts}
-                onExtract={brandAuditId ? handleAuditExtract : undefined}
               />
             )}
             {activePanel === 'insights' && (
               <div className="flex flex-col h-full">
-                {/* Copilot — top section (most useful for host) */}
-                <div className={brandAuditId ? 'h-[30%] min-h-0 border-b border-white/10' : 'flex-1 min-h-0 border-b border-white/10'}>
+                {/* Transcript — top half */}
+                <div className="flex-1 min-h-0 border-b border-white/10">
+                  <TranscriptPanel transcripts={transcripts} />
+                </div>
+                {/* Copilot — bottom half */}
+                <div className="flex-1 min-h-0">
                   <CopilotPanel
                     guidance={guidance}
                     callActive={callActive}
                     transcriptCount={transcripts.length}
-                    brandAuditMode={!!brandAuditId}
-                    auditNextQuestion={auditNextQuestion}
-                    templatePhases={templatePhases}
-                  />
-                </div>
-                {/* Brand Audit extraction panel (shown when audit mode) */}
-                {brandAuditId && (
-                  <div className="h-[35%] min-h-0 border-b border-white/10">
-                    <CopilotAuditPanel
-                      auditId={brandAuditId}
-                      extractions={auditExtractions.filter(e => e.status !== 'rejected')}
-                      progress={auditProgress}
-                      currentSection={auditCurrentSection}
-                      onAccept={handleAcceptExtraction}
-                      onReject={handleRejectExtraction}
-                    />
-                  </div>
-                )}
-                {/* Transcript — bottom section */}
-                <div className={brandAuditId ? 'h-[35%] min-h-0' : 'flex-1 min-h-0'}>
-                  <TranscriptPanel
-                    transcripts={transcripts}
-                    onExtract={brandAuditId ? handleAuditExtract : undefined}
                   />
                 </div>
               </div>
@@ -1316,13 +865,6 @@ export function CallRoom({
                 offerResponses={offerResponses}
                 participants={participants}
                 transcripts={transcripts}
-              />
-            )}
-            {activePanel === 'chat' && (
-              <ChatPanel
-                messages={chatMessages}
-                onSendMessage={sendChatMessage}
-                localParticipantId={registeredParticipantId}
               />
             )}
           </div>
@@ -1355,7 +897,7 @@ export function CallRoom({
         open={showDeviceSettings}
         onClose={() => setShowDeviceSettings(false)}
         onDeviceChange={handleDeviceChange}
-        currentStream={localStream}
+        currentStream={localStreamRef.current}
       />
 
       {/* Offer overlay — shown to guests/team when host presents an offer */}

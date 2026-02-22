@@ -107,7 +107,7 @@ export function EmailComposeModal({
           <h2 className="text-lg font-serif font-semibold text-charcoal">
             {replyTo ? 'Reply' : 'Compose Email'}
           </h2>
-          <button onClick={onClose} className="p-1 hover:bg-cream-warm rounded-lg transition-colors">
+          <button onClick={onClose} className="p-1 hover:bg-cream rounded-lg transition-colors">
             <XMarkIcon className="w-5 h-5 text-stone" />
           </button>
         </div>

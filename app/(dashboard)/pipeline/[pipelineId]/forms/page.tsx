@@ -222,14 +222,14 @@ export default function PipelineFormsPage() {
                   <>
                     <button
                       onClick={() => copyToClipboard(getFormUrl(form.slug), 'Form link')}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-charcoal bg-cream-warm rounded-md hover:bg-cream-warm/80 transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-charcoal bg-cream-warm rounded-md hover:bg-cream/80 transition-colors"
                     >
                       <LinkIcon className="w-3.5 h-3.5" />
                       Copy Link
                     </button>
                     <button
                       onClick={() => copyToClipboard(getEmbedCode(form.slug), 'Embed code')}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-charcoal bg-cream-warm rounded-md hover:bg-cream-warm/80 transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-charcoal bg-cream-warm rounded-md hover:bg-cream/80 transition-colors"
                     >
                       <CodeBracketIcon className="w-3.5 h-3.5" />
                       Embed

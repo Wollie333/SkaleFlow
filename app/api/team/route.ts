@@ -165,7 +165,8 @@ export async function POST(request: Request) {
     }
 
     // Build invite URL
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${token}`;
+    const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://skale-flow.vercel.app';
+    const inviteUrl = `${origin}/invite/${token}`;
 
     // Get inviter's name for the email
     const { data: inviter } = await serviceSupabase
@@ -310,7 +311,8 @@ export async function PATCH(request: Request) {
         .eq('id', invite.id);
     }
 
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${token}`;
+    const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://skale-flow.vercel.app';
+    const inviteUrl = `${origin}/invite/${token}`;
 
     const { data: inviter } = await serviceSupabase
       .from('users')

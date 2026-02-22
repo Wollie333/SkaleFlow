@@ -260,7 +260,7 @@ export function TargetingBuilder({ value, onChange, audiences }: TargetingBuilde
                   'flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-all duration-200',
                   value.customAudiences.includes(audience.id)
                     ? 'border-teal/30 bg-teal/5'
-                    : 'border-stone/10 hover:bg-cream-warm/20'
+                    : 'border-stone/10 hover:bg-cream/20'
                 )}
               >
                 <input

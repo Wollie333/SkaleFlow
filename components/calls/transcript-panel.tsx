@@ -109,7 +109,7 @@ export function TranscriptPanel({ transcripts, onExtract }: TranscriptPanelProps
               scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
             }
           }}
-          className="mx-3 mb-3 py-1.5 rounded bg-cream-warm/10 text-white/70 text-xs hover:bg-cream-warm/15 transition-colors"
+          className="mx-3 mb-3 py-1.5 rounded bg-cream-warm/10 text-white/70 text-xs hover:bg-cream/15 transition-colors"
         >
           &#x2193; Scroll to latest
         </button>

@@ -95,7 +95,7 @@ export function PitchEmailGenerator({
             </div>
             <button
               onClick={handleCopy}
-              className="absolute top-2 right-2 p-1.5 bg-cream-warm rounded-lg shadow-sm border border-stone/10 hover:bg-cream-warm transition-colors"
+              className="absolute top-2 right-2 p-1.5 bg-cream-warm rounded-lg shadow-sm border border-stone/10 hover:bg-cream transition-colors"
               title="Copy to clipboard"
             >
               {copied ? (

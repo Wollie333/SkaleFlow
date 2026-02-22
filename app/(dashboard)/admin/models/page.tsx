@@ -341,7 +341,7 @@ export default function AdminModelsPage() {
                     setUserSearch(u.full_name || u.email);
                     setShowDropdown(false);
                   }}
-                  className="w-full text-left px-4 py-2 hover:bg-cream-warm text-sm transition-colors"
+                  className="w-full text-left px-4 py-2 hover:bg-cream text-sm transition-colors"
                 >
                   <span className="font-medium text-charcoal">{u.full_name || 'No name'}</span>
                   <span className="text-stone ml-2">{u.email}</span>

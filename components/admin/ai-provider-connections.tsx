@@ -144,7 +144,7 @@ export function AIProviderConnections() {
           )}
           <button
             onClick={fetchBalances}
-            className="p-2 rounded-lg hover:bg-cream-warm transition-colors"
+            className="p-2 rounded-lg hover:bg-cream transition-colors"
             title="Refresh"
           >
             <ArrowPathIcon className="w-4 h-4 text-stone" />

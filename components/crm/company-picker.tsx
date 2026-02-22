@@ -108,7 +108,7 @@ export function CompanyPicker({ organizationId, value, onChange, label = 'Compan
                       setIsOpen(false);
                       setSearch('');
                     }}
-                    className="w-full text-left px-3 py-2 hover:bg-cream-warm text-sm transition-colors"
+                    className="w-full text-left px-3 py-2 hover:bg-cream text-sm transition-colors"
                   >
                     <span className="font-medium text-charcoal">{c.name}</span>
                     {c.industry && <span className="text-stone ml-1">- {c.industry}</span>}

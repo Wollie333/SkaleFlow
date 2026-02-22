@@ -373,7 +373,7 @@ export default function BillingPage() {
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                   usagePeriod === p.value
                     ? 'bg-teal text-white'
-                    : 'text-stone hover:text-charcoal hover:bg-cream-warm'
+                    : 'text-stone hover:text-charcoal hover:bg-cream'
                 }`}
               >
                 {p.label}
@@ -471,7 +471,7 @@ export default function BillingPage() {
                   </thead>
                   <tbody className="divide-y divide-stone/5">
                     {usageData.byFeature.map((f) => (
-                      <tr key={f.feature} className="hover:bg-cream-warm/50">
+                      <tr key={f.feature} className="hover:bg-cream/50">
                         <td className="px-5 py-3 text-sm font-medium text-charcoal">
                           {FEATURE_LABELS[f.feature] || f.feature}
                         </td>
@@ -524,7 +524,7 @@ export default function BillingPage() {
                 transactions.map((tx) => {
                   const typeInfo = TRANSACTION_TYPE_LABELS[tx.transaction_type] || { label: tx.transaction_type, color: 'bg-stone/10 text-stone' };
                   return (
-                    <tr key={tx.id} className="hover:bg-cream-warm/50">
+                    <tr key={tx.id} className="hover:bg-cream/50">
                       <td className="px-4 py-3 text-sm text-charcoal">
                         {new Date(tx.created_at).toLocaleDateString('en-ZA', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
@@ -613,7 +613,7 @@ export default function BillingPage() {
                 </tr>
               ) : (
                 invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-cream-warm/50">
+                  <tr key={inv.id} className="hover:bg-cream/50">
                     <td className="px-4 py-3 text-sm font-medium text-charcoal">{inv.invoice_number}</td>
                     <td className="px-4 py-3 text-sm text-charcoal">
                       {new Date(inv.created_at).toLocaleDateString('en-ZA', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -639,14 +639,14 @@ export default function BillingPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => setSelectedInvoice(inv)}
-                          className="p-1.5 hover:bg-cream-warm rounded-lg transition-colors"
+                          className="p-1.5 hover:bg-cream rounded-lg transition-colors"
                           title="View"
                         >
                           <EyeIcon className="w-4 h-4 text-stone" />
                         </button>
                         <a
                           href={`/api/billing/invoices/${inv.id}/pdf`}
-                          className="p-1.5 hover:bg-cream-warm rounded-lg transition-colors"
+                          className="p-1.5 hover:bg-cream rounded-lg transition-colors"
                           title="Download PDF"
                         >
                           <ArrowDownTrayIcon className="w-4 h-4 text-stone" />

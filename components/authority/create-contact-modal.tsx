@@ -107,7 +107,7 @@ export function CreateContactModal({ isOpen, onClose, onSubmit, editData }: Crea
           <h2 className="text-lg font-serif font-semibold text-charcoal">
             {editData ? 'Edit Contact' : 'New Media Contact'}
           </h2>
-          <button onClick={onClose} className="p-1 hover:bg-cream-warm rounded-lg transition-colors">
+          <button onClick={onClose} className="p-1 hover:bg-cream rounded-lg transition-colors">
             <XMarkIcon className="w-5 h-5 text-stone" />
           </button>
         </div>

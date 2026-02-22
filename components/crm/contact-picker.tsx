@@ -110,7 +110,7 @@ export function ContactPicker({ organizationId, value, onChange, label = 'Contac
                       setIsOpen(false);
                       setSearch('');
                     }}
-                    className="w-full text-left px-3 py-2 hover:bg-cream-warm text-sm transition-colors"
+                    className="w-full text-left px-3 py-2 hover:bg-cream text-sm transition-colors"
                   >
                     <span className="font-medium text-charcoal">{c.first_name} {c.last_name}</span>
                     {c.email && <span className="text-stone ml-1">- {c.email}</span>}

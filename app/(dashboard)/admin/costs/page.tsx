@@ -236,7 +236,7 @@ export default function AdminCostsPage() {
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                   period === p.value
                     ? 'bg-teal text-white'
-                    : 'text-stone hover:text-charcoal hover:bg-cream-warm'
+                    : 'text-stone hover:text-charcoal hover:bg-cream'
                 }`}
               >
                 {p.label}

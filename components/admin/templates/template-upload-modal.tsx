@@ -382,7 +382,7 @@ export function TemplateUploadModal({ onClose, onSaved }: Props) {
             <h2 className="text-lg font-semibold text-charcoal">Import Template</h2>
             {parsed && <SourceBadge />}
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-cream-warm">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-cream">
             <XMarkIcon className="w-5 h-5 text-stone" />
           </button>
         </div>

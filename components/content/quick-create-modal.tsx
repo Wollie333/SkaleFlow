@@ -89,7 +89,7 @@ export function QuickCreateModal({ date, onClose, onCreate }: QuickCreateModalPr
             <h3 className="text-heading-sm text-charcoal">Add Post</h3>
             <p className="text-sm text-stone">{format(date, 'EEEE, MMMM d, yyyy')}</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-cream-warm rounded-lg"><XMarkIcon className="w-5 h-5 text-stone" /></button>
+          <button onClick={onClose} className="p-2 hover:bg-cream rounded-lg"><XMarkIcon className="w-5 h-5 text-stone" /></button>
         </div>
         <div className="p-6 space-y-4">
           <div>

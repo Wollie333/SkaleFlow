@@ -309,7 +309,7 @@ export function PreviewPanel({
                     {onEditInstance && (
                       <button
                         onClick={(e) => { e.stopPropagation(); onEditInstance(placement); }}
-                        className="p-0.5 rounded hover:bg-cream-warm/20 transition-colors text-white"
+                        className="p-0.5 rounded hover:bg-cream/20 transition-colors text-white"
                         title="Edit this instance"
                       >
                         <PencilSquareIcon className="w-3.5 h-3.5" />

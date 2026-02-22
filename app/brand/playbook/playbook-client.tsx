@@ -277,7 +277,7 @@ export function PlaybookClient({ organization, outputs, isPublicView }: Playbook
                     <button
                       key={result.key}
                       onClick={() => scrollToVariable(result.key)}
-                      className="w-full text-left px-3 py-2.5 transition-colors hover:bg-cream-warm"
+                      className="w-full text-left px-3 py-2.5 transition-colors hover:bg-cream"
                       style={{
                         borderBottom: '1px solid rgba(var(--playbook-neutral-rgb, 122, 117, 109), 0.06)',
                       }}
@@ -309,7 +309,7 @@ export function PlaybookClient({ organization, outputs, isPublicView }: Playbook
                       className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                         isActive
                           ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream-warm hover:text-charcoal'
+                          : 'text-stone hover:bg-cream hover:text-charcoal'
                       }`}
                     >
                       <span className="text-[10px] font-mono font-medium flex-shrink-0 w-5 text-center" style={{ color: 'var(--playbook-primary, #1E6B63)' }}>

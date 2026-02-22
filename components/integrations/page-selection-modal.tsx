@@ -236,7 +236,7 @@ export function PageSelectionModal({ platform, isOpen, onClose, onPagesAdded }: 
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-cream-warm transition-colors"
+            className="p-1 rounded-lg hover:bg-cream transition-colors"
           >
             <XMarkIcon className="w-5 h-5 text-stone" />
           </button>

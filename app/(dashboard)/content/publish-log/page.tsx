@@ -250,7 +250,7 @@ export default function PublishLogPage() {
           </select>
           <button
             onClick={loadRecords}
-            className="p-2 rounded-lg hover:bg-cream-warm transition-colors"
+            className="p-2 rounded-lg hover:bg-cream transition-colors"
             title="Refresh"
           >
             <ArrowPathIcon className="w-4 h-4 text-stone" />
@@ -291,7 +291,7 @@ export default function PublishLogPage() {
                     const title = contentItem?.topic || contentItem?.caption?.slice(0, 50) || contentItem?.format?.replace(/_/g, ' ') || 'Untitled';
 
                     return (
-                      <tr key={record.id} className="border-b border-stone/5 hover:bg-cream-warm/30 transition-colors">
+                      <tr key={record.id} className="border-b border-stone/5 hover:bg-cream/30 transition-colors">
                         <td className="px-4 py-3">
                           <p className="font-medium text-charcoal truncate max-w-[200px]" title={title}>
                             {title}

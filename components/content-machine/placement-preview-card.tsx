@@ -90,7 +90,7 @@ export function PlacementPreviewCard({
           )}
           <button
             onClick={onConfigClick}
-            className="p-0.5 rounded hover:bg-cream-warm/20 transition-colors text-white"
+            className="p-0.5 rounded hover:bg-cream/20 transition-colors text-white"
             title="Configure this placement"
           >
             <Cog6ToothIcon className="w-3.5 h-3.5" />

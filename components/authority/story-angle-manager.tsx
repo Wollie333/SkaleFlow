@@ -301,7 +301,7 @@ export function StoryAngleManager({ angles, organizationId, onRefresh, defaultMo
               {aiStatus !== 'generating' && (
                 <button
                   onClick={() => setShowAiModal(false)}
-                  className="p-1.5 text-stone hover:text-charcoal rounded-lg hover:bg-cream-warm transition-colors"
+                  className="p-1.5 text-stone hover:text-charcoal rounded-lg hover:bg-cream transition-colors"
                 >
                   <XMarkIcon className="w-4 h-4" />
                 </button>
@@ -389,7 +389,7 @@ export function StoryAngleManager({ angles, organizationId, onRefresh, defaultMo
                   <div className="flex gap-2">
                     <button
                       onClick={() => setShowAiModal(false)}
-                      className="px-4 py-2 text-xs font-medium text-stone border border-stone/20 rounded-lg hover:bg-cream-warm transition-colors"
+                      className="px-4 py-2 text-xs font-medium text-stone border border-stone/20 rounded-lg hover:bg-cream transition-colors"
                     >
                       Close
                     </button>
@@ -459,7 +459,7 @@ export function StoryAngleManager({ angles, organizationId, onRefresh, defaultMo
               <div className="flex items-center justify-between px-6 py-4 border-t border-stone/10 bg-cream-warm/20">
                 <button
                   onClick={() => setShowAiModal(false)}
-                  className="px-4 py-2 text-xs font-medium text-stone border border-stone/20 rounded-lg hover:bg-cream-warm transition-colors"
+                  className="px-4 py-2 text-xs font-medium text-stone border border-stone/20 rounded-lg hover:bg-cream transition-colors"
                 >
                   Dismiss
                 </button>

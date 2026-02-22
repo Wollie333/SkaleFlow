@@ -110,7 +110,7 @@ export function ContentFilterBar({ filters, onChange, totalCount, filteredCount 
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-              showFilters || hasFilters ? 'bg-teal/10 text-teal' : 'text-stone hover:bg-cream-warm'
+              showFilters || hasFilters ? 'bg-teal/10 text-teal' : 'text-stone hover:bg-cream'
             )}
           >
             <FunnelIcon className="w-4 h-4" />

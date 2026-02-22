@@ -252,7 +252,7 @@ export default function MeetingsPage() {
             <div className="flex items-center justify-between mb-6">
               <button
                 onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                className="p-2 rounded-lg hover:bg-cream-warm transition-colors"
+                className="p-2 rounded-lg hover:bg-cream transition-colors"
               >
                 <ChevronLeftIcon className="w-5 h-5 text-stone" />
               </button>
@@ -261,7 +261,7 @@ export default function MeetingsPage() {
               </h2>
               <button
                 onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                className="p-2 rounded-lg hover:bg-cream-warm transition-colors"
+                className="p-2 rounded-lg hover:bg-cream transition-colors"
               >
                 <ChevronRightIcon className="w-5 h-5 text-stone" />
               </button>

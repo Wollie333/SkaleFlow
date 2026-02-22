@@ -58,7 +58,7 @@ export function ContactList({ contacts, onContactClick }: ContactListProps) {
             <tr
               key={contact.id}
               onClick={() => onContactClick(contact)}
-              className="border-b border-stone/5 hover:bg-cream-warm/30 cursor-pointer transition-colors"
+              className="border-b border-stone/5 hover:bg-cream/30 cursor-pointer transition-colors"
             >
               <td className="px-4 py-3">
                 <p className="font-medium text-charcoal text-sm">{contact.full_name}</p>

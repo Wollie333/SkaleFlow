@@ -178,7 +178,7 @@ export function ComplianceIssuesPanel({ issues, onRevalidate }: ComplianceIssues
             variant="outline"
             size="sm"
             onClick={onRevalidate}
-            className="w-full border-stone/20 text-charcoal hover:bg-cream-warm/20"
+            className="w-full border-stone/20 text-charcoal hover:bg-cream/20"
           >
             <ArrowPathIcon className="w-4 h-4 mr-1.5" />
             Re-validate

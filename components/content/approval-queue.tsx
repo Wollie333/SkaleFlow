@@ -85,7 +85,7 @@ export function ApprovalQueue<T extends QueueItem>({ items, onApprove, onReject,
       </div>
       <div className="divide-y divide-stone/5">
         {pendingItems.length > 0 && pendingItems.map(item => (
-          <div key={item.id} className="p-4 hover:bg-cream-warm/50 transition-colors">
+          <div key={item.id} className="p-4 hover:bg-cream/50 transition-colors">
             <div className="flex items-start justify-between gap-3">
               <button onClick={() => onItemClick(item)} className="flex-1 text-left">
                 <p className="text-sm font-medium text-charcoal truncate">
@@ -162,7 +162,7 @@ export function ApprovalQueue<T extends QueueItem>({ items, onApprove, onReject,
               </div>
             )}
             {revisionItems.map(item => (
-              <div key={item.id} className="p-4 hover:bg-cream-warm/50 transition-colors">
+              <div key={item.id} className="p-4 hover:bg-cream/50 transition-colors">
                 <div className="flex items-start justify-between gap-3">
                   <button onClick={() => onItemClick(item)} className="flex-1 text-left">
                     <div className="flex items-center gap-2">

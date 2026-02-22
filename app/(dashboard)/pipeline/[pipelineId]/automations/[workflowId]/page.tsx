@@ -111,7 +111,7 @@ export default function WorkflowBuilderPage() {
             value={workflowName}
             onChange={(e) => handleNameChange(e.target.value)}
             placeholder="Untitled Workflow"
-            className="font-serif text-sm font-bold text-charcoal bg-transparent border border-stone/20 outline-none focus:ring-2 focus:ring-teal/30 hover:bg-cream-warm focus:bg-cream-warm rounded-lg px-3 py-1.5 transition-colors"
+            className="font-serif text-sm font-bold text-charcoal bg-transparent border border-stone/20 outline-none focus:ring-2 focus:ring-teal/30 hover:bg-cream focus:bg-cream-warm rounded-lg px-3 py-1.5 transition-colors"
           />
         }
         className="mb-4"

@@ -43,7 +43,7 @@ export function PhaseNavDropdown({ phases, currentPhaseId, onPhaseClick }: Phase
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-lg border border-stone/15 bg-cream-warm px-3 py-2 hover:bg-cream-warm transition-colors w-full"
+        className="flex items-center gap-2 rounded-lg border border-stone/15 bg-cream-warm px-3 py-2 hover:bg-cream transition-colors w-full"
       >
         <span className="flex items-center justify-center w-6 h-6 rounded-full bg-teal/10 text-teal text-xs font-bold flex-shrink-0">
           {currentPhase.phase_number}
@@ -78,7 +78,7 @@ export function PhaseNavDropdown({ phases, currentPhaseId, onPhaseClick }: Phase
                 disabled={!accessible}
                 className={cn(
                   'w-full text-left px-3 py-2 flex items-center gap-2.5 transition-colors',
-                  accessible && 'hover:bg-cream-warm cursor-pointer',
+                  accessible && 'hover:bg-cream cursor-pointer',
                   !accessible && 'opacity-40 cursor-not-allowed',
                   isActive && 'bg-teal/5'
                 )}

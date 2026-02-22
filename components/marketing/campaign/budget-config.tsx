@@ -42,7 +42,7 @@ export function BudgetConfig({
             'flex-1 py-2.5 text-sm font-medium transition-all duration-200',
             budgetType === 'daily'
               ? 'bg-teal text-cream'
-              : 'bg-cream-warm text-stone hover:bg-cream-warm/30'
+              : 'bg-cream-warm text-stone hover:bg-cream/30'
           )}
         >
           Daily Budget
@@ -54,7 +54,7 @@ export function BudgetConfig({
             'flex-1 py-2.5 text-sm font-medium transition-all duration-200',
             budgetType === 'lifetime'
               ? 'bg-teal text-cream'
-              : 'bg-cream-warm text-stone hover:bg-cream-warm/30'
+              : 'bg-cream-warm text-stone hover:bg-cream/30'
           )}
         >
           Lifetime Budget

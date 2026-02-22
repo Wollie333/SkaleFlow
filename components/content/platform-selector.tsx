@@ -218,7 +218,7 @@ export function PlatformSelector({
                   {platformConnections.map(conn => (
                     <label
                       key={conn.id}
-                      className="flex items-center gap-2 p-2 hover:bg-cream-warm rounded cursor-pointer transition-colors"
+                      className="flex items-center gap-2 p-2 hover:bg-cream rounded cursor-pointer transition-colors"
                     >
                       <input
                         type="checkbox"

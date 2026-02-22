@@ -96,7 +96,7 @@ export function MediaLibraryModal({ organizationId, onSelect, onClose }: MediaLi
       <div className="bg-cream-warm rounded-2xl w-full max-w-3xl max-h-[80vh] flex flex-col shadow-xl">
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <h2 className="text-heading-md text-charcoal">Media Library</h2>
-          <button onClick={onClose} className="p-2 hover:bg-cream-warm rounded-lg">
+          <button onClick={onClose} className="p-2 hover:bg-cream rounded-lg">
             <XMarkIcon className="w-5 h-5 text-stone" />
           </button>
         </div>

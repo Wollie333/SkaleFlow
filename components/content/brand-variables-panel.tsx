@@ -147,7 +147,7 @@ export function BrandVariablesPanel({ organizationId, isOpen, onClose }: BrandVa
               <h2 className="text-heading-md text-charcoal">Brand DNA</h2>
               <p className="text-xs text-stone">Variables used in AI content generation</p>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-cream-warm rounded-lg transition-colors">
+            <button onClick={onClose} className="p-2 hover:bg-cream rounded-lg transition-colors">
               <XMarkIcon className="w-5 h-5 text-stone" />
             </button>
           </div>
@@ -192,7 +192,7 @@ export function BrandVariablesPanel({ organizationId, isOpen, onClose }: BrandVa
                 <div key={cat.key}>
                   <button
                     onClick={() => toggleCategory(cat.key)}
-                    className="w-full px-6 py-3 flex items-center justify-between hover:bg-cream-warm/50 transition-colors"
+                    className="w-full px-6 py-3 flex items-center justify-between hover:bg-cream/50 transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-charcoal">{cat.label}</span>
@@ -217,7 +217,7 @@ export function BrandVariablesPanel({ organizationId, isOpen, onClose }: BrandVa
                             {editingKey !== v.key && (
                               <button
                                 onClick={() => startEdit(v.key, v.value)}
-                                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-cream-warm rounded transition-all"
+                                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-cream rounded transition-all"
                               >
                                 <PencilIcon className="w-3 h-3 text-stone" />
                               </button>

@@ -8,7 +8,7 @@
   :root {
     /* Swappable tokens — RGB triplets for Tailwind alpha support */
     --color-cream: 240 236 228;
-    --color-cream-warm: 245 241 234;
+    --color-cream-warm: 255 255 255;
     --color-charcoal: 44 44 44;
     --color-stone: 122 117 109;
 
@@ -44,7 +44,7 @@
   html.dark [class*="bg-dark"],
   html.dark [class*="bg-teal"] {
     --color-cream: 240 236 228;
-    --color-cream-warm: 245 241 234;
+    --color-cream-warm: 255 255 255;
     --color-charcoal: 44 44 44;
     --color-stone: 122 117 109;
   }
@@ -139,7 +139,7 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #F0ECE4;
+  background: #F0ECE4; /* matches cream bg */
 }
 
 ::-webkit-scrollbar-thumb {

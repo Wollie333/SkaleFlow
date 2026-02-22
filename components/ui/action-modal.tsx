@@ -62,7 +62,7 @@ export function ActionModal({ open, onClose, variant, title, subtitle, actions }
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1 rounded-lg text-stone hover:text-charcoal hover:bg-cream-warm transition-colors"
+          className="absolute top-4 right-4 p-1 rounded-lg text-stone hover:text-charcoal hover:bg-cream transition-colors"
         >
           <XMarkIcon className="w-5 h-5" />
         </button>
@@ -90,7 +90,7 @@ export function ActionModal({ open, onClose, variant, title, subtitle, actions }
                   action.variant === 'danger'
                     ? 'bg-red-500 text-white hover:bg-red-600'
                     : action.variant === 'ghost'
-                    ? 'bg-transparent text-charcoal hover:bg-cream-warm border border-stone/20'
+                    ? 'bg-transparent text-charcoal hover:bg-cream border border-stone/20'
                     : 'bg-teal text-cream hover:bg-teal-light'
                 );
 

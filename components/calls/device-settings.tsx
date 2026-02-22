@@ -238,7 +238,7 @@ export function DeviceSettings({ open, onClose, onDeviceChange, currentStream }:
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 py-2.5 rounded-lg border border-white/10 text-white/60 text-sm font-medium hover:bg-cream-warm/5"
+              className="flex-1 py-2.5 rounded-lg border border-white/10 text-white/60 text-sm font-medium hover:bg-cream/5"
             >
               Cancel
             </button>

@@ -157,7 +157,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
           <div className="px-6 pb-5 flex gap-3">
             <button
               onClick={() => setViewMode('expanded')}
-              className="flex-1 py-3 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-cream-warm/5 transition-colors"
+              className="flex-1 py-3 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-cream/5 transition-colors"
             >
               Go Back
             </button>
@@ -210,7 +210,7 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
             <div className="flex items-center gap-1.5 flex-shrink-0">
               <button
                 onClick={handleMinimize}
-                className="p-2 rounded-lg bg-cream-warm/10 text-white/60 hover:text-white hover:bg-cream-warm/20 transition-colors"
+                className="p-2 rounded-lg bg-cream-warm/10 text-white/60 hover:text-white hover:bg-cream/20 transition-colors"
                 title="Minimize"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -285,13 +285,13 @@ export function OfferOverlay({ offer, onAccept, onDismiss, onDecline, onMinimize
             </button>
             <button
               onClick={handleMinimize}
-              className="flex-1 py-3 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-cream-warm/5 transition-colors"
+              className="flex-1 py-3 rounded-xl border border-white/10 text-white/60 text-sm font-medium hover:bg-cream/5 transition-colors"
             >
               View Later
             </button>
             <button
               onClick={handleStartDecline}
-              className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 text-sm font-medium hover:bg-cream-warm/5 hover:text-white/70 transition-colors"
+              className="flex-1 py-3 rounded-xl border border-white/10 text-white/50 text-sm font-medium hover:bg-cream/5 hover:text-white/70 transition-colors"
             >
               Not Interested
             </button>

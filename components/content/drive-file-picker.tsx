@@ -163,7 +163,7 @@ export function DriveFilePicker({ organizationId, contentItemId, onImport, onClo
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <h2 className="text-heading-md text-charcoal">Import from Google Drive</h2>
-          <button onClick={onClose} className="p-2 hover:bg-cream-warm rounded-lg transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-cream rounded-lg transition-colors">
             <XMarkIcon className="w-5 h-5 text-stone" />
           </button>
         </div>
@@ -227,7 +227,7 @@ export function DriveFilePicker({ organizationId, contentItemId, onImport, onClo
               {folderStack.length > 0 && (
                 <button
                   onClick={handleGoBack}
-                  className="flex items-center gap-2 px-3 py-2 mb-2 text-sm text-stone hover:text-charcoal hover:bg-cream-warm rounded-lg transition-colors w-full"
+                  className="flex items-center gap-2 px-3 py-2 mb-2 text-sm text-stone hover:text-charcoal hover:bg-cream rounded-lg transition-colors w-full"
                 >
                   <ArrowLeftIcon className="w-4 h-4" />
                   Back
@@ -246,7 +246,7 @@ export function DriveFilePicker({ organizationId, contentItemId, onImport, onClo
                       className={`relative flex flex-col items-center p-3 rounded-lg border text-center transition-colors ${
                         selected
                           ? 'border-teal bg-teal/5'
-                          : 'border-stone/10 hover:border-stone/20 hover:bg-cream-warm'
+                          : 'border-stone/10 hover:border-stone/20 hover:bg-cream'
                       }`}
                     >
                       {selected && (

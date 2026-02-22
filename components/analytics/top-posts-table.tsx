@@ -120,7 +120,7 @@ export function TopPostsTable({ posts, isLoading, visibleColumns, onPostClick }:
               <tr
                 key={post.id}
                 className={cn(
-                  'border-b border-stone/5 hover:bg-cream-warm/50',
+                  'border-b border-stone/5 hover:bg-cream/50',
                   onPostClick && 'cursor-pointer'
                 )}
                 onClick={() => onPostClick?.(post)}

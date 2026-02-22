@@ -622,7 +622,7 @@ export default function ApplicationDetailPage() {
               <h3 className="font-serif text-lg font-bold text-charcoal">Booking Link</h3>
               <button
                 onClick={() => setBookingModal(false)}
-                className="p-1.5 rounded-lg hover:bg-cream-warm transition-colors"
+                className="p-1.5 rounded-lg hover:bg-cream transition-colors"
               >
                 <XMarkIcon className="w-5 h-5 text-stone" />
               </button>

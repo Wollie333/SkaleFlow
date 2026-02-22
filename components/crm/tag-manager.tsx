@@ -110,7 +110,7 @@ export function TagManager({ organizationId, contactId, assignedTags, onTagsChan
                   key={tag.id}
                   type="button"
                   onClick={() => { addTag(tag.id); setShowPicker(false); }}
-                  className="flex items-center gap-2 w-full px-2 py-1 hover:bg-cream-warm rounded text-sm text-left transition-colors"
+                  className="flex items-center gap-2 w-full px-2 py-1 hover:bg-cream rounded text-sm text-left transition-colors"
                 >
                   <span className="w-3 h-3 rounded-full" style={{ backgroundColor: tag.color }} />
                   {tag.name}

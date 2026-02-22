@@ -82,7 +82,7 @@ export function ProgressTracker({ phases, currentPhaseId, onPhaseClick, onUnlock
                   isActive && 'bg-teal/10 border border-teal/20',
                   isCompleted && !isActive && 'bg-cream-warm',
                   accessible && !isCompleted && !isInProgress && !isActive && 'opacity-60',
-                  accessible && !isActive && 'hover:bg-cream-warm'
+                  accessible && !isActive && 'hover:bg-cream'
                 )}
               >
                 <div

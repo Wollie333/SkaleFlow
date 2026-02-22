@@ -78,7 +78,7 @@ export function TrendingHashtagsWidget({ organizationId }: TrendingHashtagsWidge
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-cream-warm/50 transition-colors"
+        className="w-full px-6 py-4 flex items-center justify-between hover:bg-cream/50 transition-colors"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-teal to-teal-dark rounded-lg flex items-center justify-center">

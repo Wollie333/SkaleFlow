@@ -108,7 +108,7 @@ export function CsvImportModal({ isOpen, onClose, organizationId, onImportComple
       <div className="bg-cream-warm rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone/10">
           <h2 className="text-lg font-serif font-semibold text-charcoal">Import Contacts (CSV)</h2>
-          <button onClick={handleClose} className="p-1 hover:bg-cream-warm rounded-lg transition-colors">
+          <button onClick={handleClose} className="p-1 hover:bg-cream rounded-lg transition-colors">
             <XMarkIcon className="w-5 h-5 text-stone" />
           </button>
         </div>

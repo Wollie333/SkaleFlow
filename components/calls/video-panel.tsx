@@ -95,7 +95,7 @@ export function VideoPanel({ localStream, participants, localUserId, localPartic
               </div>
               <button
                 onClick={onJoinCall}
-                className="mt-3 px-6 py-2.5 rounded-lg bg-cream-warm/10 hover:bg-cream-warm/20 text-white text-sm font-medium transition-colors"
+                className="mt-3 px-6 py-2.5 rounded-lg bg-cream-warm/10 hover:bg-cream/20 text-white text-sm font-medium transition-colors"
               >
                 Try Again
               </button>

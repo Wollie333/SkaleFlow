@@ -118,7 +118,7 @@ export function TableView({ items, onItemClick, onBulkAction }: TableViewProps) 
           onClick={() => setShowFilters(!showFilters)}
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors',
-            showFilters ? 'bg-teal/10 text-teal' : 'text-stone hover:bg-cream-warm'
+            showFilters ? 'bg-teal/10 text-teal' : 'text-stone hover:bg-cream'
           )}
         >
           <FunnelIcon className="w-4 h-4" /> Filters
@@ -188,7 +188,7 @@ export function TableView({ items, onItemClick, onBulkAction }: TableViewProps) 
               <tr
                 key={item.id}
                 className={cn(
-                  'hover:bg-cream-warm/50 transition-colors cursor-pointer',
+                  'hover:bg-cream/50 transition-colors cursor-pointer',
                   selectedIds.has(item.id) && 'bg-teal/5'
                 )}
               >

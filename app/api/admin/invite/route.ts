@@ -86,7 +86,8 @@ export async function POST(request: Request) {
     }
 
     // Build invitation URL
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${token}`;
+    const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://skale-flow.vercel.app';
+    const inviteUrl = `${origin}/invite/${token}`;
 
     // Send invitation email via Supabase
     // Note: You may want to use a custom email service for branded emails

@@ -214,7 +214,7 @@ function DraggablePost({
             onPreview?.(item);
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          className="p-2 bg-cream-warm/10 rounded hover:bg-cream-warm/20 transition-colors"
+          className="p-2 bg-cream-warm/10 rounded hover:bg-cream/20 transition-colors"
           title="Preview"
         >
           <EyeIcon className="w-4 h-4 text-white" />
@@ -225,7 +225,7 @@ function DraggablePost({
             onItemClick(item);
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          className="p-2 bg-cream-warm/10 rounded hover:bg-cream-warm/20 transition-colors"
+          className="p-2 bg-cream-warm/10 rounded hover:bg-cream/20 transition-colors"
           title="Edit"
         >
           <PencilIcon className="w-4 h-4 text-white" />
@@ -434,7 +434,7 @@ export function CalendarView({ items, onItemClick, onMonthChange, onMovePost, on
                 {allSelected ? 'Deselect All' : 'Select All'}
               </button>
             )}
-            <button onClick={handlePreviousMonth} className="p-2 rounded-lg hover:bg-cream-warm transition-colors">
+            <button onClick={handlePreviousMonth} className="p-2 rounded-lg hover:bg-cream transition-colors">
               <ChevronLeftIcon className="w-5 h-5 text-stone" />
             </button>
             <button
@@ -443,7 +443,7 @@ export function CalendarView({ items, onItemClick, onMonthChange, onMovePost, on
             >
               Today
             </button>
-            <button onClick={handleNextMonth} className="p-2 rounded-lg hover:bg-cream-warm transition-colors">
+            <button onClick={handleNextMonth} className="p-2 rounded-lg hover:bg-cream transition-colors">
               <ChevronRightIcon className="w-5 h-5 text-stone" />
             </button>
           </div>

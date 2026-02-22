@@ -73,7 +73,7 @@ export function ObjectiveSelector({ value, onChange }: ObjectiveSelectorProps) {
                 'flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-200 text-center',
                 isSelected
                   ? 'border-teal bg-teal/5 ring-2 ring-teal/20'
-                  : 'border-stone/20 bg-cream-warm hover:border-stone/40 hover:bg-cream-warm/30'
+                  : 'border-stone/20 bg-cream-warm hover:border-stone/40 hover:bg-cream/30'
               )}
             >
               <div

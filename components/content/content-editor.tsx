@@ -334,7 +334,7 @@ export function ContentEditor({ item, onSave, onClose, onGenerate, onApprove, on
           {organizationId && (
             <ContentBrief item={formData} organizationId={organizationId} />
           )}
-          <button onClick={onClose} className="p-2 hover:bg-cream-warm rounded-lg transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-cream rounded-lg transition-colors">
             <XMarkIcon className="w-5 h-5 text-stone" />
           </button>
         </div>

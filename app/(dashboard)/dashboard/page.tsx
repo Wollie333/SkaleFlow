@@ -533,7 +533,7 @@ function QuickAction({
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 p-3 rounded-lg hover:bg-cream-warm transition-colors group"
+      className="flex items-center gap-3 p-3 rounded-lg hover:bg-cream transition-colors group"
     >
       <div className="w-9 h-9 rounded-lg bg-teal/10 flex items-center justify-center flex-shrink-0 group-hover:bg-teal/15 transition-colors">
         <Icon className="w-4.5 h-4.5 text-teal" />

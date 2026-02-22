@@ -259,7 +259,7 @@ export function QuestionPanel({
               <button
                 type="button"
                 onClick={() => setIsQuickAnswerOpen(!isQuickAnswerOpen)}
-                className="w-full flex items-center justify-between px-3 py-2.5 bg-cream-warm hover:bg-cream-warm/50 transition-colors"
+                className="w-full flex items-center justify-between px-3 py-2.5 bg-cream-warm hover:bg-cream/50 transition-colors"
               >
                 <span className="text-xs font-medium text-stone">
                   Know your answer? Type it directly

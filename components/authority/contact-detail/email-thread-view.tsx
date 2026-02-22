@@ -42,7 +42,7 @@ export function EmailThreadView({ thread, onReply }: EmailThreadViewProps) {
       {/* Thread Header — always visible */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-start gap-3 p-4 hover:bg-cream-warm/30 transition-colors text-left"
+        className="w-full flex items-start gap-3 p-4 hover:bg-cream/30 transition-colors text-left"
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">

@@ -279,7 +279,7 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
                         <button
                           key={notification.id}
                           onClick={() => handleNotificationClick(notification)}
-                          className={`w-full text-left px-4 py-3 hover:bg-cream-warm/50 transition-colors flex gap-3 ${
+                          className={`w-full text-left px-4 py-3 hover:bg-cream/50 transition-colors flex gap-3 ${
                             !notification.is_read ? 'bg-teal/[0.03]' : ''
                           }`}
                         >

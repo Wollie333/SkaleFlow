@@ -281,7 +281,7 @@ export function TemplateEditModal({ template, onClose, onSaved }: Props) {
               </span>
             )}
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-cream-warm">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-cream">
             <XMarkIcon className="w-5 h-5 text-stone" />
           </button>
         </div>

@@ -155,7 +155,7 @@ export async function GET(
         : empty([] as Array<{ id: string; role: string; team_role: string | null; joined_at: string; user_id: string; users: { id: string; email: string; full_name: string; last_login_at: string | null } | null }>),
       // Pending invitations for the org (with email tracking)
       orgId
-        ? wrap(serviceSupabase.from('invitations').select('id, email, status, created_at, expires_at, email_status, email_sent_at, email_error').eq('organization_name', orgName).in('status', ['pending']).order('created_at', { ascending: false }))
+        ? wrap(serviceSupabase.from('invitations').select('id, email, token, status, created_at, expires_at, email_status, email_sent_at, email_error').eq('organization_name', orgName).in('status', ['pending']).order('created_at', { ascending: false }))
         : empty([] as Array<{ id: string; email: string; status: string; created_at: string; expires_at: string; email_status: string; email_sent_at: string | null; email_error: string | null }>),
       // Invoices for the org
       orgId
@@ -457,7 +457,8 @@ export async function PATCH(
           .eq('id', invite.id);
       }
 
-      const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${token}`;
+      const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://skale-flow.vercel.app';
+      const inviteUrl = `${origin}/invite/${token}`;
 
       try {
         const emailResult = await sendTeamInviteEmail({

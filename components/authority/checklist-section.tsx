@@ -73,7 +73,7 @@ export function ChecklistSection({ items, cardId, onToggle, onAdd }: ChecklistSe
               onClick={() => onToggle(item.id, !item.is_completed)}
               className={cn(
                 'w-full flex items-start gap-2 px-2 py-1.5 rounded-lg text-left transition-colors group',
-                'hover:bg-cream-warm/60'
+                'hover:bg-cream/60'
               )}
             >
               {item.is_completed ? (

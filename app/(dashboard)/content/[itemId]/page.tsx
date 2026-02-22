@@ -566,7 +566,7 @@ export default function PostEditPage() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.push('/calendar')}
-            className="p-2 rounded-lg hover:bg-cream-warm text-stone transition-colors"
+            className="p-2 rounded-lg hover:bg-cream text-stone transition-colors"
           >
             <ArrowLeftIcon className="w-5 h-5" />
           </button>

@@ -233,7 +233,7 @@ export function PostsPerformanceClient({ organizationId, connections }: PostsPer
               className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                 dateRangePreset === '7days'
                   ? 'bg-teal text-white'
-                  : 'text-stone hover:bg-cream-warm'
+                  : 'text-stone hover:bg-cream'
               }`}
             >
               Last 7 days
@@ -243,7 +243,7 @@ export function PostsPerformanceClient({ organizationId, connections }: PostsPer
               className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                 dateRangePreset === '30days'
                   ? 'bg-teal text-white'
-                  : 'text-stone hover:bg-cream-warm'
+                  : 'text-stone hover:bg-cream'
               }`}
             >
               Last 30 days
@@ -253,7 +253,7 @@ export function PostsPerformanceClient({ organizationId, connections }: PostsPer
               className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                 dateRangePreset === '90days'
                   ? 'bg-teal text-white'
-                  : 'text-stone hover:bg-cream-warm'
+                  : 'text-stone hover:bg-cream'
               }`}
             >
               Last 90 days
@@ -266,7 +266,7 @@ export function PostsPerformanceClient({ organizationId, connections }: PostsPer
               className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
                 dateRangePreset === 'custom'
                   ? 'bg-teal text-white'
-                  : 'text-stone hover:bg-cream-warm'
+                  : 'text-stone hover:bg-cream'
               }`}
             >
               <CalendarIcon className="w-4 h-4" />

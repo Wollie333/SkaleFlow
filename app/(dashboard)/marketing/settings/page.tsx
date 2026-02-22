@@ -329,7 +329,7 @@ export default function AdAccountSettingsPage() {
             {/* Setup Guide Toggle */}
             <button
               onClick={() => setExpandedGuide(isExpanded ? null : platform)}
-              className="w-full flex items-center justify-between p-3 bg-cream-warm/50 rounded-lg hover:bg-cream-warm transition-colors text-left"
+              className="w-full flex items-center justify-between p-3 bg-cream-warm/50 rounded-lg hover:bg-cream transition-colors text-left"
             >
               <div className="flex items-center gap-2">
                 <InformationCircleIcon className="w-5 h-5 text-teal" />

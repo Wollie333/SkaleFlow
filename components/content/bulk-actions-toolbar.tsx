@@ -73,7 +73,7 @@ export function BulkActionsToolbar({
 
             <button
               onClick={() => onBulkAction('reschedule')}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-charcoal bg-cream hover:bg-cream-warm rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-charcoal bg-cream hover:bg-cream rounded-lg transition-colors"
               title="Reschedule selected posts"
             >
               <CalendarIcon className="w-4 h-4" />
@@ -82,7 +82,7 @@ export function BulkActionsToolbar({
 
             <button
               onClick={() => onBulkAction('assign')}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-charcoal bg-cream hover:bg-cream-warm rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-charcoal bg-cream hover:bg-cream rounded-lg transition-colors"
               title="Assign to team member"
             >
               <UserIcon className="w-4 h-4" />

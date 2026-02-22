@@ -133,7 +133,7 @@ export default function AuthorityPipelinePage() {
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 activeTab === 'pipeline'
                   ? 'bg-teal text-white shadow-sm'
-                  : 'text-charcoal hover:bg-cream-warm'
+                  : 'text-charcoal hover:bg-cream'
               }`}
             >
               <ViewColumnsIcon className="w-3.5 h-3.5" />
@@ -144,7 +144,7 @@ export default function AuthorityPipelinePage() {
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 activeTab === 'dashboard'
                   ? 'bg-teal text-white shadow-sm'
-                  : 'text-charcoal hover:bg-cream-warm'
+                  : 'text-charcoal hover:bg-cream'
               }`}
             >
               <ChartBarIcon className="w-3.5 h-3.5" />

@@ -37,7 +37,7 @@ export function ContactHeader({ contact, hasGmail, onSendEmail, onEditContact }:
         <div className="flex items-start gap-4">
           <button
             onClick={() => router.push('/authority/contacts')}
-            className="mt-1 p-1.5 hover:bg-cream-warm rounded-lg transition-colors"
+            className="mt-1 p-1.5 hover:bg-cream rounded-lg transition-colors"
             title="Back to contacts"
           >
             <ArrowLeftIcon className="w-5 h-5 text-stone" />
@@ -103,7 +103,7 @@ export function ContactHeader({ contact, hasGmail, onSendEmail, onEditContact }:
           )}
           <button
             onClick={onEditContact}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-charcoal border border-stone/20 rounded-lg hover:bg-cream-warm transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-charcoal border border-stone/20 rounded-lg hover:bg-cream transition-colors"
           >
             <PencilSquareIcon className="w-4 h-4" />
             Edit

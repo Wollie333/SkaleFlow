@@ -327,7 +327,7 @@ export default function MarketingDashboardPage() {
                 <Link
                   key={campaign.id}
                   href={`/marketing/campaigns/${campaign.id}`}
-                  className="flex items-center gap-4 py-3 px-2 -mx-2 rounded-lg hover:bg-cream-warm/50 transition-colors group"
+                  className="flex items-center gap-4 py-3 px-2 -mx-2 rounded-lg hover:bg-cream/50 transition-colors group"
                 >
                   <PlatformIcon
                     platform={campaign.platform as AdPlatform}

@@ -692,7 +692,7 @@ export default function CalendarPage() {
                     {viewMode === 'calendar' && items.length > 0 && (
                       <button
                         onClick={() => { calendarSelectionMode ? exitSelectionMode() : setCalendarSelectionMode(true); setShowHeaderMenu(false); }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-charcoal hover:bg-cream-warm flex items-center gap-2.5"
+                        className="w-full text-left px-4 py-2.5 text-sm text-charcoal hover:bg-cream flex items-center gap-2.5"
                       >
                         <CursorArrowRaysIcon className="w-4 h-4 text-stone" />
                         {calendarSelectionMode ? 'Exit Select' : 'Select Items'}
@@ -700,14 +700,14 @@ export default function CalendarPage() {
                     )}
                     <button
                       onClick={() => { setShowBrandPanel(true); setShowHeaderMenu(false); }}
-                      className="w-full text-left px-4 py-2.5 text-sm text-charcoal hover:bg-cream-warm flex items-center gap-2.5"
+                      className="w-full text-left px-4 py-2.5 text-sm text-charcoal hover:bg-cream flex items-center gap-2.5"
                     >
                       <BeakerIcon className="w-4 h-4 text-stone" />
                       Brand DNA
                     </button>
                     <button
                       onClick={() => { handleExport(); setShowHeaderMenu(false); }}
-                      className="w-full text-left px-4 py-2.5 text-sm text-charcoal hover:bg-cream-warm flex items-center gap-2.5"
+                      className="w-full text-left px-4 py-2.5 text-sm text-charcoal hover:bg-cream flex items-center gap-2.5"
                     >
                       <DocumentArrowDownIcon className="w-4 h-4 text-stone" />
                       Export CSV

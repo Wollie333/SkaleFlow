@@ -165,7 +165,7 @@ export function GenerateWeekModal({
                     <button
                       onClick={() => setPostCount(Math.max(1, postCount - 1))}
                       disabled={postCount <= 1}
-                      className="w-8 h-8 rounded-lg border border-stone/20 flex items-center justify-center hover:bg-cream-warm disabled:opacity-30 transition-colors"
+                      className="w-8 h-8 rounded-lg border border-stone/20 flex items-center justify-center hover:bg-cream disabled:opacity-30 transition-colors"
                     >
                       <MinusIcon className="w-4 h-4 text-charcoal" />
                     </button>
@@ -173,7 +173,7 @@ export function GenerateWeekModal({
                     <button
                       onClick={() => setPostCount(Math.min(itemCount, postCount + 1))}
                       disabled={postCount >= itemCount}
-                      className="w-8 h-8 rounded-lg border border-stone/20 flex items-center justify-center hover:bg-cream-warm disabled:opacity-30 transition-colors"
+                      className="w-8 h-8 rounded-lg border border-stone/20 flex items-center justify-center hover:bg-cream disabled:opacity-30 transition-colors"
                     >
                       <PlusIcon className="w-4 h-4 text-charcoal" />
                     </button>

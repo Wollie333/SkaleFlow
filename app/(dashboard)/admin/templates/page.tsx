@@ -401,7 +401,7 @@ Visual/structural rules for the output.
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                 categoryFilter === cat.value
                   ? 'bg-teal text-white shadow-sm'
-                  : 'text-charcoal hover:bg-cream-warm'
+                  : 'text-charcoal hover:bg-cream'
               }`}
             >
               {cat.label}
@@ -549,7 +549,7 @@ Visual/structural rules for the output.
                       e.stopPropagation();
                       setEditTemplate(template);
                     }}
-                    className="p-1.5 rounded-lg hover:bg-cream-warm text-stone hover:text-charcoal transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-cream text-stone hover:text-charcoal transition-colors"
                   >
                     <PencilSquareIcon className="w-4 h-4" />
                   </button>

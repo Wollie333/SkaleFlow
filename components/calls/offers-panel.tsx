@@ -346,7 +346,7 @@ export function OffersPanel({
                     {effective.price_display && (
                       <button
                         onClick={() => openPriceEditor(offer)}
-                        className="group relative text-gold text-sm font-semibold whitespace-nowrap hover:bg-cream-warm/10 rounded px-1.5 py-0.5 -mr-1.5 transition-colors"
+                        className="group relative text-gold text-sm font-semibold whitespace-nowrap hover:bg-cream/10 rounded px-1.5 py-0.5 -mr-1.5 transition-colors"
                         title="Click to edit price"
                       >
                         {effective.price_display}
@@ -405,14 +405,14 @@ export function OffersPanel({
                     <div className="flex flex-col gap-1.5 md:flex-row md:gap-2">
                       <button
                         onClick={() => setEditingPriceId(null)}
-                        className="flex-1 py-1.5 rounded text-xs font-medium border border-white/10 text-white/50 hover:bg-cream-warm/5 transition-colors"
+                        className="flex-1 py-1.5 rounded text-xs font-medium border border-white/10 text-white/50 hover:bg-cream/5 transition-colors"
                       >
                         Cancel
                       </button>
                       {hasOverride && (
                         <button
                           onClick={() => resetPrice(offer.id)}
-                          className="py-1.5 px-2.5 rounded text-xs font-medium border border-white/10 text-white/40 hover:bg-cream-warm/5 transition-colors"
+                          className="py-1.5 px-2.5 rounded text-xs font-medium border border-white/10 text-white/40 hover:bg-cream/5 transition-colors"
                           title="Reset to original price"
                         >
                           Reset

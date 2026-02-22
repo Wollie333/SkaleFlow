@@ -100,11 +100,11 @@ export function PrCalendar({ organizationId }: PrCalendarProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-cream-warm transition-colors">
+          <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-cream transition-colors">
             <ChevronLeftIcon className="w-4 h-4 text-stone" />
           </button>
           <h2 className="text-lg font-serif font-semibold text-charcoal min-w-[180px] text-center">{monthName}</h2>
-          <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-cream-warm transition-colors">
+          <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-cream transition-colors">
             <ChevronRightIcon className="w-4 h-4 text-stone" />
           </button>
         </div>
@@ -198,7 +198,7 @@ export function PrCalendar({ organizationId }: PrCalendarProps) {
             </div>
           ) : (
             events.map(ev => (
-              <div key={ev.id} className="flex items-center gap-3 p-3 hover:bg-cream-warm/20 transition-colors">
+              <div key={ev.id} className="flex items-center gap-3 p-3 hover:bg-cream/20 transition-colors">
                 <div
                   className="w-1 h-8 rounded-full flex-shrink-0"
                   style={{ backgroundColor: ev.color || '#14b8a6' }}

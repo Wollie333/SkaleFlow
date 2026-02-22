@@ -255,7 +255,7 @@ export function CreateAuditModal({ organizationId, preselectedContactId, onClose
                         <button
                           key={c.id}
                           onClick={() => { setSelectedContact(c); setContactSearch(''); setContacts([]); }}
-                          className="w-full text-left px-4 py-2 hover:bg-cream-warm text-sm"
+                          className="w-full text-left px-4 py-2 hover:bg-cream text-sm"
                         >
                           <div className="font-medium text-charcoal">{c.first_name} {c.last_name}</div>
                           <div className="text-xs text-stone">{c.email} {c.crm_companies?.name ? `• ${c.crm_companies.name}` : ''}</div>

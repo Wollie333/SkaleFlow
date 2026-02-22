@@ -99,7 +99,9 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 });
     }
 
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${token}`;
+    // Use request origin for correct URL in all environments
+    const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://skale-flow.vercel.app';
+    const inviteUrl = `${origin}/invite/${token}`;
 
     // Send email + track status
     let emailStatus: string = 'pending';

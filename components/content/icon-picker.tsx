@@ -69,7 +69,7 @@ export function IconPicker({ onIconSelect, className }: IconPickerProps) {
                       key={emoji}
                       type="button"
                       onClick={() => handleIconClick(emoji)}
-                      className="w-8 h-8 flex items-center justify-center text-xl hover:bg-cream-warm rounded transition-colors"
+                      className="w-8 h-8 flex items-center justify-center text-xl hover:bg-cream rounded transition-colors"
                       title={emoji}
                     >
                       {emoji}
