@@ -529,6 +529,7 @@ export function InboxClient({ organizationId }: InboxClientProps) {
               thread={thread}
               onReply={handleReply}
               onMarkAsRead={handleMarkAsRead}
+              organizationId={organizationId}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center">
@@ -578,7 +579,7 @@ function MessageRow({
         isSelected
           ? 'bg-teal/5 border-l-2 border-l-teal'
           : 'border-l-2 border-l-transparent hover:bg-stone/3',
-        !interaction.is_read && !isSelected && 'bg-blue-50/40'
+        !interaction.is_read && !isSelected && 'bg-teal/5'
       )}
     >
       <div className="flex items-start gap-3">
@@ -674,14 +675,19 @@ function ConversationDetail({
   thread,
   onReply,
   onMarkAsRead,
+  organizationId,
 }: {
   interaction: SocialInteraction;
   thread: SocialInteraction[];
   onReply: (id: string, msg: string) => Promise<void>;
   onMarkAsRead: (id: string) => void;
+  organizationId: string;
 }) {
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
+  const [showSavedReplies, setShowSavedReplies] = useState(false);
+  const [savedReplies, setSavedReplies] = useState<Array<{ id: string; name: string; body: string; shortcut: string | null; category: string }>>([]);
+  const [savedRepliesLoading, setSavedRepliesLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const PlatformIcon = getPlatformIcon(interaction.platform);
@@ -691,6 +697,33 @@ function ConversationDetail({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [thread.length]);
+
+  const fetchSavedReplies = async () => {
+    if (savedReplies.length > 0) return; // Already loaded
+    setSavedRepliesLoading(true);
+    try {
+      const res = await fetch('/api/social/replies');
+      if (res.ok) {
+        const data = await res.json();
+        setSavedReplies(data.replies || []);
+      }
+    } catch (err) {
+      console.error('Error fetching saved replies:', err);
+    } finally {
+      setSavedRepliesLoading(false);
+    }
+  };
+
+  const insertSavedReply = async (reply: { id: string; body: string }) => {
+    setReplyText((prev) => (prev ? prev + '\n' + reply.body : reply.body));
+    setShowSavedReplies(false);
+    // Increment use count in background
+    fetch(`/api/social/replies/${reply.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ use_count_increment: true }),
+    }).catch(() => {});
+  };
 
   const handleSend = async () => {
     if (!replyText.trim() || sending) return;
@@ -754,9 +787,9 @@ function ConversationDetail({
               className={cn(
                 'text-xs px-2.5 py-1 rounded-full font-medium capitalize',
                 interaction.interaction_type === 'dm'
-                  ? 'bg-purple-50 text-purple-700'
+                  ? 'bg-purple-600/10 text-purple-600'
                   : interaction.interaction_type === 'mention'
-                  ? 'bg-amber-50 text-amber-700'
+                  ? 'bg-gold/10 text-gold'
                   : 'bg-stone/8 text-stone/70'
               )}
             >
@@ -796,16 +829,58 @@ function ConversationDetail({
 
       {/* ── Reply Composer ─────────────────────────────────────── */}
       <div className="flex-shrink-0 bg-cream-warm border-t border-stone/10 p-4">
+        {/* Saved Replies Popover */}
+        {showSavedReplies && (
+          <div className="mb-3 bg-cream rounded-xl border border-stone/10 shadow-lg max-h-48 overflow-y-auto">
+            {savedRepliesLoading ? (
+              <div className="p-4 text-center text-xs text-stone">Loading...</div>
+            ) : savedReplies.length === 0 ? (
+              <div className="p-4 text-center text-xs text-stone">No saved replies yet</div>
+            ) : (
+              savedReplies.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => insertSavedReply(r)}
+                  className="w-full text-left px-4 py-2.5 hover:bg-teal/5 transition-colors border-b border-stone/5 last:border-b-0"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-charcoal">{r.name}</span>
+                    {r.shortcut && <span className="text-[10px] text-stone/50">/{r.shortcut}</span>}
+                  </div>
+                  <p className="text-[11px] text-stone line-clamp-1 mt-0.5">{r.body}</p>
+                </button>
+              ))
+            )}
+          </div>
+        )}
         <div className="flex items-end gap-3">
           <div className="flex-1">
-            <textarea
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={`Reply to ${interaction.author_name || 'this message'}...`}
-              rows={2}
-              className="w-full px-4 py-3 bg-cream/50 border border-stone/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal resize-none text-sm placeholder:text-stone/40"
-            />
+            <div className="relative">
+              <textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={`Reply to ${interaction.author_name || 'this message'}...`}
+                rows={2}
+                className="w-full px-4 py-3 pr-10 bg-cream/50 border border-stone/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal resize-none text-sm placeholder:text-stone/40"
+              />
+              {/* Saved Replies Toggle */}
+              <button
+                onClick={() => {
+                  setShowSavedReplies(!showSavedReplies);
+                  if (!showSavedReplies) fetchSavedReplies();
+                }}
+                className={cn(
+                  'absolute right-2 top-2 p-1.5 rounded-lg transition-colors',
+                  showSavedReplies
+                    ? 'text-teal bg-teal/10'
+                    : 'text-stone/40 hover:text-teal hover:bg-teal/5'
+                )}
+                title="Saved replies"
+              >
+                <ChatBubbleLeftIcon className="w-4 h-4" />
+              </button>
+            </div>
             <p className="text-[10px] text-stone/40 mt-1 ml-1">
               Press Ctrl+Enter to send
             </p>
@@ -924,10 +999,10 @@ function SentimentDot({ sentiment }: { sentiment: string }) {
 
 function SentimentBadge({ sentiment }: { sentiment: string }) {
   const config: Record<string, { label: string; className: string }> = {
-    positive: { label: 'Positive', className: 'bg-green-50 text-green-400 border-green-100' },
+    positive: { label: 'Positive', className: 'bg-green-600/10 text-green-600 border-green-600/20' },
     neutral: { label: 'Neutral', className: 'bg-stone/8 text-stone/70 border-stone/10' },
-    negative: { label: 'Negative', className: 'bg-red-50 text-red-400 border-red-100' },
-    question: { label: 'Question', className: 'bg-blue-50 text-blue-400 border-blue-100' },
+    negative: { label: 'Negative', className: 'bg-red-600/10 text-red-600 border-red-600/20' },
+    question: { label: 'Question', className: 'bg-teal/10 text-teal border-teal/20' },
   };
   const c = config[sentiment];
   if (!c) return null;
@@ -983,8 +1058,8 @@ function EmptyState({
 
   return (
     <div className="p-12 flex flex-col items-center justify-center text-center">
-      <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mb-4">
-        <CheckCircleIcon className="w-8 h-8 text-green-400" />
+      <div className="w-16 h-16 bg-green-600/10 rounded-2xl flex items-center justify-center mb-4">
+        <CheckCircleIcon className="w-8 h-8 text-green-600" />
       </div>
       <h3 className="text-sm font-medium text-charcoal/70 mb-1">All caught up!</h3>
       <p className="text-xs text-stone/50 max-w-[260px]">

@@ -15,13 +15,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: userData } = await supabase
-      .from('users')
+    const { data: membership } = await supabase
+      .from('org_members')
       .select('organization_id')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
-    if (!userData?.organization_id) {
+    if (!membership?.organization_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       const { data, error } = await supabase
         .from('posting_schedule_analysis')
         .select('*')
-        .eq('organization_id', userData.organization_id)
+        .eq('organization_id', membership.organization_id)
         .order('analyzed_at', { ascending: false });
 
       if (error) {
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase
       .from('posting_schedule_analysis')
       .select('*')
-      .eq('organization_id', userData.organization_id)
+      .eq('organization_id', membership.organization_id)
       .eq('platform', platform)
       .order('analyzed_at', { ascending: false })
       .limit(1)

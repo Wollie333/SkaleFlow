@@ -134,7 +134,7 @@ export function AutoScheduleModal({
             </div>
           ) : error ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto mb-4 bg-red-50 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-600/10 rounded-full flex items-center justify-center">
                 <XMarkIcon className="w-8 h-8 text-red-500" />
               </div>
               <h3 className="text-lg font-semibold text-charcoal mb-2">No Data Available</h3>
@@ -217,8 +217,8 @@ export function AutoScheduleModal({
               </div>
 
               {/* Info */}
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <p className="text-xs text-blue-900">
+              <div className="bg-teal/5 rounded-lg p-4 border border-teal/20">
+                <p className="text-xs text-charcoal">
                   <strong>💡 How it works:</strong> This recommendation is based on analyzing your
                   historical post performance to find when your audience is most engaged on{' '}
                   {platforms.join(', ')}.

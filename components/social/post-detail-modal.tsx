@@ -170,14 +170,14 @@ export function PostDetailModal({ post, isOpen, onClose }: PostDetailModalProps)
               value={formatNumber(post.impressions)}
               icon={EyeIcon}
               color="text-indigo-500"
-              bg="bg-indigo-50"
+              bg="bg-teal/10"
             />
             <MetricCard
               label="Reach"
               value={formatNumber(post.reach)}
               icon={UserGroupIcon}
-              color="text-violet-500"
-              bg="bg-violet-50"
+              color="text-teal"
+              bg="bg-teal/10"
             />
             <MetricCard
               label="Engagement Rate"
@@ -190,8 +190,8 @@ export function PostDetailModal({ post, isOpen, onClose }: PostDetailModalProps)
               label="Likes"
               value={formatNumber(post.likes)}
               icon={HeartIcon}
-              color="text-pink-500"
-              bg="bg-pink-50"
+              color="text-red-500"
+              bg="bg-red-500/10"
             />
             <MetricCard
               label="Comments"
@@ -205,7 +205,7 @@ export function PostDetailModal({ post, isOpen, onClose }: PostDetailModalProps)
               value={formatNumber(post.shares)}
               icon={ShareIcon}
               color="text-orange-500"
-              bg="bg-orange-50"
+              bg="bg-orange-500/10"
             />
           </div>
 

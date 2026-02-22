@@ -90,10 +90,10 @@ export function HashtagPickerModal({
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      industry: 'bg-blue-500/10 text-blue-400',
-      trending: 'bg-pink-100 text-pink-700',
-      branded: 'bg-purple-100 text-purple-700',
-      campaign: 'bg-green-500/10 text-green-400',
+      industry: 'bg-teal/10 text-teal',
+      trending: 'bg-gold/10 text-gold',
+      branded: 'bg-purple-600/10 text-purple-600',
+      campaign: 'bg-green-600/10 text-green-600',
     };
     return colors[category?.toLowerCase()] || 'bg-cream text-charcoal';
   };

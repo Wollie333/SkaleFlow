@@ -95,7 +95,7 @@ export function MentionCard({ mention, onMarkAsRead, onToggleFlag }: MentionCard
                 className={cn(
                   'p-1.5 rounded-lg transition-colors',
                   mention.is_flagged
-                    ? 'text-orange-600 hover:bg-orange-50'
+                    ? 'text-orange-600 hover:bg-orange-500/10'
                     : 'text-stone hover:bg-stone/10'
                 )}
                 title={mention.is_flagged ? 'Unflag' : 'Flag'}

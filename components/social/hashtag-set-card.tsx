@@ -37,10 +37,10 @@ export function HashtagSetCard({ set, onEdit, onDelete, onCopy }: HashtagSetCard
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      industry: 'bg-blue-500/10 text-blue-400 border-blue-200',
-      trending: 'bg-pink-100 text-pink-700 border-pink-200',
-      branded: 'bg-purple-100 text-purple-700 border-purple-200',
-      campaign: 'bg-green-500/10 text-green-400 border-green-200',
+      industry: 'bg-teal/10 text-teal border-teal/20',
+      trending: 'bg-gold/10 text-gold border-gold/20',
+      branded: 'bg-purple-600/10 text-purple-600 border-purple-600/20',
+      campaign: 'bg-green-600/10 text-green-600 border-green-600/20',
     };
     return colors[category?.toLowerCase()] || 'bg-cream text-charcoal border-stone/10';
   };
@@ -157,7 +157,7 @@ export function HashtagSetCard({ set, onEdit, onDelete, onCopy }: HashtagSetCard
           </button>
           <button
             onClick={onDelete}
-            className="p-1.5 text-stone hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            className="p-1.5 text-stone hover:text-red-600 hover:bg-red-600/10 rounded-lg transition-colors"
             title="Delete"
           >
             <TrashIcon className="w-4 h-4" />

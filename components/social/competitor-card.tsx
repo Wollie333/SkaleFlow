@@ -194,7 +194,7 @@ export function CompetitorCard({
           </button>
           <button
             onClick={onDelete}
-            className="p-1.5 text-stone hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            className="p-1.5 text-stone hover:text-red-600 hover:bg-red-600/10 rounded-lg transition-colors"
             title="Delete"
           >
             <TrashIcon className="w-4 h-4" />

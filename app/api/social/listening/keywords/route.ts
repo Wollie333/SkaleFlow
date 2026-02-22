@@ -14,20 +14,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: userData } = await supabase
-      .from('users')
+    const { data: membership } = await supabase
+      .from('org_members')
       .select('organization_id')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
-    if (!userData?.organization_id) {
+    if (!membership?.organization_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
     const { data, error } = await supabase
       .from('social_listening_keywords')
       .select('*')
-      .eq('organization_id', userData.organization_id)
+      .eq('organization_id', membership.organization_id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -55,13 +55,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: userData } = await supabase
-      .from('users')
+    const { data: membership } = await supabase
+      .from('org_members')
       .select('organization_id')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
-    if (!userData?.organization_id) {
+    if (!membership?.organization_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from('social_listening_keywords')
       .insert({
-        organization_id: userData.organization_id,
+        organization_id: membership.organization_id,
         keyword: keyword.trim(),
         keyword_type: keywordType || 'brand',
       })

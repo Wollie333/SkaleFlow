@@ -14,41 +14,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get organization ID from query or user
-    const { searchParams } = new URL(request.url);
-    const organizationId = searchParams.get('organizationId');
+    // Get organization from org_members (reliable pattern)
+    const { data: membership } = await supabase
+      .from('org_members')
+      .select('organization_id')
+      .eq('user_id', user.id)
+      .single();
 
-    if (!organizationId) {
-      // Get from user
-      const { data: userData } = await supabase
-        .from('users')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!userData?.organization_id) {
-        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-      }
-
-      const { data, error } = await supabase
-        .from('hashtag_sets')
-        .select('*')
-        .eq('organization_id', userData.organization_id)
-        .order('last_used_at', { ascending: false, nullsFirst: false })
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching hashtag sets:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
-      }
-
-      return NextResponse.json({ data });
+    if (!membership?.organization_id) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
     const { data, error } = await supabase
       .from('hashtag_sets')
       .select('*')
-      .eq('organization_id', organizationId)
+      .eq('organization_id', membership.organization_id)
       .order('last_used_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
 
@@ -77,13 +57,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: userData } = await supabase
-      .from('users')
+    const { data: membership } = await supabase
+      .from('org_members')
       .select('organization_id')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
-    if (!userData?.organization_id) {
+    if (!membership?.organization_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
@@ -100,7 +80,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from('hashtag_sets')
       .insert({
-        organization_id: userData.organization_id,
+        organization_id: membership.organization_id,
         name,
         description,
         hashtags,

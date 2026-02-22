@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { MediaLibraryClient } from './media-library-client';
 
 export const metadata = {
   title: 'Media Library | SkaleFlow',
@@ -19,8 +20,8 @@ export default async function MediaLibraryPage() {
 
   const { data: membership } = await supabase
     .from('org_members')
-    .select('organization_id').eq('user_id', user.id)
-    
+    .select('organization_id')
+    .eq('user_id', user.id)
     .single();
 
   if (!membership?.organization_id) {
@@ -28,11 +29,6 @@ export default async function MediaLibraryPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 space-y-6">
-      <div className="bg-cream-warm rounded-xl border border-stone/10 p-12 text-center">
-        <h2 className="text-2xl font-bold text-charcoal mb-2">Media Library</h2>
-        <p className="text-stone mb-4">Coming soon - Centralized media asset management</p>
-      </div>
-    </div>
+    <MediaLibraryClient organizationId={membership.organization_id} />
   );
 }

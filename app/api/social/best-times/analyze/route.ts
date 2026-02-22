@@ -15,13 +15,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: userData } = await supabase
-      .from('users')
+    const { data: membership } = await supabase
+      .from('org_members')
       .select('organization_id')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
-    if (!userData?.organization_id) {
+    if (!membership?.organization_id) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Run analysis
-    const analysis = await analyzeOptimalPostingTimes(userData.organization_id, platform);
+    const analysis = await analyzeOptimalPostingTimes(membership.organization_id, platform);
 
     if (!analysis) {
       return NextResponse.json(

@@ -6075,9 +6075,11 @@ export interface Database {
         Row: {
           id: string;
           organization_id: string;
+          created_by: string;
           name: string;
-          content: string;
-          category: string | null;
+          body: string;
+          category: string;
+          shortcut: string | null;
           use_count: number;
           created_at: string;
           updated_at: string;
@@ -6085,9 +6087,11 @@ export interface Database {
         Insert: {
           id?: string;
           organization_id: string;
+          created_by: string;
           name: string;
-          content: string;
-          category?: string | null;
+          body: string;
+          category?: string;
+          shortcut?: string | null;
           use_count?: number;
           created_at?: string;
           updated_at?: string;
@@ -6095,9 +6099,11 @@ export interface Database {
         Update: {
           id?: string;
           organization_id?: string;
+          created_by?: string;
           name?: string;
-          content?: string;
-          category?: string | null;
+          body?: string;
+          category?: string;
+          shortcut?: string | null;
           use_count?: number;
           created_at?: string;
           updated_at?: string;

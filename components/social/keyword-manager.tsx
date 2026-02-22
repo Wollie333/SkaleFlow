@@ -95,10 +95,10 @@ export function KeywordManager({ keywords: initialKeywords, organizationId, onCl
 
   const getTypeColor = (type: string) => {
     const colors: Record<string, string> = {
-      brand: 'bg-teal-100 text-teal-700 border-teal-200',
-      competitor: 'bg-orange-100 text-orange-700 border-orange-200',
-      industry: 'bg-blue-500/10 text-blue-400 border-blue-200',
-      hashtag: 'bg-purple-100 text-purple-700 border-purple-200',
+      brand: 'bg-teal/10 text-teal border-teal/20',
+      competitor: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+      industry: 'bg-teal/10 text-teal border-teal/20',
+      hashtag: 'bg-purple-600/10 text-purple-600 border-purple-600/20',
     };
     return colors[type] || 'bg-cream text-charcoal border-stone/10';
   };
@@ -245,7 +245,7 @@ export function KeywordManager({ keywords: initialKeywords, organizationId, onCl
 
                             <button
                               onClick={() => handleDeleteKeyword(keyword.id)}
-                              className="p-1.5 text-stone hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-1.5 text-stone hover:text-red-600 hover:bg-red-600/10 rounded-lg transition-colors"
                               title="Delete"
                             >
                               <TrashIcon className="w-4 h-4" />

@@ -130,7 +130,7 @@ export function AudienceInsightsClient({ organizationId, connections }: Audience
       </div>
 
       {error && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-700">
+        <div className="bg-gold/10 border border-gold/20 rounded-lg p-4 text-sm text-gold">
           {error}
         </div>
       )}

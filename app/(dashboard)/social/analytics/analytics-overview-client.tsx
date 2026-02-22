@@ -268,32 +268,32 @@ export function AnalyticsOverviewClient({
       value: formatNumber(currentMetrics.totalImpressions),
       growth: calcGrowth(currentMetrics.totalImpressions, previousMetrics.totalImpressions),
       icon: EyeIcon,
-      color: 'text-indigo-500',
-      bg: 'bg-indigo-50',
+      color: 'text-teal',
+      bg: 'bg-teal/10',
     },
     {
       label: 'Avg Engagement Rate',
       value: `${currentMetrics.avgEngagementRate.toFixed(2)}%`,
       growth: calcGrowth(currentMetrics.avgEngagementRate, previousMetrics.avgEngagementRate),
       icon: ChartBarIcon,
-      color: 'text-violet-600',
-      bg: 'bg-violet-50',
+      color: 'text-purple-600',
+      bg: 'bg-purple-600/10',
     },
     {
       label: 'Reach',
       value: formatNumber(currentMetrics.totalReach),
       growth: calcGrowth(currentMetrics.totalReach, previousMetrics.totalReach),
       icon: UserGroupIcon,
-      color: 'text-violet-500',
-      bg: 'bg-violet-50',
+      color: 'text-teal',
+      bg: 'bg-teal/10',
     },
     {
       label: 'Likes',
       value: formatNumber(currentMetrics.totalLikes),
       growth: calcGrowth(currentMetrics.totalLikes, previousMetrics.totalLikes),
       icon: HeartIcon,
-      color: 'text-pink-500',
-      bg: 'bg-pink-50',
+      color: 'text-red-500',
+      bg: 'bg-red-500/10',
     },
     {
       label: 'Comments',
@@ -301,7 +301,7 @@ export function AnalyticsOverviewClient({
       growth: calcGrowth(currentMetrics.totalComments, previousMetrics.totalComments),
       icon: ChatBubbleLeftIcon,
       color: 'text-gold',
-      bg: 'bg-gold/5',
+      bg: 'bg-gold/10',
     },
     {
       label: 'Shares',
@@ -309,7 +309,7 @@ export function AnalyticsOverviewClient({
       growth: calcGrowth(currentMetrics.totalShares, previousMetrics.totalShares),
       icon: ShareIcon,
       color: 'text-orange-500',
-      bg: 'bg-orange-50',
+      bg: 'bg-orange-500/10',
     },
   ];
 
@@ -391,7 +391,7 @@ export function AnalyticsOverviewClient({
 
       {/* Error */}
       {error && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <div className="bg-gold/10 border border-gold/20 rounded-lg p-4">
           <p className="text-sm font-semibold text-amber-800 mb-1">Analytics Issue</p>
           <p className="text-sm text-amber-700 whitespace-pre-line">{error}</p>
         </div>

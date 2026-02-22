@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { ListeningReportsClient } from './listening-reports-client';
 
 export const metadata = {
   title: 'Listening Reports | SkaleFlow',
-  description: 'Schedule and manage social listening reports',
+  description: 'Social listening summary and insights',
 };
 
 export default async function ReportsPage() {
@@ -19,20 +20,52 @@ export default async function ReportsPage() {
 
   const { data: membership } = await supabase
     .from('org_members')
-    .select('organization_id').eq('user_id', user.id)
-    
+    .select('organization_id')
+    .eq('user_id', user.id)
     .single();
 
   if (!membership?.organization_id) {
     redirect('/dashboard');
   }
 
+  const organizationId = membership.organization_id;
+
+  // Fetch keywords
+  const { data: keywords } = await supabase
+    .from('social_listening_keywords')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .order('created_at', { ascending: false });
+
+  // Fetch mentions for different time periods
+  const now = new Date();
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const { data: recentMentions } = await supabase
+    .from('social_listening_mentions')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .gte('discovered_at', thirtyDaysAgo.toISOString())
+    .order('published_at', { ascending: false })
+    .limit(200);
+
+  // Fetch trends
+  const { data: trends } = await supabase
+    .from('social_listening_trends')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .order('mention_count', { ascending: false })
+    .limit(20);
+
   return (
-    <div className="p-6 md:p-8 space-y-6">
-      <div className="bg-cream-warm rounded-xl border border-stone/10 p-12 text-center">
-        <h2 className="text-2xl font-bold text-charcoal mb-2">Listening Reports</h2>
-        <p className="text-stone mb-4">Coming soon - Automated social listening reports</p>
-      </div>
-    </div>
+    <ListeningReportsClient
+      keywords={keywords || []}
+      mentions={recentMentions || []}
+      trends={trends || []}
+      organizationId={organizationId}
+    />
   );
 }

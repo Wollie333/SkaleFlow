@@ -301,7 +301,7 @@ export function TrendsClient({ trends24h, trends7d, trends30d, organizationId }:
                           {(trend.top_influencers as { name: string; followers?: number }[]).slice(0, 3).map((inf, i) => (
                             <span
                               key={i}
-                              className="px-2 py-0.5 bg-purple-50 text-purple-600 text-[10px] font-medium rounded-full"
+                              className="px-2 py-0.5 bg-purple-600/10 text-purple-600 text-[10px] font-medium rounded-full"
                             >
                               {inf.name}
                               {inf.followers ? ` (${(inf.followers / 1000).toFixed(0)}K)` : ''}

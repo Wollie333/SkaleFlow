@@ -19,7 +19,7 @@ export function SentimentIndicator({
     positive: {
       emoji: '😊',
       label: 'Positive',
-      color: 'bg-green-500/10 text-green-400 border-green-200',
+      color: 'bg-green-600/10 text-green-600 border-green-600/20',
     },
     neutral: {
       emoji: '😐',
@@ -29,12 +29,12 @@ export function SentimentIndicator({
     negative: {
       emoji: '😞',
       label: 'Negative',
-      color: 'bg-red-500/10 text-red-400 border-red-200',
+      color: 'bg-red-600/10 text-red-600 border-red-600/20',
     },
     question: {
       emoji: '❓',
       label: 'Question',
-      color: 'bg-blue-500/10 text-blue-400 border-blue-200',
+      color: 'bg-teal/10 text-teal border-teal/20',
     },
   };
 
