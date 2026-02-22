@@ -83,6 +83,12 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
 
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [actionToast, setActionToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setActionToast({ message, type });
+    setTimeout(() => setActionToast(null), 4000);
+  };
 
   const handleCopyLink = async (token: string, id: string) => {
     const url = `${window.location.origin}/invite/${token}`;
@@ -109,29 +115,47 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
     }
   };
 
-  const handleResendInvite = async (invitationId: string) => {
+  const handleResendInvite = async (invitationId: string, email: string) => {
     setActionLoading(invitationId);
     try {
-      await fetch(`/api/admin/users/${userId}`, {
+      const res = await fetch(`/api/admin/users/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'resend_invite', invitationId }),
       });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error || 'Failed to resend invite', 'error');
+      } else if (data.emailStatus === 'sent') {
+        showToast(`Invitation resent to ${email}`);
+      } else {
+        showToast(`Invite refreshed but email failed to send. Use Copy Link instead.`, 'error');
+      }
       onRefresh();
+    } catch {
+      showToast('Failed to resend invite', 'error');
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleCancelInvite = async (invitationId: string) => {
+  const handleCancelInvite = async (invitationId: string, email: string) => {
     setActionLoading(invitationId);
     try {
-      await fetch(`/api/admin/users/${userId}`, {
+      const res = await fetch(`/api/admin/users/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'cancel_invite', invitationId }),
       });
+      if (!res.ok) {
+        const data = await res.json();
+        showToast(data.error || 'Failed to cancel invite', 'error');
+      } else {
+        showToast(`Invitation to ${email} cancelled`);
+      }
       onRefresh();
+    } catch {
+      showToast('Failed to cancel invite', 'error');
     } finally {
       setActionLoading(null);
     }
@@ -169,6 +193,20 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
 
   return (
     <div className="space-y-6">
+      {/* Action Toast */}
+      {actionToast && (
+        <div className={`fixed top-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200 ${
+          actionToast.type === 'success'
+            ? 'bg-teal/10 border-teal/20 text-teal'
+            : 'bg-red-500/10 border-red-500/20 text-red-400'
+        }`}>
+          <span>{actionToast.message}</span>
+          <button onClick={() => setActionToast(null)} className="ml-1 opacity-60 hover:opacity-100">
+            <XMarkIcon className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Team Members */}
       <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
         <div className="px-5 py-4 border-b border-stone/10">
@@ -340,7 +378,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
                           </button>
                         )}
                         <button
-                          onClick={() => handleResendInvite(invite.id)}
+                          onClick={() => handleResendInvite(invite.id, invite.email)}
                           disabled={actionLoading === invite.id}
                           className="text-xs font-medium text-teal hover:text-teal-light bg-teal/5 hover:bg-teal/10 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-40 flex items-center gap-1"
                         >
@@ -348,7 +386,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
                           Resend
                         </button>
                         <button
-                          onClick={() => handleCancelInvite(invite.id)}
+                          onClick={() => handleCancelInvite(invite.id, invite.email)}
                           disabled={actionLoading === invite.id}
                           className="text-xs font-medium text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/15 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-40 flex items-center gap-1"
                         >
