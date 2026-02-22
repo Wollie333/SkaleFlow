@@ -26,87 +26,159 @@ interface LatestNewsProps {
   primaryColor?: string;
 }
 
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
 export function LatestNews({ placements, pressReleases, primaryColor = '#14b8a6' }: LatestNewsProps) {
   const hasContent = placements.length > 0 || pressReleases.length > 0;
 
   if (!hasContent) {
     return (
-      <section id="news" className="py-12 px-6">
+      <section id="news" className="py-16 md:py-20 px-5">
         <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-2xl font-serif font-bold text-charcoal mb-3">Latest News</h2>
-          <p className="text-stone">No press coverage yet. Check back soon.</p>
+          <span className="text-[10px] font-semibold tracking-[0.3em] uppercase text-stone/40 mb-3 block">
+            Latest
+          </span>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-charcoal mb-4">
+            News &amp; Coverage
+          </h2>
+          <p className="text-sm text-stone/50">No press coverage yet. Check back soon.</p>
         </div>
       </section>
     );
   }
 
-  return (
-    <section id="news" className="py-12 px-6">
-      <div className="max-w-5xl mx-auto">
-        <h2 className="text-2xl font-serif font-bold text-charcoal mb-8 text-center">Latest News</h2>
+  const featured = pressReleases.length > 0 ? pressReleases[0] : null;
+  const rest = pressReleases.slice(1);
 
-        {/* Press Releases */}
-        {pressReleases.length > 0 && (
-          <div className="mb-10">
-            <h3 className="text-sm font-semibold text-stone/60 uppercase tracking-wider mb-4">Press Releases</h3>
-            <div className="space-y-4">
-              {pressReleases.map((pr) => (
-                <article key={pr.id} className="p-5 bg-cream-warm border border-stone/10 rounded-xl hover:border-stone/10 transition-colors">
-                  <h4 className="text-lg font-semibold text-charcoal mb-1">{pr.headline}</h4>
-                  {pr.subtitle && <p className="text-sm text-stone mb-2">{pr.subtitle}</p>}
-                  <p className="text-sm text-stone line-clamp-3">{pr.body_content}</p>
-                  {pr.published_at && (
-                    <p className="text-xs text-stone/60 mt-2">{new Date(pr.published_at).toLocaleDateString()}</p>
-                  )}
-                </article>
-              ))}
+  return (
+    <section id="news" className="py-16 md:py-20 px-5">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-10 md:mb-12">
+          <span className="text-[10px] font-semibold tracking-[0.3em] uppercase text-stone/40 mb-3 block">
+            Latest
+          </span>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-charcoal">
+            News &amp; Coverage
+          </h2>
+        </div>
+
+        {/* Featured Press Release */}
+        {featured && (
+          <article
+            className="relative p-6 sm:p-8 md:p-10 rounded-2xl mb-6 md:mb-8 border transition-shadow duration-300 hover:shadow-xl overflow-hidden"
+            style={{ borderColor: `${primaryColor}20`, backgroundColor: `${primaryColor}05` }}
+          >
+            <div
+              className="absolute top-0 left-0 w-1 h-full rounded-r-full"
+              style={{ backgroundColor: primaryColor }}
+            />
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4">
+              <span
+                className="text-[10px] font-bold tracking-wider uppercase px-3 py-1 rounded-full"
+                style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
+              >
+                Press Release
+              </span>
+              {featured.published_at && (
+                <span className="text-xs text-stone/40">{formatDate(featured.published_at)}</span>
+              )}
             </div>
+            <h3 className="text-lg sm:text-xl md:text-2xl font-serif font-bold text-charcoal mb-3 leading-snug">
+              {featured.headline}
+            </h3>
+            {featured.subtitle && (
+              <p className="text-sm sm:text-base text-stone/60 mb-3 font-medium">{featured.subtitle}</p>
+            )}
+            <p className="text-sm text-stone/50 leading-relaxed line-clamp-4 max-w-3xl">
+              {featured.body_content}
+            </p>
+          </article>
+        )}
+
+        {/* Remaining Press Releases */}
+        {rest.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mb-10 md:mb-12">
+            {rest.map((pr) => (
+              <article
+                key={pr.id}
+                className="group p-5 sm:p-6 bg-white rounded-2xl border border-stone/8 transition-all duration-300 hover:shadow-lg hover:border-stone/15 hover:-translate-y-0.5"
+              >
+                {pr.published_at && (
+                  <p className="text-[11px] text-stone/35 mb-2 font-medium">
+                    {formatDate(pr.published_at)}
+                  </p>
+                )}
+                <h4 className="text-sm sm:text-base font-semibold text-charcoal mb-2 leading-snug group-hover:text-charcoal/80 transition-colors">
+                  {pr.headline}
+                </h4>
+                {pr.subtitle && (
+                  <p className="text-xs sm:text-sm text-stone/50 mb-2">{pr.subtitle}</p>
+                )}
+                <p className="text-xs sm:text-sm text-stone/40 line-clamp-3">{pr.body_content}</p>
+              </article>
+            ))}
           </div>
         )}
 
         {/* Media Placements */}
         {placements.length > 0 && (
           <div>
-            <h3 className="text-sm font-semibold text-stone/60 uppercase tracking-wider mb-4">Media Coverage</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h3 className="text-xs font-semibold tracking-[0.2em] uppercase text-stone/40 mb-5">
+              Media Coverage
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {placements.map((p) => (
-                <article key={p.id} className="p-4 bg-cream-warm border border-stone/10 rounded-xl hover:border-stone/10 transition-colors">
-                  <div className="flex items-start justify-between gap-3">
+                <article
+                  key={p.id}
+                  className="group relative p-4 sm:p-5 bg-white rounded-2xl border border-stone/8 transition-all duration-300 hover:shadow-lg hover:border-stone/15 hover:-translate-y-0.5"
+                >
+                  <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-semibold text-charcoal truncate">{p.opportunity_name}</h4>
                       {p.target_outlet && (
-                        <p className="text-xs font-medium mt-0.5" style={{ color: primaryColor }}>{p.target_outlet}</p>
+                        <p
+                          className="text-[10px] sm:text-[11px] font-bold tracking-wider uppercase mb-1"
+                          style={{ color: primaryColor }}
+                        >
+                          {p.target_outlet}
+                        </p>
                       )}
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-cream text-stone">
-                          {p.category.replace(/_/g, ' ')}
-                        </span>
-                        {p.confirmed_format && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-cream text-stone">
-                            {p.confirmed_format.replace(/_/g, ' ')}
-                          </span>
-                        )}
-                        {p.engagement_type === 'paid' && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">
-                            Paid Partnership
-                          </span>
-                        )}
-                      </div>
+                      <h4 className="text-xs sm:text-sm font-semibold text-charcoal leading-snug">
+                        {p.opportunity_name}
+                      </h4>
                     </div>
                     {p.live_url && (
                       <a
                         href={p.live_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap"
+                        className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 group-hover:scale-110"
                         style={{ backgroundColor: `${primaryColor}10`, color: primaryColor }}
+                        aria-label="Read article"
                       >
-                        Read
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+                        </svg>
                       </a>
                     )}
                   </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-stone/5 text-stone/50">
+                      {p.category.replace(/_/g, ' ')}
+                    </span>
+                    {p.confirmed_format && (
+                      <span className="text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-stone/5 text-stone/50">
+                        {p.confirmed_format.replace(/_/g, ' ')}
+                      </span>
+                    )}
+                  </div>
                   {p.published_at && (
-                    <p className="text-[10px] text-stone/60 mt-2">{new Date(p.published_at).toLocaleDateString()}</p>
+                    <p className="text-[10px] text-stone/30 mt-3">{formatDate(p.published_at)}</p>
                   )}
                 </article>
               ))}
