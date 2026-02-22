@@ -80,13 +80,13 @@ export default function PressPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-cream">
+      <div className="min-h-screen bg-[#faf9f6]">
         {/* Hero skeleton */}
         <div
           className="relative overflow-hidden"
           style={{
             minHeight: '75vh',
-            background: 'linear-gradient(160deg, #0a0f0e 0%, #1a2f2c 50%, #0a0f0e 100%)',
+            backgroundColor: '#0a0f0e',
           }}
         >
           <div className="flex flex-col items-center justify-center min-h-[75vh] px-5 py-20">
@@ -133,39 +133,51 @@ export default function PressPage() {
   // Extract brand data
   const brandPalette = data.brand?.brand_color_palette as Record<string, unknown> | undefined;
   const primaryColor = (brandPalette?.primary as string) || '#14b8a6';
-  const secondaryColor = (brandPalette?.secondary as string) || undefined;
+  const darkBase = (brandPalette?.dark_base as string) || '#0a0f0e';
+  const accentColor = (brandPalette?.accent as string) || primaryColor;
+  const lightColor = (brandPalette?.light as string) || '#faf9f6';
+  const neutralColor = (brandPalette?.neutral as string) || '#6b7280';
   const brandLogo = (data.brand?.brand_logo_url as string) || data.organization.logo_url;
   const tagline = data.press_kit?.hero_tagline || (data.brand?.brand_tagline as string | undefined);
   const positioningStatement = data.brand?.brand_positioning_statement as string | undefined;
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen" style={{ backgroundColor: lightColor }}>
       <HeroSection
         orgName={data.organization.name}
         logoUrl={brandLogo}
         tagline={tagline}
         primaryColor={primaryColor}
-        secondaryColor={secondaryColor}
+        darkBase={darkBase}
+        accentColor={accentColor}
       />
 
-      <AsSeenInBar outlets={data.outlets} />
+      <AsSeenInBar outlets={data.outlets} darkBase={darkBase} />
 
       <LatestNews
         placements={data.placements}
         pressReleases={data.press_releases}
         primaryColor={primaryColor}
+        accentColor={accentColor}
+        darkBase={darkBase}
+        lightColor={lightColor}
       />
 
       <MediaKitSection
         pressKit={data.press_kit}
         logoUrl={brandLogo}
         primaryColor={primaryColor}
+        accentColor={accentColor}
+        darkBase={darkBase}
+        lightColor={lightColor}
         positioningStatement={positioningStatement}
       />
 
       <StoryAnglesSection
         storyAngles={data.story_angles}
         primaryColor={primaryColor}
+        accentColor={accentColor}
+        darkBase={darkBase}
       />
 
       <InquiryForm
@@ -173,10 +185,12 @@ export default function PressPage() {
         orgName={data.organization.name}
         storyAngles={data.story_angles.map(a => ({ id: a.id, title: a.title }))}
         primaryColor={primaryColor}
+        darkBase={darkBase}
+        accentColor={accentColor}
       />
 
       {/* Footer */}
-      <footer className="py-8 px-5 text-center" style={{ backgroundColor: '#0a0f0e' }}>
+      <footer className="py-8 px-5 text-center" style={{ backgroundColor: darkBase }}>
         <p className="text-[11px] text-white/25">
           Powered by <span className="font-semibold text-white/35">SkaleFlow</span>
         </p>

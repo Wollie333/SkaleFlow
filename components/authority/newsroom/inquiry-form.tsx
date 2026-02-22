@@ -7,9 +7,12 @@ interface InquiryFormProps {
   orgName: string;
   storyAngles: Array<{ id: string; title: string }>;
   primaryColor?: string;
+  darkBase?: string;
+  accentColor?: string;
 }
 
-export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor = '#14b8a6' }: InquiryFormProps) {
+export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor = '#14b8a6', darkBase = '#0a0f0e', accentColor }: InquiryFormProps) {
+  const accent = accentColor || primaryColor;
   const [form, setForm] = useState({
     journalist_name: '',
     journalist_outlet: '',
@@ -59,7 +62,7 @@ export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor
       <section
         id="inquiry"
         className="relative py-20 md:py-24 px-5 overflow-hidden"
-        style={{ background: `linear-gradient(160deg, #0a0f0e 0%, ${primaryColor}33 50%, #0a0f0e 100%)` }}
+        style={{ backgroundColor: darkBase }}
       >
         <div className="relative z-10 max-w-lg mx-auto text-center">
           <div
@@ -83,17 +86,8 @@ export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor
     <section
       id="inquiry"
       className="relative py-16 md:py-24 px-5 overflow-hidden"
-      style={{ background: `linear-gradient(160deg, #0a0f0e 0%, ${primaryColor}22 50%, #0a0f0e 100%)` }}
+      style={{ backgroundColor: darkBase }}
     >
-      {/* Pattern overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.02]"
-        style={{
-          backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-        }}
-      />
-
       <div className="relative z-10 max-w-5xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-16 items-start">
           {/* Info Panel */}
@@ -153,8 +147,8 @@ export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor
           <div className="lg:col-span-3">
             <form
               onSubmit={handleSubmit}
-              className="p-5 sm:p-6 md:p-8 rounded-2xl border border-white/10 backdrop-blur-sm"
-              style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+              className="p-5 sm:p-6 md:p-8 rounded-2xl border border-white/10"
+              style={{ backgroundColor: `${primaryColor}08` }}
             >
               {/* Honeypot */}
               <input
@@ -293,10 +287,7 @@ export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor
                   type="submit"
                   disabled={submitting}
                   className="w-full py-3.5 text-sm font-semibold text-white rounded-xl transition-all duration-300 disabled:opacity-50 hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]"
-                  style={{
-                    backgroundColor: primaryColor,
-                    boxShadow: `0 4px 24px ${primaryColor}40`,
-                  }}
+                  style={{ backgroundColor: primaryColor }}
                 >
                   {submitting ? (
                     <span className="flex items-center justify-center gap-2">
