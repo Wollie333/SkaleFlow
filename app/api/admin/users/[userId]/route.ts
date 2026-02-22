@@ -234,7 +234,7 @@ export async function GET(
 
     const brandPhases = brandResult.data || [];
     const brandProgress = Object.entries(PHASE_NAMES).map(([num, fallbackName]) => {
-      const phase = brandPhases.find(p => p.phase_number === num);
+      const phase = brandPhases.find(p => String(p.phase_number) === num);
       return {
         phase_number: Number(num),
         phase_name: phase?.phase_name || fallbackName,
