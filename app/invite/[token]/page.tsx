@@ -154,23 +154,27 @@ export default function InvitePage({ params: paramsPromise }: InvitePageProps) {
           </div>
 
           <form onSubmit={handleAccept} className="space-y-6">
-            <Input
-              type="email"
-              label="Email"
-              value={invitation?.email || ''}
-              disabled
-              className="bg-dark border-teal/20 text-cream/50"
-            />
+            <div>
+              <label className="block text-sm font-medium text-cream/70 mb-2">Email</label>
+              <Input
+                type="email"
+                value={invitation?.email || ''}
+                disabled
+                className="bg-dark border-teal/20 text-cream/50"
+              />
+            </div>
 
-            <Input
-              type="text"
-              label="Your Name"
-              placeholder="Enter your full name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-              className="bg-dark border-teal/20 text-cream placeholder:text-stone/50"
-            />
+            <div>
+              <label className="block text-sm font-medium text-cream/70 mb-2">Your Name</label>
+              <Input
+                type="text"
+                placeholder="Enter your full name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+                className="bg-dark border-teal/20 text-cream placeholder:text-stone/50"
+              />
+            </div>
 
             <Button
               type="submit"
