@@ -1026,117 +1026,114 @@ export default function BrandPhaseDetailPage() {
               phaseCreditsUsed={phaseCreditsUsed}
               autoSavedOutputs={autoSavedOutputs}
               centered
+              bottomBar={!phaseComplete ? (
+                <div className="px-4 py-2.5 flex items-center justify-between gap-3">
+                  {/* Left: Previous */}
+                  <div className="flex items-center gap-2">
+                    {currentQuestionIndex > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleGoBack}
+                        disabled={isLockingAnswer || isSending}
+                        className="text-xs text-stone hover:text-charcoal transition-colors py-1 flex items-center gap-1"
+                      >
+                        <ArrowLeftIcon className="w-3.5 h-3.5" />
+                        Previous
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Center: Stepper dots + force advance warning */}
+                  <div className="flex items-center gap-2">
+                    {forceAdvanceMissingKeys && forceAdvanceMissingKeys.length > 0 ? (
+                      <div className="flex items-center gap-2 px-2.5 py-1 bg-gold/10 border border-gold/30 rounded-md">
+                        <span className="text-[11px] text-charcoal">
+                          Empty: {forceAdvanceMissingKeys.map(k => formatOutputKey(k)).join(', ')}
+                        </span>
+                        <button
+                          onClick={handleForceAdvance}
+                          disabled={isLockingAnswer}
+                          className="text-[11px] font-medium text-teal hover:text-teal/80 transition-colors whitespace-nowrap"
+                        >
+                          Continue Anyway
+                        </button>
+                        <button
+                          onClick={() => setForceAdvanceMissingKeys(null)}
+                          className="text-[11px] text-stone hover:text-charcoal transition-colors"
+                        >
+                          Stay
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: totalQuestions }, (_, i) => (
+                          <div
+                            key={i}
+                            className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                              i < currentQuestionIndex
+                                ? 'bg-teal'
+                                : i === currentQuestionIndex
+                                  ? 'bg-teal w-3'
+                                  : 'bg-stone/20'
+                            }`}
+                          />
+                        ))}
+                        <span className="text-[10px] text-stone ml-2">
+                          Q{currentQuestionIndex + 1} of {totalQuestions}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: Actions */}
+                  <div className="flex items-center gap-2">
+                    {canRequestStructure && !hasAnswerToLock && !allCurrentOutputsLocked && (
+                      <Button
+                        onClick={handleRequestStructure}
+                        disabled={isSending}
+                        variant="secondary"
+                        className="text-xs px-3 py-1.5"
+                      >
+                        <SparklesIcon className="w-3.5 h-3.5 mr-1" />
+                        Structure
+                      </Button>
+                    )}
+                    {!hasAnswerToLock && !allCurrentOutputsLocked && currentQuestionIndex < totalQuestions - 1 && (
+                      <button
+                        type="button"
+                        onClick={handleSkipQuestion}
+                        disabled={isLockingAnswer || isSending}
+                        className="text-xs text-stone hover:text-charcoal transition-colors py-1 flex items-center gap-1"
+                      >
+                        Skip
+                        <ForwardIcon className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    {(hasAnswerToLock || allCurrentOutputsLocked) && (
+                      <Button
+                        onClick={handleLockAnswer}
+                        disabled={isLockingAnswer}
+                        className="bg-teal hover:bg-teal/90 text-cream font-medium text-xs px-4 py-1.5"
+                      >
+                        {allCurrentOutputsLocked ? (
+                          <>
+                            <ArrowRightIcon className="w-3.5 h-3.5 mr-1" />
+                            {isLockingAnswer ? 'Saving...' : 'Next Question'}
+                          </>
+                        ) : (
+                          <>
+                            <CheckIcon className="w-3.5 h-3.5 mr-1" />
+                            {isLockingAnswer ? 'Saving...' : 'Save & Continue'}
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : undefined}
             />
           </div>
         </div>
-
-        {/* Bottom action bar */}
-        {!phaseComplete && (
-          <div className="border-t border-stone/10 bg-cream-warm flex-shrink-0">
-            <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-              {/* Left: Previous */}
-              <div className="flex items-center gap-2">
-                {currentQuestionIndex > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleGoBack}
-                    disabled={isLockingAnswer || isSending}
-                    className="text-xs text-stone hover:text-charcoal transition-colors py-1.5 flex items-center gap-1"
-                  >
-                    <ArrowLeftIcon className="w-3.5 h-3.5" />
-                    Previous
-                  </button>
-                )}
-              </div>
-
-              {/* Center: Stepper dots */}
-              <div className="flex items-center gap-1">
-                {Array.from({ length: totalQuestions }, (_, i) => (
-                  <div
-                    key={i}
-                    className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                      i < currentQuestionIndex
-                        ? 'bg-teal'
-                        : i === currentQuestionIndex
-                          ? 'bg-teal w-3'
-                          : 'bg-stone/20'
-                    }`}
-                  />
-                ))}
-                <span className="text-[10px] text-stone ml-2">
-                  Q{currentQuestionIndex + 1} of {totalQuestions}
-                </span>
-              </div>
-
-              {/* Force advance warning */}
-              {forceAdvanceMissingKeys && forceAdvanceMissingKeys.length > 0 && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-gold/10 border border-gold/30 rounded-md">
-                  <span className="text-[11px] text-charcoal">
-                    Empty fields: {forceAdvanceMissingKeys.map(k => formatOutputKey(k)).join(', ')}
-                  </span>
-                  <button
-                    onClick={handleForceAdvance}
-                    disabled={isLockingAnswer}
-                    className="text-[11px] font-medium text-teal hover:text-teal/80 transition-colors whitespace-nowrap"
-                  >
-                    Continue Anyway
-                  </button>
-                  <button
-                    onClick={() => setForceAdvanceMissingKeys(null)}
-                    className="text-[11px] text-stone hover:text-charcoal transition-colors"
-                  >
-                    Stay Here
-                  </button>
-                </div>
-              )}
-
-              {/* Right: Actions */}
-              <div className="flex items-center gap-2">
-                {canRequestStructure && !hasAnswerToLock && !allCurrentOutputsLocked && (
-                  <Button
-                    onClick={handleRequestStructure}
-                    disabled={isSending}
-                    variant="secondary"
-                    className="text-xs px-3 py-1.5"
-                  >
-                    <SparklesIcon className="w-3.5 h-3.5 mr-1" />
-                    Structure
-                  </Button>
-                )}
-                {!hasAnswerToLock && !allCurrentOutputsLocked && currentQuestionIndex < totalQuestions - 1 && (
-                  <button
-                    type="button"
-                    onClick={handleSkipQuestion}
-                    disabled={isLockingAnswer || isSending}
-                    className="text-xs text-stone hover:text-charcoal transition-colors py-1.5 flex items-center gap-1"
-                  >
-                    Skip
-                    <ForwardIcon className="w-3.5 h-3.5" />
-                  </button>
-                )}
-                {(hasAnswerToLock || allCurrentOutputsLocked) && (
-                  <Button
-                    onClick={handleLockAnswer}
-                    disabled={isLockingAnswer}
-                    className="bg-teal hover:bg-teal/90 text-cream font-medium text-xs px-4 py-1.5"
-                  >
-                    {allCurrentOutputsLocked ? (
-                      <>
-                        <ArrowRightIcon className="w-3.5 h-3.5 mr-1" />
-                        {isLockingAnswer ? 'Saving...' : 'Next Question'}
-                      </>
-                    ) : (
-                      <>
-                        <CheckIcon className="w-3.5 h-3.5 mr-1" />
-                        {isLockingAnswer ? 'Saving...' : 'Save & Continue'}
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Progress Sidebar */}

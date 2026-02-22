@@ -65,6 +65,8 @@ interface ExpertChatPanelProps {
   autoSavedOutputs?: string[];
   // Centered layout mode (hides agent header, shows inline)
   centered?: boolean;
+  // Optional bottom bar rendered below the input area (e.g. question nav)
+  bottomBar?: React.ReactNode;
 }
 
 export function ExpertChatPanel({
@@ -84,6 +86,7 @@ export function ExpertChatPanel({
   phaseCreditsUsed,
   autoSavedOutputs,
   centered = false,
+  bottomBar,
 }: ExpertChatPanelProps) {
   const [input, setInput] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -485,6 +488,13 @@ export function ExpertChatPanel({
           </>
         )}
       </div>
+
+      {/* Bottom bar (question nav, progress dots, actions) */}
+      {bottomBar && (
+        <div className="border-t border-stone/10 flex-shrink-0">
+          {bottomBar}
+        </div>
+      )}
     </div>
   );
 }
