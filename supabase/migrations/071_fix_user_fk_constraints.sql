@@ -1,4 +1,4 @@
--- Migration 070: Fix FK constraints that block user deletion
+-- Migration 071: Fix FK constraints that block user deletion
 -- All bare REFERENCES users(id) default to ON DELETE RESTRICT.
 -- This migration drops and re-adds them with ON DELETE SET NULL or CASCADE.
 
@@ -113,6 +113,26 @@ ALTER TABLE change_requests DROP CONSTRAINT IF EXISTS change_requests_assigned_t
 ALTER TABLE change_requests
   ADD CONSTRAINT change_requests_assigned_to_fkey
   FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL;
+
+-- team_credit_allocations.allocated_by (031)
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'team_credit_allocations') THEN
+    ALTER TABLE team_credit_allocations DROP CONSTRAINT IF EXISTS team_credit_allocations_allocated_by_fkey;
+    ALTER TABLE team_credit_allocations
+      ADD CONSTRAINT team_credit_allocations_allocated_by_fkey
+      FOREIGN KEY (allocated_by) REFERENCES users(id) ON DELETE SET NULL;
+  END IF;
+END $$;
+
+-- authority_checklist_items.completed_by (048)
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'authority_checklist_items') THEN
+    ALTER TABLE authority_checklist_items DROP CONSTRAINT IF EXISTS authority_checklist_items_completed_by_fkey;
+    ALTER TABLE authority_checklist_items
+      ADD CONSTRAINT authority_checklist_items_completed_by_fkey
+      FOREIGN KEY (completed_by) REFERENCES users(id) ON DELETE SET NULL;
+  END IF;
+END $$;
 
 -- ============================================================
 -- NOT NULL columns → make nullable, then ON DELETE SET NULL
