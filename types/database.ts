@@ -139,6 +139,8 @@ export type InviteMethod = 'link' | 'email' | 'calendar' | 'direct';
 export type OfferBillingFrequency = 'once' | 'monthly' | 'quarterly' | 'annual';
 
 // Brand Audit types
+export type BrandVisualAssetType = 'primary_logo' | 'logo_dark' | 'logo_light' | 'logo_icon' | 'pattern' | 'mood_board';
+
 export type BrandAuditStatus = 'draft' | 'in_progress' | 'call_scheduled' | 'call_in_progress' | 'call_complete' | 'review' | 'scoring' | 'complete' | 'report_generated' | 'delivered' | 'abandoned';
 export type BrandAuditSource = 'manual' | 'call' | 'hybrid' | 'website';
 export type BrandAuditSectionKey = 'company_overview' | 'brand_foundation' | 'visual_identity' | 'messaging' | 'digital_presence' | 'customer_experience' | 'competitive_landscape' | 'goals_challenges';
@@ -683,6 +685,44 @@ export interface Database {
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      brand_visual_assets: {
+        Row: {
+          id: string;
+          organization_id: string;
+          asset_type: string;
+          file_url: string;
+          file_name: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          asset_type: string;
+          file_url: string;
+          file_name: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          asset_type?: string;
+          file_url?: string;
+          file_name?: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "brand_visual_assets_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
             referencedColumns: ["id"];
           },
         ];

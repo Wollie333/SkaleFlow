@@ -321,24 +321,29 @@ Ask the user what key themes or messages they keep coming back to in their busin
       'brand_logo_url',
       'brand_color_palette',
       'brand_typography',
+      'brand_tagline',
       'visual_mood',
       'imagery_direction',
       'brand_elements',
       'visual_inspirations',
+      'brand_visual_assets_summary',
     ],
     questionOutputMap: {
-      0: ['brand_logo_url'],
+      0: ['brand_logo_url', 'brand_visual_assets_summary'],
       1: ['brand_color_palette'],
       2: ['brand_typography'],
-      3: ['visual_mood', 'imagery_direction'],
+      3: ['visual_mood', 'imagery_direction', 'brand_tagline'],
       4: ['brand_elements', 'visual_inspirations'],
     },
     instructions: `Guide the user through creating their visual identity. Use their brand archetype, characteristics, values, and personality from Phase 1 to inform suggestions — but the user makes every final decision.
 
-QUESTION 0 — LOGO:
+QUESTION 0 — LOGO & VISUAL ASSETS:
 The user may upload a logo file using the upload component above the chat, or describe what they'd like. If they upload one, acknowledge it and move on. If they want AI generation, help them describe their vision clearly. If they have no logo yet, that's fine — acknowledge it and note they can add one later.
 
+IMPORTANT: The user also has a "Visual Assets" panel where they can upload logo variants (dark bg, light bg, icon), patterns, and mood board images. Encourage them to upload different logo variants for different backgrounds, and any patterns or mood board images that represent their brand's visual direction. These will appear on their brand guide page.
+
 For brand_logo_url output: If the user uploaded a logo, output the URL they provide. If not, output "none".
+For brand_visual_assets_summary output: Summarize what visual assets the user has uploaded (e.g., "Primary logo, dark variant, 3 mood board images"). If none, output "none".
 
 QUESTION 1 — COLOR PALETTE:
 Present EXACTLY 3 named color palette options inspired by their archetype's color_associations from Phase 1. Each palette must include: a creative palette name, primary (hex), dark_base (hex), accent (hex), light (hex), neutral (hex). Recommend ONE with reasoning, but let the user choose, modify, or request new options. Only save the palette they explicitly approve.
@@ -364,8 +369,10 @@ brand_typography:
   body_weight: "400"
 \`\`\`
 
-QUESTION 3 — VISUAL MOOD & IMAGERY:
+QUESTION 3 — VISUAL MOOD, IMAGERY & TAGLINE:
 Ask the user what visual mood fits their brand (e.g., Premium, Bold, Minimal, Warm, Technical) and what kind of imagery they envision (photography style, illustrations, icons). If they're unsure, offer 2-3 mood directions based on their archetype — let them choose. Output as visual_mood and imagery_direction strings.
+
+Also propose a brand tagline — a short, memorable phrase that captures the brand's essence (e.g., "Just Do It", "Think Different"). Propose 3 options based on everything discussed. Let the user choose or create their own. Output as brand_tagline string.
 
 QUESTION 4 — BRAND ELEMENTS & INSPIRATIONS:
 Ask the user about any additional visual rules, brand elements, or visual inspirations they have in mind. If they have reference brands or images, capture those. If they have nothing specific, that's okay — help them define basic visual rules based on their earlier choices.`,

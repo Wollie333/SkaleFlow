@@ -55,7 +55,12 @@ export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor
   };
 
   const inputClass =
-    'w-full px-4 py-3 text-sm bg-white border border-stone/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-stone/20 focus:border-stone/20 transition-all duration-200 placeholder:text-stone/30 text-charcoal';
+    'w-full px-4 py-3 text-sm bg-white border border-stone/20 rounded-xl focus:outline-none focus:ring-2 transition-all duration-200 placeholder:text-stone/60 text-charcoal';
+
+  const focusStyle = {
+    '--tw-ring-color': primaryColor,
+    borderColor: primaryColor,
+  } as React.CSSProperties;
 
   if (submitted) {
     return (
@@ -171,6 +176,7 @@ export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor
                       value={form.journalist_name}
                       onChange={(e) => setForm({ ...form, journalist_name: e.target.value })}
                       className={inputClass}
+                      style={focusStyle}
                       placeholder="Jane Smith"
                     />
                   </div>
@@ -182,6 +188,7 @@ export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor
                       value={form.journalist_outlet}
                       onChange={(e) => setForm({ ...form, journalist_outlet: e.target.value })}
                       className={inputClass}
+                      style={focusStyle}
                       placeholder="The Times"
                     />
                   </div>
@@ -196,6 +203,7 @@ export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor
                       value={form.journalist_email}
                       onChange={(e) => setForm({ ...form, journalist_email: e.target.value })}
                       className={inputClass}
+                      style={focusStyle}
                       placeholder="jane@publication.com"
                     />
                   </div>
@@ -206,6 +214,7 @@ export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor
                       value={form.journalist_phone}
                       onChange={(e) => setForm({ ...form, journalist_phone: e.target.value })}
                       className={inputClass}
+                      style={focusStyle}
                       placeholder="+1 (555) 000-0000"
                     />
                   </div>
@@ -219,6 +228,7 @@ export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor
                     value={form.topic_of_interest}
                     onChange={(e) => setForm({ ...form, topic_of_interest: e.target.value })}
                     className={inputClass}
+                    style={focusStyle}
                     placeholder="What would you like to cover?"
                   />
                 </div>
@@ -230,6 +240,7 @@ export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor
                       value={form.story_angle_id}
                       onChange={(e) => setForm({ ...form, story_angle_id: e.target.value })}
                       className={inputClass}
+                      style={focusStyle}
                     >
                       <option value="">Select an angle (optional)</option>
                       {storyAngles.map((a) => (
@@ -246,6 +257,7 @@ export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor
                       value={form.preferred_format}
                       onChange={(e) => setForm({ ...form, preferred_format: e.target.value })}
                       className={inputClass}
+                      style={focusStyle}
                     >
                       <option value="">Select format</option>
                       <option value="interview">Interview</option>
@@ -262,6 +274,7 @@ export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor
                       value={form.deadline}
                       onChange={(e) => setForm({ ...form, deadline: e.target.value })}
                       className={inputClass}
+                      style={focusStyle}
                     />
                   </div>
                 </div>
@@ -273,6 +286,7 @@ export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor
                     value={form.additional_notes}
                     onChange={(e) => setForm({ ...form, additional_notes: e.target.value })}
                     className={`${inputClass} resize-none`}
+                    style={focusStyle}
                     placeholder="Any additional context for your inquiry..."
                   />
                 </div>

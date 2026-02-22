@@ -17,6 +17,7 @@ import { PhaseNavDropdown } from './phase-nav-dropdown';
 import { QuestionStepper } from './question-stepper';
 import { VariablePreviewCard } from './variable-preview-card';
 import { LogoUpload } from './logo-upload';
+import { BrandAssetsUpload } from './brand-assets-upload';
 import type { PhaseStatus, Json } from '@/types/database';
 
 interface Phase {
@@ -251,6 +252,15 @@ export function QuestionPanel({
                   organizationId={organizationId}
                   onLogoUploaded={onLogoUploaded}
                 />
+              </div>
+            )}
+
+            {/* Visual assets upload for Phase 7 */}
+            {currentPhase.phase_number === '7' && organizationId && (
+              <div className="border border-stone/10 rounded-lg p-3 bg-cream-warm">
+                <p className="text-xs font-semibold text-charcoal mb-2">Visual Assets</p>
+                <p className="text-[10px] text-stone mb-3">Upload logo variants, patterns, and mood board images for your brand guide.</p>
+                <BrandAssetsUpload organizationId={organizationId} />
               </div>
             )}
 

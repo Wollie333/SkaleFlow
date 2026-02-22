@@ -23,12 +23,17 @@ export async function GET(
     'brand_logo_url',
     'brand_color_palette',
     'brand_typography',
+    'brand_tagline',
+    'positioning_statement',
     'design_system_colors',
+    'design_system_typography',
     'design_system_components',
     'visual_mood',
     'imagery_direction',
     'brand_elements',
     'brand_archetype',
+    'visual_inspirations',
+    'brand_visual_assets_summary',
   ];
 
   const { data: outputs } = await supabase
@@ -42,8 +47,17 @@ export async function GET(
     brand[o.output_key] = o.output_value;
   }
 
+  // Fetch visual assets (logo variants, patterns, mood board)
+  const { data: visualAssets } = await supabase
+    .from('brand_visual_assets')
+    .select('id, asset_type, file_url, file_name, sort_order')
+    .eq('organization_id', org.id)
+    .order('asset_type')
+    .order('sort_order');
+
   return NextResponse.json({
     organization: org,
     brand,
+    visualAssets: visualAssets || [],
   });
 }

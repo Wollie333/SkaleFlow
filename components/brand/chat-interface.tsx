@@ -20,6 +20,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useSpeechToText } from '@/hooks/use-speech-to-text';
 import { LogoUpload } from './logo-upload';
+import { BrandAssetsUpload } from './brand-assets-upload';
 import { ModelSelector } from '@/components/ai/model-selector';
 import type { ClientModelOption } from '@/lib/ai/models';
 
@@ -308,6 +309,14 @@ export function ChatInterface({
             organizationId={organizationId}
             onLogoUploaded={(url) => onLogoUploaded?.(url)}
           />
+        </div>
+      )}
+
+      {/* Visual assets upload for Phase 7 */}
+      {phase.phase_number === '7' && !phaseComplete && organizationId && (
+        <div className="px-6 py-3 border-b border-stone/10 bg-stone/5">
+          <p className="text-xs font-semibold text-charcoal mb-2">Visual Assets</p>
+          <BrandAssetsUpload organizationId={organizationId} />
         </div>
       )}
 
