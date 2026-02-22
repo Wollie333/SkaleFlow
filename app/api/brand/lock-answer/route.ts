@@ -6,7 +6,7 @@ import { isOrgOwnerOrAdmin } from '@/lib/permissions';
 
 export async function POST(request: Request) {
   try {
-    const { organizationId, phaseId, questionIndex } = await request.json();
+    const { organizationId, phaseId, questionIndex, force } = await request.json();
 
     const supabase = await createClient();
 
@@ -99,30 +99,35 @@ export async function POST(request: Request) {
     const existingKeys = new Set(existingOutputs?.map(o => o.output_key) || []);
     const missingKeys = outputKeys.filter(k => !existingKeys.has(k));
 
-    if (missingKeys.length > 0) {
+    const isLastQuestion = questionIndex >= phaseTemplate.questions.length - 1;
+
+    if (missingKeys.length > 0 && !(force && !isLastQuestion)) {
       return NextResponse.json({
         success: false,
         missingKeys,
       });
     }
 
+    // Lock only the outputs that exist (skip missing when force advancing mid-phase)
+    const keysToLock = outputKeys.filter(k => existingKeys.has(k));
+
     // Lock the specific outputs for this question and adopt them into the correct phase
-    const { error: lockError } = await supabase
-      .from('brand_outputs')
-      .update({
-        is_locked: true,
-        phase_id: phaseId,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('organization_id', organizationId)
-      .in('output_key', outputKeys);
+    if (keysToLock.length > 0) {
+      const { error: lockError } = await supabase
+        .from('brand_outputs')
+        .update({
+          is_locked: true,
+          phase_id: phaseId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('organization_id', organizationId)
+        .in('output_key', keysToLock);
 
-    if (lockError) {
-      console.error('Failed to lock outputs:', lockError.message);
-      return NextResponse.json({ error: 'Failed to lock outputs' }, { status: 500 });
+      if (lockError) {
+        console.error('Failed to lock outputs:', lockError.message);
+        return NextResponse.json({ error: 'Failed to lock outputs' }, { status: 500 });
+      }
     }
-
-    const isLastQuestion = questionIndex >= phaseTemplate.questions.length - 1;
 
     // If this is the last question, check ALL phase variables are set before completing
     if (isLastQuestion) {

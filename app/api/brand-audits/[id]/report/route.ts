@@ -94,7 +94,7 @@ export async function POST(
       .from('brand_outputs')
       .select('output_key, output_value')
       .eq('organization_id', auditOrgId)
-      .in('output_key', ['brand_color_palette', 'brand_logo_url']);
+      .in('output_key', ['brand_color_palette', 'brand_logo_primary', 'brand_logo_url']);
 
     const colorPalette = brandOutputs?.find((b) => b.output_key === 'brand_color_palette');
     let primaryColor = '#0F766E';

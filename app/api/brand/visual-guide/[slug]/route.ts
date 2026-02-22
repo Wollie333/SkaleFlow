@@ -20,7 +20,8 @@ export async function GET(
 
   // Fetch visual identity brand outputs
   const VISUAL_KEYS = [
-    'brand_logo_url',
+    'brand_logo_primary',
+    'brand_logo_url', // legacy fallback
     'brand_color_palette',
     'brand_typography',
     'brand_tagline',

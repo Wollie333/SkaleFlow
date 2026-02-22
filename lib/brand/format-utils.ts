@@ -26,7 +26,13 @@ export const VARIABLE_DISPLAY_NAMES: Record<string, string> = {
   industry_terms_embrace: 'Industry Terms (Embrace)',
   industry_terms_reject: 'Industry Terms (Reject)',
   // Phase 7
-  brand_logo_url: 'Brand Logo',
+  brand_logo_primary: 'Primary Logo',
+  brand_logo_dark: 'Logo (Dark Background)',
+  brand_logo_light: 'Logo (Light Background)',
+  brand_logo_icon: 'Logo Icon / Favicon',
+  brand_mood_board: 'Mood Board',
+  brand_patterns: 'Patterns & Textures',
+  brand_logo_url: 'Brand Logo', // legacy alias
   brand_color_palette: 'Color Palette',
   brand_typography: 'Typography',
   visual_mood: 'Visual Mood',
@@ -34,6 +40,7 @@ export const VARIABLE_DISPLAY_NAMES: Record<string, string> = {
   brand_elements: 'Brand Elements',
   visual_inspirations: 'Visual Inspirations',
   brand_visual_assets_summary: 'Visual Assets Summary',
+  brand_visual_guidelines: 'Visual Guidelines',
   brand_tagline: 'Brand Tagline',
   // Phase 8
   design_system_colors: 'Design System Colors',

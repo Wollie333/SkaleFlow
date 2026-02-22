@@ -58,7 +58,8 @@ interface BrandGuideData {
     logo_url: string | null;
   };
   brand: {
-    brand_logo_url?: string;
+    brand_logo_primary?: string;
+    brand_logo_url?: string; // legacy
     brand_color_palette?: ColorPalette;
     brand_typography?: Typography;
     brand_tagline?: string;
@@ -129,7 +130,7 @@ export default function BrandGuidePage() {
   const typography = brand.brand_typography || {};
   const dsColors = brand.design_system_colors || {};
   const dsTypography = brand.design_system_typography || {};
-  const logoUrl = (brand.brand_logo_url as string) || organization.logo_url;
+  const logoUrl = (brand.brand_logo_primary as string) || (brand.brand_logo_url as string) || organization.logo_url;
 
   const primary = palette.primary || '#14b8a6';
   const dark = palette.dark_base || palette.neutral || '#1a1a2e';

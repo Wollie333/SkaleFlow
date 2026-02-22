@@ -19,9 +19,20 @@ interface Asset {
 
 interface BrandAssetsUploadProps {
   organizationId: string;
+  phaseId?: string;
   disabled?: boolean;
   onAssetsChange?: (assets: Asset[]) => void;
 }
+
+/** Maps asset types to their brand_outputs variable keys */
+const ASSET_TO_VARIABLE: Record<AssetType, string> = {
+  primary_logo: 'brand_logo_primary',
+  logo_dark: 'brand_logo_dark',
+  logo_light: 'brand_logo_light',
+  logo_icon: 'brand_logo_icon',
+  pattern: 'brand_patterns',
+  mood_board: 'brand_mood_board',
+};
 
 const ASSET_CATEGORIES: { type: AssetType; label: string; description: string; multi: boolean }[] = [
   { type: 'primary_logo', label: 'Primary Logo', description: 'Main brand logo', multi: false },
@@ -35,7 +46,7 @@ const ASSET_CATEGORIES: { type: AssetType; label: string; description: string; m
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp'];
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
-export function BrandAssetsUpload({ organizationId, disabled, onAssetsChange }: BrandAssetsUploadProps) {
+export function BrandAssetsUpload({ organizationId, phaseId, disabled, onAssetsChange }: BrandAssetsUploadProps) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -64,6 +75,41 @@ export function BrandAssetsUpload({ organizationId, disabled, onAssetsChange }: 
     (type: AssetType) => assets.filter((a) => a.asset_type === type),
     [assets]
   );
+
+  /** Sync asset URLs to brand_outputs for the given asset type */
+  const syncAssetToVariable = useCallback(async (assetType: AssetType, updatedAssets: Asset[]) => {
+    if (!phaseId) return;
+    const outputKey = ASSET_TO_VARIABLE[assetType];
+    if (!outputKey) return;
+
+    const typeAssets = updatedAssets.filter(a => a.asset_type === assetType);
+    const cat = ASSET_CATEGORIES.find(c => c.type === assetType);
+
+    let value: string | string[];
+    if (cat?.multi) {
+      // Multi assets: save as JSON array of URLs
+      value = typeAssets.map(a => a.file_url);
+    } else {
+      // Single assets: save as URL string (or "none" if deleted)
+      value = typeAssets.length > 0 ? typeAssets[0].file_url : 'none';
+    }
+
+    try {
+      await fetch('/api/brand/variable', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organizationId,
+          phaseId,
+          outputKey,
+          action: 'update',
+          value,
+        }),
+      });
+    } catch {
+      // Silent fail — asset is still stored, just not synced to brand_outputs
+    }
+  }, [organizationId, phaseId]);
 
   const uploadFile = async (file: File, assetType: AssetType) => {
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -100,6 +146,7 @@ export function BrandAssetsUpload({ organizationId, disabled, onAssetsChange }: 
       }
       setAssets(newAssets);
       onAssetsChange?.(newAssets);
+      syncAssetToVariable(assetType, newAssets);
     } catch (err) {
       setErrors((prev) => ({ ...prev, [assetType]: err instanceof Error ? err.message : 'Upload failed' }));
     } finally {
@@ -118,6 +165,7 @@ export function BrandAssetsUpload({ organizationId, disabled, onAssetsChange }: 
         const newAssets = assets.filter((a) => a.id !== assetId);
         setAssets(newAssets);
         onAssetsChange?.(newAssets);
+        syncAssetToVariable(assetType, newAssets);
       }
     } catch {
       setErrors((prev) => ({ ...prev, [assetType]: 'Failed to delete' }));

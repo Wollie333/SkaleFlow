@@ -53,7 +53,7 @@ export async function POST() {
   try {
     const result = await syncBrandToCanva({
       accessToken: active.accessToken,
-      brandLogoUrl: parsed.brand_logo_url,
+      brandLogoUrl: parsed.brand_logo_primary || parsed.brand_logo_url,
       colorPalette: parsed.brand_color_palette,
     });
 

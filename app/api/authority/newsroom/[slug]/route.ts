@@ -62,7 +62,7 @@ export async function GET(
     .select('output_key, output_value')
     .eq('organization_id', org.id)
     .in('output_key', [
-      'brand_color_palette', 'brand_typography', 'brand_logo_url',
+      'brand_color_palette', 'brand_typography', 'brand_logo_primary', 'brand_logo_url',
       'brand_positioning_statement', 'brand_story', 'brand_tagline',
     ]);
 

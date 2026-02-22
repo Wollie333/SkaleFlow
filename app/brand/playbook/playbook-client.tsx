@@ -65,9 +65,12 @@ const VARIABLE_SECTION_MAP: Record<string, string> = {
   industry_terms_embrace: '04', industry_terms_reject: '04',
   message_core: '04', message_pillars: '04',
   // 05 - Visual Identity
-  brand_logo_url: '05', brand_color_palette: '05', brand_typography: '05',
+  brand_logo_primary: '05', brand_logo_dark: '05', brand_logo_light: '05',
+  brand_logo_icon: '05', brand_mood_board: '05', brand_patterns: '05',
+  brand_logo_url: '05', // legacy
+  brand_color_palette: '05', brand_typography: '05',
   visual_mood: '05', imagery_direction: '05', brand_elements: '05',
-  visual_inspirations: '05',
+  visual_inspirations: '05', brand_visual_guidelines: '05',
   // 06 - Design System
   design_system_colors: '06', design_system_typography: '06',
   design_system_components: '06', design_system_animations: '06',
@@ -339,7 +342,7 @@ export function PlaybookClient({ organization, outputs, isPublicView }: Playbook
             <PlaybookCover
               orgName={organization.name}
               logoUrl={organization.logoUrl}
-              brandLogoUrl={data.brand_logo_url && data.brand_logo_url !== 'none' ? data.brand_logo_url : null}
+              brandLogoUrl={(data.brand_logo_primary || data.brand_logo_url) && (data.brand_logo_primary || data.brand_logo_url) !== 'none' ? (data.brand_logo_primary || data.brand_logo_url) : null}
             />
 
             <div className="max-w-[840px] mx-auto px-10 py-16">

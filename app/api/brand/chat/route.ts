@@ -170,13 +170,14 @@ export async function POST(request: Request) {
         .single();
       orgLogoUrl = orgData?.logo_url || null;
 
-      // Also check brand_outputs for brand_logo_url
+      // Also check brand_outputs for brand_logo_primary (fallback: brand_logo_url)
       if (!orgLogoUrl) {
         const { data: logoOutput } = await supabase
           .from('brand_outputs')
           .select('output_value')
           .eq('organization_id', organizationId)
-          .eq('output_key', 'brand_logo_url')
+          .in('output_key', ['brand_logo_primary', 'brand_logo_url'])
+          .limit(1)
           .single();
         if (logoOutput?.output_value && typeof logoOutput.output_value === 'string' && logoOutput.output_value !== 'none') {
           orgLogoUrl = logoOutput.output_value;

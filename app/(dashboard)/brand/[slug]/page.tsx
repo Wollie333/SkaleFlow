@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { ExpertChatPanel, ImportPlaybookModal, QuestionBanner, ProgressSidebar, LogoUpload, BrandAssetsUpload } from '@/components/brand';
+import { ExpertChatPanel, ImportPlaybookModal, QuestionBanner, ProgressSidebar, LogoUpload, BrandAssetsUpload, ColorPalettePicker, TypographyPicker } from '@/components/brand';
 import { Button } from '@/components/ui';
 import {
   ArrowLeftIcon,
@@ -81,6 +81,7 @@ export default function BrandPhaseDetailPage() {
   const [isSending, setIsSending] = useState(false);
   const [isLocking, setIsLocking] = useState(false);
   const [isLockingAnswer, setIsLockingAnswer] = useState(false);
+  const [forceAdvanceMissingKeys, setForceAdvanceMissingKeys] = useState<string[] | null>(null);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [phaseImportTarget, setPhaseImportTarget] = useState<{ id: string; name: string } | null>(null);
   const [isUnlocking, setIsUnlocking] = useState(false);
@@ -449,10 +450,12 @@ export default function BrandPhaseDetailPage() {
       }
 
       if (data.missingKeys && data.missingKeys.length > 0) {
+        setForceAdvanceMissingKeys(data.missingKeys);
         setIsLockingAnswer(false);
         return;
       }
 
+      setForceAdvanceMissingKeys(null);
       const newIndex = data.nextQuestionIndex;
       setCurrentPhase(prev => prev ? { ...prev, current_question_index: newIndex } : null);
 
@@ -495,6 +498,41 @@ export default function BrandPhaseDetailPage() {
       console.error('Error saving answer:', error);
     }
 
+    setIsLockingAnswer(false);
+  };
+
+  const handleForceAdvance = async () => {
+    if (!currentPhase || !organizationId) return;
+    setForceAdvanceMissingKeys(null);
+    setIsLockingAnswer(true);
+
+    try {
+      const response = await fetch('/api/brand/lock-answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organizationId,
+          phaseId: currentPhase.id,
+          questionIndex: currentPhase.current_question_index,
+          force: true,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      if (data.success) {
+        const newIndex = data.nextQuestionIndex;
+        setCurrentPhase(prev => prev ? { ...prev, current_question_index: newIndex } : null);
+        setPhases(prev => prev.map(p =>
+          p.id === currentPhase.id ? { ...p, current_question_index: newIndex } : p
+        ));
+        await reloadMessages();
+        setAutoSavedOutputs([]);
+      }
+    } catch (error) {
+      console.error('Error force advancing:', error);
+    }
     setIsLockingAnswer(false);
   };
 
@@ -904,7 +942,7 @@ export default function BrandPhaseDetailPage() {
                       await supabase.from('brand_outputs').upsert({
                         organization_id: organizationId,
                         phase_id: currentPhase.id,
-                        output_key: 'brand_logo_url',
+                        output_key: 'brand_logo_primary',
                         output_value: url,
                         is_locked: false,
                       }, { onConflict: 'organization_id,output_key' });
@@ -917,13 +955,50 @@ export default function BrandPhaseDetailPage() {
               </div>
             )}
 
-            {/* Visual assets upload for Phase 7 */}
-            {currentPhase.phase_number === '7' && organizationId && !phaseComplete && (
+            {/* Visual assets upload for Phase 7, Q0 */}
+            {currentPhase.phase_number === '7' && currentQuestionIndex === 0 && organizationId && !phaseComplete && (
               <div className="border border-stone/10 rounded-lg p-3 bg-cream-warm">
                 <p className="text-xs font-semibold text-charcoal mb-2">Visual Assets</p>
                 <p className="text-[10px] text-stone mb-3">Upload logo variants, patterns, and mood board images for your brand guide.</p>
-                <BrandAssetsUpload organizationId={organizationId} />
+                <BrandAssetsUpload organizationId={organizationId} phaseId={currentPhase.id} />
               </div>
+            )}
+
+            {/* Color palette picker for Phase 7, Q1 */}
+            {currentPhase.phase_number === '7' && currentQuestionIndex === 1 && organizationId && !phaseComplete && (
+              <ColorPalettePicker
+                organizationId={organizationId}
+                phaseId={currentPhase.id}
+                initialPalette={
+                  outputs.find(o => o.output_key === 'brand_color_palette')?.output_value
+                    ? (outputs.find(o => o.output_key === 'brand_color_palette')?.output_value as never)
+                    : null
+                }
+                onPaletteChange={async () => {
+                  const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
+                  setOutputs(freshOutputs);
+                }}
+              />
+            )}
+
+            {/* Typography picker for Phase 7, Q2 */}
+            {currentPhase.phase_number === '7' && currentQuestionIndex === 2 && organizationId && !phaseComplete && (
+              <TypographyPicker
+                organizationId={organizationId}
+                phaseId={currentPhase.id}
+                initialTypography={
+                  outputs.find(o => o.output_key === 'brand_typography')?.output_value
+                    ? (outputs.find(o => o.output_key === 'brand_typography')?.output_value as never)
+                    : null
+                }
+                onTypographyChange={async () => {
+                  const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
+                  setOutputs(freshOutputs);
+                }}
+                onSuggestPairing={() => {
+                  handleSendMessage("Please suggest 2-3 Google Font pairings that would work well for my brand. I need heading, body, and accent fonts that match my brand's personality and visual direction.");
+                }}
+              />
             )}
 
             {/* Chat messages */}
@@ -992,6 +1067,28 @@ export default function BrandPhaseDetailPage() {
                   Q{currentQuestionIndex + 1} of {totalQuestions}
                 </span>
               </div>
+
+              {/* Force advance warning */}
+              {forceAdvanceMissingKeys && forceAdvanceMissingKeys.length > 0 && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gold/10 border border-gold/30 rounded-md">
+                  <span className="text-[11px] text-charcoal">
+                    Empty fields: {forceAdvanceMissingKeys.map(k => formatOutputKey(k)).join(', ')}
+                  </span>
+                  <button
+                    onClick={handleForceAdvance}
+                    disabled={isLockingAnswer}
+                    className="text-[11px] font-medium text-teal hover:text-teal/80 transition-colors whitespace-nowrap"
+                  >
+                    Continue Anyway
+                  </button>
+                  <button
+                    onClick={() => setForceAdvanceMissingKeys(null)}
+                    className="text-[11px] text-stone hover:text-charcoal transition-colors"
+                  >
+                    Stay Here
+                  </button>
+                </div>
+              )}
 
               {/* Right: Actions */}
               <div className="flex items-center gap-2">

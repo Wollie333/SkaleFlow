@@ -13,3 +13,5 @@ export { MobileTabToggle } from './mobile-tab-toggle';
 export type { MobileTab } from './mobile-tab-toggle';
 export { QuestionBanner } from './question-banner';
 export { ProgressSidebar } from './progress-sidebar';
+export { ColorPalettePicker } from './color-palette-picker';
+export { TypographyPicker } from './typography-picker';

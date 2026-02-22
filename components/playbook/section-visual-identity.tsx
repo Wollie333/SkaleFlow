@@ -138,38 +138,33 @@ function ColorPaletteDisplay({ palette }: { palette: ColorPalette }) {
 function TypographyDisplay({ typography }: { typography: Typography }) {
   const alphabet = 'Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz';
 
+  const fonts = [
+    { label: 'Heading Font', font: typography.heading_font, weight: typography.heading_weight || '700' },
+    { label: 'Body Font', font: typography.body_font, weight: typography.body_weight || '400' },
+    ...(typography.accent_font ? [{ label: 'Accent Font', font: typography.accent_font, weight: typography.accent_weight || '500' }] : []),
+  ];
+
+  const gridCols = fonts.length === 3 ? 'grid-cols-3' : 'grid-cols-2';
+
   return (
     <div>
-      <div className="grid grid-cols-2 gap-10">
-        <div className="break-inside-avoid">
-          <p className="text-[11px] font-bold uppercase mb-4" style={{ color: 'var(--playbook-primary)', letterSpacing: '0.12em' }}>
-            Heading Font
-          </p>
-          <p className="text-4xl mb-3" style={{ fontFamily: `'${typography.heading_font}', sans-serif`, fontWeight: typography.heading_weight || '700', color: 'var(--playbook-dark)', lineHeight: '1.15' }}>
-            {typography.heading_font}
-          </p>
-          <p className="text-[11px] font-mono mb-4" style={{ color: 'var(--playbook-neutral)', letterSpacing: '0.02em' }}>
-            Weight: {typography.heading_weight || '700'}
-          </p>
-          <p className="text-sm" style={{ fontFamily: `'${typography.heading_font}', sans-serif`, fontWeight: typography.heading_weight || '700', color: 'var(--playbook-dark)', lineHeight: '1.8' }}>
-            {alphabet}
-          </p>
-        </div>
-
-        <div className="break-inside-avoid">
-          <p className="text-[11px] font-bold uppercase mb-4" style={{ color: 'var(--playbook-primary)', letterSpacing: '0.12em' }}>
-            Body Font
-          </p>
-          <p className="text-4xl mb-3" style={{ fontFamily: `'${typography.body_font}', sans-serif`, fontWeight: typography.body_weight || '400', color: 'var(--playbook-dark)', lineHeight: '1.15' }}>
-            {typography.body_font}
-          </p>
-          <p className="text-[11px] font-mono mb-4" style={{ color: 'var(--playbook-neutral)', letterSpacing: '0.02em' }}>
-            Weight: {typography.body_weight || '400'}
-          </p>
-          <p className="text-sm" style={{ fontFamily: `'${typography.body_font}', sans-serif`, fontWeight: typography.body_weight || '400', color: 'var(--playbook-dark)', lineHeight: '1.8' }}>
-            {alphabet}
-          </p>
-        </div>
+      <div className={`grid ${gridCols} gap-10`}>
+        {fonts.map(({ label, font, weight }) => (
+          <div key={label} className="break-inside-avoid">
+            <p className="text-[11px] font-bold uppercase mb-4" style={{ color: 'var(--playbook-primary)', letterSpacing: '0.12em' }}>
+              {label}
+            </p>
+            <p className="text-4xl mb-3" style={{ fontFamily: `'${font}', sans-serif`, fontWeight: weight, color: 'var(--playbook-dark)', lineHeight: '1.15' }}>
+              {font}
+            </p>
+            <p className="text-[11px] font-mono mb-4" style={{ color: 'var(--playbook-neutral)', letterSpacing: '0.02em' }}>
+              Weight: {weight}
+            </p>
+            <p className="text-sm" style={{ fontFamily: `'${font}', sans-serif`, fontWeight: weight, color: 'var(--playbook-dark)', lineHeight: '1.8' }}>
+              {alphabet}
+            </p>
+          </div>
+        ))}
       </div>
 
       <div className="mt-10 p-8 rounded-xl break-inside-avoid" style={{ backgroundColor: 'rgba(var(--playbook-primary-rgb, 30, 107, 99), 0.03)' }}>
@@ -188,16 +183,17 @@ function TypographyDisplay({ typography }: { typography: Typography }) {
 }
 
 export function SectionVisualIdentity({ data, logoUrl, id }: Props) {
-  const hasVisual = data.brand_color_palette || data.brand_typography || logoUrl || data.brand_logo_url || data.visual_mood;
+  const primaryLogo = data.brand_logo_primary || data.brand_logo_url;
+  const hasVisual = data.brand_color_palette || data.brand_typography || logoUrl || primaryLogo || data.visual_mood;
   if (!hasVisual) return null;
 
-  const displayLogo = data.brand_logo_url && data.brand_logo_url !== 'none' ? data.brand_logo_url : logoUrl;
+  const displayLogo = primaryLogo && primaryLogo !== 'none' ? primaryLogo : logoUrl;
 
   return (
     <PlaybookSection id={id} number="05" title="Visual Identity" subtitle="Logo, colors, typography, and visual direction">
       {/* Logo — special visual */}
       {displayLogo && (
-        <PlaybookRow label="Brand Logo" description="The primary logo mark across different backgrounds." variableKey="brand_logo_url" fullWidth>
+        <PlaybookRow label="Brand Logo" description="The primary logo mark across different backgrounds." variableKey="brand_logo_primary" fullWidth>
           <LogoDisplay logoUrl={displayLogo} />
         </PlaybookRow>
       )}
@@ -220,6 +216,7 @@ export function SectionVisualIdentity({ data, logoUrl, id }: Props) {
       <PlaybookRow {...getVariableDescription('imagery_direction')} variableKey="imagery_direction" value={data.imagery_direction} />
       <PlaybookRow {...getVariableDescription('brand_elements')} variableKey="brand_elements" value={data.brand_elements} />
       <PlaybookRow {...getVariableDescription('visual_inspirations')} variableKey="visual_inspirations" value={data.visual_inspirations} />
+      <PlaybookRow {...getVariableDescription('brand_visual_guidelines')} variableKey="brand_visual_guidelines" value={data.brand_visual_guidelines} />
     </PlaybookSection>
   );
 }

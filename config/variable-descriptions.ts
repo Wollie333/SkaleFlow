@@ -67,13 +67,20 @@ export const VARIABLE_DESCRIPTIONS: Record<string, { label: string; description:
   message_pillars: { label: 'Message Pillars', description: 'The 3-4 supporting themes that reinforce the core message.' },
 
   // Phase 7: Visual Identity
-  brand_logo_url: { label: 'Brand Logo', description: 'The primary logo mark for the brand.' },
-  brand_color_palette: { label: 'Color Palette', description: 'Primary, dark, accent, light, and neutral colors with hex values.' },
-  brand_typography: { label: 'Typography', description: 'Heading and body font pairings with weights.' },
+  brand_logo_primary: { label: 'Primary Logo', description: 'The main logo mark for the brand, used as the default across all materials.' },
+  brand_logo_dark: { label: 'Logo (Dark Background)', description: 'Logo variant optimized for dark backgrounds.' },
+  brand_logo_light: { label: 'Logo (Light Background)', description: 'Logo variant optimized for light backgrounds.' },
+  brand_logo_icon: { label: 'Logo Icon / Favicon', description: 'Square icon mark used for favicons, app icons, and small displays.' },
+  brand_mood_board: { label: 'Mood Board', description: 'Collection of images that represent the brand\'s visual direction and feel.' },
+  brand_patterns: { label: 'Patterns & Textures', description: 'Brand patterns, textures, and graphic elements for backgrounds and accents.' },
+  brand_logo_url: { label: 'Brand Logo', description: 'The primary logo mark for the brand (legacy).' },
+  brand_color_palette: { label: 'Color Palette', description: 'Primary, dark, accent, light, and neutral colors with hex values and roles.' },
+  brand_typography: { label: 'Typography', description: 'Heading, body, and accent font pairings with weights.' },
   visual_mood: { label: 'Visual Mood', description: 'The overall visual feeling — premium, bold, minimal, warm, etc.' },
   imagery_direction: { label: 'Imagery Direction', description: 'Photography style, illustration approach, and icon preferences.' },
   brand_elements: { label: 'Brand Elements', description: 'Additional visual rules, patterns, and graphic elements.' },
   visual_inspirations: { label: 'Visual Inspirations', description: 'Brands, styles, and references that inform the visual direction.' },
+  brand_visual_guidelines: { label: 'Visual Guidelines', description: 'Logo usage rules, color application rules, spacing, and visual do\'s and don\'ts.' },
 
   // Phase 8: Design System
   design_system_colors: { label: 'Color System', description: 'Full color system with HEX, RGB, roles, and usage guidelines.' },

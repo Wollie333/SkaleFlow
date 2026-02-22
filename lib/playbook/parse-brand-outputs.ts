@@ -22,6 +22,8 @@ export interface Typography {
   heading_weight: string;
   body_font: string;
   body_weight: string;
+  accent_font?: string;
+  accent_weight?: string;
 }
 
 export interface DesignSystemColor {
@@ -103,13 +105,21 @@ export interface ParsedBrandData {
   message_core?: string;
   message_pillars?: string;
   // Phase 7
-  brand_logo_url?: string;
+  brand_logo_primary?: string;
+  brand_logo_dark?: string;
+  brand_logo_light?: string;
+  brand_logo_icon?: string;
+  brand_mood_board?: string | string[];
+  brand_patterns?: string | string[];
+  brand_logo_url?: string; // legacy alias
   brand_color_palette?: ColorPalette;
   brand_typography?: Typography;
   visual_mood?: string;
   imagery_direction?: string;
   brand_elements?: string;
   visual_inspirations?: string;
+  brand_visual_guidelines?: string;
+  brand_visual_assets_summary?: string;
   // Phase 8
   website_role?: string;
   primary_conversion?: string;

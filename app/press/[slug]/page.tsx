@@ -137,7 +137,7 @@ export default function PressPage() {
   const accentColor = (brandPalette?.accent as string) || primaryColor;
   const lightColor = (brandPalette?.light as string) || '#faf9f6';
   const neutralColor = (brandPalette?.neutral as string) || '#6b7280';
-  const brandLogo = (data.brand?.brand_logo_url as string) || data.organization.logo_url;
+  const brandLogo = (data.brand?.brand_logo_primary as string) || (data.brand?.brand_logo_url as string) || data.organization.logo_url;
   const tagline = data.press_kit?.hero_tagline || (data.brand?.brand_tagline as string | undefined);
   const positioningStatement = data.brand?.brand_positioning_statement as string | undefined;
 
