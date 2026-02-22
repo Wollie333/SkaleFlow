@@ -147,8 +147,8 @@ export function InquiryForm({ organizationId, orgName, storyAngles, primaryColor
           <div className="lg:col-span-3">
             <form
               onSubmit={handleSubmit}
-              className="p-5 sm:p-6 md:p-8 rounded-2xl border border-white/10"
-              style={{ backgroundColor: `${primaryColor}08` }}
+              className="p-5 sm:p-6 md:p-8 rounded-2xl border border-white/15"
+              style={{ backgroundColor: 'rgba(255,255,255,0.12)' }}
             >
               {/* Honeypot */}
               <input
