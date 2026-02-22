@@ -1,18 +1,13 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button, Input } from '@/components/ui';
 
-interface InvitePageProps {
-  params: Promise<{ token: string }>;
-}
-
-export default function InvitePage({ params: paramsPromise }: InvitePageProps) {
-  const params = use(paramsPromise);
+export default function InvitePage() {
+  const { token } = useParams<{ token: string }>();
   const router = useRouter();
-  const supabase = createClient();
 
   const [invitation, setInvitation] = useState<{
     email: string;
@@ -25,66 +20,79 @@ export default function InvitePage({ params: paramsPromise }: InvitePageProps) {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
+    if (!token) return;
+
     async function fetchInvitation() {
-      const { data, error } = await supabase
-        .from('invitations')
-        .select('email, organization_name, status, expires_at')
-        .eq('token', params.token)
-        .single();
+      try {
+        const supabase = createClient();
+        const { data, error: fetchError } = await supabase
+          .from('invitations')
+          .select('email, organization_name, status, expires_at')
+          .eq('token', token)
+          .single();
 
+        if (fetchError || !data) {
+          setError('Invalid or expired invitation link.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (data.status !== 'pending') {
+          setError('This invitation has already been used.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (new Date(data.expires_at) < new Date()) {
+          setError('This invitation has expired.');
+          setIsLoading(false);
+          return;
+        }
+
+        setInvitation({
+          email: data.email,
+          organization_name: data.organization_name,
+        });
+      } catch {
+        setError('Something went wrong. Please try again.');
+      }
       setIsLoading(false);
-
-      if (error || !data) {
-        setError('Invalid or expired invitation link.');
-        return;
-      }
-
-      if (data.status !== 'pending') {
-        setError('This invitation has already been used.');
-        return;
-      }
-
-      if (new Date(data.expires_at) < new Date()) {
-        setError('This invitation has expired.');
-        return;
-      }
-
-      setInvitation({
-        email: data.email,
-        organization_name: data.organization_name,
-      });
     }
 
     fetchInvitation();
-  }, [params.token, supabase]);
+  }, [token]);
 
   const handleAccept = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!invitation) return;
+    if (!invitation || !token) return;
 
     setIsSubmitting(true);
     setError(null);
 
-    // Sign up with magic link
-    const { error: authError } = await supabase.auth.signInWithOtp({
-      email: invitation.email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?invite=${params.token}`,
-        data: {
-          full_name: fullName,
-          invite_token: params.token,
+    try {
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signInWithOtp({
+        email: invitation.email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?invite=${token}`,
+          data: {
+            full_name: fullName,
+            invite_token: token,
+          },
         },
-      },
-    });
+      });
 
-    setIsSubmitting(false);
+      if (authError) {
+        setError(authError.message);
+        setIsSubmitting(false);
+        return;
+      }
 
-    if (authError) {
-      setError(authError.message);
-      return;
+      setSuccess(true);
+    } catch {
+      setError('Something went wrong. Please try again.');
     }
-
-    setSuccess(true);
+    setIsSubmitting(false);
   };
 
   if (isLoading) {
@@ -124,7 +132,7 @@ export default function InvitePage({ params: paramsPromise }: InvitePageProps) {
             Check your email
           </h1>
           <p className="text-stone">
-            We've sent a login link to <span className="text-cream">{invitation?.email}</span>.
+            We&apos;ve sent a login link to <span className="text-cream">{invitation?.email}</span>.
             Click the link to complete your account setup.
           </p>
         </div>
@@ -147,7 +155,7 @@ export default function InvitePage({ params: paramsPromise }: InvitePageProps) {
 
         <div className="bg-dark-light border border-teal/12 rounded-2xl p-8 card-gradient-border">
           <div className="text-center mb-8">
-            <h2 className="text-heading-lg text-cream">You're invited!</h2>
+            <h2 className="text-heading-lg text-cream">You&apos;re invited!</h2>
             <p className="text-stone mt-2">
               Join <span className="text-gold">{invitation?.organization_name}</span> on SkaleFlow
             </p>
