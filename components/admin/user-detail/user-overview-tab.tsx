@@ -100,7 +100,7 @@ export function UserOverviewTab({
             <CpuChipIcon className="w-5 h-5 text-teal" />
             <p className="text-xs font-semibold text-stone uppercase tracking-wider">Credits Used</p>
           </div>
-          <p className="text-2xl font-bold text-charcoal">{totalCreditsUsed.toLocaleString('en-ZA')}</p>
+          <p className="text-2xl font-bold text-charcoal">{(totalCreditsUsed ?? 0).toLocaleString('en-ZA')}</p>
           <p className="text-sm text-stone mt-1">
             {creditsByFeature.length} feature{creditsByFeature.length !== 1 ? 's' : ''} used
           </p>

@@ -144,7 +144,7 @@ export function UserBillingTab({
                 </div>
                 {subscription.tier && (
                   <p className="text-sm text-stone">
-                    {subscription.tier.monthly_credits.toLocaleString('en-ZA')} credits/month
+                    {(subscription.tier.monthly_credits ?? 0).toLocaleString('en-ZA')} credits/month
                   </p>
                 )}
               </div>
@@ -229,19 +229,19 @@ export function UserBillingTab({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
               <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Monthly</p>
-              <p className="text-2xl font-bold text-charcoal">{credits.monthly_balance.toLocaleString('en-ZA')}</p>
+              <p className="text-2xl font-bold text-charcoal">{(credits.monthly_balance ?? 0).toLocaleString('en-ZA')}</p>
               {credits.period_end && (
                 <p className="text-xs text-stone mt-1">Resets {formatDate(credits.period_end)}</p>
               )}
             </div>
             <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
               <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Top-up</p>
-              <p className="text-2xl font-bold text-charcoal">{credits.topup_balance.toLocaleString('en-ZA')}</p>
+              <p className="text-2xl font-bold text-charcoal">{(credits.topup_balance ?? 0).toLocaleString('en-ZA')}</p>
               <p className="text-xs text-stone mt-1">Never expires</p>
             </div>
             <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
               <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Total Available</p>
-              <p className="text-2xl font-bold text-teal">{credits.total_balance.toLocaleString('en-ZA')}</p>
+              <p className="text-2xl font-bold text-teal">{(credits.total_balance ?? 0).toLocaleString('en-ZA')}</p>
             </div>
           </div>
         </div>
@@ -281,7 +281,7 @@ export function UserBillingTab({
                       {tx.description}
                     </td>
                     <td className={`px-5 py-3 text-sm font-medium text-right ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {isPositive ? '+' : ''}{tx.credits_amount.toLocaleString('en-ZA')}
+                      {isPositive ? '+' : ''}{(tx.credits_amount ?? 0).toLocaleString('en-ZA')}
                     </td>
                     <td className="px-5 py-3 text-sm text-stone text-right">{formatDate(tx.created_at)}</td>
                   </tr>

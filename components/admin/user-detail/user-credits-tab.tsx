@@ -63,26 +63,26 @@ export function UserCreditsTab({
         <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
           <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Monthly Balance</p>
           <p className="text-2xl font-bold text-charcoal">
-            {credits ? credits.monthly_balance.toLocaleString('en-ZA') : '—'}
+            {credits ? (credits.monthly_balance ?? 0).toLocaleString('en-ZA') : '—'}
           </p>
           <p className="text-sm text-stone mt-1">
-            of {monthlyAllocation.toLocaleString('en-ZA')} allocated
+            of {(monthlyAllocation ?? 0).toLocaleString('en-ZA')} allocated
           </p>
         </div>
 
         <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
           <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Top-Up Balance</p>
           <p className="text-2xl font-bold text-charcoal">
-            {credits ? credits.topup_balance.toLocaleString('en-ZA') : '—'}
+            {credits ? (credits.topup_balance ?? 0).toLocaleString('en-ZA') : '—'}
           </p>
           <p className="text-sm text-stone mt-1">Never expires</p>
         </div>
 
         <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] p-5">
           <p className="text-xs font-semibold text-stone uppercase tracking-wider mb-1">Total Used</p>
-          <p className="text-2xl font-bold text-charcoal">{totalCreditsUsed.toLocaleString('en-ZA')}</p>
+          <p className="text-2xl font-bold text-charcoal">{(totalCreditsUsed ?? 0).toLocaleString('en-ZA')}</p>
           <p className="text-sm text-stone mt-1">
-            {totalRequests.toLocaleString('en-ZA')} AI requests
+            {(totalRequests ?? 0).toLocaleString('en-ZA')} AI requests
           </p>
         </div>
       </div>
@@ -107,8 +107,8 @@ export function UserCreditsTab({
               {creditsByFeature.map((f) => (
                 <tr key={f.feature} className="border-b border-stone/10 last:border-0">
                   <td className="px-5 py-3 text-sm font-medium text-charcoal">{f.label}</td>
-                  <td className="px-5 py-3 text-sm text-stone text-right">{f.credits_charged.toLocaleString('en-ZA')}</td>
-                  <td className="px-5 py-3 text-sm text-stone text-right">{f.request_count.toLocaleString('en-ZA')}</td>
+                  <td className="px-5 py-3 text-sm text-stone text-right">{(f.credits_charged ?? 0).toLocaleString('en-ZA')}</td>
+                  <td className="px-5 py-3 text-sm text-stone text-right">{(f.request_count ?? 0).toLocaleString('en-ZA')}</td>
                 </tr>
               ))}
             </tbody>
@@ -149,7 +149,7 @@ export function UserCreditsTab({
                     <td className={`px-5 py-3 text-sm font-medium text-right ${
                       tx.credits_amount > 0 ? 'text-emerald-600' : 'text-charcoal'
                     }`}>
-                      {tx.credits_amount > 0 ? '+' : ''}{tx.credits_amount.toLocaleString('en-ZA')}
+                      {(tx.credits_amount ?? 0) > 0 ? '+' : ''}{(tx.credits_amount ?? 0).toLocaleString('en-ZA')}
                     </td>
                     <td className="px-5 py-3 text-sm text-stone text-right">{formatDate(tx.created_at)}</td>
                   </tr>
