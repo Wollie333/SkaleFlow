@@ -4,12 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui';
 import {
-  EnvelopeIcon,
   ArrowPathIcon,
   XMarkIcon,
   PencilIcon,
   CheckIcon,
   UserPlusIcon,
+  ClipboardDocumentIcon,
+  ClipboardDocumentCheckIcon,
 } from '@heroicons/react/24/outline';
 
 interface TeamMember {
@@ -29,6 +30,7 @@ interface TeamMember {
 interface PendingInvitation {
   id: string;
   email: string;
+  token?: string;
   status: string;
   created_at: string;
   expires_at: string;
@@ -53,15 +55,15 @@ function formatDate(dateStr: string) {
 }
 
 const emailStatusBadge: Record<string, { label: string; classes: string }> = {
-  pending: { label: 'Pending', classes: 'bg-amber-50 text-amber-600' },
-  sent: { label: 'Sent', classes: 'bg-emerald-50 text-emerald-600' },
-  failed: { label: 'Failed', classes: 'bg-red-50 text-red-600' },
+  pending: { label: 'Pending', classes: 'bg-gold/20 text-gold' },
+  sent: { label: 'Sent', classes: 'bg-teal/10 text-teal' },
+  failed: { label: 'Failed', classes: 'bg-red-500/10 text-red-400' },
   delivered: { label: 'Delivered', classes: 'bg-teal/10 text-teal' },
   bounced: { label: 'Bounced', classes: 'bg-red-500/10 text-red-400' },
 };
 
 const roleBadge: Record<string, { label: string; classes: string }> = {
-  owner: { label: 'Owner', classes: 'bg-purple-100 text-purple-700' },
+  owner: { label: 'Owner', classes: 'bg-purple-500/10 text-purple-400' },
   admin: { label: 'Admin', classes: 'bg-blue-500/10 text-blue-400' },
   member: { label: 'Member', classes: 'bg-teal/10 text-teal' },
   viewer: { label: 'Viewer', classes: 'bg-stone/10 text-stone' },
@@ -77,8 +79,17 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
   const [inviteTeamRole, setInviteTeamRole] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteError, setInviteError] = useState('');
+  const [inviteSuccess, setInviteSuccess] = useState<{ url: string; emailStatus: string } | null>(null);
 
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopyLink = async (token: string, id: string) => {
+    const url = `${window.location.origin}/invite/${token}`;
+    await navigator.clipboard.writeText(url);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   const handleUpdateTeamRole = async (memberId: string) => {
     setRoleLoading(true);
@@ -130,6 +141,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
     if (!inviteEmail.trim()) return;
     setInviteLoading(true);
     setInviteError('');
+    setInviteSuccess(null);
     try {
       const res = await fetch(`/api/admin/users/${userId}/team`, {
         method: 'POST',
@@ -141,6 +153,10 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
         setInviteError(data.error || 'Failed to send invite');
         return;
       }
+      setInviteSuccess({
+        url: data.inviteUrl || '',
+        emailStatus: data.emailStatus || 'unknown',
+      });
       setInviteEmail('');
       setInviteTeamRole('');
       onRefresh();
@@ -277,6 +293,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
               {pendingInvitations.map((invite) => {
                 const esBadge = emailStatusBadge[invite.email_status] || emailStatusBadge.pending;
                 const isExpired = new Date(invite.expires_at) < new Date();
+                const isCopied = copiedId === invite.id;
 
                 return (
                   <tr key={invite.id} className="border-b border-stone/10 last:border-0">
@@ -299,6 +316,29 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
                     </td>
                     <td className="px-5 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {invite.token && (
+                          <button
+                            onClick={() => handleCopyLink(invite.token!, invite.id)}
+                            className={`text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 ${
+                              isCopied
+                                ? 'text-teal bg-teal/10'
+                                : 'text-charcoal hover:text-teal bg-stone/5 hover:bg-teal/5'
+                            }`}
+                            title="Copy invite link"
+                          >
+                            {isCopied ? (
+                              <>
+                                <ClipboardDocumentCheckIcon className="w-3.5 h-3.5" />
+                                Copied
+                              </>
+                            ) : (
+                              <>
+                                <ClipboardDocumentIcon className="w-3.5 h-3.5" />
+                                Copy Link
+                              </>
+                            )}
+                          </button>
+                        )}
                         <button
                           onClick={() => handleResendInvite(invite.id)}
                           disabled={actionLoading === invite.id}
@@ -310,7 +350,7 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
                         <button
                           onClick={() => handleCancelInvite(invite.id)}
                           disabled={actionLoading === invite.id}
-                          className="text-xs font-medium text-red-600 hover:text-red-400 bg-red-50 hover:bg-red-500/10 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-40 flex items-center gap-1"
+                          className="text-xs font-medium text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/15 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-40 flex items-center gap-1"
                         >
                           <XMarkIcon className="w-3.5 h-3.5" />
                           Cancel
@@ -330,9 +370,62 @@ export function UserTeamTab({ teamMembers, pendingInvitations, userId, onRefresh
         <h3 className="font-serif text-lg font-bold text-charcoal mb-4">Invite Team Member</h3>
 
         {inviteError && (
-          <div className="mb-3 p-2.5 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center justify-between">
+          <div className="mb-3 p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm flex items-center justify-between">
             <span>{inviteError}</span>
-            <button onClick={() => setInviteError('')} className="text-red-400 hover:text-red-600 ml-2">&times;</button>
+            <button onClick={() => setInviteError('')} className="text-red-400 hover:text-red-300 ml-2">&times;</button>
+          </div>
+        )}
+
+        {inviteSuccess && (
+          <div className={`mb-3 p-3 rounded-lg border text-sm ${
+            inviteSuccess.emailStatus === 'sent'
+              ? 'bg-teal/10 border-teal/20 text-teal'
+              : 'bg-gold/10 border-gold/20 text-charcoal'
+          }`}>
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                {inviteSuccess.emailStatus === 'sent' ? (
+                  <p>Invitation created and email sent successfully.</p>
+                ) : (
+                  <p>Invitation created but email delivery failed. Share the link manually:</p>
+                )}
+              </div>
+              <button
+                onClick={() => setInviteSuccess(null)}
+                className="text-stone hover:text-charcoal flex-shrink-0"
+              >
+                <XMarkIcon className="w-4 h-4" />
+              </button>
+            </div>
+            {inviteSuccess.url && (
+              <div className="mt-2 flex items-center gap-2">
+                <code className="text-xs bg-dark/5 rounded px-2 py-1 flex-1 truncate">{inviteSuccess.url}</code>
+                <button
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(inviteSuccess.url);
+                    setCopiedId('new-invite');
+                    setTimeout(() => setCopiedId(null), 2000);
+                  }}
+                  className={`text-xs font-medium px-2.5 py-1.5 rounded-lg flex items-center gap-1 flex-shrink-0 ${
+                    copiedId === 'new-invite'
+                      ? 'text-teal bg-teal/10'
+                      : 'text-charcoal hover:text-teal bg-stone/5 hover:bg-teal/5'
+                  }`}
+                >
+                  {copiedId === 'new-invite' ? (
+                    <>
+                      <ClipboardDocumentCheckIcon className="w-3.5 h-3.5" />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <ClipboardDocumentIcon className="w-3.5 h-3.5" />
+                      Copy
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
