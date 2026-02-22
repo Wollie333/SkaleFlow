@@ -144,7 +144,19 @@ export async function PATCH(request: Request) {
 
     // Handle delete user
     if (action === 'delete') {
-      // Delete related records first: org_members, subscriptions, then user
+      // Nullify FK references that could block deletion
+      await Promise.all([
+        serviceSupabase.from('org_members').update({ invited_by: null }).eq('invited_by', userId),
+        serviceSupabase.from('invitations').update({ invited_by: null }).eq('invited_by', userId),
+        serviceSupabase.from('brand_phases').update({ locked_by: null }).eq('locked_by', userId),
+        serviceSupabase.from('brand_conversations').update({ user_id: null }).eq('user_id', userId),
+        serviceSupabase.from('brand_playbooks').update({ generated_by: null }).eq('generated_by', userId),
+        serviceSupabase.from('content_items').update({ assigned_to: null }).eq('assigned_to', userId),
+        serviceSupabase.from('content_items').update({ approved_by: null }).eq('approved_by', userId),
+        serviceSupabase.from('ai_usage').update({ user_id: null }).eq('user_id', userId),
+      ]);
+
+      // Delete related records: org_members, subscriptions, then user
       const { data: mem } = await serviceSupabase
         .from('org_members')
         .select('organization_id')
@@ -152,26 +164,22 @@ export async function PATCH(request: Request) {
         .maybeSingle();
 
       if (mem) {
-        // Delete subscriptions for the org
         await serviceSupabase
           .from('subscriptions')
           .delete()
           .eq('organization_id', mem.organization_id);
 
-        // Delete org membership
         await serviceSupabase
           .from('org_members')
           .delete()
           .eq('user_id', userId);
 
-        // Delete organization if this user is the owner
         await serviceSupabase
           .from('organizations')
           .delete()
           .eq('owner_id', userId);
       }
 
-      // Delete the user record
       const { error: deleteError } = await serviceSupabase
         .from('users')
         .delete()
@@ -179,10 +187,12 @@ export async function PATCH(request: Request) {
 
       if (deleteError) {
         console.error('Failed to delete user:', deleteError);
-        return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
+        const msg = deleteError.message?.includes('violates foreign key')
+          ? 'Cannot delete user: still referenced by other records. Please run migration 070 first.'
+          : 'Failed to delete user';
+        return NextResponse.json({ error: msg }, { status: 500 });
       }
 
-      // Delete from Supabase Auth
       const { error: authDeleteError } = await serviceSupabase.auth.admin.deleteUser(userId);
       if (authDeleteError) {
         console.error('Failed to delete auth user:', authDeleteError);

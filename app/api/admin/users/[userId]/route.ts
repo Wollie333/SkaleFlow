@@ -508,6 +508,18 @@ export async function PATCH(
 
     // Handle delete
     if (action === 'delete') {
+      // Nullify FK references that could block deletion
+      await Promise.all([
+        serviceSupabase.from('org_members').update({ invited_by: null }).eq('invited_by', userId),
+        serviceSupabase.from('invitations').update({ invited_by: null }).eq('invited_by', userId),
+        serviceSupabase.from('brand_phases').update({ locked_by: null }).eq('locked_by', userId),
+        serviceSupabase.from('brand_conversations').update({ user_id: null }).eq('user_id', userId),
+        serviceSupabase.from('brand_playbooks').update({ generated_by: null }).eq('generated_by', userId),
+        serviceSupabase.from('content_items').update({ assigned_to: null }).eq('assigned_to', userId),
+        serviceSupabase.from('content_items').update({ approved_by: null }).eq('approved_by', userId),
+        serviceSupabase.from('ai_usage').update({ user_id: null }).eq('user_id', userId),
+      ]);
+
       const { data: mem } = await serviceSupabase
         .from('org_members')
         .select('organization_id')
@@ -522,7 +534,11 @@ export async function PATCH(
 
       const { error } = await serviceSupabase.from('users').delete().eq('id', userId);
       if (error) {
-        return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
+        console.error('Failed to delete user:', error);
+        const msg = error.message?.includes('violates foreign key')
+          ? 'Cannot delete user: still referenced by other records. Please run migration 070 first.'
+          : 'Failed to delete user';
+        return NextResponse.json({ error: msg }, { status: 500 });
       }
 
       const { error: authErr } = await serviceSupabase.auth.admin.deleteUser(userId);

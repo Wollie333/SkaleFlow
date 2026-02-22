@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, PageHeader } from '@/components/ui';
-import { UsersIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { UsersIcon, PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { AddUserModal } from '@/components/admin/add-user-modal';
+import { ConfirmDialog } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/useToast';
 
 interface SubscriptionTier {
   id: string;
@@ -41,20 +43,27 @@ interface User {
   org_members: UserOrg[];
 }
 
+type RoleFilter = 'all' | 'client' | 'team_member' | 'super_admin';
+
 export default function AdminUsersPage() {
   const router = useRouter();
+  const toast = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [tiers, setTiers] = useState<SubscriptionTier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [tierLoading, setTierLoading] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [orgPopup, setOrgPopup] = useState<string | null>(null);
   const [orgName, setOrgName] = useState('');
   const [orgLoading, setOrgLoading] = useState(false);
   const [showAddUser, setShowAddUser] = useState(false);
   const [betaLoading, setBetaLoading] = useState<string | null>(null);
+
+  // Search & filter
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -79,6 +88,27 @@ export default function AdminUsersPage() {
     fetchUsers();
   }, [fetchUsers]);
 
+  // Filtered users
+  const filteredUsers = useMemo(() => {
+    let result = users;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        u => u.full_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+      );
+    }
+
+    if (roleFilter !== 'all') {
+      result = result.filter(u => u.role === roleFilter);
+    }
+
+    return result;
+  }, [users, searchQuery, roleFilter]);
+
+  const pendingUsers = filteredUsers.filter(u => !u.approved);
+  const approvedUsers = filteredUsers.filter(u => u.approved);
+
   const handleApproval = async (userId: string, approved: boolean) => {
     setActionLoading(userId);
     try {
@@ -90,13 +120,14 @@ export default function AdminUsersPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || 'Failed to update user');
+        toast.error(data.error || 'Failed to update user');
         return;
       }
 
+      toast.success(approved ? 'User approved' : 'User approval revoked');
       await fetchUsers();
     } catch {
-      setError('Failed to update user');
+      toast.error('Failed to update user');
     } finally {
       setActionLoading(null);
     }
@@ -113,13 +144,14 @@ export default function AdminUsersPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || 'Failed to update tier');
+        toast.error(data.error || 'Failed to update tier');
         return;
       }
 
+      toast.success('Subscription tier updated');
       await fetchUsers();
     } catch {
-      setError('Failed to update tier');
+      toast.error('Failed to update tier');
     } finally {
       setTierLoading(null);
     }
@@ -136,13 +168,14 @@ export default function AdminUsersPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || 'Failed to pause user');
+        toast.error(data.error || 'Failed to pause user');
         return;
       }
 
+      toast.success('User account paused');
       await fetchUsers();
     } catch {
-      setError('Failed to pause user');
+      toast.error('Failed to pause user');
     } finally {
       setActionLoading(null);
     }
@@ -159,14 +192,15 @@ export default function AdminUsersPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || 'Failed to delete user');
+        toast.error(data.error || 'Failed to delete user');
         return;
       }
 
-      setConfirmDelete(null);
+      setDeleteTarget(null);
+      toast.success('User deleted');
       await fetchUsers();
     } catch {
-      setError('Failed to delete user');
+      toast.error('Failed to delete user');
     } finally {
       setActionLoading(null);
     }
@@ -184,15 +218,16 @@ export default function AdminUsersPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || 'Failed to assign organization');
+        toast.error(data.error || 'Failed to assign organization');
         return;
       }
 
       setOrgPopup(null);
       setOrgName('');
+      toast.success('Organization assigned');
       await fetchUsers();
     } catch {
-      setError('Failed to assign organization');
+      toast.error('Failed to assign organization');
     } finally {
       setOrgLoading(false);
     }
@@ -209,13 +244,14 @@ export default function AdminUsersPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || 'Failed to update AI beta status');
+        toast.error(data.error || 'Failed to update AI beta status');
         return;
       }
 
+      toast.success(enabled ? 'AI beta enabled' : 'AI beta disabled');
       await fetchUsers();
     } catch {
-      setError('Failed to update AI beta status');
+      toast.error('Failed to update AI beta status');
     } finally {
       setBetaLoading(null);
     }
@@ -229,9 +265,6 @@ export default function AdminUsersPage() {
     return sub.subscription_tiers;
   };
 
-  const pendingUsers = users.filter(u => !u.approved);
-  const approvedUsers = users.filter(u => u.approved);
-
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-ZA', {
       day: 'numeric',
@@ -240,18 +273,37 @@ export default function AdminUsersPage() {
     });
   };
 
+  // Skeleton loading
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-stone">Loading users...</div>
+      <div>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <div className="h-7 w-48 bg-stone/10 rounded-lg animate-pulse mb-2" />
+            <div className="h-4 w-72 bg-stone/10 rounded animate-pulse" />
+          </div>
+          <div className="h-9 w-24 bg-stone/10 rounded-lg animate-pulse" />
+        </div>
+        <div className="bg-cream-warm rounded-xl border border-teal/[0.08] overflow-hidden">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-stone/10 last:border-0">
+              <div className="h-4 w-32 bg-stone/10 rounded animate-pulse" />
+              <div className="h-4 w-48 bg-stone/10 rounded animate-pulse" />
+              <div className="h-4 w-28 bg-stone/10 rounded animate-pulse" />
+              <div className="h-4 w-20 bg-stone/10 rounded animate-pulse" />
+              <div className="flex-1" />
+              <div className="h-7 w-16 bg-stone/10 rounded-lg animate-pulse" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  if (error && users.length === 0) {
     return (
       <div className="p-6">
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
           {error}
           <button
             onClick={() => { setError(''); fetchUsers(); }}
@@ -266,6 +318,17 @@ export default function AdminUsersPage() {
 
   return (
     <div>
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && handleDelete(deleteTarget.id)}
+        title="Delete User"
+        message={`Are you sure you want to permanently delete ${deleteTarget?.name || 'this user'}? This action cannot be undone. All associated data will be removed.`}
+        confirmText={actionLoading ? 'Deleting...' : 'Delete User'}
+        variant="danger"
+      />
+
       {/* Org Assignment Popup */}
       {orgPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -326,15 +389,39 @@ export default function AdminUsersPage() {
             Add User
           </Button>
         }
-        className="mb-8"
+        className="mb-6"
       />
+
+      {/* Search & Filter Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
+        <div className="relative flex-1">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name or email..."
+            className="w-full pl-9 pr-4 py-2 text-sm border border-stone/10 rounded-lg bg-cream-warm text-charcoal placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+          />
+        </div>
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value as RoleFilter)}
+          className="text-sm border border-stone/10 rounded-lg px-3 py-2 bg-cream-warm text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal cursor-pointer"
+        >
+          <option value="all">All Roles</option>
+          <option value="client">Client</option>
+          <option value="team_member">Team Member</option>
+          <option value="super_admin">Super Admin</option>
+        </select>
+      </div>
 
       {/* Pending Users */}
       {pendingUsers.length > 0 && (
         <div className="mb-8">
           <h2 className="font-serif text-xl font-bold text-charcoal mb-4 flex items-center gap-2">
             Pending Approval
-            <span className="bg-amber-100 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+            <span className="bg-gold/20 text-gold text-xs font-semibold px-2.5 py-1 rounded-full">
               {pendingUsers.length}
             </span>
           </h2>
@@ -355,7 +442,7 @@ export default function AdminUsersPage() {
                   <tr
                     key={user.id}
                     onClick={() => router.push(`/admin/users/${user.id}`)}
-                    className="border-b border-stone/10 last:border-0 bg-amber-50/30 cursor-pointer hover:bg-amber-50/60 transition-colors"
+                    className="border-b border-stone/10 last:border-0 bg-gold/[0.03] cursor-pointer hover:bg-gold/[0.06] transition-colors"
                   >
                     <td className="px-6 py-4">
                       <span className="font-medium text-charcoal">{user.full_name}</span>
@@ -389,30 +476,12 @@ export default function AdminUsersPage() {
                         >
                           Approve
                         </Button>
-                        {confirmDelete === user.id ? (
-                          <>
-                            <Button
-                              onClick={() => handleDelete(user.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2"
-                              isLoading={actionLoading === user.id}
-                            >
-                              Confirm
-                            </Button>
-                            <Button
-                              onClick={() => setConfirmDelete(null)}
-                              className="bg-cream-warm hover:bg-cream text-stone border border-stone/20 text-sm px-4 py-2"
-                            >
-                              Cancel
-                            </Button>
-                          </>
-                        ) : (
-                          <Button
-                            onClick={() => setConfirmDelete(user.id)}
-                            className="bg-cream-warm hover:bg-red-50 text-red-600 border border-red-200 text-sm px-4 py-2"
-                          >
-                            Delete
-                          </Button>
-                        )}
+                        <Button
+                          onClick={() => setDeleteTarget({ id: user.id, name: user.full_name })}
+                          className="bg-cream-warm hover:bg-red-500/10 text-red-600 border border-red-500/20 text-sm px-4 py-2"
+                        >
+                          Delete
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -432,7 +501,7 @@ export default function AdminUsersPage() {
 
         {approvedUsers.length === 0 ? (
           <div className="bg-cream-warm rounded-xl border border-teal/[0.08] p-8 text-center text-stone">
-            No approved users yet.
+            {searchQuery || roleFilter !== 'all' ? 'No users match your search.' : 'No approved users yet.'}
           </div>
         ) : (
           <div className="bg-cream-warm rounded-xl border border-teal/[0.08] shadow-[0_2px_12px_rgba(15,31,29,0.03)] overflow-hidden">
@@ -492,7 +561,7 @@ export default function AdminUsersPage() {
                           ))}
                         </select>
                       ) : (
-                        <span className="text-stone text-sm">—</span>
+                        <span className="text-stone text-sm">&mdash;</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
@@ -518,47 +587,29 @@ export default function AdminUsersPage() {
                           }`} />
                         </button>
                       ) : (
-                        <span className="text-stone text-xs">—</span>
+                        <span className="text-stone text-xs">&mdash;</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-stone">
                       {user.last_login_at ? formatDate(user.last_login_at) : 'Never'}
                     </td>
                     <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      {confirmDelete === user.id ? (
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            onClick={() => handleDelete(user.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1.5"
-                            isLoading={actionLoading === user.id}
-                          >
-                            Confirm Delete
-                          </Button>
-                          <Button
-                            onClick={() => setConfirmDelete(null)}
-                            className="bg-cream-warm hover:bg-cream text-stone border border-stone/20 text-sm px-3 py-1.5"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handlePause(user.id)}
-                            disabled={actionLoading === user.id || user.role === 'super_admin'}
-                            className="text-xs font-medium text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            Pause
-                          </button>
-                          <button
-                            onClick={() => setConfirmDelete(user.id)}
-                            disabled={user.role === 'super_admin'}
-                            className="text-xs font-medium text-red-600 hover:text-red-400 bg-red-50 hover:bg-red-500/10 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handlePause(user.id)}
+                          disabled={actionLoading === user.id || user.role === 'super_admin'}
+                          className="text-xs font-medium text-amber-600 hover:text-amber-700 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Pause
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget({ id: user.id, name: user.full_name })}
+                          disabled={user.role === 'super_admin'}
+                          className="text-xs font-medium text-red-600 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

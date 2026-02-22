@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui';
-import { CheckCircleIcon, PauseCircleIcon, PlayIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, PauseCircleIcon, PlayIcon, XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 interface UserData {
   id: string;
@@ -43,6 +43,7 @@ interface UserProfileCardProps {
   onApprove: () => void;
   onPause: () => void;
   onAssignOrg: () => void;
+  onRoleChange?: (role: string) => void;
   onPauseSubscription?: () => void;
   onCancelSubscription?: () => void;
   onReactivateSubscription?: () => void;
@@ -78,6 +79,7 @@ export function UserProfileCard({
   onApprove,
   onPause,
   onAssignOrg,
+  onRoleChange,
   onPauseSubscription,
   onCancelSubscription,
   onReactivateSubscription,
@@ -104,7 +106,7 @@ export function UserProfileCard({
             {badge.label}
           </span>
           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-            user.approved ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+            user.approved ? 'bg-emerald-50 text-emerald-600' : 'bg-gold/20 text-gold'
           }`}>
             {user.approved ? 'Approved' : 'Pending'}
           </span>
@@ -123,13 +125,32 @@ export function UserProfileCard({
           </div>
         </div>
 
+        {/* Role change dropdown */}
+        {onRoleChange && user.role !== 'super_admin' && (
+          <div className="mt-4 pt-4 border-t border-stone/10">
+            <label className="text-xs font-semibold text-stone uppercase tracking-wider block mb-2">
+              Role
+            </label>
+            <select
+              value={user.role}
+              onChange={(e) => onRoleChange(e.target.value)}
+              disabled={actionLoading}
+              className="w-full text-sm border border-stone/10 rounded-lg px-3 py-2 bg-cream-warm text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal disabled:opacity-50 cursor-pointer"
+            >
+              <option value="client">Client</option>
+              <option value="team_member">Team Member</option>
+              <option value="super_admin">Super Admin</option>
+            </select>
+          </div>
+        )}
+
         {/* Approve / Pause toggle */}
         <div className="mt-4 pt-4 border-t border-stone/10">
           {user.approved ? (
             <button
               onClick={onPause}
               disabled={actionLoading || user.role === 'super_admin'}
-              className="w-full flex items-center justify-center gap-2 text-sm font-medium text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-4 py-2 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 text-sm font-medium text-amber-600 hover:text-amber-700 bg-amber-500/10 hover:bg-amber-500/20 px-4 py-2 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <PauseCircleIcon className="w-4 h-4" />
               Pause Account
@@ -160,13 +181,14 @@ export function UserProfileCard({
             </div>
           </div>
         ) : (
-          <div>
+          <div className="text-center py-2">
             <p className="text-sm text-stone mb-3">No organization assigned</p>
             <button
               onClick={onAssignOrg}
-              className="text-sm font-medium text-teal hover:text-teal-light underline"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-teal hover:text-teal-light bg-teal/5 hover:bg-teal/10 px-4 py-2 rounded-lg transition-colors"
             >
-              + Assign Organization
+              <PlusIcon className="w-4 h-4" />
+              Create & Assign Organization
             </button>
           </div>
         )}
@@ -205,7 +227,7 @@ export function UserProfileCard({
                       <button
                         onClick={onPauseSubscription}
                         disabled={actionLoading}
-                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
+                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-amber-600 hover:text-amber-700 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
                       >
                         <PauseCircleIcon className="w-3.5 h-3.5" />
                         Pause
@@ -215,7 +237,7 @@ export function UserProfileCard({
                       <button
                         onClick={onCancelSubscription}
                         disabled={actionLoading}
-                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-400 bg-red-50 hover:bg-red-500/10 px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
+                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
                       >
                         <XMarkIcon className="w-3.5 h-3.5" />
                         Cancel
@@ -239,7 +261,7 @@ export function UserProfileCard({
                       <button
                         onClick={onCancelSubscription}
                         disabled={actionLoading}
-                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-400 bg-red-50 hover:bg-red-500/10 px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
+                        className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 px-3 py-2 rounded-lg transition-colors disabled:opacity-40"
                       >
                         <XMarkIcon className="w-3.5 h-3.5" />
                         Cancel

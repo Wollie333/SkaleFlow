@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { PageHeader, Button } from '@/components/ui';
 import { UserCircleIcon, ArrowLeftIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ConfirmDialog } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/useToast';
 import { UserProfileCard } from '@/components/admin/user-detail/user-profile-card';
 import { UserOverviewTab } from '@/components/admin/user-detail/user-overview-tab';
 import { UserActivityTimeline } from '@/components/admin/user-detail/user-activity-timeline';
@@ -122,6 +124,7 @@ export default function AdminUserDetailPage() {
   const { userId } = useParams<{ userId: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const toast = useToast();
   const tabParam = searchParams.get('tab') as Tab | null;
   const [data, setData] = useState<UserDetail | null>(null);
   const [tiers, setTiers] = useState<SubscriptionTier[]>([]);
@@ -130,7 +133,7 @@ export default function AdminUserDetailPage() {
   const [activeTab, setActiveTab] = useState<Tab>(tabParam || 'overview');
   const [actionLoading, setActionLoading] = useState(false);
   const [tierLoading, setTierLoading] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Org assignment popup
   const [showOrgPopup, setShowOrgPopup] = useState(false);
@@ -198,19 +201,28 @@ export default function AdminUserDetailPage() {
 
       if (!res.ok) {
         const err = await res.json();
-        setError(err.error || 'Action failed');
+        toast.error(err.error || 'Action failed');
         return;
       }
 
-      // If deleted, go back
+      // Success messages
       if (body.action === 'delete') {
+        toast.success('User deleted');
         router.push('/admin/users');
         return;
       }
+      if (body.action === 'pause') toast.success('User account paused');
+      else if (body.action === 'pause_subscription') toast.success('Subscription paused');
+      else if (body.action === 'cancel_subscription') toast.success('Subscription cancelled');
+      else if (body.action === 'reactivate_subscription') toast.success('Subscription reactivated');
+      else if (body.approved === true) toast.success('User approved');
+      else if (body.approved === false) toast.success('User approval revoked');
+      else if (body.role) toast.success('Role updated');
+      else toast.success('Updated successfully');
 
       await fetchData();
     } catch {
-      setError('Action failed');
+      toast.error('Action failed');
     } finally {
       setActionLoading(false);
     }
@@ -227,13 +239,14 @@ export default function AdminUserDetailPage() {
 
       if (!res.ok) {
         const err = await res.json();
-        setError(err.error || 'Failed to update tier');
+        toast.error(err.error || 'Failed to update tier');
         return;
       }
 
+      toast.success('Subscription tier updated');
       await fetchData();
     } catch {
-      setError('Failed to update tier');
+      toast.error('Failed to update tier');
     } finally {
       setTierLoading(false);
     }
@@ -251,18 +264,23 @@ export default function AdminUserDetailPage() {
 
       if (!res.ok) {
         const err = await res.json();
-        setError(err.error || 'Failed to assign organization');
+        toast.error(err.error || 'Failed to assign organization');
         return;
       }
 
       setShowOrgPopup(false);
       setOrgName('');
+      toast.success('Organization assigned');
       await fetchData();
     } catch {
-      setError('Failed to assign organization');
+      toast.error('Failed to assign organization');
     } finally {
       setOrgLoading(false);
     }
+  };
+
+  const handleRoleChange = async (role: string) => {
+    await handleAction({ role });
   };
 
   if (isLoading) {
@@ -276,7 +294,7 @@ export default function AdminUserDetailPage() {
   if (error && !data) {
     return (
       <div className="p-6">
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
           {error}
           <button
             onClick={() => router.push('/admin/users')}
@@ -329,6 +347,17 @@ export default function AdminUserDetailPage() {
 
   return (
     <div>
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={() => handleAction({ action: 'delete' })}
+        title="Delete User"
+        message={`Are you sure you want to permanently delete ${user.full_name}? This action cannot be undone. All associated data will be removed.`}
+        confirmText={actionLoading ? 'Deleting...' : 'Delete User'}
+        variant="danger"
+      />
+
       {/* Org Assignment Popup */}
       {showOrgPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -370,9 +399,9 @@ export default function AdminUserDetailPage() {
 
       {/* Error banner */}
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center justify-between">
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm flex items-center justify-between">
           <span>{error}</span>
-          <button onClick={() => setError('')} className="text-red-400 hover:text-red-600 ml-3">
+          <button onClick={() => setError('')} className="text-red-400 hover:text-red-300 ml-3">
             &times;
           </button>
         </div>
@@ -414,31 +443,13 @@ export default function AdminUserDetailPage() {
 
             {/* Delete */}
             {user.role !== 'super_admin' && (
-              confirmDelete ? (
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={() => handleAction({ action: 'delete' })}
-                    className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-2"
-                    isLoading={actionLoading}
-                  >
-                    Confirm Delete
-                  </Button>
-                  <button
-                    onClick={() => setConfirmDelete(false)}
-                    className="text-sm text-stone hover:text-charcoal px-3 py-2"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setConfirmDelete(true)}
-                  className="flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-400 bg-red-50 hover:bg-red-500/10 px-3 py-2 rounded-lg transition-colors"
-                >
-                  <TrashIcon className="w-4 h-4" />
-                  Delete
-                </button>
-              )
+              <button
+                onClick={() => setShowDeleteDialog(true)}
+                className="flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 px-3 py-2 rounded-lg transition-colors"
+              >
+                <TrashIcon className="w-4 h-4" />
+                Delete
+              </button>
             )}
           </div>
         }
@@ -526,6 +537,7 @@ export default function AdminUserDetailPage() {
             onApprove={() => handleAction({ approved: true })}
             onPause={() => handleAction({ action: 'pause' })}
             onAssignOrg={() => setShowOrgPopup(true)}
+            onRoleChange={handleRoleChange}
             onPauseSubscription={() => handleAction({ action: 'pause_subscription' })}
             onCancelSubscription={() => handleAction({ action: 'cancel_subscription' })}
             onReactivateSubscription={() => handleAction({ action: 'reactivate_subscription' })}
