@@ -135,10 +135,10 @@ export function FollowerGrowthChart({ data, isLoading }: FollowerGrowthChartProp
                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                 fontSize: '12px',
               }}
-              formatter={(value: number, name: string) => [
-                value.toLocaleString(),
+              formatter={((value: number | undefined, name: string) => [
+                (value ?? 0).toLocaleString(),
                 PLATFORM_NAMES[name] || name,
-              ]}
+              ]) as never}
               labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               labelStyle={{ fontWeight: 600, color: '#374151', marginBottom: '4px' }}
             />

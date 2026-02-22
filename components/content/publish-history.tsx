@@ -131,12 +131,12 @@ export function PublishHistory({ contentItemId }: PublishHistoryProps) {
                       month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                     })}
                   </p>
-                  {event.details?.error && (
-                    <p className="text-xs text-red-500 mt-1">{String(event.details.error)}</p>
+                  {Boolean(event.details?.error) && (
+                    <p className="text-xs text-red-500 mt-1">{String(event.details!.error)}</p>
                   )}
-                  {event.details?.postUrl && (
+                  {Boolean(event.details?.postUrl) && (
                     <a
-                      href={String(event.details.postUrl)}
+                      href={String(event.details!.postUrl)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-teal hover:underline mt-1 inline-block"

@@ -52,6 +52,7 @@ const notificationIcons: Record<NotificationType, React.ComponentType<{ classNam
   call_completed: CheckCircleIcon,
   call_summary_ready: DocumentTextIcon,
   brand_audit_completed: CheckCircleIcon,
+  publish_failed: ExclamationTriangleIcon,
 };
 
 const notificationColors: Record<NotificationType, string> = {
@@ -71,6 +72,7 @@ const notificationColors: Record<NotificationType, string> = {
   call_completed: 'text-green-500',
   call_summary_ready: 'text-teal',
   brand_audit_completed: 'text-teal',
+  publish_failed: 'text-red-500',
 };
 
 interface Notification {

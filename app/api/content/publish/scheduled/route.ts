@@ -34,15 +34,16 @@ function getTimezoneOffset(timezone: string): string {
 
 async function notifyPublishFailure(
   supabase: ReturnType<typeof createServiceClient>,
-  item: { id: string; organization_id: string; created_by: string | null; topic: string | null },
+  item: { id: string; organization_id: string; topic?: string | null },
   platform: string,
 ) {
   try {
     const { createNotification } = await import('@/lib/notifications');
-    await createNotification(supabase, {
-      user_id: item.created_by || item.organization_id,
-      organization_id: item.organization_id,
-      type: 'publish_failed' as any,
+    await createNotification({
+      supabase,
+      userId: item.organization_id,
+      orgId: item.organization_id,
+      type: 'publish_failed',
       title: 'Publishing Failed',
       body: `Failed to publish "${item.topic || 'Untitled'}" to ${platform} after ${MAX_RETRIES} attempts.`,
       link: `/content?item=${item.id}`,
