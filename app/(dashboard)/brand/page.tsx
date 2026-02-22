@@ -20,7 +20,6 @@ import {
 import { LockClosedIcon } from '@heroicons/react/24/solid';
 import { getPhaseTemplate } from '@/config/phases';
 import { isPhaseAccessible } from '@/lib/phase-access';
-import { getPrimaryAgent } from '@/config/phase-agents';
 import type { PhaseStatus } from '@/types/database';
 
 interface Phase {
@@ -39,7 +38,6 @@ export default function BrandEnginePage() {
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [phasesWithData, setPhasesWithData] = useState<Set<string>>(new Set());
-  const [phaseCreditMap, setPhaseCreditMap] = useState<Record<string, number>>({});
   const [showImportModal, setShowImportModal] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
@@ -80,22 +78,6 @@ export default function BrandEnginePage() {
 
           if (outputPhases) {
             setPhasesWithData(new Set(outputPhases.map(o => o.phase_id)));
-          }
-
-          // Load per-phase credit usage
-          const { data: creditData } = await supabase
-            .from('brand_conversations')
-            .select('phase_id, credits_used')
-            .eq('organization_id', membership.organization_id);
-
-          if (creditData) {
-            const map: Record<string, number> = {};
-            for (const row of creditData) {
-              if (row.credits_used > 0) {
-                map[row.phase_id] = row.credits_used;
-              }
-            }
-            if (!cancelled) setPhaseCreditMap(map);
           }
         }
       } catch (error) {
@@ -220,18 +202,6 @@ export default function BrandEnginePage() {
   const allPhasesComplete = phases.length > 0 && phases.every(p => p.status === 'locked' || p.status === 'completed');
   const recommendedPhase = phases.find(p => p.status === 'in_progress') || phases.find(p => p.status === 'not_started');
 
-  const totalQuestions = phases.reduce((sum, p) => {
-    const t = getPhaseTemplate(p.phase_number);
-    return sum + (t?.questions.length ?? 0);
-  }, 0);
-
-  const totalVariables = phases.reduce((sum, p) => {
-    const t = getPhaseTemplate(p.phase_number);
-    return sum + (t?.outputVariables.length ?? 0);
-  }, 0);
-
-  const totalCreditsUsed = Object.values(phaseCreditMap).reduce((sum, c) => sum + c, 0);
-
   return (
     <div className="space-y-8">
       {/* Hero Banner */}
@@ -279,7 +249,7 @@ export default function BrandEnginePage() {
                     Brand Engine
                   </h1>
                   <p className="text-cream/60 text-base leading-relaxed">
-                    Build your complete brand strategy with AI-guided expert conversations across {phases.length} strategic phases.
+                    Build your complete brand strategy in {phases.length} guided steps.
                   </p>
                   {recommendedPhase && (
                     <button
@@ -294,31 +264,10 @@ export default function BrandEnginePage() {
               )}
             </div>
 
-            {/* Stats */}
-            <div className="flex gap-6 md:gap-8">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-gold">{completedCount}<span className="text-lg text-cream/30">/{phases.length}</span></div>
-                <div className="text-xs text-cream/40 uppercase tracking-wider mt-1">Phases</div>
-              </div>
-              <div className="w-px bg-cream/10" />
-              <div className="text-center">
-                <div className="text-3xl font-bold text-gold">{totalQuestions}</div>
-                <div className="text-xs text-cream/40 uppercase tracking-wider mt-1">Questions</div>
-              </div>
-              <div className="w-px bg-cream/10" />
-              <div className="text-center">
-                <div className="text-3xl font-bold text-gold">{totalVariables}</div>
-                <div className="text-xs text-cream/40 uppercase tracking-wider mt-1">Variables</div>
-              </div>
-              {totalCreditsUsed > 0 && (
-                <>
-                  <div className="w-px bg-cream/10" />
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-gold">{totalCreditsUsed.toLocaleString()}</div>
-                    <div className="text-xs text-cream/40 uppercase tracking-wider mt-1">Credits Used</div>
-                  </div>
-                </>
-              )}
+            {/* Phase completion */}
+            <div className="text-center md:text-right">
+              <div className="text-4xl font-bold text-gold">{completedCount}<span className="text-lg text-cream/30">/{phases.length}</span></div>
+              <div className="text-xs text-cream/40 uppercase tracking-wider mt-1">Phases Complete</div>
             </div>
           </div>
 
@@ -405,6 +354,25 @@ export default function BrandEnginePage() {
         </div>
       )}
 
+      {/* How it works — first-time onboarding */}
+      {completedCount === 0 && phases.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { step: '1', title: 'Answer questions about your brand', desc: 'Work through guided conversations with AI experts across 10 strategic phases.' },
+            { step: '2', title: 'AI structures your strategy', desc: 'Your answers are transformed into structured brand variables you can use everywhere.' },
+            { step: '3', title: 'Export your brand playbook', desc: 'Get a complete, professional brand playbook and power your Content Engine.' },
+          ].map(item => (
+            <div key={item.step} className="bg-cream-warm rounded-xl border border-stone/10 p-5">
+              <div className="w-8 h-8 rounded-full bg-teal/10 flex items-center justify-center text-sm font-bold text-teal mb-3">
+                {item.step}
+              </div>
+              <h3 className="text-sm font-semibold text-charcoal mb-1">{item.title}</h3>
+              <p className="text-xs text-stone leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Phase cards grid */}
       {phases.length === 0 ? (
         <div className="flex items-center justify-center h-[40vh] text-stone">
@@ -418,13 +386,11 @@ export default function BrandEnginePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {phases.map((phase) => {
               const template = getPhaseTemplate(phase.phase_number);
-              const primaryAgent = getPrimaryAgent(phase.phase_number);
               const isCompleted = phase.status === 'locked' || phase.status === 'completed';
               const isInProgress = phase.status === 'in_progress';
               const isRecommended = recommendedPhase?.id === phase.id;
               const accessible = isPhaseAccessible(phases, phase.id);
               const hasImportedData = phasesWithData.has(phase.id);
-              const phaseCredits = phaseCreditMap[phase.id] || 0;
               const qTotal = template?.questions.length ?? 0;
               const qDone = phase.current_question_index ?? 0;
 
@@ -488,19 +454,6 @@ export default function BrandEnginePage() {
                         </p>
                       )}
 
-                      {primaryAgent && (
-                        <div className="flex items-center gap-1.5 mt-1.5">
-                          <img
-                            src={primaryAgent.avatarUrl}
-                            alt={primaryAgent.name}
-                            className="w-4 h-4 rounded-full"
-                          />
-                          <span className="text-xs text-stone/70">
-                            Guided by {primaryAgent.name}
-                          </span>
-                        </div>
-                      )}
-
                       <div className="flex items-center gap-2 mt-3 flex-wrap">
                         {isCompleted && (
                           <>
@@ -546,15 +499,21 @@ export default function BrandEnginePage() {
                             Imported data waiting
                           </span>
                         )}
-                        {!accessible && !hasImportedData && (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-stone bg-stone/10 px-2 py-0.5 rounded-full">
-                            <LockClosedIcon className="w-3 h-3" />
-                            Locked
-                          </span>
-                        )}
-                        {phaseCredits > 0 && (
-                          <span className="inline-flex items-center text-xs font-medium text-gold bg-gold/10 px-2 py-0.5 rounded-full">
-                            {phaseCredits.toLocaleString()} credits
+                        {!accessible && !hasImportedData && (() => {
+                          // Find which phase is blocking this one (previous incomplete phase)
+                          const phaseIdx = phases.findIndex(p => p.id === phase.id);
+                          const blocker = phases.slice(0, phaseIdx).find(p => p.status !== 'locked' && p.status !== 'completed');
+                          return (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-stone bg-stone/10 px-2 py-0.5 rounded-full">
+                              <LockClosedIcon className="w-3 h-3" />
+                              {blocker ? `Requires Phase ${blocker.phase_number}` : 'Locked'}
+                            </span>
+                          );
+                        })()}
+                        {template?.estimatedMinutes && !isCompleted && (
+                          <span className="inline-flex items-center gap-1 text-xs text-stone/60">
+                            <ClockIcon className="w-3 h-3" />
+                            ~{template.estimatedMinutes} min
                           </span>
                         )}
                       </div>

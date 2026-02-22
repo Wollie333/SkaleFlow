@@ -11,3 +11,5 @@ export { QuestionStepper } from './question-stepper';
 export { VariablePreviewCard } from './variable-preview-card';
 export { MobileTabToggle } from './mobile-tab-toggle';
 export type { MobileTab } from './mobile-tab-toggle';
+export { QuestionBanner } from './question-banner';
+export { ProgressSidebar } from './progress-sidebar';

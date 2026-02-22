@@ -5,12 +5,11 @@ import { cn } from '@/lib/utils';
 import {
   ChatBubbleLeftEllipsisIcon,
   PencilIcon,
-  LockClosedIcon,
-  LockOpenIcon,
   CheckIcon,
   XMarkIcon,
   ClockIcon,
 } from '@heroicons/react/24/outline';
+import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { formatOutputKey } from '@/lib/brand/format-utils';
 import type { Json } from '@/types/database';
 
@@ -134,24 +133,24 @@ export function VariablePreviewCard({
               </button>
             </>
           ) : isLocked ? (
-            /* Locked state: closed lock icon (click to unlock) */
+            /* Confirmed state: check icon (click to edit) */
             onUnlock && (
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onUnlock(outputKey); }}
                 disabled={isLocking}
                 className="p-1 rounded text-teal hover:bg-teal/10 disabled:opacity-40 transition-colors"
-                title="Unlock variable"
+                title="Edit this answer"
               >
                 {isLocking ? (
                   <span className="block w-3.5 h-3.5 border-2 border-teal/30 border-t-teal rounded-full animate-spin" />
                 ) : (
-                  <LockClosedIcon className="w-3.5 h-3.5" />
+                  <CheckCircleIcon className="w-3.5 h-3.5" />
                 )}
               </button>
             )
           ) : (
-            /* Unlocked state: AI chat + edit + open lock (click to lock) */
+            /* Draft/empty state: AI chat + edit + confirm */
             <>
               {onAiChat && (
                 <button
@@ -178,13 +177,13 @@ export function VariablePreviewCard({
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onLock(outputKey); }}
                   disabled={isLocking}
-                  className="p-1 rounded text-stone hover:text-charcoal hover:bg-stone/10 disabled:opacity-40 transition-colors"
-                  title="Lock variable"
+                  className="p-1 rounded text-teal hover:text-teal/80 hover:bg-teal/10 disabled:opacity-40 transition-colors"
+                  title="Confirm this answer"
                 >
                   {isLocking ? (
-                    <span className="block w-3.5 h-3.5 border-2 border-stone/30 border-t-stone rounded-full animate-spin" />
+                    <span className="block w-3.5 h-3.5 border-2 border-teal/30 border-t-teal rounded-full animate-spin" />
                   ) : (
-                    <LockOpenIcon className="w-3.5 h-3.5" />
+                    <span className="text-[10px] font-semibold">Confirm</span>
                   )}
                 </button>
               )}
@@ -192,6 +191,19 @@ export function VariablePreviewCard({
           )}
         </div>
       </div>
+
+      {/* Status label */}
+      {!isEditing && !isEmpty && !isLocked && (
+        <span className="inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded bg-gold/10 text-gold mt-1">
+          Draft
+        </span>
+      )}
+      {!isEditing && isLocked && (
+        <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-teal/10 text-teal mt-1">
+          <CheckCircleIcon className="w-3 h-3" />
+          Confirmed
+        </span>
+      )}
 
       {/* Body */}
       {isEditing ? (
@@ -210,7 +222,7 @@ export function VariablePreviewCard({
         </div>
       ) : isEmpty ? (
         <p className="text-xs text-stone/50 mt-1.5 italic">
-          Awaiting AI extraction
+          Needs your input
         </p>
       ) : (
         <div className="mt-1.5">

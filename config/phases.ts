@@ -2,6 +2,7 @@ export interface PhaseTemplate {
   number: string;
   name: string;
   description: string;
+  estimatedMinutes: number;
   questions: string[];
   outputVariables: string[];
   questionOutputMap: Record<number, string[]>;
@@ -13,6 +14,7 @@ export const PHASE_TEMPLATES: Record<string, PhaseTemplate> = {
     number: '1',
     name: 'Brand Foundation',
     description: 'Define the internal core of your brand — purpose, vision, values, archetype, and origin story.',
+    estimatedMinutes: 25,
     questions: [
       'Why does this business exist beyond making money? Who does it serve and how?',
       'What future are you building? Where do you want this brand to be in 5-10 years?',
@@ -69,6 +71,7 @@ Ask for both the business origin story and the founder's personal journey. Captu
     number: '2',
     name: 'Ideal Customer',
     description: 'Define a complete Ideal Customer Profile with layered depth — demographics, psychographics, pains, desires, and journey.',
+    estimatedMinutes: 25,
     questions: [
       'Who is the decision-maker? (Role, company size, industry, revenue, geography, team size)',
       'What frustrates them most? Go deep — surface pain, deeper pain, and root cause.',
@@ -125,6 +128,7 @@ Ask the user to walk you through how someone goes from first hearing about them 
     number: '3',
     name: 'Market Enemy',
     description: 'Define the one enemy your brand fights against — the mindset, system, or broken approach.',
+    estimatedMinutes: 10,
     questions: [
       'What keeps creating problems for your customers? What is the real cost — emotionally, financially, in time, and in missed opportunity?',
       'What advice or approach has failed them? What does it promise vs. what it actually delivers, and why do people keep believing it?',
@@ -157,6 +161,7 @@ Ask the user to name this enemy. If they need help, offer 2-3 name ideas based o
     number: '4',
     name: 'Offer & Lead Magnet',
     description: 'Design a clear, aligned offer and a strategic lead magnet that feeds into it.',
+    estimatedMinutes: 30,
     questions: [
       'What core problem does your offer solve?',
       'What specific outcome are you responsible for delivering?',
@@ -225,6 +230,7 @@ Ask the user for the top 3 objections they hear from prospects and their ideal r
     number: '5',
     name: 'Market Positioning',
     description: 'Define market position, differentiation, category, and competitive landscape.',
+    estimatedMinutes: 20,
     questions: [
       'Why does this offer exist? Complete this: "For [ICP] who [need], [Brand] is the [category] that [differentiation] because [proof]."',
       'Why do alternatives fail? What do competitors, DIY, and doing nothing get wrong?',
@@ -266,6 +272,7 @@ Ask the user to map who else serves their ICP. Let them describe what competitor
     number: '6',
     name: 'Brand Voice & Messaging',
     description: 'Define vocabulary, tone, core message, and message pillars.',
+    estimatedMinutes: 20,
     questions: [
       'What words and phrases should the brand ALWAYS use? Include context for when and how to use each.',
       'What words should the brand NEVER use? Include WHY each is avoided and what message it sends.',
@@ -310,6 +317,7 @@ Ask the user what key themes or messages they keep coming back to in their busin
     number: '7',
     name: 'Visual Identity',
     description: 'Define your complete visual identity — logo, colors, typography, and visual direction.',
+    estimatedMinutes: 20,
     questions: [
       'Upload your logo (PNG/SVG/JPG) using the upload area above, or describe what you\'d like and we\'ll generate concepts.',
       'Let\'s define your brand color palette. I\'ll present options based on your archetype and brand characteristics.',
@@ -381,6 +389,7 @@ Ask the user about any additional visual rules, brand elements, or visual inspir
     number: '8',
     name: 'Design System',
     description: 'Build a complete design system with color roles, typography scale, and component specifications.',
+    estimatedMinutes: 15,
     questions: [
       'Let\'s expand your Phase 7 color palette into a full color system with roles, tints, and usage rules.',
       'Let\'s define your typography scale — sizes, weights, and line heights for headings, body, and UI elements.',
@@ -499,6 +508,7 @@ Then say: "If this looks right, click **Save & Continue** to lock it in. Want me
     number: '9',
     name: 'Website Strategy & Copy',
     description: 'Define website architecture, content strategy, and write copy for all key pages.',
+    estimatedMinutes: 45,
     questions: [
       'What is the primary role of the website? (Generate leads, sell directly, build authority)',
       'What are the primary and secondary conversion actions?',
@@ -600,6 +610,7 @@ Draft: headline, supporting copy, and CTA for the lead magnet landing page. Refe
     number: '10',
     name: 'Growth Engine',
     description: 'Build your authority platform and conversion strategy using the Key Person of Influence 5P framework.',
+    estimatedMinutes: 30,
     questions: [
       'Perfect your pitch — create your one-liner, elevator pitch, and signature talk title.',
       'What will you publish, where, and how often? (Book, podcast, newsletter, blog, social)',

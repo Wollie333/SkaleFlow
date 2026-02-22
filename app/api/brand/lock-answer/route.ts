@@ -208,13 +208,31 @@ export async function POST(request: Request) {
       }
     }
 
-    // Clear conversation messages for fresh thread on the next question
-    // Locked outputs provide all needed context via buildSystemPrompt()
+    // Preserve last few messages with a separator for context continuity
     if (!isLastQuestion) {
+      const { data: conv } = await supabase
+        .from('brand_conversations')
+        .select('messages')
+        .eq('organization_id', organizationId)
+        .eq('phase_id', phaseId)
+        .single();
+
+      const existingMessages = (conv?.messages as unknown as Array<{ role: string; content: string; timestamp: string }>) || [];
+
+      // Keep last 3 messages (or fewer if not enough) and prepend a separator
+      const kept = existingMessages.slice(-3);
+      const separator = {
+        role: 'separator' as const,
+        content: `__QUESTION_DIVIDER__Q${questionIndex + 1}`,
+        timestamp: new Date().toISOString(),
+      };
+
+      const newMessages = kept.length > 0 ? [separator, ...kept] : [];
+
       await supabase
         .from('brand_conversations')
         .update({
-          messages: [],
+          messages: newMessages,
           updated_at: new Date().toISOString(),
         })
         .eq('organization_id', organizationId)

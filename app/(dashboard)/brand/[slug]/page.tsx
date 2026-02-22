@@ -3,14 +3,17 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { QuestionPanel, ExpertChatPanel, ImportPlaybookModal } from '@/components/brand';
+import { ExpertChatPanel, ImportPlaybookModal, QuestionBanner, ProgressSidebar, LogoUpload, BrandAssetsUpload } from '@/components/brand';
 import { Button } from '@/components/ui';
 import {
   ArrowLeftIcon,
   ArrowUpTrayIcon,
-  DocumentArrowDownIcon,
   ExclamationTriangleIcon,
-  PencilSquareIcon,
+  ArrowRightIcon,
+  CheckIcon,
+  ForwardIcon,
+  SparklesIcon,
+  Bars3BottomRightIcon,
 } from '@heroicons/react/24/outline';
 import { TopupModal } from '@/components/billing/topup-modal';
 import { getPhaseTemplate } from '@/config/phases';
@@ -20,6 +23,7 @@ import { useModelPreference } from '@/hooks/useModelPreference';
 import { useCreditBalance } from '@/hooks/useCreditBalance';
 import { useModelStatus } from '@/hooks/useModelStatus';
 import { useAvailableModels } from '@/hooks/useAvailableModels';
+import { formatOutputKey } from '@/lib/brand/format-utils';
 import type { PhaseStatus, Json } from '@/types/database';
 
 const SAVE_INTENT_PATTERNS = [
@@ -47,7 +51,7 @@ interface Phase {
 }
 
 interface Message {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'separator';
   content: string;
   timestamp: string;
   attachments?: { name: string; type: string; size: number }[];
@@ -85,17 +89,17 @@ export default function BrandPhaseDetailPage() {
   const [phaseCreditsUsed, setPhaseCreditsUsed] = useState<number>(0);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [lockingKey, setLockingKey] = useState<string | null>(null);
-  const [acceptedExtractions, setAcceptedExtractions] = useState<Set<string>>(new Set());
+  const [autoSavedOutputs, setAutoSavedOutputs] = useState<string[]>([]);
+  const [showProgressSidebar, setShowProgressSidebar] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const messageOperationRef = useRef(false); // Guard: true when handleSendMessage is in-flight
+  const messageOperationRef = useRef(false);
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
 
   const { selectedModel, updatePreference } = useModelPreference(organizationId, 'brand_chat');
   const { balance: creditBalance, refetch: refetchCredits } = useCreditBalance(organizationId);
   const { statuses: providerStatuses } = useModelStatus();
   const { models: availableModels } = useAvailableModels('brand_chat');
 
-  // Helper: fetch outputs by expected variable keys (not phase_id) so we always find
-  // variables even if their phase_id is stale from a migration.
   const fetchOutputsForPhase = useCallback(async (orgId: string, phaseNum: string) => {
     const template = getPhaseTemplate(phaseNum);
     const expectedKeys = template?.outputVariables || [];
@@ -106,7 +110,7 @@ export default function BrandPhaseDetailPage() {
       .eq('organization_id', orgId)
       .in('output_key', expectedKeys);
     return data || [];
-  }, []); // supabase is stable; getPhaseTemplate is a pure function // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load phases and find current phase by URL slug
   useEffect(() => {
@@ -167,13 +171,12 @@ export default function BrandPhaseDetailPage() {
     };
   }, [phaseNumber]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Load conversation and outputs when entering a phase (not on question index changes)
+  // Load conversation and outputs when entering a phase
   const currentPhaseId = currentPhase?.id;
   useEffect(() => {
     if (!currentPhaseId || !organizationId) return;
 
     async function loadPhaseData() {
-      // Don't overwrite messages if handleSendMessage is in-flight
       if (messageOperationRef.current) return;
 
       const { data: conversation, error: convError } = await supabase
@@ -187,7 +190,6 @@ export default function BrandPhaseDetailPage() {
         console.error('Phase detail: conversation load failed', convError.message);
       }
 
-      // Double-check guard after async operation
       if (!messageOperationRef.current) {
         setMessages((conversation?.messages as unknown as Message[]) || []);
       }
@@ -204,6 +206,17 @@ export default function BrandPhaseDetailPage() {
 
     loadPhaseData();
   }, [currentPhaseId, organizationId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const reloadMessages = useCallback(async () => {
+    if (!organizationId || !currentPhase) return;
+    const { data: conversation } = await supabase
+      .from('brand_conversations')
+      .select('messages')
+      .eq('organization_id', organizationId)
+      .eq('phase_id', currentPhase.id)
+      .single();
+    setMessages((conversation?.messages as unknown as Message[]) || []);
+  }, [organizationId, currentPhase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reloadAfterImport = useCallback(async () => {
     if (!organizationId) return;
@@ -227,11 +240,6 @@ export default function BrandPhaseDetailPage() {
       setOutputs(freshOutputs);
     }
   }, [organizationId, currentPhase]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handlePhaseClick = useCallback((phase: { id: string; phase_number: string; phase_name: string; status: PhaseStatus }) => {
-    if (!isPhaseAccessible(phases, phase.id)) return;
-    router.push(`/brand/phase-${phase.phase_number}`);
-  }, [phases, router]);
 
   const handleStopGeneration = useCallback(() => {
     if (abortControllerRef.current) {
@@ -310,7 +318,7 @@ export default function BrandPhaseDetailPage() {
           const errData = await response.json();
           errMsg = errData.error || errMsg;
         } catch {
-          // Response is not JSON (timeout, 502, etc.)
+          // Response is not JSON
         }
 
         if (response.status === 402) {
@@ -326,9 +334,13 @@ export default function BrandPhaseDetailPage() {
 
       const data = await response.json();
 
-      // Update phase credit tracking
       if (data.phaseCreditsUsed !== undefined) {
         setPhaseCreditsUsed(data.phaseCreditsUsed);
+      }
+
+      // Track auto-saved outputs from AI
+      if (data.autoSavedOutputs && data.autoSavedOutputs.length > 0) {
+        setAutoSavedOutputs(data.autoSavedOutputs);
       }
 
       const assistantMessage: Message = {
@@ -363,11 +375,9 @@ export default function BrandPhaseDetailPage() {
       refetchCredits();
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
-        // User cancelled Ã¢â‚¬â€ remove the user message
         setMessages(prev => prev.slice(0, -1));
       } else {
         console.error('Error sending message:', error);
-        // Show error as assistant message instead of silently removing
         const errorMessage: Message = {
           role: 'assistant',
           content: `Something went wrong: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`,
@@ -409,11 +419,9 @@ export default function BrandPhaseDetailPage() {
         const missingByQ = data.missingByQuestion as Record<string, string[]>;
         const questionNums = Object.keys(missingByQ).map(Number).sort((a, b) => a - b);
         const firstMissingQ = questionNums[0];
-        const missingVarNames = data.missingKeys.map((k: string) => k.replace(/_/g, ' ')).join(', ');
 
         setIsLockingAnswer(false);
 
-        // Navigate to the first question with missing variables
         const response2 = await fetch('/api/brand/navigate-question', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -431,22 +439,17 @@ export default function BrandPhaseDetailPage() {
               p.id === currentPhase.id ? { ...p, current_question_index: firstMissingQ } : p
             )
           );
-          setMessages([]);
-          setAcceptedExtractions(new Set());
+          await reloadMessages();
+          setAutoSavedOutputs([]);
 
-          // Reload outputs
           const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
           setOutputs(freshOutputs);
-
-          // Thread stays blank Ã¢â‚¬â€ user initiates conversation
         }
         return;
       }
 
       if (data.missingKeys && data.missingKeys.length > 0) {
-        const missingStr = data.missingKeys.join(', ');
         setIsLockingAnswer(false);
-        // Thread stays blank Ã¢â‚¬â€ user initiates conversation
         return;
       }
 
@@ -482,15 +485,14 @@ export default function BrandPhaseDetailPage() {
           )
         );
 
-        setMessages([]);
-        setAcceptedExtractions(new Set());
+        await reloadMessages();
+        setAutoSavedOutputs([]);
 
         setIsLockingAnswer(false);
-        // Thread stays blank Ã¢â‚¬â€ user initiates conversation
         return;
       }
     } catch (error) {
-      console.error('Error locking answer:', error);
+      console.error('Error saving answer:', error);
     }
 
     setIsLockingAnswer(false);
@@ -499,7 +501,7 @@ export default function BrandPhaseDetailPage() {
   const handleRequestStructure = () => {
     if (!phaseTemplate) return;
     const keys = phaseTemplate.questionOutputMap[currentPhase?.current_question_index ?? 0] ?? [];
-    const prompt = `Based on everything we've discussed in this conversation, please structure my answers into YAML format for these variables: ${keys.join(', ')}. IMPORTANT: Use exactly what I told you Ã¢â‚¬â€ my specific choices, preferences, and wording. Do not substitute your own recommendations. Present the structured output now so I can lock it.`;
+    const prompt = `Based on everything we've discussed in this conversation, please structure my answers into YAML format for these variables: ${keys.join(', ')}. IMPORTANT: Use exactly what I told you — my specific choices, preferences, and wording. Do not substitute your own recommendations. Present the structured output now so I can save it.`;
     handleSendMessage(prompt);
   };
 
@@ -528,10 +530,9 @@ export default function BrandPhaseDetailPage() {
           p.id === currentPhase.id ? { ...p, current_question_index: targetIndex } : p
         )
       );
-      setMessages([]);
-      setAcceptedExtractions(new Set());
+      await reloadMessages();
+      setAutoSavedOutputs([]);
 
-      // Reload outputs for the target question
       const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
       setOutputs(freshOutputs);
     } catch (error) {
@@ -543,8 +544,6 @@ export default function BrandPhaseDetailPage() {
   const handleSkipQuestion = async () => {
     if (!currentPhase || !organizationId || !phaseTemplate) return;
     const nextIndex = currentPhase.current_question_index + 1;
-
-    // If this is the last question, can't skip Ã¢â‚¬â€ they need to fill in missing vars
     if (nextIndex >= phaseTemplate.questions.length) return;
 
     setIsLockingAnswer(true);
@@ -567,8 +566,8 @@ export default function BrandPhaseDetailPage() {
           p.id === currentPhase.id ? { ...p, current_question_index: nextIndex } : p
         )
       );
-      setMessages([]);
-      setAcceptedExtractions(new Set());
+      await reloadMessages();
+      setAutoSavedOutputs([]);
 
       const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
       setOutputs(freshOutputs);
@@ -576,43 +575,6 @@ export default function BrandPhaseDetailPage() {
       console.error('Error skipping question:', error);
     }
     setIsLockingAnswer(false);
-  };
-
-  const handleLockPhase = async () => {
-    if (!currentPhase || !organizationId) return;
-
-    setIsLocking(true);
-
-    try {
-      const response = await fetch('/api/brand/lock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          organizationId,
-          phaseId: currentPhase.id,
-        }),
-      });
-
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-
-      setPhases(prev =>
-        prev.map(p =>
-          p.id === currentPhase.id ? { ...p, status: 'locked' as PhaseStatus } : p
-        )
-      );
-
-      const currentIndex = phases.findIndex(p => p.id === currentPhase.id);
-      if (currentIndex < phases.length - 1) {
-        router.push(`/brand/phase-${phases[currentIndex + 1].phase_number}`);
-      }
-
-      setOutputs(prev => prev.map(o => ({ ...o, is_locked: true })));
-    } catch (error) {
-      console.error('Error locking phase:', error);
-    }
-
-    setIsLocking(false);
   };
 
   const handleExportPlaybook = () => {
@@ -659,10 +621,7 @@ export default function BrandPhaseDetailPage() {
   const handleAiChat = useCallback((outputKey: string) => {
     if (!currentPhase || !organizationId) return;
 
-    const displayName = outputKey
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-
+    const displayName = formatOutputKey(outputKey);
     const existingOutput = outputs.find(o => o.output_key === outputKey);
 
     if (existingOutput?.is_locked) return;
@@ -696,13 +655,12 @@ export default function BrandPhaseDetailPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to save');
 
-      // Refresh outputs
       const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
       setOutputs(freshOutputs);
     } catch (error) {
       console.error('Error saving variable:', error);
       setSavingKey(null);
-      throw error; // Re-throw so the card can show the error
+      throw error;
     }
     setSavingKey(null);
   }, [currentPhase, organizationId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -721,13 +679,13 @@ export default function BrandPhaseDetailPage() {
         }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to lock');
+      if (!response.ok) throw new Error(data.error || 'Failed to confirm');
 
       setOutputs(prev => prev.map(o =>
         o.output_key === outputKey ? { ...o, is_locked: true } : o
       ));
     } catch (error) {
-      console.error('Error locking variable:', error);
+      console.error('Error confirming variable:', error);
     }
     setLockingKey(null);
   }, [organizationId]);
@@ -757,37 +715,15 @@ export default function BrandPhaseDetailPage() {
     setLockingKey(null);
   }, [organizationId]);
 
-  const handleAcceptExtraction = useCallback(async (messageIndex: number, outputKey: string, value: string) => {
-    if (!currentPhase || !organizationId) return;
-    try {
-      const response = await fetch('/api/brand/variable', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          organizationId,
-          phaseId: currentPhase.id,
-          outputKey,
-          action: 'update',
-          value,
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to accept extraction');
-
-      // Mark this extraction as accepted
-      setAcceptedExtractions(prev => {
-        const next = new Set(prev);
-        next.add(`${messageIndex}:${outputKey}`);
-        return next;
-      });
-
-      // Refresh outputs
-      const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
-      setOutputs(freshOutputs);
-    } catch (error) {
-      console.error('Error accepting extraction:', error);
+  // Handle suggestion chip clicks
+  const handleSuggestionClick = useCallback((action: string) => {
+    if (action === '__help_me_think__') {
+      handleSendMessage('Help me think through this question. Ask me what you need to know to create a great answer.');
+    } else if (action === '__i_know_this__') {
+      // Focus the chat input
+      chatInputRef.current?.focus();
     }
-  }, [currentPhase, organizationId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isLoading) {
     return (
@@ -817,15 +753,21 @@ export default function BrandPhaseDetailPage() {
   const currentAgent = getAgentForQuestion(currentPhase.phase_number, currentQuestionIndex);
 
   const currentOutputKeys = phaseTemplate?.questionOutputMap[currentQuestionIndex] ?? [];
+  const outputMap = new Map(outputs.map(o => [o.output_key, o]));
   const hasAnswerToLock = currentOutputKeys.length > 0 &&
     currentOutputKeys.some(key =>
       outputs.some(o => o.output_key === key && !o.is_locked)
     );
 
-  const hasAiResponse = messages.length >= 2 && messages.some(m => m.role === 'assistant');
-  const canRequestStructure = currentOutputKeys.length > 0 && !hasAnswerToLock && hasAiResponse && !isSending;
+  const allCurrentOutputsLocked = currentOutputKeys.length > 0 &&
+    currentOutputKeys.every(key => {
+      const o = outputMap.get(key);
+      return o && o.is_locked;
+    });
 
-  const allPhasesComplete = phases.every(p => p.status === 'locked' || p.status === 'completed');
+  const realMessages = messages.filter(m => m.role !== 'separator');
+  const hasAiResponse = realMessages.length >= 2 && realMessages.some(m => m.role === 'assistant');
+  const canRequestStructure = currentOutputKeys.length > 0 && !hasAnswerToLock && hasAiResponse && !isSending;
 
   const currentPhaseIndex = phases.findIndex(p => p.id === currentPhase.id);
   const nextPhase = currentPhaseIndex >= 0 && currentPhaseIndex < phases.length - 1
@@ -839,10 +781,17 @@ export default function BrandPhaseDetailPage() {
 
   const currentQuestionText = phaseTemplate?.questions[currentQuestionIndex];
 
+  // Build output status map for the question banner
+  const outputStatuses = new Map<string, { filled: boolean; locked: boolean }>();
+  for (const key of currentOutputKeys) {
+    const o = outputMap.get(key);
+    outputStatuses.set(key, { filled: !!o, locked: o?.is_locked ?? false });
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh-80px)]">
       {/* Compact header */}
-      <header className="flex items-center justify-between px-1 py-3 flex-shrink-0">
+      <header className="flex items-center justify-between px-4 py-3 flex-shrink-0">
         <div className="flex items-center gap-3">
           <Button onClick={() => router.push('/brand')} variant="ghost" className="p-2">
             <ArrowLeftIcon className="w-5 h-5" />
@@ -859,11 +808,19 @@ export default function BrandPhaseDetailPage() {
             <Button
               onClick={() => setPhaseImportTarget({ id: currentPhase.id, name: currentPhase.phase_name })}
               variant="secondary"
+              className="hidden sm:flex"
             >
               <ArrowUpTrayIcon className="w-4 h-4 mr-2" />
               Import
             </Button>
           )}
+          <Button
+            onClick={() => setShowProgressSidebar(true)}
+            variant="secondary"
+          >
+            <Bars3BottomRightIcon className="w-4 h-4 mr-2" />
+            Progress
+          </Button>
         </div>
       </header>
 
@@ -883,7 +840,7 @@ export default function BrandPhaseDetailPage() {
 
       {/* Credit error banner */}
       {creditError && (
-        <div className="mx-1 mb-3 flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex-shrink-0">
+        <div className="mx-4 mb-3 flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex-shrink-0">
           <ExclamationTriangleIcon className="w-5 h-5 text-red-500 flex-shrink-0" />
           <p className="text-sm text-red-400 flex-1">{creditError}</p>
           <button
@@ -914,94 +871,198 @@ export default function BrandPhaseDetailPage() {
         />
       )}
 
+      {/* ─── Centered single-column chat layout ─── */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto px-4 py-2 space-y-4">
+            {/* Question Banner */}
+            <QuestionBanner
+              currentQuestionIndex={currentQuestionIndex}
+              totalQuestions={totalQuestions}
+              questionText={currentQuestionText}
+              outputKeys={currentOutputKeys}
+              outputStatuses={outputStatuses}
+              agent={currentAgent ? {
+                name: currentAgent.name,
+                title: currentAgent.title,
+                expertise: currentAgent.expertise,
+                avatarUrl: currentAgent.avatarUrl,
+              } : undefined}
+              phaseComplete={phaseComplete}
+              onSuggestionClick={handleSuggestionClick}
+              isSending={isSending}
+              hasMessages={messages.some(m => m.role !== 'separator')}
+            />
 
-      {/* Two-panel layout */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-4 overflow-y-auto lg:overflow-hidden min-h-0 px-1 pb-1">
-        {/* Left panel Ã¢â‚¬â€ Question & Context (42%) */}
-        <div className="lg:w-[42%] lg:flex-shrink-0 w-full bg-cream-warm rounded-xl border border-stone/10 lg:overflow-hidden flex-shrink-0">
-          <QuestionPanel
-            phases={phases}
-            currentPhase={currentPhase}
-            onPhaseClick={handlePhaseClick}
-            totalQuestions={totalQuestions}
-            currentQuestionIndex={currentQuestionIndex}
-            currentQuestionText={currentQuestionText}
-            currentOutputKeys={currentOutputKeys}
-            allOutputKeys={phaseTemplate?.outputVariables || []}
-            outputs={outputs}
-            agent={currentAgent ? {
-              name: currentAgent.name,
-              title: currentAgent.title,
-              expertise: currentAgent.expertise,
-              avatarUrl: currentAgent.avatarUrl,
-            } : undefined}
-            hasAnswerToLock={hasAnswerToLock}
-            isLockingAnswer={isLockingAnswer}
-            onLockAnswer={handleLockAnswer}
-            canRequestStructure={canRequestStructure}
-            onRequestStructure={handleRequestStructure}
-            onSkipQuestion={handleSkipQuestion}
-            onGoBack={handleGoBack}
-            onAiChat={handleAiChat}
-            onManualEdit={handleManualEdit}
-            onLockVariable={handleLockVariable}
-            onUnlockVariable={handleUnlockVariable}
-            savingKey={savingKey}
-            lockingKey={lockingKey}
-            onQuickAnswer={(answer) => {
-              handleSendMessage(answer);
-            }}
-            isSending={isSending}
-            organizationId={organizationId || undefined}
-            onLogoUploaded={async (url) => {
-              if (organizationId && currentPhase) {
-                await supabase.from('brand_outputs').upsert({
-                  organization_id: organizationId,
-                  phase_id: currentPhase.id,
-                  output_key: 'brand_logo_url',
-                  output_value: url,
-                  is_locked: false,
-                }, { onConflict: 'organization_id,output_key' });
-                const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
-                setOutputs(freshOutputs);
-                handleSendMessage("I've uploaded my logo. Please take a look at it and share your thoughts on its style, colors, and how it fits our brand direction.");
-              }
-            }}
-            phaseComplete={phaseComplete}
-            nextPhase={nextPhase}
-            onGoToNextPhase={nextPhase ? handleGoToNextPhase : undefined}
-          />
+            {/* Logo upload for Phase 7, Question 0 */}
+            {currentPhase.phase_number === '7' && currentQuestionIndex === 0 && organizationId && !phaseComplete && (
+              <div className="border border-stone/10 rounded-lg p-3 bg-cream-warm">
+                <LogoUpload
+                  organizationId={organizationId}
+                  onLogoUploaded={async (url) => {
+                    if (organizationId && currentPhase) {
+                      await supabase.from('brand_outputs').upsert({
+                        organization_id: organizationId,
+                        phase_id: currentPhase.id,
+                        output_key: 'brand_logo_url',
+                        output_value: url,
+                        is_locked: false,
+                      }, { onConflict: 'organization_id,output_key' });
+                      const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
+                      setOutputs(freshOutputs);
+                      handleSendMessage("I've uploaded my logo. Please take a look at it and share your thoughts on its style, colors, and how it fits our brand direction.");
+                    }
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Visual assets upload for Phase 7 */}
+            {currentPhase.phase_number === '7' && organizationId && !phaseComplete && (
+              <div className="border border-stone/10 rounded-lg p-3 bg-cream-warm">
+                <p className="text-xs font-semibold text-charcoal mb-2">Visual Assets</p>
+                <p className="text-[10px] text-stone mb-3">Upload logo variants, patterns, and mood board images for your brand guide.</p>
+                <BrandAssetsUpload organizationId={organizationId} />
+              </div>
+            )}
+
+            {/* Chat messages */}
+            <ExpertChatPanel
+              messages={messages}
+              isLoading={isSending}
+              onSendMessage={handleSendMessage}
+              onStopGeneration={handleStopGeneration}
+              agent={currentAgent ? {
+                name: currentAgent.name,
+                title: currentAgent.title,
+                expertise: currentAgent.expertise,
+                avatarUrl: currentAgent.avatarUrl,
+                avatarInitials: currentAgent.avatarInitials,
+                avatarColor: currentAgent.avatarColor,
+              } : undefined}
+              phaseComplete={phaseComplete}
+              nextPhaseName={nextPhase ? `Phase ${nextPhase.phase_number}: ${nextPhase.phase_name}` : undefined}
+              onGoToNextPhase={nextPhase ? handleGoToNextPhase : undefined}
+              selectedModelId={selectedModel}
+              onModelChange={updatePreference}
+              models={availableModels}
+              creditBalance={creditBalance ? { totalRemaining: creditBalance.totalRemaining, hasCredits: creditBalance.hasCredits } : null}
+              providerStatuses={providerStatuses}
+              phaseCreditsUsed={phaseCreditsUsed}
+              autoSavedOutputs={autoSavedOutputs}
+              centered
+            />
+          </div>
         </div>
 
-        {/* Right panel Ã¢â‚¬â€ Expert Chat (58%) */}
-        <div className="lg:flex-1 w-full flex-shrink-0 lg:overflow-hidden">
-          <ExpertChatPanel
-            messages={messages}
-            isLoading={isSending}
-            onSendMessage={handleSendMessage}
-            onStopGeneration={handleStopGeneration}
-            agent={currentAgent ? {
-              name: currentAgent.name,
-              title: currentAgent.title,
-              expertise: currentAgent.expertise,
-              avatarUrl: currentAgent.avatarUrl,
-              avatarInitials: currentAgent.avatarInitials,
-              avatarColor: currentAgent.avatarColor,
-            } : undefined}
-            phaseComplete={phaseComplete}
-            nextPhaseName={nextPhase ? `Phase ${nextPhase.phase_number}: ${nextPhase.phase_name}` : undefined}
-            onGoToNextPhase={nextPhase ? handleGoToNextPhase : undefined}
-            selectedModelId={selectedModel}
-            onModelChange={updatePreference}
-            models={availableModels}
-            creditBalance={creditBalance ? { totalRemaining: creditBalance.totalRemaining, hasCredits: creditBalance.hasCredits } : null}
-            providerStatuses={providerStatuses}
-            phaseCreditsUsed={phaseCreditsUsed}
-            onAcceptExtraction={handleAcceptExtraction}
-            acceptedExtractions={acceptedExtractions}
-          />
-        </div>
+        {/* Bottom action bar */}
+        {!phaseComplete && (
+          <div className="border-t border-stone/10 bg-cream-warm flex-shrink-0">
+            <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+              {/* Left: Previous */}
+              <div className="flex items-center gap-2">
+                {currentQuestionIndex > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleGoBack}
+                    disabled={isLockingAnswer || isSending}
+                    className="text-xs text-stone hover:text-charcoal transition-colors py-1.5 flex items-center gap-1"
+                  >
+                    <ArrowLeftIcon className="w-3.5 h-3.5" />
+                    Previous
+                  </button>
+                )}
+              </div>
+
+              {/* Center: Stepper dots */}
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalQuestions }, (_, i) => (
+                  <div
+                    key={i}
+                    className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                      i < currentQuestionIndex
+                        ? 'bg-teal'
+                        : i === currentQuestionIndex
+                          ? 'bg-teal w-3'
+                          : 'bg-stone/20'
+                    }`}
+                  />
+                ))}
+                <span className="text-[10px] text-stone ml-2">
+                  Q{currentQuestionIndex + 1} of {totalQuestions}
+                </span>
+              </div>
+
+              {/* Right: Actions */}
+              <div className="flex items-center gap-2">
+                {canRequestStructure && !hasAnswerToLock && !allCurrentOutputsLocked && (
+                  <Button
+                    onClick={handleRequestStructure}
+                    disabled={isSending}
+                    variant="secondary"
+                    className="text-xs px-3 py-1.5"
+                  >
+                    <SparklesIcon className="w-3.5 h-3.5 mr-1" />
+                    Structure
+                  </Button>
+                )}
+                {!hasAnswerToLock && !allCurrentOutputsLocked && currentQuestionIndex < totalQuestions - 1 && (
+                  <button
+                    type="button"
+                    onClick={handleSkipQuestion}
+                    disabled={isLockingAnswer || isSending}
+                    className="text-xs text-stone hover:text-charcoal transition-colors py-1.5 flex items-center gap-1"
+                  >
+                    Skip
+                    <ForwardIcon className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {(hasAnswerToLock || allCurrentOutputsLocked) && (
+                  <Button
+                    onClick={handleLockAnswer}
+                    disabled={isLockingAnswer}
+                    className="bg-teal hover:bg-teal/90 text-cream font-medium text-xs px-4 py-1.5"
+                  >
+                    {allCurrentOutputsLocked ? (
+                      <>
+                        <ArrowRightIcon className="w-3.5 h-3.5 mr-1" />
+                        {isLockingAnswer ? 'Saving...' : 'Next Question'}
+                      </>
+                    ) : (
+                      <>
+                        <CheckIcon className="w-3.5 h-3.5 mr-1" />
+                        {isLockingAnswer ? 'Saving...' : 'Save & Continue'}
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Progress Sidebar */}
+      {phaseTemplate && (
+        <ProgressSidebar
+          isOpen={showProgressSidebar}
+          onClose={() => setShowProgressSidebar(false)}
+          phaseName={currentPhase.phase_name}
+          phaseNumber={currentPhase.phase_number}
+          totalQuestions={totalQuestions}
+          currentQuestionIndex={currentQuestionIndex}
+          phaseComplete={phaseComplete}
+          questionOutputMap={phaseTemplate.questionOutputMap}
+          questions={phaseTemplate.questions}
+          outputs={outputs}
+          onAiChat={handleAiChat}
+          onManualEdit={handleManualEdit}
+          onLockVariable={handleLockVariable}
+          onUnlockVariable={handleUnlockVariable}
+          savingKey={savingKey}
+          lockingKey={lockingKey}
+        />
+      )}
     </div>
   );
 }

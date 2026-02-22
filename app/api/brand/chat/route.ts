@@ -514,9 +514,43 @@ export async function POST(request: Request) {
       logger.info('YAML outputs parsed', { outputKeys: yamlOutputs.map(o => o.output_key) });
     }
 
-    // Extracted outputs are returned in the response but NOT auto-saved.
-    // The client shows them in the chat with "Accept Extraction" buttons.
-    // User explicitly accepts each extraction, which saves it via /api/brand/variable.
+    // Auto-save extracted outputs as drafts (never overwrite locked values)
+    const autoSavedKeys: string[] = [];
+    if (yamlOutputs.length > 0) {
+      for (const output of yamlOutputs) {
+        // Check if already locked — never overwrite confirmed values
+        const existing = (allOutputs || []).find(
+          o => o.output_key === output.output_key && o.is_locked
+        );
+        if (existing) continue;
+
+        const { error: upsertError } = await supabase
+          .from('brand_outputs')
+          .upsert(
+            {
+              organization_id: organizationId,
+              phase_id: phaseId,
+              output_key: output.output_key,
+              output_value: output.output_value,
+              is_locked: false,
+            },
+            { onConflict: 'organization_id,output_key' }
+          );
+
+        if (upsertError) {
+          logger.warn('Failed to auto-save output', {
+            outputKey: output.output_key,
+            error: upsertError.message,
+          });
+        } else {
+          autoSavedKeys.push(output.output_key);
+        }
+      }
+
+      if (autoSavedKeys.length > 0) {
+        logger.info('Auto-saved outputs as drafts', { keys: autoSavedKeys });
+      }
+    }
 
     logger.info('Brand chat request complete', {
       organizationId,
@@ -529,6 +563,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       message: assistantMessage,
       outputs: yamlOutputs.length > 0 ? yamlOutputs : undefined,
+      autoSavedOutputs: autoSavedKeys.length > 0 ? autoSavedKeys : undefined,
       tokensUsed: requestTokens,
       creditsCharged,
       phaseCreditsUsed: newCreditTotal,

@@ -14,12 +14,12 @@ import {
   DocumentIcon,
   PhotoIcon,
   ArrowRightIcon,
-  CheckBadgeIcon,
+  Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
-import { LockClosedIcon } from '@heroicons/react/24/solid';
+import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { useSpeechToText } from '@/hooks/use-speech-to-text';
 import { ModelSelector } from '@/components/ai/model-selector';
-import { formatFileSize, parseYamlPreview } from '@/lib/brand/format-utils';
+import { formatFileSize, parseYamlPreview, formatOutputKey } from '@/lib/brand/format-utils';
 import type { ClientModelOption } from '@/lib/ai/models';
 
 interface Attachment {
@@ -29,7 +29,7 @@ interface Attachment {
 }
 
 interface Message {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'separator';
   content: string;
   timestamp: string;
   attachments?: Attachment[];
@@ -61,9 +61,10 @@ interface ExpertChatPanelProps {
   creditBalance?: { totalRemaining: number; hasCredits: boolean } | null;
   providerStatuses?: Record<string, 'active' | 'offline'>;
   phaseCreditsUsed?: number;
-  // Extraction accept — messageIndex is the position in the messages array
-  onAcceptExtraction?: (messageIndex: number, outputKey: string, value: string) => void;
-  acceptedExtractions?: Set<string>;
+  // Auto-saved outputs from AI
+  autoSavedOutputs?: string[];
+  // Centered layout mode (hides agent header, shows inline)
+  centered?: boolean;
 }
 
 export function ExpertChatPanel({
@@ -81,8 +82,8 @@ export function ExpertChatPanel({
   creditBalance,
   providerStatuses,
   phaseCreditsUsed,
-  onAcceptExtraction,
-  acceptedExtractions,
+  autoSavedOutputs,
+  centered = false,
 }: ExpertChatPanelProps) {
   const [input, setInput] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -153,72 +154,19 @@ export function ExpertChatPanel({
     }
   };
 
+  const [showModelSelector, setShowModelSelector] = useState(false);
+
   return (
-    <div className="flex flex-col h-full bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
-      {/* Agent header */}
-      <div className="px-5 py-3 border-b border-stone/10 bg-cream-warm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            {agent ? (
-              <img
-                src={agent.avatarUrl}
-                alt={agent.name}
-                className="w-10 h-10 rounded-full flex-shrink-0"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-teal/10 flex items-center justify-center flex-shrink-0">
-                <SparklesIcon className="w-5 h-5 text-teal" />
-              </div>
-            )}
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-charcoal truncate">
-                {agent?.name || 'AI Strategist'}
-              </p>
-              <p className="text-[11px] text-stone truncate">
-                {agent?.title || 'Brand strategy expert'}
-              </p>
-            </div>
-          </div>
-
-          {/* Model selector + credits */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {models && models.length > 0 && onModelChange && (
-              <>
-                <ModelSelector
-                  models={models}
-                  selectedModelId={selectedModelId || null}
-                  onSelect={onModelChange}
-                  compact
-                  providerStatuses={providerStatuses}
-                />
-                {creditBalance && (
-                  <span className={cn(
-                    'text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap',
-                    selectedModelId && models.find(m => m.id === selectedModelId)?.isFree
-                      ? 'bg-teal/10 text-teal'
-                      : creditBalance.hasCredits
-                        ? 'bg-stone/10 text-stone'
-                        : 'bg-red-50 text-red-500'
-                  )}>
-                    {selectedModelId && models.find(m => m.id === selectedModelId)?.isFree
-                      ? 'Free'
-                      : `${creditBalance.totalRemaining.toLocaleString()} cr`}
-                  </span>
-                )}
-                {phaseCreditsUsed !== undefined && phaseCreditsUsed > 0 && (
-                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full whitespace-nowrap bg-gold/10 text-gold">
-                    Phase: {phaseCreditsUsed.toLocaleString()} cr
-                  </span>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
+    <div className={cn(
+      'flex flex-col h-full overflow-hidden',
+      centered ? '' : 'bg-cream-warm rounded-xl border border-stone/10'
+    )}>
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-5 space-y-4">
-        {messages.length === 0 && (
+      <div ref={messagesContainerRef} className={cn(
+        'flex-1 overflow-y-auto space-y-4',
+        centered ? 'px-0 py-2' : 'p-5'
+      )}>
+        {messages.length === 0 && !centered && (
           <div className="text-center py-12">
             {agent ? (
               <>
@@ -234,7 +182,7 @@ export function ExpertChatPanel({
                   {agent.expertise}
                 </p>
                 <p className="text-xs text-stone/50 mt-3">
-                  Start the conversation or use the quick-answer option
+                  Start the conversation or type your answer directly
                 </p>
               </>
             ) : (
@@ -246,12 +194,33 @@ export function ExpertChatPanel({
           </div>
         )}
 
-        {messages.map((message, i) => (
+        {messages.map((message, i) => {
+          // Render separator as a visual divider
+          if (message.role === 'separator') {
+            const match = message.content.match(/__QUESTION_DIVIDER__Q(\d+)/);
+            const qNum = match ? match[1] : '';
+            return (
+              <div key={i} className="flex items-center gap-3 py-2 opacity-50">
+                <div className="flex-1 h-px bg-stone/20" />
+                <span className="text-[10px] text-stone/50 font-medium uppercase tracking-wider whitespace-nowrap">
+                  Question {qNum} completed
+                </span>
+                <div className="flex-1 h-px bg-stone/20" />
+              </div>
+            );
+          }
+
+          // Find if this message is before a separator (faded style)
+          const nextSeparatorIdx = messages.findIndex((m, j) => j > i && m.role === 'separator');
+          const isBeforeSeparator = nextSeparatorIdx === -1 && messages.some(m => m.role === 'separator') && i < messages.findIndex(m => m.role === 'separator');
+
+          return (
           <div
             key={i}
             className={cn(
               'flex gap-3',
-              message.role === 'user' && 'justify-end'
+              message.role === 'user' && 'justify-end',
+              isBeforeSeparator && 'opacity-50',
             )}
           >
             {message.role === 'assistant' && (
@@ -301,7 +270,7 @@ export function ExpertChatPanel({
                 )}
                 <div className="text-sm whitespace-pre-wrap prose prose-sm max-w-none">
                   {message.role === 'assistant'
-                    ? formatAssistantMessage(message.content, i, onAcceptExtraction, acceptedExtractions)
+                    ? formatAssistantMessage(message.content, i, autoSavedOutputs)
                     : message.content}
                 </div>
               </div>
@@ -318,7 +287,8 @@ export function ExpertChatPanel({
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
 
         {isLoading && (
           <div className="flex gap-3">
@@ -345,11 +315,11 @@ export function ExpertChatPanel({
       </div>
 
       {/* Input area */}
-      <div className="p-4 border-t border-stone/10">
+      <div className={cn('p-4', centered ? 'border-t-0' : 'border-t border-stone/10')}>
         {phaseComplete ? (
           <div className="space-y-3 py-2">
             <div className="flex items-center justify-center gap-2 text-teal">
-              <LockClosedIcon className="w-4 h-4" />
+              <CheckCircleIcon className="w-4 h-4" />
               <span className="text-sm font-medium">Phase complete</span>
             </div>
             {nextPhaseName && onGoToNextPhase && (
@@ -424,7 +394,7 @@ export function ExpertChatPanel({
                   value={isListening ? (input + (input && !input.endsWith(' ') ? ' ' : '') + transcript) : input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Type your message..."
+                  placeholder={agent ? `Type your answer or chat with ${agent.name}...` : 'Type your message...'}
                   rows={1}
                   className="flex-1 resize-none !py-2 !px-0 !bg-transparent !border-0 !ring-0 !outline-none !shadow-none !min-h-0 text-sm placeholder:text-stone/50"
                   disabled={isLoading}
@@ -448,7 +418,47 @@ export function ExpertChatPanel({
                     )}
                   </Button>
                 )}
+                {models && models.length > 0 && onModelChange && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setShowModelSelector(!showModelSelector)}
+                    className="p-2 h-auto shrink-0 hover:bg-teal/10"
+                    title="AI model settings"
+                  >
+                    <Cog6ToothIcon className="w-5 h-5 text-stone hover:text-teal" />
+                  </Button>
+                )}
               </div>
+              {/* Model selector popover */}
+              {showModelSelector && models && onModelChange && (
+                <div className="absolute bottom-full mb-2 right-0 bg-cream-warm border border-stone/15 rounded-lg shadow-lg p-3 min-w-[220px] z-10">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-charcoal">AI Model</span>
+                    {creditBalance && (
+                      <span className={cn(
+                        'text-[10px] font-medium px-1.5 py-0.5 rounded-full',
+                        selectedModelId && models.find(m => m.id === selectedModelId)?.isFree
+                          ? 'bg-teal/10 text-teal'
+                          : creditBalance.hasCredits
+                            ? 'bg-stone/10 text-stone'
+                            : 'bg-red-50 text-red-500'
+                      )}>
+                        {selectedModelId && models.find(m => m.id === selectedModelId)?.isFree
+                          ? 'Free'
+                          : `${creditBalance.totalRemaining.toLocaleString()} cr`}
+                      </span>
+                    )}
+                  </div>
+                  <ModelSelector
+                    models={models}
+                    selectedModelId={selectedModelId || null}
+                    onSelect={(id) => { onModelChange(id); setShowModelSelector(false); }}
+                    compact
+                    providerStatuses={providerStatuses}
+                  />
+                </div>
+              )}
               {isLoading && onStopGeneration ? (
                 <button
                   type="button"
@@ -481,15 +491,15 @@ export function ExpertChatPanel({
 
 /**
  * Format assistant messages — render YAML code blocks as green extraction cards
- * with Accept Extraction buttons for each variable.
+ * with auto-saved badges (no manual accept needed).
  */
 function formatAssistantMessage(
   content: string,
   messageIndex: number,
-  onAcceptExtraction?: (messageIndex: number, outputKey: string, value: string) => void,
-  acceptedExtractions?: Set<string>,
+  autoSavedOutputs?: string[],
 ): React.ReactNode {
   const parts = content.split(/(```yaml[\s\S]*?```)/g);
+  const savedSet = new Set(autoSavedOutputs || []);
 
   return parts.map((part, i) => {
     if (part.startsWith('```yaml')) {
@@ -507,41 +517,26 @@ function formatAssistantMessage(
       return (
         <div key={i} className="space-y-2 my-3">
           {pairs.map(({ key, value }) => {
-            const extractionId = `${messageIndex}:${key}`;
-            const isAccepted = acceptedExtractions?.has(extractionId);
+            const isSaved = savedSet.has(key);
             return (
               <div
                 key={key}
                 className="bg-emerald-50 border border-emerald-200 rounded-lg p-3"
               >
-                <div className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider mb-1">
-                  {key.replace(/_/g, ' ')}
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider">
+                    {formatOutputKey(key)}
+                  </span>
+                  {isSaved && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">
+                      <CheckCircleIcon className="w-3 h-3" />
+                      Saved
+                    </span>
+                  )}
                 </div>
                 <div className="text-sm text-charcoal whitespace-pre-wrap leading-relaxed">
                   {value}
                 </div>
-                {onAcceptExtraction && (
-                  <button
-                    type="button"
-                    onClick={() => onAcceptExtraction(messageIndex, key, value)}
-                    disabled={isAccepted}
-                    className={cn(
-                      'mt-2 inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md transition-colors',
-                      isAccepted
-                        ? 'bg-emerald-100 text-emerald-600 cursor-default'
-                        : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                    )}
-                  >
-                    {isAccepted ? (
-                      <>
-                        <CheckBadgeIcon className="w-3.5 h-3.5" />
-                        Accepted
-                      </>
-                    ) : (
-                      'Accept Extraction'
-                    )}
-                  </button>
-                )}
               </div>
             );
           })}
