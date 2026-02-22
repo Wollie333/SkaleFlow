@@ -259,10 +259,12 @@ async function fetchInstagramAudienceInsights(
 async function fetchFacebookAudienceInsights(
   tokens: { accessToken: string; platformPageId?: string },
   connection: { platform_username: string | null; platform_page_name: string | null }
-): Promise<AudienceInsight> {
+): Promise<AudienceInsight | null> {
   const pageId = tokens.platformPageId;
   if (!pageId) {
-    return makeEmptyInsight('facebook', connection, 'No Facebook Page ID');
+    // Profile-only connection — skip silently, the page connection will provide data
+    console.log('[audience-insights] Skipping Facebook profile connection (no page ID)');
+    return null;
   }
 
   let followers: number | null = null;
@@ -382,10 +384,12 @@ async function fetchFacebookAudienceInsights(
 async function fetchLinkedInAudienceInsights(
   tokens: { accessToken: string; platformPageId?: string; accountType?: string },
   connection: { platform_username: string | null; platform_page_name: string | null }
-): Promise<AudienceInsight> {
+): Promise<AudienceInsight | null> {
   const orgId = tokens.platformPageId;
   if (!orgId || tokens.accountType !== 'page') {
-    return makeEmptyInsight('linkedin', connection, 'Organization page required for audience insights');
+    // Personal profile connection — skip silently, org page connection will provide data
+    console.log('[audience-insights] Skipping LinkedIn profile connection (no org page)');
+    return null;
   }
 
   let followers: number | null = null;
