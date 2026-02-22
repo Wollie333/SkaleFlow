@@ -66,7 +66,31 @@ export default function PipelineListPage() {
 
     const response = await fetch(`/api/pipeline?organizationId=${membership.organization_id}`);
     if (response.ok) {
-      const data = await response.json();
+      let data = await response.json();
+
+      // Auto-provision application pipeline for super admins
+      const isSA = userData?.role === 'super_admin';
+      const hasAppPipeline = data.some((p: Pipeline) => p.pipeline_type === 'application');
+      if (isSA && !hasAppPipeline) {
+        const provisionRes = await fetch('/api/pipeline', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            organizationId: membership.organization_id,
+            name: 'Applications',
+            description: 'SkaleFlow application intake pipeline',
+            template: 'application',
+          }),
+        });
+        if (provisionRes.ok) {
+          // Re-fetch to get the full list with the new pipeline
+          const refreshRes = await fetch(`/api/pipeline?organizationId=${membership.organization_id}`);
+          if (refreshRes.ok) {
+            data = await refreshRes.json();
+          }
+        }
+      }
+
       setPipelines(data);
     }
     setLoading(false);
