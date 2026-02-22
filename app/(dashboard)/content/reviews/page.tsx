@@ -56,6 +56,7 @@ const notificationIcons: Record<NotificationType, React.ComponentType<{ classNam
   call_completed: CheckCircleIcon,
   call_summary_ready: DocumentTextIcon,
   brand_audit_completed: CheckCircleIcon,
+  publish_failed: ExclamationTriangleIcon,
 };
 
 const notificationColors: Record<NotificationType, { icon: string; bg: string }> = {
@@ -75,6 +76,7 @@ const notificationColors: Record<NotificationType, { icon: string; bg: string }>
   call_completed: { icon: 'text-green-600', bg: 'bg-green-50' },
   call_summary_ready: { icon: 'text-teal', bg: 'bg-teal/10' },
   brand_audit_completed: { icon: 'text-teal', bg: 'bg-teal/10' },
+  publish_failed: { icon: 'text-red-500', bg: 'bg-red-50' },
 };
 
 type FilterTab = 'all' | 'unread' | 'approvals' | 'my_content';

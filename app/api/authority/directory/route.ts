@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { sanitizeSearch } from '@/lib/sanitize-search';
+import type { PRDirectoryCategory } from '@/types/database';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
     query = query.or(`full_name.ilike.%${s}%,company.ilike.%${s}%,description.ilike.%${s}%`);
   }
   if (category) {
-    query = query.eq('category', category);
+    query = query.eq('category', category as PRDirectoryCategory);
   }
   if (country) {
     query = query.eq('country', country);

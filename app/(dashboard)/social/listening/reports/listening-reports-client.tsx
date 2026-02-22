@@ -25,11 +25,9 @@ interface Keyword {
 
 interface Mention {
   id: string;
-  keyword_id: string;
+  keyword_id: string | null;
   platform: string;
   sentiment: string | null;
-  reach: number | null;
-  engagement: number | null;
   published_at: string | null;
   discovered_at: string;
   is_read: boolean;
@@ -38,11 +36,10 @@ interface Mention {
 
 interface Trend {
   id: string;
-  topic: string;
+  trend_value: string;
   mention_count: number;
-  sentiment_score: number | null;
+  growth_rate: number | null;
   time_period: string;
-  platforms: string[] | null;
 }
 
 interface ListeningReportsClientProps {
@@ -91,9 +88,9 @@ export function ListeningReportsClient({ keywords, mentions, trends }: Listening
       .map(([platform, count]) => ({ platform, count, pct: totalMentions > 0 ? Math.round((count / totalMentions) * 100) : 0 }));
   }, [filteredMentions, totalMentions]);
 
-  // Total reach & engagement
-  const totalReach = filteredMentions.reduce((s, m) => s + (m.reach || 0), 0);
-  const totalEngagement = filteredMentions.reduce((s, m) => s + (m.engagement || 0), 0);
+  // Total reach & engagement (not tracked per-mention in DB)
+  const totalReach = 0;
+  const totalEngagement = 0;
 
   // Flagged mentions
   const flaggedCount = filteredMentions.filter((m) => m.is_flagged).length;
@@ -290,15 +287,15 @@ export function ListeningReportsClient({ keywords, mentions, trends }: Listening
             {trends.slice(0, 9).map((trend) => (
               <div key={trend.id} className="flex items-center justify-between p-3 bg-cream/50 rounded-lg border border-stone/5">
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium text-charcoal truncate block">{trend.topic}</span>
+                  <span className="text-sm font-medium text-charcoal truncate block">{trend.trend_value}</span>
                   <span className="text-xs text-stone">{trend.mention_count} mentions</span>
                 </div>
-                {trend.sentiment_score !== null && (
+                {trend.growth_rate !== null && (
                   <span className={cn(
                     'text-xs font-semibold px-2 py-0.5 rounded-full',
-                    trend.sentiment_score > 0 ? 'bg-green-600/10 text-green-600' : trend.sentiment_score < 0 ? 'bg-red-600/10 text-red-600' : 'bg-stone/10 text-stone'
+                    trend.growth_rate > 0 ? 'bg-green-600/10 text-green-600' : trend.growth_rate < 0 ? 'bg-red-600/10 text-red-600' : 'bg-stone/10 text-stone'
                   )}>
-                    {trend.sentiment_score > 0 ? '+' : ''}{trend.sentiment_score?.toFixed(1)}
+                    {trend.growth_rate > 0 ? '+' : ''}{trend.growth_rate?.toFixed(1)}%
                   </span>
                 )}
               </div>
