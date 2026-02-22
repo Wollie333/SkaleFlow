@@ -94,15 +94,16 @@ export async function POST(request: NextRequest) {
   let fetchedCount = 0;
   let failedCount = 0;
 
-  for (const result of results) {
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    const platform = connections[i]?.platform || 'unknown';
     if (result.status === 'fulfilled') {
       allPosts.push(...result.value.posts);
       fetchedCount += result.value.posts.length;
     } else {
       const errorMessage = result.reason instanceof Error ? result.reason.message : 'Unknown error';
-      // Try to extract platform name from error context
-      console.error('Platform fetch failed:', errorMessage);
-      errors.push({ platform: 'unknown', error: errorMessage });
+      console.error(`[fetch-platform-posts] ${platform} fetch failed:`, errorMessage);
+      errors.push({ platform, error: errorMessage });
       failedCount++;
     }
   }

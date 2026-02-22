@@ -58,7 +58,7 @@ export const linkedinAdapter: PlatformAdapter = {
         {
           headers: {
             Authorization: `Bearer ${tokenData.access_token}`,
-            'LinkedIn-Version': '202401',
+            'LinkedIn-Version': '202501',
             'X-Restli-Protocol-Version': '2.0.0',
           },
         }
@@ -96,7 +96,7 @@ export const linkedinAdapter: PlatformAdapter = {
         {
           headers: {
             Authorization: `Bearer ${tokenData.access_token}`,
-            'LinkedIn-Version': '202401',
+            'LinkedIn-Version': '202501',
             'X-Restli-Protocol-Version': '2.0.0',
           },
         }
@@ -131,7 +131,7 @@ export const linkedinAdapter: PlatformAdapter = {
           {
             headers: {
               Authorization: `Bearer ${tokenData.access_token}`,
-              'LinkedIn-Version': '202401',
+              'LinkedIn-Version': '202501',
               'X-Restli-Protocol-Version': '2.0.0',
             },
           }
@@ -346,7 +346,7 @@ export const linkedinAdapter: PlatformAdapter = {
         {
           headers: {
             Authorization: `Bearer ${tokens.accessToken}`,
-            'LinkedIn-Version': '202401',
+            'LinkedIn-Version': '202501',
             'X-Restli-Protocol-Version': '2.0.0',
           },
         }
@@ -387,7 +387,7 @@ export const linkedinAdapter: PlatformAdapter = {
           {
             headers: {
               Authorization: `Bearer ${tokens.accessToken}`,
-              'LinkedIn-Version': '202401',
+              'LinkedIn-Version': '202501',
               'X-Restli-Protocol-Version': '2.0.0',
             },
           }
