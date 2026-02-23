@@ -152,9 +152,9 @@ export function ProgressSidebar({
               <div
                 key={qIndex}
                 className={cn(
-                  'rounded-lg border transition-colors',
+                  'rounded-lg border transition-colors bg-white',
                   isCurrent
-                    ? 'border-teal/30 bg-teal/[0.02]'
+                    ? 'border-teal/30'
                     : 'border-stone/10'
                 )}
               >
@@ -172,8 +172,8 @@ export function ProgressSidebar({
                         : allFilled
                           ? 'bg-gold/15 text-gold'
                           : isCurrent
-                            ? 'bg-teal/15 text-teal'
-                            : 'bg-stone/10 text-stone'
+                            ? 'bg-teal/15 text-charcoal'
+                            : 'bg-stone/10 text-charcoal'
                     )}>
                       {allLocked ? (
                         <CheckCircleIcon className="w-3.5 h-3.5" />
@@ -203,7 +203,7 @@ export function ProgressSidebar({
                                   ? 'bg-teal/10 text-gold'
                                   : isSet
                                     ? 'bg-gold/10 text-gold'
-                                    : 'bg-stone/8 text-stone/50'
+                                    : 'bg-stone/8 text-stone'
                               )}
                             >
                               {formatOutputKey(key)}
