@@ -160,11 +160,11 @@ export function ProgressSidebar({
                 <button
                   type="button"
                   onClick={() => toggleQuestion(qIndex)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 text-left"
+                  className="w-full flex items-start justify-between px-3 py-2.5 text-left"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-start gap-2 min-w-0">
                     <div className={cn(
-                      'w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-semibold',
+                      'w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-semibold mt-0.5',
                       allLocked
                         ? 'bg-teal text-cream'
                         : allFilled
@@ -179,18 +179,42 @@ export function ProgressSidebar({
                         qIndex + 1
                       )}
                     </div>
-                    <span className={cn(
-                      'text-xs font-medium truncate',
-                      isCurrent ? 'text-teal' : 'text-charcoal'
-                    )}>
-                      Q{qIndex + 1}
-                      {isCurrent && <span className="text-teal/60 ml-1">(current)</span>}
-                    </span>
+                    <div className="min-w-0">
+                      <span className={cn(
+                        'text-xs font-medium',
+                        isCurrent ? 'text-teal' : 'text-charcoal'
+                      )}>
+                        Q{qIndex + 1}
+                        {isCurrent && <span className="text-teal/60 ml-1">(current)</span>}
+                      </span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {keys.map(key => {
+                          const o = outputMap.get(key);
+                          const isSet = !!o;
+                          const locked = o?.is_locked ?? false;
+                          return (
+                            <span
+                              key={key}
+                              className={cn(
+                                'text-[9px] px-1.5 py-0.5 rounded-full font-medium',
+                                locked
+                                  ? 'bg-teal/10 text-teal'
+                                  : isSet
+                                    ? 'bg-gold/10 text-gold'
+                                    : 'bg-stone/8 text-stone/50'
+                              )}
+                            >
+                              {formatOutputKey(key)}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                   {isCollapsed ? (
-                    <ChevronDownIcon className="w-3.5 h-3.5 text-stone flex-shrink-0" />
+                    <ChevronDownIcon className="w-3.5 h-3.5 text-stone flex-shrink-0 mt-0.5" />
                   ) : (
-                    <ChevronUpIcon className="w-3.5 h-3.5 text-stone flex-shrink-0" />
+                    <ChevronUpIcon className="w-3.5 h-3.5 text-stone flex-shrink-0 mt-0.5" />
                   )}
                 </button>
 

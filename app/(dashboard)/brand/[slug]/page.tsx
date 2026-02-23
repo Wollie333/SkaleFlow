@@ -986,13 +986,17 @@ export default function BrandPhaseDetailPage() {
                       organizationId={organizationId}
                       onLogoUploaded={async (url) => {
                         if (organizationId && currentPhase) {
-                          await supabase.from('brand_outputs').upsert({
-                            organization_id: organizationId,
-                            phase_id: currentPhase.id,
-                            output_key: 'brand_logo_primary',
-                            output_value: url,
-                            is_locked: false,
-                          }, { onConflict: 'organization_id,output_key' });
+                          await fetch('/api/brand/variable', {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              organizationId,
+                              phaseId: currentPhase.id,
+                              outputKey: 'brand_logo_primary',
+                              action: 'update',
+                              value: url,
+                            }),
+                          });
                           const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
                           setOutputs(freshOutputs);
                           handleSendMessage("I've uploaded my logo. Please take a look at it and share your thoughts on its style, colors, and how it fits our brand direction.");
