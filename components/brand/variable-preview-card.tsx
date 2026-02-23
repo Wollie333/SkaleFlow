@@ -81,14 +81,14 @@ export function VariablePreviewCard({
       className={cn(
         'rounded-lg p-3 transition-all duration-200',
         hasPending
-          ? 'bg-amber-50 border border-amber-200/50'
+          ? 'bg-amber-50/50 border border-amber-200/50'
           : isEditing
-            ? 'bg-white border border-teal/20'
+            ? 'bg-cream-warm border border-teal/20'
             : isEmpty
-              ? 'border border-dashed border-stone/20 bg-white/60'
+              ? 'border border-dashed border-stone/20 bg-cream-warm'
               : isLocked
-                ? 'bg-white border border-teal/20'
-                : 'bg-white border border-stone/15'
+                ? 'bg-teal/5 border border-teal/15'
+                : 'bg-cream-warm border border-stone/10'
       )}
     >
       {/* Header with name + action icons */}
@@ -268,6 +268,33 @@ function isUrl(s: string): boolean {
   return s.startsWith('http://') || s.startsWith('https://');
 }
 
+/** Extract a displayable image URL from any value shape */
+function extractImageUrl(val: Json): string | null {
+  if (!val || val === 'none') return null;
+  // Plain string URL
+  if (typeof val === 'string' && isUrl(val)) return val;
+  // Quoted URL (JSON artifact)
+  if (typeof val === 'string' && isUrl(val.replace(/^["']|["']$/g, ''))) return val.replace(/^["']|["']$/g, '');
+  // Object with url/file_url/src field
+  if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
+    const obj = val as Record<string, unknown>;
+    for (const key of ['url', 'file_url', 'src', 'href', 'logo_url']) {
+      if (typeof obj[key] === 'string' && isUrl(obj[key] as string)) return obj[key] as string;
+    }
+    // First string value that looks like a URL
+    for (const v of Object.values(obj)) {
+      if (typeof v === 'string' && isUrl(v)) return v;
+    }
+  }
+  // Array — take first URL
+  if (Array.isArray(val)) {
+    for (const item of val as unknown[]) {
+      if (typeof item === 'string' && isUrl(item)) return item;
+    }
+  }
+  return null;
+}
+
 /** True if this key+value gets a rich preview (suppresses plain text fallback) */
 function isRichKey(key: string, value?: Json): boolean {
   if (IMAGE_URL_KEYS.has(key) || IMAGE_ARRAY_KEYS.has(key)) return true;
@@ -283,8 +310,8 @@ function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) 
 
   // ── Single image URL (logos) ──
   if (IMAGE_URL_KEYS.has(outputKey)) {
-    const url = typeof value === 'string' ? value : null;
-    if (!url || url === 'none') return null;
+    const url = extractImageUrl(value);
+    if (!url) return null;
     return (
       <div className="mt-1">
         <div className="w-14 h-14 rounded-lg border border-stone/10 bg-white overflow-hidden">
