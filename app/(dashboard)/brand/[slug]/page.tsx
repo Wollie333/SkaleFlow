@@ -755,15 +755,17 @@ export default function BrandPhaseDetailPage() {
     setLockingKey(null);
   }, [organizationId]);
 
-  // Handle suggestion chip clicks
+  // Handle suggestion chip clicks — use ref to avoid stale closure
+  const handleSendMessageRef = useRef(handleSendMessage);
+  handleSendMessageRef.current = handleSendMessage;
+
   const handleSuggestionClick = useCallback((action: string) => {
     if (action === '__help_me_think__') {
-      handleSendMessage('Help me think through this question. Ask me what you need to know to create a great answer.');
+      handleSendMessageRef.current("I'm not sure how to approach this question. Please guide me through it step by step — ask me simple, specific questions one at a time so we can build a great answer together.");
     } else if (action === '__i_know_this__') {
-      // Focus the chat input
       chatInputRef.current?.focus();
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   if (isLoading) {
     return (
