@@ -30,8 +30,9 @@ interface ProgressSidebarProps {
   questionOutputMap: Record<number, string[]>;
   questions: string[];
   outputs: BrandOutput[];
+  organizationId?: string;
   onAiChat: (outputKey: string) => void;
-  onManualEdit: (outputKey: string, newValue: string) => Promise<void> | void;
+  onManualEdit: (outputKey: string, newValue: Json) => Promise<void> | void;
   onLockVariable: (outputKey: string) => void;
   onUnlockVariable: (outputKey: string) => void;
   savingKey?: string | null;
@@ -49,6 +50,7 @@ export function ProgressSidebar({
   questionOutputMap,
   questions,
   outputs,
+  organizationId,
   onAiChat,
   onManualEdit,
   onLockVariable,
@@ -90,10 +92,10 @@ export function ProgressSidebar({
         />
       )}
 
-      {/* Sidebar drawer */}
+      {/* Sidebar drawer — bg-cream gives contrast with bg-white cards in both modes */}
       <div
         className={cn(
-          'fixed top-0 right-0 h-full w-[340px] max-w-[85vw] bg-cream-warm border-l border-stone/10 shadow-xl z-50 transform transition-transform duration-300',
+          'fixed top-0 right-0 h-full w-[340px] max-w-[85vw] bg-cream border-l border-stone/10 shadow-xl z-50 transform transition-transform duration-300',
           isOpen ? 'translate-x-0' : 'translate-x-full'
         )}
       >
@@ -120,7 +122,7 @@ export function ProgressSidebar({
             <span className="text-stone">
               {lockedCount}/{allOutputKeys.length} confirmed
             </span>
-            <span className="font-medium text-teal">{completionPercent}%</span>
+            <span className="font-medium text-gold">{completionPercent}%</span>
           </div>
           <div className="w-full bg-stone/10 rounded-full h-1.5">
             <div
@@ -181,11 +183,11 @@ export function ProgressSidebar({
                     </div>
                     <div className="min-w-0">
                       <span className={cn(
-                        'text-xs font-medium',
-                        isCurrent ? 'text-teal' : 'text-charcoal'
+                        'text-xs font-medium text-charcoal',
+                        isCurrent && 'text-gold'
                       )}>
                         Q{qIndex + 1}
-                        {isCurrent && <span className="text-teal/60 ml-1">(current)</span>}
+                        {isCurrent && <span className="text-gold/60 ml-1">(current)</span>}
                       </span>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {keys.map(key => {
@@ -198,7 +200,7 @@ export function ProgressSidebar({
                               className={cn(
                                 'text-[9px] px-1.5 py-0.5 rounded-full font-medium',
                                 locked
-                                  ? 'bg-teal/10 text-teal'
+                                  ? 'bg-teal/10 text-gold'
                                   : isSet
                                     ? 'bg-gold/10 text-gold'
                                     : 'bg-stone/8 text-stone/50'
@@ -230,6 +232,7 @@ export function ProgressSidebar({
                           value={output?.output_value}
                           isLocked={output?.is_locked ?? false}
                           isEmpty={!output}
+                          organizationId={organizationId}
                           onAiChat={onAiChat}
                           onManualEdit={onManualEdit}
                           onLock={onLockVariable}

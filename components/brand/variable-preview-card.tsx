@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import {
   ChatBubbleLeftEllipsisIcon,
@@ -8,6 +8,8 @@ import {
   CheckIcon,
   XMarkIcon,
   ClockIcon,
+  ArrowUpTrayIcon,
+  PhotoIcon,
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { formatOutputKey } from '@/lib/brand/format-utils';
@@ -18,8 +20,9 @@ interface VariablePreviewCardProps {
   value?: Json;
   isLocked: boolean;
   isEmpty: boolean;
+  organizationId?: string;
   onAiChat?: (outputKey: string) => void;
-  onManualEdit?: (outputKey: string, newValue: string) => Promise<void> | void;
+  onManualEdit?: (outputKey: string, newValue: Json) => Promise<void> | void;
   onLock?: (outputKey: string) => void;
   onUnlock?: (outputKey: string) => void;
   isSaving?: boolean;
@@ -27,11 +30,44 @@ interface VariablePreviewCardProps {
   pendingApproval?: { status: string; proposedValue: unknown };
 }
 
+// ─── Variable type categorization ───
+
+const IMAGE_URL_KEYS = new Set([
+  'brand_logo_primary', 'brand_logo_dark', 'brand_logo_light', 'brand_logo_icon',
+]);
+const IMAGE_ARRAY_KEYS = new Set([
+  'brand_mood_board', 'brand_patterns', 'brand_elements', 'visual_inspirations',
+]);
+const COLOR_KEYS = new Set(['brand_color_palette', 'design_system_colors']);
+const TYPOGRAPHY_KEYS = new Set(['brand_typography', 'design_system_typography']);
+
+const OUTPUT_KEY_TO_ASSET_TYPE: Record<string, string> = {
+  brand_logo_primary: 'logo',
+  brand_logo_dark: 'logo_dark',
+  brand_logo_light: 'logo_light',
+  brand_logo_icon: 'logo_icon',
+  brand_mood_board: 'mood_board',
+  brand_patterns: 'pattern',
+  brand_elements: 'brand_element',
+  visual_inspirations: 'visual_inspiration',
+};
+
+type VarType = 'image-url' | 'image-array' | 'color' | 'typography' | 'text';
+
+function getVarType(key: string): VarType {
+  if (IMAGE_URL_KEYS.has(key)) return 'image-url';
+  if (IMAGE_ARRAY_KEYS.has(key)) return 'image-array';
+  if (COLOR_KEYS.has(key)) return 'color';
+  if (TYPOGRAPHY_KEYS.has(key)) return 'typography';
+  return 'text';
+}
+
 export function VariablePreviewCard({
   outputKey,
   value,
   isLocked,
   isEmpty,
+  organizationId,
   onAiChat,
   onManualEdit,
   onLock,
@@ -43,38 +79,138 @@ export function VariablePreviewCard({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
+  const [editImageUrls, setEditImageUrls] = useState<string[]>([]);
+  const [editTypography, setEditTypography] = useState<Record<string, string>>({});
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const varType = getVarType(outputKey);
   const displayValue = formatValue(value);
   const isLong = displayValue.length > 200;
   const truncatedValue = isLong && !isExpanded ? displayValue.slice(0, 200) + '...' : displayValue;
 
+  // ── Type-aware start edit ──
   const handleStartEdit = () => {
-    setEditValue(displayValue);
     setSaveError(null);
+    if (varType === 'image-url') {
+      // For single image: just open file picker directly
+      fileInputRef.current?.click();
+      return;
+    }
+    if (varType === 'image-array') {
+      const urls = Array.isArray(value)
+        ? (value as unknown[]).filter((u): u is string => typeof u === 'string' && u !== 'none')
+        : [];
+      setEditImageUrls([...urls]);
+    } else if (varType === 'typography') {
+      const obj = value && typeof value === 'object' && !Array.isArray(value)
+        ? value as Record<string, unknown>
+        : {};
+      // Handle both brand_typography (heading_font) and design_system_typography (nested objects)
+      const rows = extractTypographyRows(obj);
+      if (rows.length > 0) {
+        const fonts: Record<string, string> = {};
+        for (const r of rows) {
+          fonts[r.label] = r.font;
+        }
+        setEditTypography(fonts);
+      } else {
+        setEditTypography({
+          Heading: (obj.heading_font as string) || '',
+          Body: (obj.body_font as string) || '',
+          Accent: (obj.accent_font as string) || '',
+        });
+      }
+    } else {
+      setEditValue(displayValue);
+    }
     setIsEditing(true);
   };
 
+  // ── Type-aware save ──
   const handleSaveEdit = async () => {
-    if (onManualEdit && editValue.trim()) {
-      setSaveError(null);
-      try {
+    if (!onManualEdit) return;
+    setSaveError(null);
+    try {
+      if (varType === 'image-array') {
+        await onManualEdit(outputKey, editImageUrls.length > 0 ? editImageUrls : 'none');
+      } else if (varType === 'typography') {
+        const existing = value && typeof value === 'object' && !Array.isArray(value)
+          ? { ...(value as Record<string, unknown>) }
+          : {};
+        // Map labels back to keys
+        if (editTypography['Heading'] !== undefined) existing.heading_font = editTypography['Heading'];
+        if (editTypography['Body'] !== undefined) existing.body_font = editTypography['Body'];
+        if (editTypography['Accent'] !== undefined) existing.accent_font = editTypography['Accent'];
+        // For design_system_typography style (nested objects), update font_family
+        for (const [label, font] of Object.entries(editTypography)) {
+          const key = label.replace(/ /g, '_').toLowerCase();
+          if (typeof existing[key] === 'object' && existing[key] !== null) {
+            (existing[key] as Record<string, unknown>).font_family = font;
+            (existing[key] as Record<string, unknown>).font = font;
+          }
+        }
+        await onManualEdit(outputKey, existing as Json);
+      } else {
+        if (!editValue.trim()) return;
         await onManualEdit(outputKey, editValue.trim());
-        setIsEditing(false);
-      } catch (err) {
-        setSaveError(err instanceof Error ? err.message : 'Failed to save');
       }
+      setIsEditing(false);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save');
     }
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
     setEditValue('');
+    setEditImageUrls([]);
+    setEditTypography({});
     setSaveError(null);
+  };
+
+  // ── Image upload handler ──
+  const handleImageUpload = async (files: FileList | null) => {
+    if (!files?.length || !organizationId) return;
+    setUploadingImage(true);
+    setSaveError(null);
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('organizationId', organizationId);
+        formData.append('assetType', OUTPUT_KEY_TO_ASSET_TYPE[outputKey] || 'logo');
+
+        const res = await fetch('/api/brand/assets', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Upload failed');
+
+        const fileUrl = data.asset.file_url;
+
+        if (varType === 'image-array') {
+          // Add to edit state
+          setEditImageUrls(prev => [...prev, fileUrl]);
+        } else {
+          // Single image: save immediately
+          await onManualEdit?.(outputKey, fileUrl);
+        }
+      }
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setEditImageUrls(prev => prev.filter((_, i) => i !== index));
   };
 
   const hasPending = !!pendingApproval;
   const pendingStatus = pendingApproval?.status;
+  const isImageType = varType === 'image-url' || varType === 'image-array';
 
   return (
     <div
@@ -83,14 +219,26 @@ export function VariablePreviewCard({
         hasPending
           ? 'bg-amber-50/50 border border-amber-200/50'
           : isEditing
-            ? 'bg-cream-warm border border-teal/20'
+            ? 'bg-white border border-teal/20'
             : isEmpty
-              ? 'border border-dashed border-stone/20 bg-cream-warm'
+              ? 'border border-dashed border-stone/20 bg-white'
               : isLocked
                 ? 'bg-teal/5 border border-teal/15'
-                : 'bg-cream-warm border border-stone/10'
+                : 'bg-white border border-stone/10'
       )}
     >
+      {/* Hidden file input for image uploads */}
+      {isImageType && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+          multiple={varType === 'image-array'}
+          onChange={e => handleImageUpload(e.target.files)}
+          className="hidden"
+        />
+      )}
+
       {/* Header with name + action icons */}
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs font-semibold text-charcoal flex items-center gap-1.5">
@@ -107,12 +255,39 @@ export function VariablePreviewCard({
         </span>
 
         <div className="flex items-center gap-1 flex-shrink-0">
-          {isEditing ? (
+          {isEditing && varType === 'image-array' ? (
+            /* Image array edit: save (commit array) + cancel */
             <>
               <button
                 type="button"
                 onClick={handleSaveEdit}
-                disabled={isSaving || !editValue.trim()}
+                disabled={isSaving}
+                className="p-1 rounded text-teal hover:bg-teal/10 disabled:opacity-40 transition-colors"
+                title="Save"
+              >
+                {isSaving ? (
+                  <span className="block w-3.5 h-3.5 border-2 border-teal/30 border-t-teal rounded-full animate-spin" />
+                ) : (
+                  <CheckIcon className="w-3.5 h-3.5" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                disabled={isSaving}
+                className="p-1 rounded text-stone hover:bg-stone/10 disabled:opacity-40 transition-colors"
+                title="Cancel"
+              >
+                <XMarkIcon className="w-3.5 h-3.5" />
+              </button>
+            </>
+          ) : isEditing ? (
+            /* Text / typography edit: save + cancel */
+            <>
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                disabled={isSaving || (varType === 'text' && !editValue.trim())}
                 className="p-1 rounded text-teal hover:bg-teal/10 disabled:opacity-40 transition-colors"
                 title="Save"
               >
@@ -133,7 +308,6 @@ export function VariablePreviewCard({
               </button>
             </>
           ) : isLocked ? (
-            /* Confirmed state: check icon (click to edit) */
             onUnlock && (
               <button
                 type="button"
@@ -150,7 +324,7 @@ export function VariablePreviewCard({
               </button>
             )
           ) : (
-            /* Draft/empty state: AI chat + edit + confirm */
+            /* Draft/empty state: AI chat + edit/upload + confirm */
             <>
               {onAiChat && (
                 <button
@@ -166,10 +340,17 @@ export function VariablePreviewCard({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); handleStartEdit(); }}
+                  disabled={uploadingImage}
                   className="p-1 rounded text-stone hover:text-teal hover:bg-teal/10 transition-colors"
-                  title="Edit manually"
+                  title={isImageType ? 'Upload image' : 'Edit manually'}
                 >
-                  <PencilIcon className="w-3.5 h-3.5" />
+                  {uploadingImage ? (
+                    <span className="block w-3.5 h-3.5 border-2 border-teal/30 border-t-teal rounded-full animate-spin" />
+                  ) : isImageType ? (
+                    <ArrowUpTrayIcon className="w-3.5 h-3.5" />
+                  ) : (
+                    <PencilIcon className="w-3.5 h-3.5" />
+                  )}
                 </button>
               )}
               {!isEmpty && onLock && (
@@ -199,30 +380,87 @@ export function VariablePreviewCard({
         </span>
       )}
       {!isEditing && isLocked && (
-        <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-teal/10 text-teal mt-1">
+        <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-teal/10 text-gold mt-1">
           <CheckCircleIcon className="w-3 h-3" />
           Confirmed
         </span>
       )}
 
-      {/* Body */}
+      {/* Body — edit mode OR preview */}
       {isEditing ? (
         <div className="mt-2">
-          <textarea
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            rows={4}
-            className="w-full text-sm border border-stone/15 rounded-lg px-3 py-2 resize-y focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal/30 bg-cream-warm"
-            placeholder="Enter value..."
-            autoFocus
-          />
+          {/* Image array edit mode */}
+          {varType === 'image-array' && (
+            <div>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {editImageUrls.map((url, i) => (
+                  <div key={i} className="relative w-12 h-12 group">
+                    <img src={url} alt="" className="w-full h-full rounded border border-stone/10 object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(i)}
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <XMarkIcon className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage}
+                  className="w-12 h-12 rounded border-2 border-dashed border-stone/20 hover:border-teal/40 flex items-center justify-center transition-colors"
+                >
+                  {uploadingImage ? (
+                    <span className="block w-4 h-4 border-2 border-teal/30 border-t-teal rounded-full animate-spin" />
+                  ) : (
+                    <PhotoIcon className="w-5 h-5 text-stone/40" />
+                  )}
+                </button>
+              </div>
+              <p className="text-[10px] text-stone/50">{editImageUrls.length} image{editImageUrls.length !== 1 ? 's' : ''}</p>
+            </div>
+          )}
+
+          {/* Typography edit mode */}
+          {varType === 'typography' && (
+            <div className="space-y-2">
+              {Object.entries(editTypography).map(([label, font]) => (
+                <div key={label} className="flex items-center gap-2">
+                  <span className="text-[10px] text-stone/60 w-14 flex-shrink-0 truncate">{label}</span>
+                  <input
+                    type="text"
+                    value={font}
+                    onChange={e => setEditTypography(prev => ({ ...prev, [label]: e.target.value }))}
+                    className="flex-1 text-xs px-2 py-1.5 border border-stone/15 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal/30 bg-cream-warm"
+                    placeholder="Font name..."
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Text edit mode (default) */}
+          {varType === 'text' && (
+            <textarea
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              rows={4}
+              className="w-full text-sm border border-stone/15 rounded-lg px-3 py-2 resize-y focus:outline-none focus:ring-2 focus:ring-teal/30 focus:border-teal/30 bg-cream-warm"
+              placeholder="Enter value..."
+              autoFocus
+            />
+          )}
+
+          {/* Color edit — not in edit mode, user uses the dedicated color picker */}
+
           {saveError && (
             <p className="text-xs text-red-600 mt-1">{saveError}</p>
           )}
         </div>
       ) : isEmpty ? (
         <p className="text-xs text-stone/50 mt-1.5 italic">
-          Needs your input
+          {isImageType ? 'No image uploaded' : 'Needs your input'}
         </p>
       ) : (
         <div className="mt-1.5">
@@ -255,15 +493,6 @@ export function VariablePreviewCard({
 
 // ─── Rich preview helpers ───
 
-const IMAGE_URL_KEYS = new Set([
-  'brand_logo_primary', 'brand_logo_dark', 'brand_logo_light', 'brand_logo_icon',
-]);
-const IMAGE_ARRAY_KEYS = new Set([
-  'brand_mood_board', 'brand_patterns', 'brand_elements', 'visual_inspirations',
-]);
-const COLOR_KEYS = new Set(['brand_color_palette', 'design_system_colors']);
-const TYPOGRAPHY_KEYS = new Set(['brand_typography', 'design_system_typography']);
-
 function isUrl(s: string): boolean {
   return s.startsWith('http://') || s.startsWith('https://');
 }
@@ -271,22 +500,17 @@ function isUrl(s: string): boolean {
 /** Extract a displayable image URL from any value shape */
 function extractImageUrl(val: Json): string | null {
   if (!val || val === 'none') return null;
-  // Plain string URL
   if (typeof val === 'string' && isUrl(val)) return val;
-  // Quoted URL (JSON artifact)
   if (typeof val === 'string' && isUrl(val.replace(/^["']|["']$/g, ''))) return val.replace(/^["']|["']$/g, '');
-  // Object with url/file_url/src field
   if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
     const obj = val as Record<string, unknown>;
     for (const key of ['url', 'file_url', 'src', 'href', 'logo_url']) {
       if (typeof obj[key] === 'string' && isUrl(obj[key] as string)) return obj[key] as string;
     }
-    // First string value that looks like a URL
     for (const v of Object.values(obj)) {
       if (typeof v === 'string' && isUrl(v)) return v;
     }
   }
-  // Array — take first URL
   if (Array.isArray(val)) {
     for (const item of val as unknown[]) {
       if (typeof item === 'string' && isUrl(item)) return item;
@@ -300,7 +524,6 @@ function isRichKey(key: string, value?: Json): boolean {
   if (IMAGE_URL_KEYS.has(key) || IMAGE_ARRAY_KEYS.has(key)) return true;
   if (COLOR_KEYS.has(key) || TYPOGRAPHY_KEYS.has(key)) return true;
   if (key === 'brand_archetype') return true;
-  // Generic: arrays and objects always get rich rendering
   if (value !== undefined && value !== null && typeof value === 'object') return true;
   return false;
 }
@@ -324,8 +547,8 @@ function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) 
   // ── Image array (mood board, patterns, elements, inspirations) ──
   if (IMAGE_ARRAY_KEYS.has(outputKey)) {
     const urls = Array.isArray(value)
-      ? (value as unknown[]).filter((u): u is string => typeof u === 'string' && u !== 'none')
-      : typeof value === 'string' && value !== 'none'
+      ? (value as unknown[]).filter((u): u is string => typeof u === 'string' && isUrl(u))
+      : typeof value === 'string' && isUrl(value)
         ? [value]
         : [];
     if (urls.length === 0) return null;
@@ -409,7 +632,6 @@ function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) 
     const items = value as unknown[];
     if (items.length === 0) return null;
 
-    // Array of image URLs
     if (items.every(i => typeof i === 'string' && isUrl(i as string))) {
       return (
         <div className="flex flex-wrap gap-1.5 mt-1">
@@ -427,7 +649,6 @@ function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) 
       );
     }
 
-    // Array of strings → bullet list
     if (items.every(i => typeof i === 'string')) {
       return (
         <ul className="mt-1 space-y-0.5">
@@ -444,7 +665,6 @@ function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) 
       );
     }
 
-    // Array of objects → show key fields from each
     return (
       <div className="mt-1 space-y-1.5">
         {items.slice(0, 5).map((item, i) => {
@@ -473,7 +693,6 @@ function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) 
     const entries = Object.entries(obj).filter(([, v]) => v !== null && v !== undefined && v !== '');
     if (entries.length === 0) return null;
 
-    // Check if it has hex colors → render as swatches
     const swatches = extractColorSwatches(obj);
     if (swatches.length >= 2) {
       return (
@@ -492,7 +711,6 @@ function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) 
       );
     }
 
-    // Check for typography-like fields
     const typoRows = extractTypographyRows(obj);
     if (typoRows.length > 0) {
       return (
@@ -508,7 +726,6 @@ function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) 
       );
     }
 
-    // Generic key-value display
     return (
       <div className="mt-1 space-y-1">
         {entries.slice(0, 6).map(([key, val]) => {
@@ -536,11 +753,11 @@ function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) 
   return null;
 }
 
-/** Extract color swatches from an object (recursive, handles multiple formats) */
+// ─── Helper functions ───
+
 function extractColorSwatches(obj: Record<string, unknown>): { hex: string; role: string }[] {
   const swatches: { hex: string; role: string }[] = [];
 
-  // Direct colors array
   const colorsArr = obj.colors as Array<Record<string, unknown>> | undefined;
   if (Array.isArray(colorsArr)) {
     for (const c of colorsArr) {
@@ -551,7 +768,6 @@ function extractColorSwatches(obj: Record<string, unknown>): { hex: string; role
     if (swatches.length > 0) return swatches;
   }
 
-  // Named color roles (primary, dark_base, accent, etc.)
   for (const [role, val] of Object.entries(obj)) {
     if (typeof val === 'object' && val !== null && 'hex' in (val as Record<string, unknown>)) {
       swatches.push({ hex: (val as Record<string, unknown>).hex as string, role });
@@ -563,11 +779,9 @@ function extractColorSwatches(obj: Record<string, unknown>): { hex: string; role
   return swatches;
 }
 
-/** Extract typography rows from an object */
 function extractTypographyRows(obj: Record<string, unknown>): { label: string; font: string; detail?: string }[] {
   const rows: { label: string; font: string; detail?: string }[] = [];
 
-  // Direct font fields (brand_typography style)
   const fontFields = [
     { key: 'heading_font', weight: 'heading_weight', label: 'Heading' },
     { key: 'body_font', weight: 'body_weight', label: 'Body' },
@@ -581,7 +795,6 @@ function extractTypographyRows(obj: Record<string, unknown>): { label: string; f
   }
   if (rows.length > 0) return rows;
 
-  // Design system style: nested objects with font_family, size, weight, line_height
   for (const [key, val] of Object.entries(obj)) {
     if (typeof val === 'object' && val !== null) {
       const sub = val as Record<string, unknown>;

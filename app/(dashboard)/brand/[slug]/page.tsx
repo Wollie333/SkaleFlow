@@ -677,7 +677,7 @@ export default function BrandPhaseDetailPage() {
     }
   }, [currentPhase, organizationId, outputs]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleManualEdit = useCallback(async (outputKey: string, newValue: string) => {
+  const handleManualEdit = useCallback(async (outputKey: string, newValue: Json) => {
     if (!currentPhase || !organizationId) return;
     setSavingKey(outputKey);
     try {
@@ -1270,6 +1270,7 @@ export default function BrandPhaseDetailPage() {
           questionOutputMap={phaseTemplate.questionOutputMap}
           questions={phaseTemplate.questions}
           outputs={outputs}
+          organizationId={organizationId ?? undefined}
           onAiChat={handleAiChat}
           onManualEdit={handleManualEdit}
           onLockVariable={handleLockVariable}
