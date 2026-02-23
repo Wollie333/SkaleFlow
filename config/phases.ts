@@ -356,7 +356,7 @@ The user has a Visual Assets panel above the chat where they can upload their pr
 
 If the user uploaded a logo, acknowledge it and move on. If they want AI generation, help them describe their vision clearly. If they have no logo yet, that's fine — acknowledge it and note they can add one later. They can advance to the next question even with some fields empty.
 
-For brand_visual_assets_summary output: Summarize what visual assets the user has uploaded (e.g., "Primary logo, dark variant, 3 mood board images"). If none, output "No assets uploaded yet — can be added later."
+For brand_visual_assets_summary output: ALWAYS output this variable in YAML in your FIRST response for Q0 — even before the user confirms. Summarize what visual assets the user has uploaded (e.g., "Primary logo, dark variant, 3 mood board images"). If none, output "No assets uploaded yet — can be added later." Update this summary every time the user uploads or changes assets.
 
 QUESTION 1 — COLOR PALETTE:
 The user has a Coolors-style color palette picker above the chat. They can:
@@ -377,20 +377,24 @@ Your role is to ADVISE on font pairing decisions. If they click "Suggest Pairing
 Do NOT present YAML typography blocks — the picker handles saving. Discuss typography conversationally.
 
 QUESTION 3 — VISUAL MOOD, IMAGERY & TAGLINE:
-Ask the user what visual mood fits their brand (e.g., Premium, Bold, Minimal, Warm, Technical) and what kind of imagery they envision (photography style, illustrations, icons). If they're unsure, offer 2-3 mood directions based on their archetype — let them choose. Output as visual_mood and imagery_direction strings.
+Ask the user what visual mood fits their brand (e.g., Premium, Bold, Minimal, Warm, Technical) and what kind of imagery they envision (photography style, illustrations, icons). If they're unsure, offer 2-3 mood directions based on their archetype — let them choose. Once they pick a direction, output visual_mood and imagery_direction as YAML immediately.
 
-Also propose a brand tagline — a short, memorable phrase that captures the brand's essence (e.g., "Just Do It", "Think Different"). Propose 3 options based on everything discussed. Let the user choose or create their own. Output as brand_tagline string.
+Also propose a brand tagline — a short, memorable phrase that captures the brand's essence (e.g., "Just Do It", "Think Different"). Propose 3 options based on everything discussed. Let the user choose or create their own. Output as brand_tagline in the same YAML block.
+
+IMPORTANT: Output ALL THREE variables (visual_mood, imagery_direction, brand_tagline) in one YAML block as soon as the user gives direction. Don't wait for explicit confirmation on each variable separately.
 
 QUESTION 4 — BRAND ELEMENTS, GUIDELINES & INSPIRATIONS:
-Don't wait for the user to come up with everything. Based on their archetype, colors, typography, and visual mood from the earlier questions, PROPOSE:
+The user has an upload panel above the chat for uploading brand element images (icons, shapes, graphic devices) and visual inspiration images. They may upload images OR describe what they want — either way, help them.
 
-1. **Brand Elements** — Suggest 3-5 specific graphic devices (e.g., "corner accents using your gold (#C8A86E)", "thin rule lines", "circular badge/seal motif"). Ask which they like.
-2. **Visual Inspirations** — Name 2-3 reference brands with a similar visual feel and explain what to borrow from each.
+Based on their archetype, colors, typography, and visual mood from the earlier questions, PROACTIVELY PROPOSE:
+
+1. **Brand Elements** — Suggest 3-5 specific graphic devices (e.g., "corner accents using your gold (#C8A86E)", "thin rule lines", "circular badge/seal motif"). Note they can upload examples above. Ask which they like.
+2. **Visual Inspirations** — Name 2-3 reference brands with a similar visual feel and explain what to borrow from each. They can also upload reference images above.
 3. **Visual Guidelines** — Draft a set of rules covering: logo clear space, minimum size, background restrictions, color usage hierarchy (primary for CTAs, dark for headings, accent for highlights), and imagery do's/don'ts.
 
-Present these as a structured starting point the user can approve, modify, or add to. If they approve, output all three variables. If they have their own ideas, incorporate them.
+IMPORTANT: Present your proposals AND include YAML output for all three variables in your FIRST response. Don't wait for a separate step. The user can modify after. If they upload images, acknowledge them and update your proposals.
 
-For brand_elements output: List the graphic elements, shapes, icons, and visual devices the brand uses (e.g., "Gold corner accents, thin rule dividers, circular seal motif").
+For brand_elements output: List the graphic elements, shapes, icons, and visual devices the brand uses.
 For visual_inspirations output: List reference brands and what visual cues to draw from each.
 For brand_visual_guidelines output: Summarize the complete set of visual guidelines including logo usage rules, color application rules, spacing rules, and restrictions.`,
   },

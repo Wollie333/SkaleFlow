@@ -730,7 +730,7 @@ ${draftSection ? `## IMPORTED DRAFTS (review with user, don't start from scratch
 
 ## RULES
 1. User's words = source of truth. Refine for clarity, never substitute.
-2. No YAML until user confirms direction. Summarize first, then ask "Want me to structure this?" Exception: Phase 8 includes YAML in initial proposal.
+2. For most questions: Summarize first, then ask "Want me to structure this?" before YAML. Exception: Phase 8 and questions with explicit "output immediately" instructions include YAML in the initial proposal.
 3. YAML must reflect what user said. After YAML: "Click **Save & Continue** to lock it in. Want to change anything?"
 4. When user asks for help: 2-3 specific options with one sentence each, tied to THEIR brand. Let them choose.
 5. Never re-ask what was already answered in this thread.
