@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 export interface BrandTypography {
   heading_font: string;
@@ -237,6 +237,58 @@ export function TypographyPicker({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-save 1.5s after last change
+  useEffect(() => {
+    if (disabled) return;
+    // Skip auto-save on initial mount (before user interaction)
+    if (saved || saving) return;
+    // Only auto-save after user has made changes (not on initial render)
+    const isDefault = headingFont === (initialTypography?.heading_font || 'Playfair Display')
+      && bodyFont === (initialTypography?.body_font || 'Inter')
+      && accentFont === (initialTypography?.accent_font || 'DM Sans')
+      && headingWeight === (initialTypography?.heading_weight || '700')
+      && bodyWeight === (initialTypography?.body_weight || '400')
+      && accentWeight === (initialTypography?.accent_weight || '500');
+    if (isDefault) return;
+
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(async () => {
+      setSaving(true);
+      try {
+        const typography: BrandTypography = {
+          heading_font: headingFont,
+          heading_weight: headingWeight,
+          body_font: bodyFont,
+          body_weight: bodyWeight,
+          accent_font: accentFont,
+          accent_weight: accentWeight,
+        };
+        const res = await fetch('/api/brand/variable', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            organizationId,
+            phaseId,
+            outputKey: 'brand_typography',
+            action: 'update',
+            value: typography,
+          }),
+        });
+        if (res.ok) {
+          setSaved(true);
+          onTypographyChange?.(typography);
+        }
+      } catch {
+        // Silent — manual save still available
+      } finally {
+        setSaving(false);
+      }
+    }, 1500);
+
+    return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
+  }, [headingFont, headingWeight, bodyFont, bodyWeight, accentFont, accentWeight, organizationId, phaseId, disabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSave = useCallback(async () => {
     if (disabled) return;
@@ -336,7 +388,13 @@ export function TypographyPicker({
           {saving ? 'Saving...' : saved ? 'Saved' : 'Save Typography'}
         </button>
         {error && <span className="text-[11px] text-red-600">{error}</span>}
-        {saved && <span className="text-[11px] text-teal">Typography saved to your brand.</span>}
+        {saved && !saving && <span className="text-[11px] text-teal flex items-center gap-1">
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          Auto-saved
+        </span>}
+        {saving && <span className="text-[11px] text-stone">Saving...</span>}
       </div>
     </div>
   );

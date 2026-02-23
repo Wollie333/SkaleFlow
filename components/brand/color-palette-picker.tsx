@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 interface ColorSwatch {
   hex: string;
@@ -127,6 +127,47 @@ export function ColorPalettePicker({
   const [error, setError] = useState<string | null>(null);
   const [editingHex, setEditingHex] = useState<number | null>(null);
   const [hexInputs, setHexInputs] = useState<string[]>(swatches.map(s => s.hex));
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const swatchesRef = useRef(swatches);
+  swatchesRef.current = swatches;
+  const paletteNameRef = useRef(paletteName);
+  paletteNameRef.current = paletteName;
+
+  // Auto-save 1.5s after last change
+  const scheduleAutoSave = useCallback(() => {
+    if (disabled) return;
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(async () => {
+      setSaving(true);
+      try {
+        const palette = swatchesToPalette(swatchesRef.current, paletteNameRef.current);
+        const res = await fetch('/api/brand/variable', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            organizationId,
+            phaseId,
+            outputKey: 'brand_color_palette',
+            action: 'update',
+            value: palette,
+          }),
+        });
+        if (res.ok) {
+          setSaved(true);
+          onPaletteChange?.(palette);
+        }
+      } catch {
+        // Silent — manual save still available
+      } finally {
+        setSaving(false);
+      }
+    }, 1500);
+  }, [organizationId, phaseId, disabled, onPaletteChange]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
+  }, []);
 
   const updateSwatch = useCallback((index: number, hex: string) => {
     setSwatches(prev => {
@@ -140,7 +181,8 @@ export function ColorPalettePicker({
       return next;
     });
     setSaved(false);
-  }, []);
+    scheduleAutoSave();
+  }, [scheduleAutoSave]);
 
   const toggleLock = useCallback((index: number) => {
     if (disabled) return;
@@ -189,12 +231,13 @@ export function ColorPalettePicker({
       }));
       if (generated.name) setPaletteName(generated.name);
       setSaved(false);
+      scheduleAutoSave();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Generation failed');
     } finally {
       setGenerating(false);
     }
-  }, [organizationId, swatches, disabled]);
+  }, [organizationId, swatches, disabled, scheduleAutoSave]);
 
   const handleRandomize = useCallback(() => {
     if (disabled) return;
@@ -207,7 +250,8 @@ export function ColorPalettePicker({
       return randomHSLColor();
     }));
     setSaved(false);
-  }, [swatches, disabled]);
+    scheduleAutoSave();
+  }, [swatches, disabled, scheduleAutoSave]);
 
   const handleSave = useCallback(async () => {
     if (disabled) return;
@@ -372,7 +416,13 @@ export function ColorPalettePicker({
           {saving ? 'Saving...' : saved ? 'Saved' : 'Save Palette'}
         </button>
         {error && <span className="text-[11px] text-red-600">{error}</span>}
-        {saved && <span className="text-[11px] text-teal">Palette saved to your brand.</span>}
+        {saved && !saving && <span className="text-[11px] text-teal flex items-center gap-1">
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          Auto-saved
+        </span>}
+        {saving && <span className="text-[11px] text-stone">Saving...</span>}
       </div>
     </div>
   );
