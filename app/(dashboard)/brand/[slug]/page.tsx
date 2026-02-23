@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { ExpertChatPanel, ImportPlaybookModal, QuestionBanner, ProgressSidebar, LogoUpload, BrandAssetsUpload, ColorPalettePicker, TypographyPicker } from '@/components/brand';
+import { ExpertChatPanel, ImportPlaybookModal, QuestionBanner, ProgressSidebar, LogoUpload, BrandAssetsUpload, BrandElementsUpload, ColorPalettePicker, TypographyPicker } from '@/components/brand';
 import { Button } from '@/components/ui';
 import {
   ArrowLeftIcon,
@@ -1086,6 +1086,31 @@ export default function BrandPhaseDetailPage() {
                       }}
                       onSuggestPairing={() => {
                         handleSendMessage("Please suggest 2-3 Google Font pairings that would work well for my brand. I need heading, body, and accent fonts that match my brand's personality and visual direction.");
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Brand elements & inspirations upload for Phase 7, Q4 */}
+            {currentPhase.phase_number === '7' && currentQuestionIndex === 4 && organizationId && !phaseComplete && (
+              <div className="border border-stone/10 rounded-lg bg-cream-warm overflow-hidden">
+                <button
+                  onClick={() => setCollapsedCards(prev => ({ ...prev, elements: !prev.elements }))}
+                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-stone/5 transition-colors"
+                >
+                  <span className="text-xs font-semibold text-charcoal">Brand Elements & Inspirations</span>
+                  <ChevronDownIcon className={`w-4 h-4 text-stone transition-transform ${collapsedCards.elements ? '-rotate-90' : ''}`} />
+                </button>
+                {!collapsedCards.elements && (
+                  <div className="px-3 pb-3">
+                    <BrandElementsUpload
+                      organizationId={organizationId}
+                      phaseId={currentPhase.id}
+                      onOutputSaved={async () => {
+                        const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
+                        setOutputs(freshOutputs);
                       }}
                     />
                   </div>

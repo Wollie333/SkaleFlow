@@ -4,6 +4,7 @@ export { PhaseOutputs } from './phase-outputs';
 export { ImportPlaybookModal } from './import-playbook-modal';
 export { LogoUpload } from './logo-upload';
 export { BrandAssetsUpload } from './brand-assets-upload';
+export { BrandElementsUpload } from './brand-elements-upload';
 export { QuestionPanel } from './question-panel';
 export { ExpertChatPanel } from './expert-chat-panel';
 export { PhaseNavDropdown } from './phase-nav-dropdown';

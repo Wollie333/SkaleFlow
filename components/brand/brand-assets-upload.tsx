@@ -7,7 +7,7 @@ import {
   PhotoIcon,
 } from '@heroicons/react/24/outline';
 
-export type AssetType = 'primary_logo' | 'logo_dark' | 'logo_light' | 'logo_icon' | 'pattern' | 'mood_board';
+export type AssetType = 'primary_logo' | 'logo_dark' | 'logo_light' | 'logo_icon' | 'pattern' | 'mood_board' | 'brand_element' | 'visual_inspiration';
 
 interface Asset {
   id: string;
@@ -34,6 +34,8 @@ const ASSET_TO_VARIABLE: Record<AssetType, string> = {
   logo_icon: 'brand_logo_icon',
   pattern: 'brand_patterns',
   mood_board: 'brand_mood_board',
+  brand_element: 'brand_elements',
+  visual_inspiration: 'visual_inspirations',
 };
 
 const ASSET_CATEGORIES: { type: AssetType; label: string; description: string; multi: boolean }[] = [
