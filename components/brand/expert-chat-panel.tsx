@@ -158,6 +158,30 @@ export function ExpertChatPanel({
   };
 
   const [showModelSelector, setShowModelSelector] = useState(false);
+  const [showPreviousMessages, setShowPreviousMessages] = useState(false);
+
+  // Reset collapsed state when advancing to a new question (new separator appears)
+  const separatorCount = messages.filter(m => m.role === 'separator').length;
+  const prevSeparatorCountRef = useRef(separatorCount);
+  useEffect(() => {
+    if (separatorCount !== prevSeparatorCountRef.current) {
+      setShowPreviousMessages(false);
+      prevSeparatorCountRef.current = separatorCount;
+    }
+  }, [separatorCount]);
+
+  // Find the last separator index to hide earlier messages by default
+  let lastSeparatorIndex = -1;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === 'separator') {
+      lastSeparatorIndex = i;
+      break;
+    }
+  }
+  const hasPreviousMessages = lastSeparatorIndex >= 0;
+  const visibleMessages = hasPreviousMessages && !showPreviousMessages
+    ? messages.slice(lastSeparatorIndex + 1)
+    : messages;
 
   return (
     <div className={cn(
@@ -197,7 +221,21 @@ export function ExpertChatPanel({
           </div>
         )}
 
-        {messages.map((message, i) => {
+        {/* Show earlier conversation toggle */}
+        {hasPreviousMessages && !showPreviousMessages && visibleMessages.length > 0 && (
+          <button
+            onClick={() => setShowPreviousMessages(true)}
+            className="w-full flex items-center gap-3 py-2 group"
+          >
+            <div className="flex-1 h-px bg-stone/15" />
+            <span className="text-[10px] text-stone/40 font-medium uppercase tracking-wider whitespace-nowrap group-hover:text-stone/70 transition-colors">
+              Show earlier conversation
+            </span>
+            <div className="flex-1 h-px bg-stone/15" />
+          </button>
+        )}
+
+        {visibleMessages.map((message, i) => {
           // Render separator as a visual divider
           if (message.role === 'separator') {
             const match = message.content.match(/__QUESTION_DIVIDER__Q(\d+)/);
@@ -214,8 +252,8 @@ export function ExpertChatPanel({
           }
 
           // Find if this message is before a separator (faded style)
-          const nextSeparatorIdx = messages.findIndex((m, j) => j > i && m.role === 'separator');
-          const isBeforeSeparator = nextSeparatorIdx === -1 && messages.some(m => m.role === 'separator') && i < messages.findIndex(m => m.role === 'separator');
+          const nextSeparatorIdx = visibleMessages.findIndex((m, j) => j > i && m.role === 'separator');
+          const isBeforeSeparator = nextSeparatorIdx === -1 && visibleMessages.some(m => m.role === 'separator') && i < visibleMessages.findIndex(m => m.role === 'separator');
 
           return (
           <div
