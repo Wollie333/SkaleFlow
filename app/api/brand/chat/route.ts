@@ -202,12 +202,13 @@ export async function POST(request: Request) {
         const buffer = Buffer.from(await file.arrayBuffer());
         const base64 = buffer.toString('base64');
 
-        if (file.type.startsWith('image/')) {
+        const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (allowedImageTypes.includes(file.type)) {
           contentBlocks.push({
             type: 'image',
             source: {
               type: 'base64',
-              media_type: file.type,
+              media_type: file.type as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
               data: base64,
             },
           });
@@ -243,14 +244,16 @@ export async function POST(request: Request) {
         if (logoResponse.ok) {
           const logoBuffer = Buffer.from(await logoResponse.arrayBuffer());
           const logoBase64 = logoBuffer.toString('base64');
-          const logoContentType = logoResponse.headers.get('content-type') || 'image/png';
+          const rawLogoType = logoResponse.headers.get('content-type') || 'image/png';
+          const allowedLogoTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+          const logoContentType = allowedLogoTypes.includes(rawLogoType) ? rawLogoType : 'image/png';
 
           messageContent = [
             {
               type: 'image',
               source: {
                 type: 'base64',
-                media_type: logoContentType,
+                media_type: logoContentType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
                 data: logoBase64,
               },
             },

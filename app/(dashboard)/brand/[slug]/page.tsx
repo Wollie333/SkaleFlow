@@ -14,6 +14,7 @@ import {
   ForwardIcon,
   SparklesIcon,
   Bars3BottomRightIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 import { TopupModal } from '@/components/billing/topup-modal';
 import { getPhaseTemplate } from '@/config/phases';
@@ -92,6 +93,7 @@ export default function BrandPhaseDetailPage() {
   const [lockingKey, setLockingKey] = useState<string | null>(null);
   const [autoSavedOutputs, setAutoSavedOutputs] = useState<string[]>([]);
   const [showProgressSidebar, setShowProgressSidebar] = useState(false);
+  const [collapsedCards, setCollapsedCards] = useState<Record<string, boolean>>({});
   const abortControllerRef = useRef<AbortController | null>(null);
   const messageOperationRef = useRef(false);
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
@@ -842,6 +844,37 @@ export default function BrandPhaseDetailPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Compact progress indicator */}
+          {totalQuestions > 0 && (
+            <div className="hidden sm:flex items-center gap-2 mr-2">
+              {phaseComplete ? (
+                <span className="flex items-center gap-1 text-xs font-semibold text-teal">
+                  <CheckIcon className="w-3.5 h-3.5" />
+                  Complete
+                </span>
+              ) : (
+                <>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalQuestions }, (_, i) => (
+                      <div
+                        key={i}
+                        className={`w-2 h-2 rounded-full transition-colors ${
+                          i < currentQuestionIndex
+                            ? 'bg-teal'
+                            : i === currentQuestionIndex
+                              ? 'bg-teal ring-2 ring-teal/30'
+                              : 'bg-stone-light/60'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs text-charcoal/50 font-medium">
+                    {currentQuestionIndex + 1}/{totalQuestions}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
           {currentPhase.status !== 'locked' && (
             <Button
               onClick={() => setPhaseImportTarget({ id: currentPhase.id, name: currentPhase.phase_name })}
@@ -937,78 +970,125 @@ export default function BrandPhaseDetailPage() {
 
             {/* Logo upload for Phase 7, Question 0 */}
             {currentPhase.phase_number === '7' && currentQuestionIndex === 0 && organizationId && !phaseComplete && (
-              <div className="border border-stone/10 rounded-lg p-3 bg-cream-warm">
-                <LogoUpload
-                  organizationId={organizationId}
-                  onLogoUploaded={async (url) => {
-                    if (organizationId && currentPhase) {
-                      await supabase.from('brand_outputs').upsert({
-                        organization_id: organizationId,
-                        phase_id: currentPhase.id,
-                        output_key: 'brand_logo_primary',
-                        output_value: url,
-                        is_locked: false,
-                      }, { onConflict: 'organization_id,output_key' });
-                      const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
-                      setOutputs(freshOutputs);
-                      handleSendMessage("I've uploaded my logo. Please take a look at it and share your thoughts on its style, colors, and how it fits our brand direction.");
-                    }
-                  }}
-                />
+              <div className="border border-stone/10 rounded-lg bg-cream-warm overflow-hidden">
+                <button
+                  onClick={() => setCollapsedCards(prev => ({ ...prev, logo: !prev.logo }))}
+                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-stone/5 transition-colors"
+                >
+                  <span className="text-xs font-semibold text-charcoal">Logo Upload</span>
+                  <ChevronDownIcon className={`w-4 h-4 text-stone transition-transform ${collapsedCards.logo ? '-rotate-90' : ''}`} />
+                </button>
+                {!collapsedCards.logo && (
+                  <div className="px-3 pb-3">
+                    <LogoUpload
+                      organizationId={organizationId}
+                      onLogoUploaded={async (url) => {
+                        if (organizationId && currentPhase) {
+                          await supabase.from('brand_outputs').upsert({
+                            organization_id: organizationId,
+                            phase_id: currentPhase.id,
+                            output_key: 'brand_logo_primary',
+                            output_value: url,
+                            is_locked: false,
+                          }, { onConflict: 'organization_id,output_key' });
+                          const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
+                          setOutputs(freshOutputs);
+                          handleSendMessage("I've uploaded my logo. Please take a look at it and share your thoughts on its style, colors, and how it fits our brand direction.");
+                        }
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
             {/* Visual assets upload for Phase 7, Q0 */}
             {currentPhase.phase_number === '7' && currentQuestionIndex === 0 && organizationId && !phaseComplete && (
-              <div className="border border-stone/10 rounded-lg p-3 bg-cream-warm">
-                <p className="text-xs font-semibold text-charcoal mb-2">Visual Assets</p>
-                <p className="text-[10px] text-stone mb-3">Upload logo variants, patterns, and mood board images for your brand guide.</p>
-                <BrandAssetsUpload
-                  organizationId={organizationId}
-                  phaseId={currentPhase.id}
-                  onOutputSaved={async () => {
-                    const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
-                    setOutputs(freshOutputs);
-                  }}
-                />
+              <div className="border border-stone/10 rounded-lg bg-cream-warm overflow-hidden">
+                <button
+                  onClick={() => setCollapsedCards(prev => ({ ...prev, assets: !prev.assets }))}
+                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-stone/5 transition-colors"
+                >
+                  <span className="text-xs font-semibold text-charcoal">Visual Assets</span>
+                  <ChevronDownIcon className={`w-4 h-4 text-stone transition-transform ${collapsedCards.assets ? '-rotate-90' : ''}`} />
+                </button>
+                {!collapsedCards.assets && (
+                  <div className="px-3 pb-3">
+                    <p className="text-[10px] text-stone mb-3">Upload logo variants, patterns, and mood board images for your brand guide.</p>
+                    <BrandAssetsUpload
+                      organizationId={organizationId}
+                      phaseId={currentPhase.id}
+                      onOutputSaved={async () => {
+                        const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
+                        setOutputs(freshOutputs);
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
             {/* Color palette picker for Phase 7, Q1 */}
             {currentPhase.phase_number === '7' && currentQuestionIndex === 1 && organizationId && !phaseComplete && (
-              <ColorPalettePicker
-                organizationId={organizationId}
-                phaseId={currentPhase.id}
-                initialPalette={
-                  outputs.find(o => o.output_key === 'brand_color_palette')?.output_value
-                    ? (outputs.find(o => o.output_key === 'brand_color_palette')?.output_value as never)
-                    : null
-                }
-                onPaletteChange={async () => {
-                  const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
-                  setOutputs(freshOutputs);
-                }}
-              />
+              <div className="border border-stone/10 rounded-lg bg-cream-warm overflow-hidden">
+                <button
+                  onClick={() => setCollapsedCards(prev => ({ ...prev, colors: !prev.colors }))}
+                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-stone/5 transition-colors"
+                >
+                  <span className="text-xs font-semibold text-charcoal">Color Palette</span>
+                  <ChevronDownIcon className={`w-4 h-4 text-stone transition-transform ${collapsedCards.colors ? '-rotate-90' : ''}`} />
+                </button>
+                {!collapsedCards.colors && (
+                  <div className="px-3 pb-3">
+                    <ColorPalettePicker
+                      organizationId={organizationId}
+                      phaseId={currentPhase.id}
+                      initialPalette={
+                        outputs.find(o => o.output_key === 'brand_color_palette')?.output_value
+                          ? (outputs.find(o => o.output_key === 'brand_color_palette')?.output_value as never)
+                          : null
+                      }
+                      onPaletteChange={async () => {
+                        const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
+                        setOutputs(freshOutputs);
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Typography picker for Phase 7, Q2 */}
             {currentPhase.phase_number === '7' && currentQuestionIndex === 2 && organizationId && !phaseComplete && (
-              <TypographyPicker
-                organizationId={organizationId}
-                phaseId={currentPhase.id}
-                initialTypography={
-                  outputs.find(o => o.output_key === 'brand_typography')?.output_value
-                    ? (outputs.find(o => o.output_key === 'brand_typography')?.output_value as never)
-                    : null
-                }
-                onTypographyChange={async () => {
-                  const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
-                  setOutputs(freshOutputs);
-                }}
-                onSuggestPairing={() => {
-                  handleSendMessage("Please suggest 2-3 Google Font pairings that would work well for my brand. I need heading, body, and accent fonts that match my brand's personality and visual direction.");
-                }}
-              />
+              <div className="border border-stone/10 rounded-lg bg-cream-warm overflow-hidden">
+                <button
+                  onClick={() => setCollapsedCards(prev => ({ ...prev, typography: !prev.typography }))}
+                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-stone/5 transition-colors"
+                >
+                  <span className="text-xs font-semibold text-charcoal">Typography</span>
+                  <ChevronDownIcon className={`w-4 h-4 text-stone transition-transform ${collapsedCards.typography ? '-rotate-90' : ''}`} />
+                </button>
+                {!collapsedCards.typography && (
+                  <div className="px-3 pb-3">
+                    <TypographyPicker
+                      organizationId={organizationId}
+                      phaseId={currentPhase.id}
+                      initialTypography={
+                        outputs.find(o => o.output_key === 'brand_typography')?.output_value
+                          ? (outputs.find(o => o.output_key === 'brand_typography')?.output_value as never)
+                          : null
+                      }
+                      onTypographyChange={async () => {
+                        const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
+                        setOutputs(freshOutputs);
+                      }}
+                      onSuggestPairing={() => {
+                        handleSendMessage("Please suggest 2-3 Google Font pairings that would work well for my brand. I need heading, body, and accent fonts that match my brand's personality and visual direction.");
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Chat messages */}
