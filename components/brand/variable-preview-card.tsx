@@ -418,7 +418,7 @@ export function VariablePreviewCard({
                   )}
                 </button>
               </div>
-              <p className="text-[10px] text-stone/50">{editImageUrls.length} image{editImageUrls.length !== 1 ? 's' : ''}</p>
+              <p className="text-[10px] text-stone">{editImageUrls.length} image{editImageUrls.length !== 1 ? 's' : ''}</p>
             </div>
           )}
 
@@ -427,7 +427,7 @@ export function VariablePreviewCard({
             <div className="space-y-2">
               {Object.entries(editTypography).map(([label, font]) => (
                 <div key={label} className="flex items-center gap-2">
-                  <span className="text-[10px] text-stone/60 w-14 flex-shrink-0 truncate">{label}</span>
+                  <span className="text-[10px] text-stone w-14 flex-shrink-0 truncate">{label}</span>
                   <input
                     type="text"
                     value={font}
@@ -459,7 +459,7 @@ export function VariablePreviewCard({
           )}
         </div>
       ) : isEmpty ? (
-        <p className="text-xs text-stone/50 mt-1.5 italic">
+        <p className="text-xs text-stone mt-1.5 italic">
           {isImageType ? 'No image uploaded' : 'Needs your input'}
         </p>
       ) : (
@@ -468,7 +468,7 @@ export function VariablePreviewCard({
           {/* Fallback text for non-rich types */}
           {!isRichKey(outputKey, value) && (
             <>
-              <div className="text-sm text-charcoal/80 whitespace-pre-wrap break-words leading-relaxed">
+              <div className="text-sm text-charcoal whitespace-pre-wrap break-words leading-relaxed">
                 {truncatedValue}
               </div>
               {isLong && (
@@ -581,7 +581,7 @@ function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) 
               style={{ backgroundColor: s.hex }}
               title={`${s.role}: ${s.hex}`}
             />
-            <span className="text-[8px] text-stone/60 leading-none">{s.hex}</span>
+            <span className="text-[8px] text-stone leading-none">{s.hex}</span>
           </div>
         ))}
       </div>
@@ -597,7 +597,7 @@ function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) 
       <div className="space-y-1 mt-1">
         {rows.map((r, i) => (
           <div key={i} className="flex items-baseline gap-2">
-            <span className="text-[10px] text-stone/50 w-12 flex-shrink-0 truncate">{r.label}</span>
+            <span className="text-[10px] text-stone w-12 flex-shrink-0 truncate">{r.label}</span>
             <span className="text-xs text-charcoal font-medium">{r.font}</span>
             {r.detail && <span className="text-[9px] text-stone/40">{r.detail}</span>}
           </div>
@@ -653,7 +653,7 @@ function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) 
       return (
         <ul className="mt-1 space-y-0.5">
           {(items as string[]).slice(0, 6).map((s, i) => (
-            <li key={i} className="text-[11px] text-charcoal/80 leading-snug flex gap-1.5">
+            <li key={i} className="text-[11px] text-charcoal leading-snug flex gap-1.5">
               <span className="text-stone/30 flex-shrink-0">&#x2022;</span>
               <span>{s.length > 120 ? s.slice(0, 120) + '...' : s}</span>
             </li>
@@ -676,7 +676,7 @@ function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) 
           return (
             <div key={i}>
               <p className="text-[11px] font-medium text-charcoal">{String(label)}</p>
-              {desc && <p className="text-[10px] text-stone/60 leading-snug">{String(desc).slice(0, 100)}{String(desc).length > 100 ? '...' : ''}</p>}
+              {desc && <p className="text-[10px] text-stone leading-snug">{String(desc).slice(0, 100)}{String(desc).length > 100 ? '...' : ''}</p>}
             </div>
           );
         })}
@@ -704,7 +704,7 @@ function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) 
                 style={{ backgroundColor: s.hex }}
                 title={`${s.role}: ${s.hex}`}
               />
-              <span className="text-[8px] text-stone/60 leading-none">{s.hex}</span>
+              <span className="text-[8px] text-stone leading-none">{s.hex}</span>
             </div>
           ))}
         </div>
@@ -717,7 +717,7 @@ function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) 
         <div className="space-y-1 mt-1">
           {typoRows.map((r, i) => (
             <div key={i} className="flex items-baseline gap-2">
-              <span className="text-[10px] text-stone/50 w-12 flex-shrink-0 truncate">{r.label}</span>
+              <span className="text-[10px] text-stone w-12 flex-shrink-0 truncate">{r.label}</span>
               <span className="text-xs text-charcoal font-medium">{r.font}</span>
               {r.detail && <span className="text-[9px] text-stone/40">{r.detail}</span>}
             </div>
@@ -738,8 +738,8 @@ function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) 
                 : String(val);
           return (
             <div key={key}>
-              <span className="text-[10px] text-stone/50">{key.replace(/_/g, ' ')}</span>
-              <p className="text-[11px] text-charcoal/80 leading-snug">{display}</p>
+              <span className="text-[10px] text-stone">{key.replace(/_/g, ' ')}</span>
+              <p className="text-[11px] text-charcoal leading-snug">{display}</p>
             </div>
           );
         })}
