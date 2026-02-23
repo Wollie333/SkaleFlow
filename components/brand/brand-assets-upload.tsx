@@ -22,6 +22,8 @@ interface BrandAssetsUploadProps {
   phaseId?: string;
   disabled?: boolean;
   onAssetsChange?: (assets: Asset[]) => void;
+  /** Called after an asset is synced to brand_outputs — use to refresh parent output state */
+  onOutputSaved?: () => void;
 }
 
 /** Maps asset types to their brand_outputs variable keys */
@@ -46,7 +48,7 @@ const ASSET_CATEGORIES: { type: AssetType; label: string; description: string; m
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp'];
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
-export function BrandAssetsUpload({ organizationId, phaseId, disabled, onAssetsChange }: BrandAssetsUploadProps) {
+export function BrandAssetsUpload({ organizationId, phaseId, disabled, onAssetsChange, onOutputSaved }: BrandAssetsUploadProps) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -106,10 +108,11 @@ export function BrandAssetsUpload({ organizationId, phaseId, disabled, onAssetsC
           value,
         }),
       });
+      onOutputSaved?.();
     } catch {
       // Silent fail — asset is still stored, just not synced to brand_outputs
     }
-  }, [organizationId, phaseId]);
+  }, [organizationId, phaseId, onOutputSaved]);
 
   const uploadFile = async (file: File, assetType: AssetType) => {
     if (!ALLOWED_TYPES.includes(file.type)) {

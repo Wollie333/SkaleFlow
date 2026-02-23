@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { SparklesIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, LockClosedIcon, LockOpenIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { formatOutputKey } from '@/lib/brand/format-utils';
 
@@ -23,6 +23,9 @@ interface QuestionBannerProps {
   onSuggestionClick: (prompt: string) => void;
   isSending: boolean;
   hasMessages: boolean;
+  onLockVariable?: (key: string) => void;
+  onUnlockVariable?: (key: string) => void;
+  lockingKey?: string | null;
 }
 
 export function QuestionBanner({
@@ -36,6 +39,9 @@ export function QuestionBanner({
   onSuggestionClick,
   isSending,
   hasMessages,
+  onLockVariable,
+  onUnlockVariable,
+  lockingKey,
 }: QuestionBannerProps) {
   if (phaseComplete) {
     return (
@@ -89,29 +95,53 @@ export function QuestionBanner({
           {questionText}
         </p>
 
-        {/* Output variable badges */}
+        {/* Output variable badges — clickable to toggle lock */}
         {outputKeys.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-3">
             {outputKeys.map(key => {
               const status = outputStatuses.get(key);
               const locked = status?.locked ?? false;
               const filled = status?.filled ?? false;
+              const isLocking = lockingKey === key;
+              const canToggle = filled && (onLockVariable || onUnlockVariable);
+
               return (
-                <span
+                <button
                   key={key}
+                  type="button"
+                  disabled={!canToggle || isLocking}
+                  onClick={() => {
+                    if (!filled) return;
+                    if (locked && onUnlockVariable) onUnlockVariable(key);
+                    else if (!locked && onLockVariable) onLockVariable(key);
+                  }}
                   className={cn(
-                    'inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium',
+                    'inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full font-medium transition-all',
                     locked
-                      ? 'bg-teal/15 text-teal'
+                      ? 'bg-teal/15 text-teal hover:bg-teal/25'
                       : filled
-                        ? 'bg-gold/15 text-gold'
-                        : 'bg-stone/10 text-stone'
+                        ? 'bg-gold/15 text-gold hover:bg-gold/25'
+                        : 'bg-stone/10 text-stone',
+                    canToggle ? 'cursor-pointer' : 'cursor-default',
+                    isLocking && 'opacity-50'
                   )}
+                  title={
+                    !filled ? 'Not yet answered'
+                    : locked ? 'Click to unlock and edit'
+                    : 'Click to lock this answer'
+                  }
                 >
-                  {locked && <CheckCircleIcon className="w-2.5 h-2.5" />}
-                  {filled && !locked && <span className="w-1.5 h-1.5 rounded-full bg-gold" />}
+                  {isLocking ? (
+                    <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : locked ? (
+                    <LockClosedIcon className="w-3 h-3" />
+                  ) : filled ? (
+                    <LockOpenIcon className="w-3 h-3" />
+                  ) : (
+                    <span className="w-1.5 h-1.5 rounded-full bg-stone/30" />
+                  )}
                   {formatOutputKey(key)}
-                </span>
+                </button>
               );
             })}
           </div>

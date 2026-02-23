@@ -930,6 +930,9 @@ export default function BrandPhaseDetailPage() {
               onSuggestionClick={handleSuggestionClick}
               isSending={isSending}
               hasMessages={messages.some(m => m.role !== 'separator')}
+              onLockVariable={handleLockVariable}
+              onUnlockVariable={handleUnlockVariable}
+              lockingKey={lockingKey}
             />
 
             {/* Logo upload for Phase 7, Question 0 */}
@@ -960,7 +963,14 @@ export default function BrandPhaseDetailPage() {
               <div className="border border-stone/10 rounded-lg p-3 bg-cream-warm">
                 <p className="text-xs font-semibold text-charcoal mb-2">Visual Assets</p>
                 <p className="text-[10px] text-stone mb-3">Upload logo variants, patterns, and mood board images for your brand guide.</p>
-                <BrandAssetsUpload organizationId={organizationId} phaseId={currentPhase.id} />
+                <BrandAssetsUpload
+                  organizationId={organizationId}
+                  phaseId={currentPhase.id}
+                  onOutputSaved={async () => {
+                    const freshOutputs = await fetchOutputsForPhase(organizationId, currentPhase.phase_number);
+                    setOutputs(freshOutputs);
+                  }}
+                />
               </div>
             )}
 

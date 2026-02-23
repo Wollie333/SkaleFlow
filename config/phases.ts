@@ -323,7 +323,7 @@ Ask the user what key themes or messages they keep coming back to in their busin
       'Define your brand colors using the color palette picker above. Generate AI suggestions or pick your own.',
       'Set your brand typography — choose fonts for headings, body text, and accents.',
       'What visual mood and imagery direction fits your brand? (Photography style, illustrations, icons)',
-      'Any brand elements, visual rules, or inspirations to define?',
+      'Define your brand elements (icons, shapes, graphic devices), visual guidelines (logo spacing, do\'s & don\'ts), and any brand inspirations.',
     ],
     outputVariables: [
       'brand_logo_primary',
@@ -382,9 +382,17 @@ Ask the user what visual mood fits their brand (e.g., Premium, Bold, Minimal, Wa
 Also propose a brand tagline — a short, memorable phrase that captures the brand's essence (e.g., "Just Do It", "Think Different"). Propose 3 options based on everything discussed. Let the user choose or create their own. Output as brand_tagline string.
 
 QUESTION 4 — BRAND ELEMENTS, GUIDELINES & INSPIRATIONS:
-Ask the user about any additional visual rules, brand elements, or visual inspirations they have in mind. If they have reference brands or images, capture those. Help them define visual guidelines — logo usage rules, spacing, do's and don'ts.
+Don't wait for the user to come up with everything. Based on their archetype, colors, typography, and visual mood from the earlier questions, PROPOSE:
 
-For brand_visual_guidelines output: Summarize the complete set of visual guidelines including logo usage rules, color application rules, and any restrictions. If they have nothing specific, help them define basic visual rules based on their earlier choices.`,
+1. **Brand Elements** — Suggest 3-5 specific graphic devices (e.g., "corner accents using your gold (#C8A86E)", "thin rule lines", "circular badge/seal motif"). Ask which they like.
+2. **Visual Inspirations** — Name 2-3 reference brands with a similar visual feel and explain what to borrow from each.
+3. **Visual Guidelines** — Draft a set of rules covering: logo clear space, minimum size, background restrictions, color usage hierarchy (primary for CTAs, dark for headings, accent for highlights), and imagery do's/don'ts.
+
+Present these as a structured starting point the user can approve, modify, or add to. If they approve, output all three variables. If they have their own ideas, incorporate them.
+
+For brand_elements output: List the graphic elements, shapes, icons, and visual devices the brand uses (e.g., "Gold corner accents, thin rule dividers, circular seal motif").
+For visual_inspirations output: List reference brands and what visual cues to draw from each.
+For brand_visual_guidelines output: Summarize the complete set of visual guidelines including logo usage rules, color application rules, spacing rules, and restrictions.`,
   },
   '8': {
     number: '8',
