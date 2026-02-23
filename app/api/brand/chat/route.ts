@@ -200,6 +200,11 @@ export async function POST(request: Request) {
 
       for (const file of files) {
         const buffer = Buffer.from(await file.arrayBuffer());
+        // Skip files that are too small (<100 bytes, likely empty/corrupt) or too large (>20MB)
+        if (buffer.byteLength < 100 || buffer.byteLength > 20 * 1024 * 1024) {
+          logger.warn('File skipped: invalid size', { name: file.name, type: file.type, size: buffer.byteLength });
+          continue;
+        }
         const base64 = buffer.toString('base64');
 
         const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -241,30 +246,39 @@ export async function POST(request: Request) {
       // Phase 7: inject the uploaded logo image so Claude can see and discuss it
       try {
         const logoResponse = await fetch(orgLogoUrl);
-        if (logoResponse.ok) {
+        const rawLogoType = logoResponse.headers.get('content-type') || '';
+        const allowedLogoTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        const isValidType = allowedLogoTypes.includes(rawLogoType);
+
+        if (logoResponse.ok && isValidType) {
           const logoBuffer = Buffer.from(await logoResponse.arrayBuffer());
-          const logoBase64 = logoBuffer.toString('base64');
-          const rawLogoType = logoResponse.headers.get('content-type') || 'image/png';
-          const allowedLogoTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-          const logoContentType = allowedLogoTypes.includes(rawLogoType) ? rawLogoType : 'image/png';
 
-          messageContent = [
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: logoContentType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-                data: logoBase64,
+          // Skip if image is too large (>20MB) or suspiciously small (<100 bytes, likely error)
+          if (logoBuffer.byteLength > 100 && logoBuffer.byteLength < 20 * 1024 * 1024) {
+            const logoBase64 = logoBuffer.toString('base64');
+
+            messageContent = [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: rawLogoType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+                  data: logoBase64,
+                },
               },
-            },
-            {
-              type: 'text',
-              text: `${message}\n\n[The user's uploaded logo is shown above. You can see and reference it in your response.]`,
-            },
-          ];
+              {
+                type: 'text',
+                text: `${message}\n\n[The user's uploaded logo is shown above. You can see and reference it in your response.]`,
+              },
+            ];
 
-          logger.info('Logo image injected into Phase 7 conversation', { organizationId, logoUrl: orgLogoUrl });
+            logger.info('Logo image injected into Phase 7 conversation', { organizationId, logoUrl: orgLogoUrl, contentType: rawLogoType, sizeBytes: logoBuffer.byteLength });
+          } else {
+            logger.warn('Logo skipped: invalid size', { organizationId, sizeBytes: logoBuffer.byteLength });
+            messageContent = message;
+          }
         } else {
+          logger.warn('Logo skipped: bad response or unsupported type', { organizationId, status: logoResponse.status, contentType: rawLogoType });
           messageContent = message;
         }
       } catch (logoFetchError) {
