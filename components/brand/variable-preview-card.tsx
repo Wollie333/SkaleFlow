@@ -226,25 +226,164 @@ export function VariablePreviewCard({
         </p>
       ) : (
         <div className="mt-1.5">
-          <div className="text-sm text-charcoal/80 whitespace-pre-wrap break-words leading-relaxed">
-            {truncatedValue}
-          </div>
-          {isLong && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsExpanded(!isExpanded);
-              }}
-              className="text-[11px] text-teal hover:text-teal/80 font-medium mt-1"
-            >
-              {isExpanded ? 'Show less' : 'Show more'}
-            </button>
+          <RichPreview outputKey={outputKey} value={value} />
+          {/* Fallback text for non-rich types */}
+          {!isRichKey(outputKey) && (
+            <>
+              <div className="text-sm text-charcoal/80 whitespace-pre-wrap break-words leading-relaxed">
+                {truncatedValue}
+              </div>
+              {isLong && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsExpanded(!isExpanded);
+                  }}
+                  className="text-[11px] text-teal hover:text-teal/80 font-medium mt-1"
+                >
+                  {isExpanded ? 'Show less' : 'Show more'}
+                </button>
+              )}
+            </>
           )}
         </div>
       )}
     </div>
   );
+}
+
+// Keys that get rich visual previews instead of plain text
+const IMAGE_URL_KEYS = new Set([
+  'brand_logo_primary', 'brand_logo_dark', 'brand_logo_light', 'brand_logo_icon',
+]);
+const IMAGE_ARRAY_KEYS = new Set([
+  'brand_mood_board', 'brand_patterns', 'brand_elements', 'visual_inspirations',
+]);
+const COLOR_KEY = 'brand_color_palette';
+const TYPOGRAPHY_KEY = 'brand_typography';
+
+function isRichKey(key: string): boolean {
+  return IMAGE_URL_KEYS.has(key) || IMAGE_ARRAY_KEYS.has(key) || key === COLOR_KEY || key === TYPOGRAPHY_KEY;
+}
+
+function RichPreview({ outputKey, value }: { outputKey: string; value?: Json }) {
+  if (!value) return null;
+
+  // Single image URL (logos)
+  if (IMAGE_URL_KEYS.has(outputKey)) {
+    const url = typeof value === 'string' ? value : null;
+    if (!url || url === 'none') return null;
+    return (
+      <div className="mt-1">
+        <div className="w-14 h-14 rounded-lg border border-stone/10 bg-white overflow-hidden">
+          <img src={url} alt={formatOutputKey(outputKey)} className="w-full h-full object-contain" />
+        </div>
+      </div>
+    );
+  }
+
+  // Image array (mood board, patterns, brand elements, inspirations)
+  if (IMAGE_ARRAY_KEYS.has(outputKey)) {
+    const urls = Array.isArray(value)
+      ? (value as unknown[]).filter((u): u is string => typeof u === 'string' && u !== 'none')
+      : typeof value === 'string' && value !== 'none'
+        ? [value]
+        : [];
+    if (urls.length === 0) return null;
+    return (
+      <div className="flex flex-wrap gap-1.5 mt-1">
+        {urls.slice(0, 6).map((url, i) => (
+          <div key={i} className="w-10 h-10 rounded border border-stone/10 bg-white overflow-hidden flex-shrink-0">
+            <img src={url} alt="" className="w-full h-full object-cover" />
+          </div>
+        ))}
+        {urls.length > 6 && (
+          <div className="w-10 h-10 rounded border border-stone/10 bg-stone/5 flex items-center justify-center flex-shrink-0">
+            <span className="text-[9px] text-stone font-medium">+{urls.length - 6}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Color palette
+  if (outputKey === COLOR_KEY && typeof value === 'object' && value !== null) {
+    const palette = value as Record<string, unknown>;
+    // Try colors array first, then individual color keys
+    const colorsArr = palette.colors as Array<Record<string, unknown>> | undefined;
+    const swatches: { hex: string; role: string }[] = [];
+
+    if (Array.isArray(colorsArr)) {
+      for (const c of colorsArr) {
+        if (c && typeof c.hex === 'string') {
+          swatches.push({ hex: c.hex, role: (c.role as string) || '' });
+        }
+      }
+    } else {
+      // Fallback: check for named color keys (primary, dark_base, accent, light, neutral)
+      for (const role of ['primary', 'dark_base', 'accent', 'light', 'neutral']) {
+        const c = palette[role] as Record<string, unknown> | undefined;
+        if (c && typeof c.hex === 'string') {
+          swatches.push({ hex: c.hex, role });
+        }
+      }
+    }
+
+    if (swatches.length === 0) return null;
+    return (
+      <div className="flex gap-1.5 mt-1">
+        {swatches.map((s, i) => (
+          <div key={i} className="flex flex-col items-center gap-0.5">
+            <div
+              className="w-7 h-7 rounded-md border border-stone/15 shadow-sm"
+              style={{ backgroundColor: s.hex }}
+              title={`${s.role}: ${s.hex}`}
+            />
+            <span className="text-[8px] text-stone/60 leading-none">{s.hex}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Typography
+  if (outputKey === TYPOGRAPHY_KEY && typeof value === 'object' && value !== null) {
+    const typo = value as Record<string, unknown>;
+    const heading = typo.heading_font as string | undefined;
+    const body = typo.body_font as string | undefined;
+    const accent = typo.accent_font as string | undefined;
+    const headingW = typo.heading_weight as string | undefined;
+    const bodyW = typo.body_weight as string | undefined;
+
+    if (!heading && !body) return null;
+    return (
+      <div className="space-y-1 mt-1">
+        {heading && (
+          <div className="flex items-baseline gap-2">
+            <span className="text-[10px] text-stone/50 w-10 flex-shrink-0">Head</span>
+            <span className="text-xs text-charcoal font-medium">{heading}</span>
+            {headingW && <span className="text-[9px] text-stone/40">{headingW}</span>}
+          </div>
+        )}
+        {body && (
+          <div className="flex items-baseline gap-2">
+            <span className="text-[10px] text-stone/50 w-10 flex-shrink-0">Body</span>
+            <span className="text-xs text-charcoal font-medium">{body}</span>
+            {bodyW && <span className="text-[9px] text-stone/40">{bodyW}</span>}
+          </div>
+        )}
+        {accent && (
+          <div className="flex items-baseline gap-2">
+            <span className="text-[10px] text-stone/50 w-10 flex-shrink-0">Accent</span>
+            <span className="text-xs text-charcoal font-medium">{accent}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function formatValue(value: Json | undefined): string {
