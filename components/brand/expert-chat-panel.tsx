@@ -20,7 +20,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { useSpeechToText } from '@/hooks/use-speech-to-text';
-import { ModelSelector } from '@/components/ai/model-selector';
 import { formatFileSize, parseYamlPreview, formatOutputKey } from '@/lib/brand/format-utils';
 import type { ClientModelOption } from '@/lib/ai/models';
 
@@ -97,6 +96,9 @@ export function ExpertChatPanel({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { isListening, isSupported, transcript, start, stop, reset } = useSpeechToText();
   const inputBeforeListeningRef = useRef('');
+  const [showModelSelector, setShowModelSelector] = useState(false);
+  const [showPreviousMessages, setShowPreviousMessages] = useState(false);
+  const [threadCollapsed, setThreadCollapsed] = useState(false);
 
   useEffect(() => {
     if (!isListening && transcript) {
@@ -158,10 +160,6 @@ export function ExpertChatPanel({
       handleSubmit(e);
     }
   };
-
-  const [showModelSelector, setShowModelSelector] = useState(false);
-  const [showPreviousMessages, setShowPreviousMessages] = useState(false);
-  const [threadCollapsed, setThreadCollapsed] = useState(false);
 
   // Reset collapsed state when advancing to a new question (new separator appears)
   const separatorCount = messages.filter(m => m.role === 'separator').length;
