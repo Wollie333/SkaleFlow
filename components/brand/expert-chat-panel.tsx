@@ -15,6 +15,8 @@ import {
   PhotoIcon,
   ArrowRightIcon,
   Cog6ToothIcon,
+  ChatBubbleLeftRightIcon,
+  EyeSlashIcon,
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { useSpeechToText } from '@/hooks/use-speech-to-text';
@@ -123,7 +125,7 @@ export function ExpertChatPanel({
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, threadCollapsed]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -159,6 +161,7 @@ export function ExpertChatPanel({
 
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [showPreviousMessages, setShowPreviousMessages] = useState(false);
+  const [threadCollapsed, setThreadCollapsed] = useState(false);
 
   // Reset collapsed state when advancing to a new question (new separator appears)
   const separatorCount = messages.filter(m => m.role === 'separator').length;
@@ -179,9 +182,24 @@ export function ExpertChatPanel({
     }
   }
   const hasPreviousMessages = lastSeparatorIndex >= 0;
-  const visibleMessages = hasPreviousMessages && !showPreviousMessages
+  const baseVisibleMessages = hasPreviousMessages && !showPreviousMessages
     ? messages.slice(lastSeparatorIndex + 1)
     : messages;
+
+  // Thread collapse: when collapsed, only show the last assistant message
+  const realMessages = baseVisibleMessages.filter(m => m.role !== 'separator');
+  const hiddenCount = threadCollapsed ? Math.max(0, realMessages.length - 1) : 0;
+  const visibleMessages = threadCollapsed
+    ? (() => {
+        // Show only the last assistant message (or last message if no assistant)
+        const lastAssistantIdx = baseVisibleMessages.reduce(
+          (acc, m, idx) => (m.role === 'assistant' ? idx : acc), -1
+        );
+        if (lastAssistantIdx >= 0) return [baseVisibleMessages[lastAssistantIdx]];
+        // Fallback: show last message
+        return baseVisibleMessages.length > 0 ? [baseVisibleMessages[baseVisibleMessages.length - 1]] : [];
+      })()
+    : baseVisibleMessages;
 
   return (
     <div className={cn(
@@ -221,8 +239,30 @@ export function ExpertChatPanel({
           </div>
         )}
 
+        {/* Thread collapse/expand toggle */}
+        {realMessages.length > 1 && (
+          <button
+            onClick={() => setThreadCollapsed(prev => !prev)}
+            className="w-full flex items-center gap-2 py-1.5 group"
+          >
+            <div className="flex-1 h-px bg-stone/15" />
+            {threadCollapsed ? (
+              <span className="inline-flex items-center gap-1.5 text-[10px] text-stone/50 font-medium uppercase tracking-wider whitespace-nowrap group-hover:text-stone/80 transition-colors bg-stone/5 px-2.5 py-1 rounded-full">
+                <ChatBubbleLeftRightIcon className="w-3 h-3" />
+                Show thread ({hiddenCount} hidden)
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 text-[10px] text-stone/50 font-medium uppercase tracking-wider whitespace-nowrap group-hover:text-stone/80 transition-colors bg-stone/5 px-2.5 py-1 rounded-full">
+                <EyeSlashIcon className="w-3 h-3" />
+                Hide thread
+              </span>
+            )}
+            <div className="flex-1 h-px bg-stone/15" />
+          </button>
+        )}
+
         {/* Show earlier conversation toggle */}
-        {hasPreviousMessages && !showPreviousMessages && visibleMessages.length > 0 && (
+        {!threadCollapsed && hasPreviousMessages && !showPreviousMessages && baseVisibleMessages.length > 0 && (
           <button
             onClick={() => setShowPreviousMessages(true)}
             className="w-full flex items-center gap-3 py-2 group"
