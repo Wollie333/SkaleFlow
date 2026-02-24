@@ -223,7 +223,7 @@ export function VariablePreviewCard({
             : isEmpty
               ? 'border border-dashed border-stone/20 bg-white'
               : isLocked
-                ? 'bg-teal/5 border border-teal/15'
+                ? 'bg-white border-l-2 border-l-teal border border-teal/15'
                 : 'bg-white border border-stone/10'
       )}
     >
@@ -380,7 +380,7 @@ export function VariablePreviewCard({
         </span>
       )}
       {!isEditing && isLocked && (
-        <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-teal/10 text-gold mt-1">
+        <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-gold/10 text-gold mt-1">
           <CheckCircleIcon className="w-3 h-3" />
           Confirmed
         </span>
