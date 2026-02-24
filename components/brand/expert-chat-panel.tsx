@@ -471,34 +471,88 @@ export function ExpertChatPanel({
                   </Button>
                 )}
               </div>
-              {/* Model selector popover */}
+              {/* Model selector modal */}
               {showModelSelector && models && onModelChange && (
-                <div className="absolute bottom-full mb-2 right-0 bg-cream-warm border border-stone/15 rounded-lg shadow-lg p-3 min-w-[220px] z-10">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-charcoal">AI Model</span>
-                    {creditBalance && (
-                      <span className={cn(
-                        'text-[10px] font-medium px-1.5 py-0.5 rounded-full',
-                        selectedModelId && models.find(m => m.id === selectedModelId)?.isFree
-                          ? 'bg-teal/10 text-teal'
-                          : creditBalance.hasCredits
-                            ? 'bg-stone/10 text-stone'
-                            : 'bg-red-50 text-red-500'
-                      )}>
-                        {selectedModelId && models.find(m => m.id === selectedModelId)?.isFree
-                          ? 'Free'
-                          : `${creditBalance.totalRemaining.toLocaleString()} cr`}
-                      </span>
-                    )}
+                <>
+                  <div className="fixed inset-0 bg-dark/40 backdrop-blur-sm z-50" onClick={() => setShowModelSelector(false)} />
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowModelSelector(false)}>
+                    <div className="bg-cream-warm rounded-xl shadow-2xl border border-stone/10 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+                      {/* Modal header */}
+                      <div className="flex items-center justify-between px-5 py-4 border-b border-stone/10">
+                        <div>
+                          <h3 className="text-sm font-semibold text-charcoal">Select AI Model</h3>
+                          <p className="text-xs text-stone mt-0.5">Choose the model for this chat</p>
+                        </div>
+                        <button type="button" onClick={() => setShowModelSelector(false)} className="p-1.5 rounded-lg text-stone hover:text-charcoal hover:bg-stone/10 transition-colors">
+                          <XMarkIcon className="w-5 h-5" />
+                        </button>
+                      </div>
+
+                      {/* Credit balance */}
+                      {creditBalance && (
+                        <div className="px-5 py-2.5 border-b border-stone/10 flex items-center justify-between">
+                          <span className="text-xs text-stone">Credits remaining</span>
+                          <span className={cn(
+                            'text-xs font-semibold',
+                            creditBalance.hasCredits ? 'text-charcoal' : 'text-red-500'
+                          )}>
+                            {creditBalance.totalRemaining.toLocaleString()} credits
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Model list */}
+                      <div className="py-2">
+                        {models.map(model => {
+                          const isSelected = model.id === selectedModelId;
+                          const status = providerStatuses?.[model.provider];
+                          return (
+                            <button
+                              key={model.id}
+                              type="button"
+                              onClick={() => { onModelChange(model.id); setShowModelSelector(false); }}
+                              className={cn(
+                                'w-full text-left px-5 py-3 flex items-center justify-between hover:bg-cream transition-colors',
+                                isSelected && 'bg-cream'
+                              )}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={cn(
+                                  'w-8 h-8 rounded-lg flex items-center justify-center',
+                                  model.isFree ? 'bg-teal/10' : 'bg-gold/10'
+                                )}>
+                                  {model.isFree
+                                    ? <SparklesIcon className="w-4 h-4 text-teal" />
+                                    : <SparklesIcon className="w-4 h-4 text-gold" />
+                                  }
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-charcoal">{model.name}</p>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <span className={cn(
+                                      'w-1.5 h-1.5 rounded-full',
+                                      status === 'offline' ? 'bg-red-500' : status === 'active' ? 'bg-emerald-500' : 'bg-stone/30'
+                                    )} />
+                                    <span className="text-xs text-stone capitalize">{model.provider}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={cn(
+                                  'text-xs font-medium px-2 py-0.5 rounded-full',
+                                  model.isFree ? 'bg-teal/10 text-teal' : 'bg-gold/10 text-gold'
+                                )}>
+                                  {model.isFree ? 'Free' : `~${model.estimatedCreditsPerMessage} cr`}
+                                </span>
+                                {isSelected && <CheckCircleIcon className="w-4 h-4 text-teal" />}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
-                  <ModelSelector
-                    models={models}
-                    selectedModelId={selectedModelId || null}
-                    onSelect={(id) => { onModelChange(id); setShowModelSelector(false); }}
-                    compact
-                    providerStatuses={providerStatuses}
-                  />
-                </div>
+                </>
               )}
               {isLoading && onStopGeneration ? (
                 <button
