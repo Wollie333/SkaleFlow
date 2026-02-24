@@ -189,17 +189,16 @@ export function ExpertChatPanel({
   // Thread collapse: when collapsed, only show the last assistant message
   const realMessages = baseVisibleMessages.filter(m => m.role !== 'separator');
   const hiddenCount = threadCollapsed ? Math.max(0, realMessages.length - 1) : 0;
-  const visibleMessages = threadCollapsed
-    ? (() => {
-        // Show only the last assistant message (or last message if no assistant)
-        const lastAssistantIdx = baseVisibleMessages.reduce(
-          (acc, m, idx) => (m.role === 'assistant' ? idx : acc), -1
-        );
-        if (lastAssistantIdx >= 0) return [baseVisibleMessages[lastAssistantIdx]];
-        // Fallback: show last message
-        return baseVisibleMessages.length > 0 ? [baseVisibleMessages[baseVisibleMessages.length - 1]] : [];
-      })()
-    : baseVisibleMessages;
+
+  let visibleMessages = baseVisibleMessages;
+  if (threadCollapsed && baseVisibleMessages.length > 0) {
+    const lastAssistantIdx = baseVisibleMessages.reduce(
+      (acc: number, m: Message, idx: number) => (m.role === 'assistant' ? idx : acc), -1
+    );
+    visibleMessages = lastAssistantIdx >= 0
+      ? [baseVisibleMessages[lastAssistantIdx]]
+      : [baseVisibleMessages[baseVisibleMessages.length - 1]];
+  }
 
   return (
     <div className={cn(
