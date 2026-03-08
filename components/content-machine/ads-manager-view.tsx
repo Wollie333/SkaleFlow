@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  ChevronLeftIcon,
   ArrowPathIcon,
   PencilIcon,
   DocumentDuplicateIcon,
@@ -147,6 +148,16 @@ const CATEGORY_COLORS: Record<string, string> = {
   community: 'text-teal',
 };
 
+const CONTENT_TYPE_COLORS: Record<string, string> = {
+  'Outcome Oriented': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+  'Point of View': 'bg-blue-400/15 text-blue-400 border-blue-400/25',
+  'Authority': 'bg-purple-400/15 text-purple-400 border-purple-400/25',
+  'How-To': 'bg-teal/15 text-teal border-teal/25',
+  'Community': 'bg-amber-400/15 text-amber-400 border-amber-400/25',
+  'Culture / Behind the Scenes': 'bg-pink-400/15 text-pink-400 border-pink-400/25',
+  'Trend / Meme': 'bg-orange-400/15 text-orange-400 border-orange-400/25',
+};
+
 // ─── Component ─────────────────────────────────────────────────────────
 export function AdsManagerView({ organizationId, onCreateCampaign, generatingBatchId, onGenerationComplete, onGenerationCancel }: AdsManagerViewProps) {
   const router = useRouter();
@@ -173,6 +184,19 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const datePickerRef = useRef<HTMLDivElement>(null);
+
+  // Close date picker on outside click
+  useEffect(() => {
+    if (!showDatePicker) return;
+    function handleClick(e: MouseEvent) {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
+        setShowDatePicker(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showDatePicker]);
 
   // ─── Drill-down navigation ───────────────────────────────────────────
   function drillIntoCampaign(campaignId: string) {
@@ -214,6 +238,28 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
     setActiveTab(tab);
     resetTableControls();
   }
+
+  function goBack() {
+    if (activeTab === 'posts' && drillContext.adsetId) {
+      // Posts → Channels (same campaign)
+      setDrillContext(prev => ({ campaignId: prev.campaignId, campaignName: prev.campaignName }));
+      setActiveTab('adsets');
+      resetTableControls();
+    } else if (activeTab === 'adsets' && drillContext.campaignId) {
+      // Channels → Campaigns
+      setDrillContext({});
+      setActiveTab('campaigns');
+      resetTableControls();
+    } else if (activeTab === 'posts' && drillContext.campaignId) {
+      // Posts (campaign-level) → Campaigns
+      setDrillContext({});
+      setActiveTab('campaigns');
+      resetTableControls();
+    }
+  }
+
+  const canGoBack = (activeTab === 'adsets' && !!drillContext.campaignId) ||
+                    (activeTab === 'posts' && (!!drillContext.campaignId || !!drillContext.adsetId));
 
   // ─── Data fetching ───────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
@@ -373,6 +419,37 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
     fetchData();
   }
 
+  async function handleDeleteSelected() {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    const label = activeTab === 'campaigns' ? 'campaign' : activeTab === 'adsets' ? 'channel' : 'post';
+    if (!confirm(`Delete ${ids.length} ${label}${ids.length > 1 ? 's' : ''}? This cannot be undone.`)) return;
+
+    const supabase = createClient();
+
+    if (activeTab === 'campaigns') {
+      // Delete posts → adsets → campaigns (cascade manually)
+      for (const id of ids) {
+        await supabase.from('content_posts').delete().eq('campaign_id', id);
+        await supabase.from('campaign_adsets').delete().eq('campaign_id', id);
+        await supabase.from('campaigns').delete().eq('id', id);
+      }
+    } else if (activeTab === 'adsets') {
+      for (const id of ids) {
+        await supabase.from('content_posts').delete().eq('adset_id', id);
+        await supabase.from('campaign_adsets').delete().eq('id', id);
+      }
+    } else {
+      // Posts — direct delete
+      for (const id of ids) {
+        await supabase.from('content_posts').delete().eq('id', id);
+      }
+    }
+
+    setSelectedIds(new Set());
+    fetchData();
+  }
+
   // ─── Helpers ─────────────────────────────────────────────────────────
   const activeCampaignCount = campaigns.filter(c => c.status === 'active').length;
   const hasCampaigns = campaigns.length > 0;
@@ -436,10 +513,97 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* Date range picker */}
+          <div className="relative" ref={datePickerRef}>
+            <button
+              onClick={() => setShowDatePicker(!showDatePicker)}
+              className={cn(
+                'flex items-center gap-2 px-3 py-1.5 text-xs rounded-lg border transition-colors',
+                (dateFrom || dateTo)
+                  ? 'border-teal/30 text-teal bg-teal/5'
+                  : 'border-stone/10 text-stone hover:border-stone/20'
+              )}
+            >
+              <CalendarDaysIcon className="w-3.5 h-3.5" />
+              {dateFrom || dateTo ? (
+                <span>
+                  {dateFrom ? new Date(dateFrom + 'T00:00').toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Start'}
+                  {' – '}
+                  {dateTo ? new Date(dateTo + 'T00:00').toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Now'}
+                </span>
+              ) : (
+                <span>Date range</span>
+              )}
+              {(dateFrom || dateTo) && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setDateFrom(''); setDateTo(''); setShowDatePicker(false); }}
+                  className="p-0.5 rounded hover:bg-teal/10"
+                >
+                  <XMarkIcon className="w-3 h-3" />
+                </button>
+              )}
+            </button>
+
+            {/* Dropdown */}
+            {showDatePicker && (
+              <div className="absolute right-0 top-full mt-1 z-30 bg-cream-warm border border-stone/10 rounded-xl shadow-lg p-4 w-72">
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[11px] font-medium text-stone uppercase tracking-wider mb-1 block">From</label>
+                    <input
+                      type="date"
+                      value={dateFrom}
+                      onChange={e => setDateFrom(e.target.value)}
+                      className="w-full px-3 py-1.5 text-sm border border-stone/10 rounded-lg bg-cream/50 text-charcoal focus:outline-none focus:border-teal/30 focus:ring-1 focus:ring-teal/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-medium text-stone uppercase tracking-wider mb-1 block">To</label>
+                    <input
+                      type="date"
+                      value={dateTo}
+                      onChange={e => setDateTo(e.target.value)}
+                      className="w-full px-3 py-1.5 text-sm border border-stone/10 rounded-lg bg-cream/50 text-charcoal focus:outline-none focus:border-teal/30 focus:ring-1 focus:ring-teal/20"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex gap-1">
+                      {[
+                        { label: '7d', days: 7 },
+                        { label: '30d', days: 30 },
+                        { label: '90d', days: 90 },
+                      ].map(preset => (
+                        <button
+                          key={preset.label}
+                          onClick={() => {
+                            const to = new Date();
+                            const from = new Date();
+                            from.setDate(from.getDate() - preset.days);
+                            setDateFrom(from.toISOString().split('T')[0]);
+                            setDateTo(to.toISOString().split('T')[0]);
+                          }}
+                          className="px-2 py-1 text-[11px] font-medium rounded-md bg-stone/10 text-stone hover:bg-teal/10 hover:text-teal transition-colors"
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => { setDateFrom(''); setDateTo(''); }}
+                      className="text-[11px] text-stone hover:text-teal transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {lastUpdated && (
             <span className="text-xs text-stone">
-              Updated {lastUpdated.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}
+              {lastUpdated.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
           <button onClick={fetchData} className="p-1.5 rounded-lg hover:bg-teal/10 text-stone transition-colors" title="Refresh">
@@ -453,6 +617,8 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
         <div className="border-b border-stone/10 px-6 py-3">
           <GenerationBatchTracker
             batchId={generatingBatchId}
+            statusEndpoint="/api/content/campaigns/queue"
+            cancelEndpoint="/api/content/campaigns/queue/cancel"
             onComplete={() => {
               fetchData();
               onGenerationComplete?.();
@@ -466,9 +632,21 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
         </div>
       )}
 
-      {/* Three-level tabs + Breadcrumb */}
+      {/* Three-level tabs + Breadcrumb + Back button */}
       <div className="border-b border-stone/10 px-6 py-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
+          {/* Back button */}
+          {canGoBack && (
+            <button
+              onClick={goBack}
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-teal bg-teal/10 hover:bg-teal/15 rounded-lg transition-colors"
+              title="Go back one level"
+            >
+              <ChevronLeftIcon className="w-3.5 h-3.5" />
+              Back
+            </button>
+          )}
+
           <div className="flex border border-stone/10 rounded-lg overflow-hidden">
             {(['campaigns', 'adsets', 'posts'] as TabLevel[]).map(tab => {
               const labels: Record<TabLevel, string> = { campaigns: 'Campaigns', adsets: 'Channels', posts: 'Posts' };
@@ -545,7 +723,7 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
               <div className="w-px h-5 bg-stone/10" />
               <Button size="sm" variant="outline" className="gap-1.5 text-xs !border-teal/30 !text-teal hover:!bg-teal/10"><PencilIcon className="w-3.5 h-3.5" />Edit</Button>
               <Button size="sm" variant="outline" className="gap-1.5 text-xs !border-teal/30 !text-teal hover:!bg-teal/10"><DocumentDuplicateIcon className="w-3.5 h-3.5" />Duplicate</Button>
-              <Button size="sm" variant="outline" className="gap-1.5 text-xs !border-red-400/30 !text-red-400 hover:!bg-red-400/10"><TrashIcon className="w-3.5 h-3.5" />Delete</Button>
+              <Button size="sm" variant="outline" className="gap-1.5 text-xs !border-red-400/30 !text-red-400 hover:!bg-red-400/10" onClick={handleDeleteSelected}><TrashIcon className="w-3.5 h-3.5" />Delete</Button>
               <div className="w-px h-5 bg-stone/10" />
               <span className="text-xs text-stone font-medium">{selectedIds.size} selected</span>
             </>
@@ -595,7 +773,12 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
             onToggleSelect={toggleSelect} onToggleSelectAll={toggleSelectAll}
             onSort={handleSort} SortIcon={SortIcon}
             formatDate={formatDate} formatStatus={formatStatus}
-            onRowClick={(id) => router.push(`/content/${id}`)}
+            onRowClick={(id) => {
+              const post = posts.find(p => p.id === id);
+              if (post?.campaign_id) {
+                router.push(`/content/campaigns/${post.campaign_id}/posts/${id}`);
+              }
+            }}
           />
         )}
       </div>
@@ -620,14 +803,14 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
 // ─── Hover Action Buttons ──────────────────────────────────────────────
 function RowActions({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn(
+    <td className={cn(
       'absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10',
       className
     )}>
       <div className="flex items-center gap-0.5 bg-cream-warm border border-stone/10 rounded-lg shadow-sm px-1 py-0.5">
         {children}
       </div>
-    </div>
+    </td>
   );
 }
 
@@ -882,7 +1065,11 @@ function PostsTable({
               </span>
             </td>
             <td className="px-3 py-2.5"><span className="text-xs text-charcoal capitalize">{p.format.replace(/_/g, ' ')}</span></td>
-            <td className="px-3 py-2.5"><span className="text-xs text-charcoal">{p.content_type_name}</span></td>
+            <td className="px-3 py-2.5">
+              <span className={cn('inline-flex px-2 py-0.5 text-[11px] font-medium rounded-full border', CONTENT_TYPE_COLORS[p.content_type_name] || 'bg-stone/10 text-charcoal border-stone/20')}>
+                {p.content_type_name}
+              </span>
+            </td>
             <td className="px-3 py-2.5"><StatusPill status={p.status} label={formatStatus(p.status)} /></td>
             <td className="px-3 py-2.5 text-charcoal whitespace-nowrap">
               {p.scheduled_date ? (
