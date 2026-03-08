@@ -18,6 +18,10 @@ export const BRAND_VARIABLE_CATEGORIES: BrandVariableCategory[] = [
       'icp_psychographics',
       'icp_buying_triggers',
       'customer_journey_stages',
+      'icp_right_client_traits',
+      'icp_wrong_client_flags',
+      'icp_values_alignment',
+      'icp_tactic_trap',
     ],
   },
   {
@@ -32,6 +36,7 @@ export const BRAND_VARIABLE_CATEGORIES: BrandVariableCategory[] = [
       'founder_story',
       'brand_tagline',
       'brand_visual_assets_summary',
+      'brand_faith_positioning',
       'category',
     ],
   },
@@ -64,6 +69,8 @@ export const BRAND_VARIABLE_CATEGORIES: BrandVariableCategory[] = [
       'lead_magnet_title',
       'lead_magnet_promise',
       'lead_magnet_content_outline',
+      'offer_qualification_criteria',
+      'offer_implementation_services',
     ],
   },
   {
@@ -85,6 +92,9 @@ export const BRAND_VARIABLE_CATEGORIES: BrandVariableCategory[] = [
       'differentiation_statement',
       'competitive_landscape',
       'beliefs_to_teach',
+      'category_name',
+      'category_claim',
+      'one_liner',
     ],
   },
   {
@@ -108,6 +118,7 @@ export const BRAND_VARIABLE_CATEGORIES: BrandVariableCategory[] = [
       'conversion_strategy',
       'conversion_funnel',
       'conversion_metrics',
+      'offer_affiliate_tools',
     ],
   },
 ];
@@ -126,6 +137,7 @@ export const CORE_CONTENT_VARIABLES: string[] = [
   'brand_characteristics',
   'brand_values',
   'message_core',
+  'one_liner',
 ];
 
 /**
@@ -157,8 +169,8 @@ type StrategicCombo = `${string}_${string}`;
 
 const STRATEGIC_VARIABLE_MAP: Record<StrategicCombo, string[]> = {
   // ── AWARENESS ──
-  awareness_character:            ['icp_pains', 'icp_desires', 'icp_emotional_triggers', 'enemy_name', 'brand_origin_story'],
-  awareness_external_problem:     ['icp_pains', 'enemy_name', 'enemy_description', 'enemy_cost', 'positioning_statement'],
+  awareness_character:            ['icp_pains', 'icp_desires', 'icp_emotional_triggers', 'enemy_name', 'brand_origin_story', 'icp_tactic_trap', 'icp_right_client_traits'],
+  awareness_external_problem:     ['icp_pains', 'enemy_name', 'enemy_description', 'enemy_cost', 'positioning_statement', 'icp_tactic_trap'],
   awareness_internal_problem:     ['icp_emotional_triggers', 'icp_internal_dialogue', 'enemy_description', 'beliefs_to_teach', 'brand_origin_story'],
   awareness_philosophical_problem:['enemy_false_promises', 'enemy_cost', 'beliefs_to_teach', 'brand_purpose', 'positioning_statement'],
   awareness_guide:                ['brand_origin_story', 'founder_story', 'icp_pains', 'icp_desires', 'content_themes'],
@@ -172,8 +184,8 @@ const STRATEGIC_VARIABLE_MAP: Record<StrategicCombo, string[]> = {
   consideration_external_problem:     ['icp_pains', 'icp_objections', 'enemy_description', 'positioning_statement', 'differentiation_statement'],
   consideration_internal_problem:     ['icp_internal_dialogue', 'icp_emotional_triggers', 'icp_objections', 'beliefs_to_teach', 'offer_problem'],
   consideration_philosophical_problem:['enemy_false_promises', 'beliefs_to_teach', 'competitive_landscape', 'positioning_statement', 'brand_purpose'],
-  consideration_guide:                ['founder_story', 'brand_origin_story', 'competitive_landscape', 'differentiation_statement', 'message_pillars'],
-  consideration_plan:                 ['offer_name', 'offer_inclusions', 'offer_outcome', 'conversion_strategy', 'message_pillars'],
+  consideration_guide:                ['founder_story', 'brand_origin_story', 'competitive_landscape', 'differentiation_statement', 'message_pillars', 'brand_faith_positioning', 'one_liner'],
+  consideration_plan:                 ['offer_name', 'offer_inclusions', 'offer_outcome', 'conversion_strategy', 'message_pillars', 'offer_qualification_criteria', 'category_name'],
   consideration_call_to_action:       ['offer_name', 'offer_outcome', 'lead_magnet_title', 'lead_magnet_promise', 'conversion_strategy'],
   consideration_failure:              ['icp_objections', 'enemy_cost', 'offer_transformation_before', 'competitive_landscape', 'beliefs_to_teach'],
   consideration_success:              ['offer_outcome', 'offer_transformation_after', 'icp_desires', 'founder_story', 'message_pillars'],
@@ -185,7 +197,7 @@ const STRATEGIC_VARIABLE_MAP: Record<StrategicCombo, string[]> = {
   conversion_philosophical_problem:['brand_purpose', 'beliefs_to_teach', 'offer_name', 'offer_outcome', 'positioning_statement'],
   conversion_guide:                ['founder_story', 'offer_name', 'offer_inclusions', 'differentiation_statement', 'conversion_strategy'],
   conversion_plan:                 ['offer_name', 'offer_inclusions', 'offer_outcome', 'conversion_funnel', 'conversion_strategy'],
-  conversion_call_to_action:       ['offer_name', 'offer_outcome', 'offer_inclusions', 'lead_magnet_title', 'conversion_strategy'],
+  conversion_call_to_action:       ['offer_name', 'offer_outcome', 'offer_inclusions', 'lead_magnet_title', 'conversion_strategy', 'offer_qualification_criteria', 'icp_right_client_traits'],
   conversion_failure:              ['enemy_cost', 'icp_objections', 'offer_transformation_before', 'offer_name', 'conversion_strategy'],
   conversion_success:              ['offer_outcome', 'offer_transformation_after', 'icp_desires', 'offer_name', 'authority_pitch'],
 };
@@ -315,4 +327,15 @@ export const VARIABLE_DISPLAY_NAMES: Record<string, string> = {
   conversion_strategy: 'Conversion Strategy',
   conversion_funnel: 'Conversion Funnel',
   conversion_metrics: 'Key Metrics',
+  icp_right_client_traits: 'Right Client Traits',
+  icp_wrong_client_flags: 'Wrong Client Red Flags',
+  icp_values_alignment: 'Values Alignment',
+  icp_tactic_trap: 'Tactic Trap',
+  brand_faith_positioning: 'Faith & Values Positioning',
+  category_name: 'Category Name',
+  category_claim: 'Category Claim',
+  one_liner: 'One-Liner',
+  offer_qualification_criteria: 'Qualification Criteria',
+  offer_implementation_services: 'Implementation Services',
+  offer_affiliate_tools: 'Affiliate & Recommended Tools',
 };

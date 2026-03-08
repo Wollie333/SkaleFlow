@@ -188,7 +188,7 @@ export async function POST(request: Request) {
     // Build system prompt with current question index for sequential enforcement
     const currentQuestionIndex = (phase as Record<string, unknown>).current_question_index as number ?? 0;
     const agent = getAgentForQuestion(phase.phase_number, currentQuestionIndex);
-    const systemPrompt = buildSystemPrompt(phaseTemplate, lockedOutputs, org?.name || 'Your Organization', currentQuestionIndex, draftOutputs, orgLogoUrl, agent ? formatAgentForPrompt(agent) : null, currentPhaseOutputs);
+    const systemPrompt = buildSystemPrompt(phaseTemplate, lockedOutputs, org?.name || 'Your Organization', currentQuestionIndex, draftOutputs, orgLogoUrl, agent ? formatAgentForPrompt(agent, phase.phase_number) : null, currentPhaseOutputs);
 
     // Build the user message content for Claude (with file content blocks if files attached)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -22,6 +22,7 @@ export const PHASE_TEMPLATES: Record<string, PhaseTemplate> = {
       'What characteristics should the brand embody? (Personality traits, communication style, how the brand "shows up")',
       'Let\'s identify your brand archetype. Based on everything we\'ve discussed, I\'ll suggest the best-fit archetypes for your brand.',
       'What will this brand NEVER do? Give me 3-5 non-negotiables with the reasoning behind each.',
+      'How does your personal faith, spiritual conviction, or guiding philosophy show up in your brand? Is it explicit, implicit, or not part of the brand?',
       'What\'s the brand\'s origin story? How did this business come to be, and what\'s the founder\'s personal journey?',
     ],
     outputVariables: [
@@ -32,6 +33,7 @@ export const PHASE_TEMPLATES: Record<string, PhaseTemplate> = {
       'brand_characteristics',
       'brand_archetype',
       'brand_non_negotiables',
+      'brand_faith_positioning',
       'brand_origin_story',
       'founder_story',
     ],
@@ -42,7 +44,8 @@ export const PHASE_TEMPLATES: Record<string, PhaseTemplate> = {
       3: ['brand_characteristics'],
       4: ['brand_archetype'],
       5: ['brand_non_negotiables'],
-      6: ['brand_origin_story', 'founder_story'],
+      6: ['brand_faith_positioning'],
+      7: ['brand_origin_story', 'founder_story'],
     },
     instructions: `Guide the user through Brand Foundation. Ask each question, listen to their answer, help them refine it, and structure it as YAML only after they approve.
 
@@ -64,7 +67,10 @@ Based on their prior answers (purpose, values, characteristics), suggest 2-3 bes
 QUESTION 5 — NON-NEGOTIABLES:
 Ask what the brand will NEVER do. For each one they give, help them add the reasoning behind it if missing. Use their language.
 
-QUESTION 6 — ORIGIN & FOUNDER STORY:
+QUESTION 6 — FAITH & VALUES POSITIONING:
+Ask how their personal faith, spiritual conviction, or guiding philosophy shows up in their brand. This could be: (1) Explicit — faith is central to the brand identity, (2) Implicit — values are faith-informed but not overtly stated, or (3) Not applicable — the brand is secular. Let THEM define the role. If they share faith convictions, help them articulate how these shape their business decisions, client relationships, and brand boundaries. If not applicable, acknowledge it respectfully and note "Secular brand — no faith positioning." Output as brand_faith_positioning.
+
+QUESTION 7 — ORIGIN & FOUNDER STORY:
 Ask for both the business origin story and the founder's personal journey. Capture their narrative faithfully — these are personal stories, so preserve their voice and emotion.`,
   },
   '2': {
@@ -80,6 +86,8 @@ Ask for both the business origin story and the founder's personal journey. Captu
       'What are their beliefs, worldview, and identity? (Psychographics — what they believe, aspire to, value, how they see themselves)',
       'What objections stop them, and what triggers them to finally act?',
       'Map their customer journey — from awareness through advocacy, with touchpoints and emotions at each stage.',
+      'Describe the RIGHT client — the kind of person you love working with. What traits, attitudes, and behaviors make them a perfect fit?',
+      'Now describe the WRONG client — the kind of person who looks right on paper but is actually a terrible fit. What are the red flags?',
     ],
     outputVariables: [
       'icp_demographics',
@@ -91,6 +99,9 @@ Ask for both the business origin story and the founder's personal journey. Captu
       'icp_objections',
       'icp_buying_triggers',
       'customer_journey_stages',
+      'icp_right_client_traits',
+      'icp_wrong_client_flags',
+      'icp_values_alignment',
     ],
     questionOutputMap: {
       0: ['icp_demographics'],
@@ -100,6 +111,8 @@ Ask for both the business origin story and the founder's personal journey. Captu
       4: ['icp_psychographics'],
       5: ['icp_objections', 'icp_buying_triggers'],
       6: ['customer_journey_stages'],
+      7: ['icp_right_client_traits', 'icp_values_alignment'],
+      8: ['icp_wrong_client_flags'],
     },
     instructions: `Guide the user through defining their Ideal Customer Profile. Listen to their knowledge of their customer — they know this person. Help them articulate and deepen what they already know.
 
@@ -122,7 +135,13 @@ QUESTION 5 — OBJECTIONS & BUYING TRIGGERS:
 Ask what objections they hear and what finally makes someone buy. Use the user's actual experience — real objections they've encountered, real moments they've seen trigger a purchase.
 
 QUESTION 6 — CUSTOMER JOURNEY:
-Ask the user to walk you through how someone goes from first hearing about them to becoming a loyal customer. Help them map it into stages, but use their actual touchpoints and process.`,
+Ask the user to walk you through how someone goes from first hearing about them to becoming a loyal customer. Help them map it into stages, but use their actual touchpoints and process.
+
+QUESTION 7 — RIGHT CLIENT TRAITS:
+Ask the user to describe their IDEAL client — the person they love working with. What traits, attitudes, behaviors, and values make them a perfect fit? Help them be specific: what does this person believe, how do they show up, what's their attitude toward investment and growth? Also extract icp_values_alignment — the shared values between brand and ideal client that create natural chemistry. Output both icp_right_client_traits and icp_values_alignment.
+
+QUESTION 8 — WRONG CLIENT FLAGS:
+Ask the user to describe the WRONG client — the person who looks right on paper but is actually a terrible fit. What are the red flags? What attitudes, behaviors, or expectations signal trouble? Help them name 3-5 specific flags with examples from real experience. This isn't about demographics — it's about character traits that predict bad outcomes. Output as icp_wrong_client_flags.`,
   },
   '3': {
     number: '3',
@@ -132,6 +151,7 @@ Ask the user to walk you through how someone goes from first hearing about them 
     questions: [
       'What keeps creating problems for your customers? What is the real cost — emotionally, financially, in time, and in missed opportunity?',
       'What advice or approach has failed them? What does it promise vs. what it actually delivers, and why do people keep believing it?',
+      'What tactics, hacks, or shortcuts does your market keep chasing? What are the "shiny objects" that distract them from doing the real work?',
       'Name the enemy. Give it a memorable, brandable name — and define its type (mindset, system, approach, or myth).',
     ],
     outputVariables: [
@@ -140,11 +160,13 @@ Ask the user to walk you through how someone goes from first hearing about them 
       'enemy_description',
       'enemy_cost',
       'enemy_false_promises',
+      'icp_tactic_trap',
     ],
     questionOutputMap: {
       0: ['enemy_description', 'enemy_cost'],
       1: ['enemy_false_promises'],
-      2: ['enemy_name', 'enemy_type'],
+      2: ['icp_tactic_trap'],
+      3: ['enemy_name', 'enemy_type'],
     },
     instructions: `Guide the user to define the ONE enemy their brand fights against — a mindset, system, or broken approach (never a specific competitor).
 
@@ -154,7 +176,10 @@ Ask the user what keeps creating problems for their customers. Listen to their a
 QUESTION 1 — FALSE PROMISES:
 Ask what advice or approach has failed their customers before. Let the user describe what doesn't work and why. Help them structure it clearly.
 
-QUESTION 2 — NAME & TYPE:
+QUESTION 2 — TACTIC TRAP:
+Ask the user what tactics, hacks, or shortcuts their market keeps chasing — the "shiny objects" that distract from real work. These are the surface-level fixes people try that never produce lasting results. Help them name 3-5 specific tactics and explain why each one fails. Output as icp_tactic_trap — a structured list of traps with what they promise vs. what actually happens.
+
+QUESTION 3 — NAME & TYPE:
 Ask the user to name this enemy. If they need help, offer 2-3 name ideas based on what they've described — but let them choose or create their own. Define the type (mindset, system, approach, or myth) together.`,
   },
   '4': {
@@ -171,6 +196,9 @@ Ask the user to name this enemy. If they need help, offer 2-3 name ideas based o
       'Outline the lead magnet content — sections, key takeaways, and how it connects to the main offer.',
       'What is the pricing structure? (Tier name, displayed price, billing frequency — once-off, monthly, quarterly, annual)',
       'What are the top 3 objections prospects raise, and what is your ideal response to each?',
+      'What must be true about a prospect before they can get results from your offer? What conditions need to be in place?',
+      'Do you offer implementation, done-for-you, or hands-on services alongside your core offer? Describe the service model.',
+      'Are there complementary tools, platforms, or affiliate products you recommend to clients? What do you earn from recommending them?',
     ],
     outputVariables: [
       'offer_problem',
@@ -189,6 +217,9 @@ Ask the user to name this enemy. If they need help, offer 2-3 name ideas based o
       'offer_billing_frequency',
       'offer_tier',
       'offer_objections',
+      'offer_qualification_criteria',
+      'offer_implementation_services',
+      'offer_affiliate_tools',
     ],
     questionOutputMap: {
       0: ['offer_problem'],
@@ -199,6 +230,9 @@ Ask the user to name this enemy. If they need help, offer 2-3 name ideas based o
       5: ['lead_magnet_content_outline'],
       6: ['offer_price_display', 'offer_billing_frequency', 'offer_tier'],
       7: ['offer_objections'],
+      8: ['offer_qualification_criteria'],
+      9: ['offer_implementation_services'],
+      10: ['offer_affiliate_tools'],
     },
     instructions: `Guide the user through designing their offer and lead magnet. The user knows their business — help them articulate and structure what they already know.
 
@@ -224,7 +258,16 @@ QUESTION 6 — PRICING:
 Ask the user about pricing. Help them define: (1) tier name (e.g. "Premium", "Starter", "Growth"), (2) the displayed price (e.g. "R5,000/month", "$997 once-off"), (3) billing frequency (once-off, monthly, quarterly, or annual). If they have multiple tiers, focus on their PRIMARY offer tier — the one they'd present on a sales call. Output as offer_tier, offer_price_display, and offer_billing_frequency.
 
 QUESTION 7 — OBJECTION HANDLING:
-Ask the user for the top 3 objections they hear from prospects and their ideal response to each. Use their REAL sales experience — the objections they actually encounter. For each, capture the objection and the response as a pair. Output as offer_objections — a structured list of {objection, response} pairs.`,
+Ask the user for the top 3 objections they hear from prospects and their ideal response to each. Use their REAL sales experience — the objections they actually encounter. For each, capture the objection and the response as a pair. Output as offer_objections — a structured list of {objection, response} pairs.
+
+QUESTION 8 — QUALIFICATION CRITERIA:
+Ask the user what must be true about a prospect BEFORE they can get results. What conditions, resources, mindset, or prerequisites need to be in place? Help them define 3-5 specific criteria that separate qualified prospects from unqualified ones. This protects both the brand and the client — it's not gatekeeping, it's ensuring success. Output as offer_qualification_criteria.
+
+QUESTION 9 — IMPLEMENTATION SERVICES:
+Ask the user if they offer any hands-on implementation, done-for-you, or service-based components alongside their core offer. If yes, help them describe the service model — what's included, how it works, and how it relates to the main offer. If no, acknowledge it and note "No implementation services — self-serve model." Output as offer_implementation_services.
+
+QUESTION 10 — AFFILIATE & RECOMMENDED TOOLS:
+Ask the user if there are complementary tools, platforms, software, or products they recommend to clients. Do they earn affiliate commissions from any of these? Help them list each tool with: what it does, why they recommend it, and whether there's an affiliate relationship. If none, acknowledge and note "No affiliate tools." Output as offer_affiliate_tools.`,
   },
   '5': {
     number: '5',
@@ -235,20 +278,23 @@ Ask the user for the top 3 objections they hear from prospects and their ideal r
       'Why does this offer exist? Complete this: "For [ICP] who [need], [Brand] is the [category] that [differentiation] because [proof]."',
       'Why do alternatives fail? What do competitors, DIY, and doing nothing get wrong?',
       'What is your unique mechanism — the thing you do that no one else does?',
-      'What category do you own or want to create? Define it clearly.',
+      'Let\'s extract your category. Through conversation, we\'ll define the exact category you own, what you call it, and why you own it — plus distill your one-liner.',
       'Map the competitive landscape — who else serves this ICP, what they get right, what they miss, and your strategic advantage.',
     ],
     outputVariables: [
       'positioning_statement',
       'differentiation_statement',
       'category',
+      'category_name',
+      'category_claim',
+      'one_liner',
       'competitive_landscape',
     ],
     questionOutputMap: {
       0: ['positioning_statement'],
       1: ['differentiation_statement'],
       2: ['differentiation_statement'],
-      3: ['category'],
+      3: ['category', 'category_name', 'category_claim', 'one_liner'],
       4: ['competitive_landscape'],
     },
     instructions: `Guide the user through defining their market positioning and competitive differentiation. Position against the ENEMY from Phase 3, not against specific competitors. The user knows their market — help them articulate and sharpen what they already know.
@@ -262,8 +308,18 @@ Ask the user what alternatives their customers typically try before coming to th
 QUESTION 2 — UNIQUE MECHANISM:
 Ask the user what they do that nobody else does — their proprietary process, methodology, or approach. If they struggle, ask "What's the specific thing you do that makes results more predictable?" Help them name it and describe why it works, but the mechanism must come from THEM.
 
-QUESTION 3 — CATEGORY:
-Ask the user what category they see themselves in. If they feel the existing category doesn't fit, help them articulate a new one. Offer 2-3 options based on their positioning — but let them choose, modify, or create their own. Define what the category means and why it matters.
+QUESTION 3 — CATEGORY EXTRACTION & ONE LINER:
+This is a multi-exchange extraction conversation, not a single question. Guide the user through these steps:
+
+1. Ask what category they currently see themselves in. If the existing category doesn't fit, help them articulate a new one.
+2. Ask them to name the category — what would they call it? Offer 2-3 options based on positioning.
+3. Ask what claim they make in this category — what do they own? What's their right to lead it?
+4. Help them define category_name (the label), category_claim (why they own it), and category (the broader positioning context).
+5. Once category is locked, ask: "Now let's distill everything into ONE sentence — your one-liner. If someone asks 'What do you do?' at a dinner party, what's the answer that makes them say 'Tell me more'?"
+6. Draft 3 one-liner options based on their ICP, enemy, offer, and category. Format: "[ICP problem/desire] → [Brand mechanism] → [Transformation]."
+7. Let them choose, modify, or write their own. Output as one_liner.
+
+Output ALL FOUR variables: category, category_name, category_claim, one_liner.
 
 QUESTION 4 — COMPETITIVE LANDSCAPE:
 Ask the user to map who else serves their ICP. Let them describe what competitors get right and what they miss. Help them organize it into a clear strategic view, using their knowledge of the market. This is internal strategy — use their honest assessment.`,
@@ -625,7 +681,7 @@ Draft: headline, supporting copy, and CTA for the lead magnet landing page. Refe
     description: 'Build your authority platform and conversion strategy using the Key Person of Influence 5P framework.',
     estimatedMinutes: 30,
     questions: [
-      'Perfect your pitch — create your one-liner, elevator pitch, and signature talk title.',
+      'Your one-liner is already defined from Phase 5. Let\'s build on it — refine it, create your elevator pitch, and design your signature talk title.',
       'What will you publish, where, and how often? (Book, podcast, newsletter, blog, social)',
       'Map your product ecosystem — from free lead magnet through core offer to premium tier.',
       'Build your profile and PR plan — media targets, speaking opportunities, awards, thought leadership.',
@@ -654,7 +710,7 @@ Draft: headline, supporting copy, and CTA for the lead magnet landing page. Refe
     instructions: `Guide the user through building their Growth Engine using Daniel Priestley's Key Person of Influence 5P framework combined with strategic conversion planning. The user knows their business and industry — help them articulate and structure their growth strategy using what they've already built in phases 1-9.
 
 QUESTION 0 — PERFECT YOUR PITCH:
-Ask the user how they currently describe what they do. Help them refine it into three formats: (1) a one-liner, (2) a 60-second elevator pitch, (3) a signature talk title. Draft each using their words, brand foundation, and positioning — then present for review. If they have existing pitches, start from those and refine.
+Your one-liner is already defined from Phase 5 — reference the one_liner variable from the user's locked brand outputs. Start by presenting it: "Your one-liner from Phase 5 is: [one_liner]. Let's build on this foundation." Help them refine it if needed, then expand into two additional formats: (1) a 60-second elevator pitch that expands the one-liner into a compelling narrative, (2) a signature talk title that would make someone want to attend. Draft each using their words, brand foundation, and positioning — then present for review.
 
 QUESTION 1 — PUBLISHING STRATEGY:
 Ask the user what they're already publishing or plan to publish — book, podcast, newsletter, blog, social content. Ask where and how often. Help them organize this into a structured publishing plan aligned with their content pillars from Phase 6. If they're starting from scratch, ask what format excites them most and build from there.

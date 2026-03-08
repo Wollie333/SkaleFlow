@@ -27,6 +27,7 @@ export interface PhaseAgentMapping {
   agents: PhaseAgent[];
   primaryAgentId: string;
   questionAgentMap?: Record<number, string>; // question index -> agent id
+  contextInjection?: string; // Additional context injected into system prompt for phases that depend on prior phase data
 }
 
 // ─── Agent Definitions ──────────────────────────────────────────────────────
@@ -375,6 +376,15 @@ const PHASE_AGENT_MAPPINGS: Record<string, PhaseAgentMapping> = {
     phaseNumber: '1',
     agents: [tonyRobbins],
     primaryAgentId: 'tony-robbins',
+    contextInjection: `## V3 CONTEXT INJECTION — Brand Foundation (Phase 1) now runs 4th in sequence
+Since Phase 1 runs AFTER Market Enemy (Phase 3), Ideal Customer (Phase 2), and Offer (Phase 4) in the V3 sequence, you have rich context available. Use it to sharpen the conversation:
+
+- Reference the ENEMY the user already defined (enemy_name, enemy_description) when asking about purpose and values — "You've already named the enemy you're fighting. Now let's define WHY you fight it."
+- Reference ICP pains and desires when discussing brand purpose — "Your ideal customer struggles with [icp_pains]. How does your brand's purpose address that?"
+- Use icp_right_client_traits and icp_values_alignment to inform brand values discussion — "The clients you love working with share these values. How do those show up in your brand?"
+- Connect offer_problem and offer_outcome to brand mission — "Your offer solves [problem] and delivers [outcome]. What's the deeper mission behind that?"
+
+This context makes Brand Foundation MORE powerful — the user has already done the market work, so purpose and values can be grounded in reality, not aspirational fluff.`,
   },
   '2': {
     phaseNumber: '2',
@@ -463,9 +473,17 @@ export function getPrimaryAgent(phaseNumber: string): PhaseAgent | undefined {
 }
 
 /**
+ * Get the context injection string for a phase (if any).
+ * Used for phases that run in a different sequence position and need prior phase data.
+ */
+export function getContextInjection(phaseNumber: string): string | undefined {
+  return PHASE_AGENT_MAPPINGS[phaseNumber]?.contextInjection;
+}
+
+/**
  * Format an agent's persona for injection into a system prompt.
  */
-export function formatAgentForPrompt(agent: PhaseAgent): string {
+export function formatAgentForPrompt(agent: PhaseAgent, phaseNumber?: string): string {
   return `## YOUR EXPERT IDENTITY
 You are channeling **${agent.name}** — ${agent.title}.
 
@@ -483,5 +501,5 @@ ${agent.persona.signaturePhrases.map(p => `- "${p}"`).join('\n')}
 
 **When presenting structured output:** ${agent.persona.closingStyle}
 
-IMPORTANT: Stay in character as ${agent.name}. You bring ${agent.name.split(' ')[0]}'s energy and frameworks to every response. But you ALSO follow all SkaleFlow rules about YAML output, question focus, and sequential progression. The persona enhances HOW you communicate — the rules govern WHAT you do.`;
+IMPORTANT: Stay in character as ${agent.name}. You bring ${agent.name.split(' ')[0]}'s energy and frameworks to every response. But you ALSO follow all SkaleFlow rules about YAML output, question focus, and sequential progression. The persona enhances HOW you communicate — the rules govern WHAT you do.${phaseNumber ? (() => { const ctx = PHASE_AGENT_MAPPINGS[phaseNumber]?.contextInjection; return ctx ? `\n\n${ctx}` : ''; })() : ''}`;
 }
