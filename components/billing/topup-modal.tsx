@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button, Card } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import {
   XMarkIcon,
   ExclamationTriangleIcon,
@@ -106,7 +107,7 @@ export function TopupModal({ organizationId, onClose, message }: TopupModalProps
 
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-teal" />
+              <LoadingSpinner size="md" />
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { TagManager } from '@/components/crm/tag-manager';
 import { ActivityTimeline } from '@/components/crm/activity-timeline';
 import { CALL_TYPE_LABELS, CALL_STATUS_LABELS, CALL_STATUS_COLORS } from '@/lib/calls/helpers';
@@ -285,7 +286,7 @@ export function ContactDetailTabs({
             <h3 className="text-lg font-bold text-charcoal mb-4">Deals</h3>
             {loadingDeals ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal"></div>
+                <LoadingSpinner size="md" />
               </div>
             ) : deals.length === 0 ? (
               <p className="text-stone text-center py-8">No deals yet</p>
@@ -335,7 +336,7 @@ export function ContactDetailTabs({
             <h3 className="text-lg font-bold text-charcoal mb-4">Calls</h3>
             {loadingCalls ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal"></div>
+                <LoadingSpinner size="md" />
               </div>
             ) : calls.length === 0 ? (
               <p className="text-stone text-center py-8">No calls yet</p>
@@ -395,7 +396,7 @@ export function ContactDetailTabs({
             <h3 className="text-lg font-bold text-charcoal mb-4">Invoices</h3>
             {loadingInvoices ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal"></div>
+                <LoadingSpinner size="md" />
               </div>
             ) : invoices.length === 0 ? (
               <p className="text-stone text-center py-8">No invoices yet</p>
@@ -505,7 +506,7 @@ export function ContactDetailTabs({
               <h3 className="text-lg font-bold text-charcoal mb-4">Activity Timeline</h3>
               {loadingActivities ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal"></div>
+                  <LoadingSpinner size="md" />
                 </div>
               ) : (
                 <ActivityTimeline activities={activities} />

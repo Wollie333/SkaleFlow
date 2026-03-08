@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { UsersIcon, CurrencyDollarIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import { PageHeader } from '@/components/ui';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface Stage {
   id: string;
@@ -53,7 +54,7 @@ export default function PipelineAnalyticsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal" />
+        <LoadingSpinner />
       </div>
     );
   }

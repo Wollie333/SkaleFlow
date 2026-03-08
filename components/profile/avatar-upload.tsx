@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { UserCircleIcon, CameraIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface AvatarUploadProps {
   userId: string;
@@ -113,7 +114,7 @@ export function AvatarUpload({ userId, currentAvatarUrl, onUploadComplete }: Ava
         {/* Loading spinner */}
         {uploading && (
           <div className="absolute inset-0 rounded-full bg-dark/80 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white" />
+            <LoadingSpinner className="border-white" />
           </div>
         )}
       </div>

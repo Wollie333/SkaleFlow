@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button, Textarea } from '@/components/ui';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ChatBubbleLeftIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { createClient } from '@/lib/supabase/client';
 import { format } from 'date-fns';
@@ -88,7 +89,7 @@ export function CommentThread({ contentItemId }: CommentThreadProps) {
 
       {isLoading ? (
         <div className="flex justify-center py-4">
-          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-teal" />
+          <LoadingSpinner size="md" />
         </div>
       ) : (
         <>

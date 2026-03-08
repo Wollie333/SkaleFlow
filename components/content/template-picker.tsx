@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button, Card } from '@/components/ui';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DocumentDuplicateIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 interface Template {
@@ -52,7 +53,7 @@ export function TemplatePicker({ organizationId, onSelect, onClose }: TemplatePi
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
           {isLoading ? (
             <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal" />
+              <LoadingSpinner />
             </div>
           ) : templates.length === 0 ? (
             <div className="text-center py-12">

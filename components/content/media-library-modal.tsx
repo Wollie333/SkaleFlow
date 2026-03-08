@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import {
   XMarkIcon,
   MagnifyingGlassIcon,
@@ -141,7 +142,7 @@ export function MediaLibraryModal({ organizationId, onSelect, onClose }: MediaLi
         <div className="flex-1 overflow-y-auto p-4">
           {isLoading ? (
             <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal" />
+              <LoadingSpinner />
             </div>
           ) : assets.length === 0 ? (
             <div className="text-center py-12">

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { PlusIcon, BoltIcon } from '@heroicons/react/24/outline';
 import { PageHeader } from '@/components/ui';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { WorkflowList } from '@/components/automations/workflow-list';
 
 interface Workflow {
@@ -72,7 +73,7 @@ export default function AutomationsListPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal" />
+        <LoadingSpinner />
       </div>
     );
   }

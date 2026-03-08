@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { PageHeader } from '@/components/ui';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { SparklesIcon, MagnifyingGlassIcon, ArrowPathIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import { CLIENT_MODEL_CATALOG } from '@/lib/ai/client-models';
 import { cn } from '@/lib/utils';
@@ -214,7 +215,7 @@ export default function AdminModelsPage() {
       <div className="p-8">
         <PageHeader title="AI Models" icon={SparklesIcon} subtitle="Manage model access per tier and user" />
         <div className="flex items-center justify-center h-40">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal" />
+          <LoadingSpinner />
         </div>
       </div>
     );

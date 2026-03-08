@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, Button } from '@/components/ui';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { KeyIcon, ShieldCheckIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 interface ApiKeyInfo {
@@ -125,7 +126,7 @@ export function AiBetaTab() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
-        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-teal" />
+        <LoadingSpinner size="md" />
       </div>
     );
   }

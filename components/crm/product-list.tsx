@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import ProductFormModal from './product-form-modal';
 
 interface Product {
@@ -84,7 +85,7 @@ export default function ProductList({ organizationId }: ProductListProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal"></div>
+        <LoadingSpinner />
       </div>
     );
   }

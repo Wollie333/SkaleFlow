@@ -92,6 +92,8 @@ const crmAdminNavigation: NavItem[] = [
 ];
 
 const contentNavigation: NavItem[] = [
+  { name: 'Campaigns', href: '/content/campaigns', icon: RocketLaunchIcon },
+  { name: 'Winner Pool', href: '/content/campaigns/winners', icon: TrophyIcon },
   { name: 'Content Calendar', href: '/calendar', icon: CalendarDaysIcon },
   { name: 'Content Machine', href: '/content/machine', icon: BoltIcon },
   { name: 'Publish Log', href: '/content/publish-log', icon: ClipboardDocumentCheckIcon },
@@ -260,8 +262,14 @@ export function Sidebar({
   if (canAccessBrandEngine) {
     engineItems.push({ name: 'Brand Engine', href: '/brand', icon: SparklesIcon });
   }
+  if (canAccessBrandEngine) {
+    engineItems.push({ name: 'Presence Engine', href: '/presence', icon: GlobeAltIcon });
+  }
   if (canAccessContentEngine) {
     engineItems.push({ name: 'Content Engine', href: '/content/machine', icon: BoltIcon });
+  }
+  if (isOwnerOrAdmin || isSuperAdmin) {
+    engineItems.push({ name: 'Ads Engine', href: '/marketing', icon: MegaphoneIcon });
   }
   if (isOwnerOrAdmin || isSuperAdmin) {
     engineItems.push({ name: 'Authority Engine', href: '/authority', icon: NewspaperIcon });
@@ -317,30 +325,7 @@ export function Sidebar({
           })}
         </div>
 
-        {/* Reviews — owner/admin only */}
-        {canAccessReviews && (
-          <div className="mt-4">
-            <div className="space-y-1">
-              <Link
-                href="/reviews"
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
-                  pathname.startsWith('/reviews')
-                    ? 'bg-teal/10 text-teal'
-                    : 'text-stone hover:bg-cream hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
-                )}
-              >
-                <EyeIcon className="w-5 h-5" />
-                Reviews
-                {totalPendingReviews > 0 && (
-                  <span className="ml-auto text-xs bg-gold/15 text-gold px-2 py-0.5 rounded-full font-semibold">
-                    {totalPendingReviews}
-                  </span>
-                )}
-              </Link>
-            </div>
-          </div>
-        )}
+        {/* Reviews — hidden for now (future feature) */}
 
         {/* SkaleFlow Engines */}
         {engineItems.length > 0 && (
@@ -351,9 +336,81 @@ export function Sidebar({
             <div className="space-y-1">
               {engineItems.map((item) => {
                 const isAuthority = item.name === 'Authority Engine';
+                const isAdsEngine = item.name === 'Ads Engine';
                 const isActive = isAuthority
                   ? pathname === '/authority' || pathname.startsWith('/authority')
+                  : isAdsEngine
+                  ? pathname === '/marketing' || pathname.startsWith('/marketing')
                   : pathname === item.href || pathname.startsWith(item.href);
+
+                if (isAdsEngine) {
+                  // Ads Engine — collapsible with sub-nav (same style as Authority)
+                  return (
+                    <div key={item.name}>
+                      <div className="flex items-center">
+                        <Link
+                          href={item.href}
+                          className={cn(
+                            'flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                            isActive
+                              ? 'bg-teal/10 text-teal'
+                              : 'text-stone hover:bg-cream hover:text-charcoal active:scale-[0.97] active:bg-teal/5'
+                          )}
+                        >
+                          <item.icon className="w-5 h-5" />
+                          {item.name}
+                          {!isSuperAdmin && <LockClosedIcon className="w-3.5 h-3.5 text-stone/40" />}
+                        </Link>
+                        <button
+                          onClick={() => setAdsEngineExpanded(!adsEngineExpanded)}
+                          className="p-1.5 text-stone hover:text-charcoal transition-colors rounded"
+                        >
+                          {adsEngineExpanded ? (
+                            <ChevronDownIcon className="w-4 h-4" />
+                          ) : (
+                            <ChevronRightIcon className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                      {adsEngineExpanded && (
+                        <div className="space-y-1 mt-1">
+                          {isSuperAdmin ? (
+                            marketingNavigation.map((sub) => {
+                              const subActive = sub.href === '/marketing'
+                                ? pathname === '/marketing'
+                                : pathname.startsWith(sub.href);
+                              return (
+                                <Link
+                                  key={sub.name}
+                                  href={sub.href}
+                                  className={cn(
+                                    'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
+                                    subActive
+                                      ? 'bg-teal/10 text-teal'
+                                      : 'text-stone hover:bg-cream hover:text-charcoal'
+                                  )}
+                                >
+                                  <sub.icon className="w-4 h-4" />
+                                  {sub.name}
+                                </Link>
+                              );
+                            })
+                          ) : (
+                            marketingNavigation.map((sub) => (
+                              <div
+                                key={sub.name}
+                                className="flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium text-stone/40 cursor-not-allowed"
+                              >
+                                <sub.icon className="w-4 h-4" />
+                                {sub.name}
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
 
                 if (isAuthority) {
                   // Authority Engine — collapsible with sub-nav
@@ -431,470 +488,38 @@ export function Sidebar({
           </div>
         )}
 
-        {/* Social Engine Section */}
-        <div className="mt-6">
-          <div className="flex items-center">
-            <button
-              onClick={() => setSocialEngineExpanded(!socialEngineExpanded)}
-              className="flex-1 flex items-center justify-between px-3 py-1 group"
-            >
-              <h4 className="text-xs font-semibold text-teal-dark dark:text-gold uppercase tracking-wider flex items-center gap-2">
-                Social Engine
-              </h4>
-              {socialEngineExpanded ? (
-                <ChevronDownIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
-              ) : (
-                <ChevronRightIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
-              )}
-            </button>
-          </div>
-          {socialEngineExpanded && (
-            <div className="space-y-1 mt-2">
-              {/* Publishing */}
-              <div>
-                <button
-                  onClick={() => setPublishingExpanded(!publishingExpanded)}
-                  className="w-full flex items-center gap-3 px-3 py-2 ml-2 text-sm font-medium text-stone hover:text-charcoal transition-colors"
-                >
-                  <CalendarDaysIcon className="w-4 h-4" />
-                  <span className="flex-1 text-left">Publishing</span>
-                  {publishingExpanded ? (
-                    <ChevronDownIcon className="w-4 h-4" />
-                  ) : (
-                    <ChevronRightIcon className="w-4 h-4" />
-                  )}
-                </button>
-                {publishingExpanded && (
-                  <div className="space-y-1 mt-1">
-                    {socialPublishingNav.map((navItem) => {
-                      const navActive = pathname === navItem.href || pathname.startsWith(navItem.href);
-                      return (
-                        <Link
-                          key={navItem.name}
-                          href={navItem.href}
-                          className={cn(
-                            'flex items-center gap-3 px-3 py-2 ml-8 rounded-lg text-sm font-medium transition-colors',
-                            navActive
-                              ? 'bg-teal/10 text-teal'
-                              : 'text-stone hover:bg-cream hover:text-charcoal'
-                          )}
-                        >
-                          <navItem.icon className="w-4 h-4" />
-                          {navItem.name}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+        {/* Social Engine — hidden for now (future feature) */}
 
-              {/* Inbox */}
-              <div>
-                <button
-                  onClick={() => setInboxExpanded(!inboxExpanded)}
-                  className="w-full flex items-center gap-3 px-3 py-2 ml-2 text-sm font-medium text-stone hover:text-charcoal transition-colors"
-                >
-                  <InboxIcon className="w-4 h-4" />
-                  <span className="flex-1 text-left">Inbox</span>
-                  {inboxExpanded ? (
-                    <ChevronDownIcon className="w-4 h-4" />
-                  ) : (
-                    <ChevronRightIcon className="w-4 h-4" />
-                  )}
-                </button>
-                {inboxExpanded && (
-                  <div className="space-y-1 mt-1">
-                    {socialInboxNav.map((navItem) => {
-                      const navActive = pathname === navItem.href || pathname.startsWith(navItem.href);
-                      return (
-                        <Link
-                          key={navItem.name}
-                          href={navItem.href}
-                          className={cn(
-                            'flex items-center gap-3 px-3 py-2 ml-8 rounded-lg text-sm font-medium transition-colors',
-                            navActive
-                              ? 'bg-teal/10 text-teal'
-                              : 'text-stone hover:bg-cream hover:text-charcoal'
-                          )}
-                        >
-                          <navItem.icon className="w-4 h-4" />
-                          {navItem.name}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Listening */}
-              <div>
-                <button
-                  onClick={() => setListeningExpanded(!listeningExpanded)}
-                  className="w-full flex items-center gap-3 px-3 py-2 ml-2 text-sm font-medium text-stone hover:text-charcoal transition-colors"
-                >
-                  <MicrophoneIcon className="w-4 h-4" />
-                  <span className="flex-1 text-left">Listening</span>
-                  {listeningExpanded ? (
-                    <ChevronDownIcon className="w-4 h-4" />
-                  ) : (
-                    <ChevronRightIcon className="w-4 h-4" />
-                  )}
-                </button>
-                {listeningExpanded && (
-                  <div className="space-y-1 mt-1">
-                    {socialListeningNav.map((navItem) => {
-                      const navActive = pathname === navItem.href || pathname.startsWith(navItem.href);
-                      return (
-                        <Link
-                          key={navItem.name}
-                          href={navItem.href}
-                          className={cn(
-                            'flex items-center gap-3 px-3 py-2 ml-8 rounded-lg text-sm font-medium transition-colors',
-                            navActive
-                              ? 'bg-teal/10 text-teal'
-                              : 'text-stone hover:bg-cream hover:text-charcoal'
-                          )}
-                        >
-                          <navItem.icon className="w-4 h-4" />
-                          {navItem.name}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Analytics */}
-              <div>
-                <button
-                  onClick={() => setAnalyticsExpanded(!analyticsExpanded)}
-                  className="w-full flex items-center gap-3 px-3 py-2 ml-2 text-sm font-medium text-stone hover:text-charcoal transition-colors"
-                >
-                  <ChartBarIcon className="w-4 h-4" />
-                  <span className="flex-1 text-left">Analytics</span>
-                  {analyticsExpanded ? (
-                    <ChevronDownIcon className="w-4 h-4" />
-                  ) : (
-                    <ChevronRightIcon className="w-4 h-4" />
-                  )}
-                </button>
-                {analyticsExpanded && (
-                  <div className="space-y-1 mt-1">
-                    {socialAnalyticsNav.map((navItem) => {
-                      const navActive = pathname === navItem.href || pathname.startsWith(navItem.href);
-                      return (
-                        <Link
-                          key={navItem.name}
-                          href={navItem.href}
-                          className={cn(
-                            'flex items-center gap-3 px-3 py-2 ml-8 rounded-lg text-sm font-medium transition-colors',
-                            navActive
-                              ? 'bg-teal/10 text-teal'
-                              : 'text-stone hover:bg-cream hover:text-charcoal'
-                          )}
-                        >
-                          <navItem.icon className="w-4 h-4" />
-                          {navItem.name}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Library */}
-              <div>
-                <button
-                  onClick={() => setLibraryExpanded(!libraryExpanded)}
-                  className="w-full flex items-center gap-3 px-3 py-2 ml-2 text-sm font-medium text-stone hover:text-charcoal transition-colors"
-                >
-                  <FolderIcon className="w-4 h-4" />
-                  <span className="flex-1 text-left">Library</span>
-                  {libraryExpanded ? (
-                    <ChevronDownIcon className="w-4 h-4" />
-                  ) : (
-                    <ChevronRightIcon className="w-4 h-4" />
-                  )}
-                </button>
-                {libraryExpanded && (
-                  <div className="space-y-1 mt-1">
-                    {socialLibraryNav.map((navItem) => {
-                      const navActive = pathname === navItem.href || pathname.startsWith(navItem.href);
-                      return (
-                        <Link
-                          key={navItem.name}
-                          href={navItem.href}
-                          className={cn(
-                            'flex items-center gap-3 px-3 py-2 ml-8 rounded-lg text-sm font-medium transition-colors',
-                            navActive
-                              ? 'bg-teal/10 text-teal'
-                              : 'text-stone hover:bg-cream hover:text-charcoal'
-                          )}
-                        >
-                          <navItem.icon className="w-4 h-4" />
-                          {navItem.name}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Ads Engine Section */}
-        <div className="mt-6">
-          <div className="flex items-center">
-            <button
-              onClick={() => setAdsEngineExpanded(!adsEngineExpanded)}
-              className="flex-1 flex items-center justify-between px-3 py-1 group"
-            >
-              <h4 className="text-xs font-semibold text-teal-dark dark:text-gold uppercase tracking-wider flex items-center gap-2">
-                Ads Engine
-                {!isSuperAdmin && <LockClosedIcon className="w-3 h-3 text-stone/40" />}
-              </h4>
-              {adsEngineExpanded ? (
-                <ChevronDownIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
-              ) : (
-                <ChevronRightIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
-              )}
-            </button>
-          </div>
-          {adsEngineExpanded && (
-            <div className="space-y-1 mt-2">
-              {isSuperAdmin ? (
-                marketingNavigation.map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
-                        isActive
-                          ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream hover:text-charcoal'
-                      )}
-                    >
-                      <item.icon className="w-4 h-4" />
-                      {item.name}
-                    </Link>
-                  );
-                })
-              ) : (
-                marketingNavigation.map((item) => (
-                  <div
-                    key={item.name}
-                    className="flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium text-stone/40 cursor-not-allowed"
-                  >
-                    <item.icon className="w-4 h-4" />
-                    {item.name}
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* CRM Section — accessible to owners/admins/super_admins */}
-        {(isOwnerOrAdmin || isSuperAdmin) && (
-          <div className="mt-6">
-            <div className="flex items-center">
-              <button
-                onClick={() => setCrmExpanded(!crmExpanded)}
-                className="flex-1 flex items-center justify-between px-3 py-1 group"
-              >
-                <h4 className="text-xs font-semibold text-teal-dark dark:text-gold uppercase tracking-wider flex items-center gap-2">
-                  CRM
-                </h4>
-                {crmExpanded ? (
-                  <ChevronDownIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
-                ) : (
-                  <ChevronRightIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
-                )}
-              </button>
-            </div>
-            {crmExpanded && (
-              <div className="space-y-1 mt-2">
-                {crmNavigation.map((item) => {
-                  const isActive = item.href === '/crm'
-                    ? pathname === '/crm'
-                    : pathname === item.href || pathname.startsWith(item.href + '/');
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
-                        isActive
-                          ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream hover:text-charcoal'
-                      )}
-                    >
-                      <item.icon className="w-4 h-4" />
-                      {item.name}
-                    </Link>
-                  );
-                })}
-                {isSuperAdmin && crmAdminNavigation.map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
-                        isActive
-                          ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream hover:text-charcoal'
-                      )}
-                    >
-                      <item.icon className="w-4 h-4" />
-                      {item.name}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Brand Audit Section */}
-        {(isOwnerOrAdmin || isSuperAdmin) && (
-          <div className="mt-6">
-            <div className="flex items-center">
-              <button
-                onClick={() => setBrandAuditExpanded(!brandAuditExpanded)}
-                className="flex-1 flex items-center justify-between px-3 py-1 group"
-              >
-                <h4 className="text-xs font-semibold text-teal-dark dark:text-gold uppercase tracking-wider flex items-center gap-2">
-                  Brand Audit
-                </h4>
-                {brandAuditExpanded ? (
-                  <ChevronDownIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
-                ) : (
-                  <ChevronRightIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
-                )}
-              </button>
-            </div>
-            {brandAuditExpanded && (
-              <div className="space-y-1 mt-2">
-                {brandAuditNavigation.map((item) => {
-                  const isActive = item.href === '/brand-audit'
-                    ? pathname === '/brand-audit' || (pathname.startsWith('/brand-audit') && !pathname.includes('?'))
-                    : pathname === item.href || pathname.startsWith(item.href);
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
-                        isActive
-                          ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream hover:text-charcoal'
-                      )}
-                    >
-                      <item.icon className="w-4 h-4" />
-                      {item.name}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Calls Section — accessible to owners/admins/super_admins */}
-        {(isOwnerOrAdmin || isSuperAdmin) && (
-          <div className="mt-6">
-            <div className="flex items-center">
-              <button
-                onClick={() => setCallsExpanded(!callsExpanded)}
-                className="flex-1 flex items-center justify-between px-3 py-1 group"
-              >
-                <h4 className="text-xs font-semibold text-teal-dark dark:text-gold uppercase tracking-wider flex items-center gap-2">
-                  Calls
-                </h4>
-                {callsExpanded ? (
-                  <ChevronDownIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
-                ) : (
-                  <ChevronRightIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
-                )}
-              </button>
-            </div>
-            {callsExpanded && (
-              <div className="space-y-1 mt-2">
-                {callsNavigation.map((item) => {
-                  const isActive = item.href === '/calls'
-                    ? pathname === '/calls'
-                    : pathname === item.href || pathname.startsWith(item.href + '/');
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
-                        isActive
-                          ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream hover:text-charcoal'
-                      )}
-                    >
-                      <item.icon className="w-4 h-4" />
-                      {item.name}
-                      {item.href === '/calls' && upcomingCallCount !== undefined && upcomingCallCount > 0 && (
-                        <span className="ml-auto text-xs bg-teal/15 text-teal px-2 py-0.5 rounded-full font-semibold">
-                          {upcomingCallCount}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+        {/* CRM — hidden for now (future feature) */}
+        {/* Brand Audit — hidden for now (future feature) */}
+        {/* Calls — hidden for now (future feature) */}
 
         {/* Admin Navigation */}
         {isSuperAdmin && (
           <div className="mt-6">
-            <div className="flex items-center">
-              <button
-                onClick={() => setAdminExpanded(!adminExpanded)}
-                className="flex-1 flex items-center justify-between px-3 py-1 group"
-              >
-                <h4 className="text-xs font-semibold text-teal-dark dark:text-gold uppercase tracking-wider flex items-center gap-2">
-                  Admin
-                </h4>
-                {adminExpanded ? (
-                  <ChevronDownIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
-                ) : (
-                  <ChevronRightIcon className="w-4 h-4 text-stone group-hover:text-charcoal transition-colors" />
-                )}
-              </button>
+            <h4 className="px-3 text-xs font-semibold text-teal-dark dark:text-gold uppercase tracking-wider mb-2">
+              Admin
+            </h4>
+            <div className="space-y-1">
+              {adminNavigation.map((item) => {
+                const isActive = pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-teal/10 text-teal'
+                        : 'text-stone hover:bg-cream hover:text-charcoal'
+                    )}
+                  >
+                    <item.icon className="w-4 h-4" />
+                    {item.name}
+                  </Link>
+                );
+              })}
             </div>
-            {adminExpanded && (
-              <div className="space-y-1 mt-2">
-                {adminNavigation.map((item) => {
-                  const isActive = pathname.startsWith(item.href);
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2 ml-2 rounded-lg text-sm font-medium transition-colors',
-                        isActive
-                          ? 'bg-teal/10 text-teal'
-                          : 'text-stone hover:bg-cream hover:text-charcoal'
-                      )}
-                    >
-                      <item.icon className="w-4 h-4" />
-                      {item.name}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
           </div>
         )}
 

@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { PlusIcon, PencilIcon, TrashIcon, EyeIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 import { PageHeader } from '@/components/ui';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import type { Database } from '@/types/database';
 
 const AVAILABLE_MERGE_FIELDS = [
@@ -164,7 +165,7 @@ export default function EmailTemplatesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal" />
+        <LoadingSpinner />
       </div>
     );
   }

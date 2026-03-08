@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface TransactionDetails {
   reference: string;
@@ -105,7 +106,7 @@ export default function BillingCallbackPage() {
       <div className="text-center max-w-md w-full">
         {status === 'verifying' && (
           <>
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-teal mx-auto mb-6" />
+            <div className="mx-auto mb-6 w-fit"><LoadingSpinner size="xl" /></div>
             <h1 className="text-heading-lg text-charcoal mb-2">Processing Payment</h1>
             <p className="text-stone">{message}</p>
           </>

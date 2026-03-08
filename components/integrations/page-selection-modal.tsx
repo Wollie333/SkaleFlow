@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Button, Input } from '@/components/ui';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { XMarkIcon, CheckCircleIcon, MagnifyingGlassIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import type { SocialPlatform } from '@/types/database';
 import { PLATFORM_CONFIG } from '@/lib/social/types';
@@ -246,7 +247,7 @@ export function PageSelectionModal({ platform, isOpen, onClose, onPagesAdded }: 
         <div className="p-6 overflow-y-auto flex-1">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-teal" />
+              <LoadingSpinner size="md" />
               <p className="ml-3 text-sm text-stone">Loading {config.name} pages...</p>
             </div>
           ) : (

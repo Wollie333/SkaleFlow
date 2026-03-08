@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface FormField {
   id: string;
@@ -145,10 +146,7 @@ export default function PublicFormPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: theme.colors.light }}>
-        <div
-          className="animate-spin rounded-full h-8 w-8 border-b-2"
-          style={{ borderColor: theme.colors.primary }}
-        />
+        <LoadingSpinner />
       </div>
     );
   }

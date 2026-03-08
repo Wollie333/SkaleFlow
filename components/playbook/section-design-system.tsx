@@ -568,6 +568,7 @@ function FormDemo({ rule }: { rule: ComponentRule }) {
 
         {/* Select */}
         <select
+          defaultValue=""
           className="px-4 py-2.5 text-[13px] outline-none appearance-none cursor-default"
           style={{
             borderRadius: radius,
@@ -590,7 +591,7 @@ function FormDemo({ rule }: { rule: ComponentRule }) {
             t.style.boxShadow = 'none';
           }}
         >
-          <option>Select option</option>
+          <option value="">Select option</option>
         </select>
       </div>
 

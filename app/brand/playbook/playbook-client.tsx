@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-page-custom-font */
 'use client';
 
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
@@ -113,6 +114,12 @@ export function PlaybookClient({ organization, outputs, isPublicView }: Playbook
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSection, setActiveSection] = useState('01');
   const sectionRefs = useRef<Record<string, IntersectionObserverEntry>>({});
+
+  // Compute date on client only to avoid hydration mismatch
+  const [dateLabel, setDateLabel] = useState('');
+  useEffect(() => {
+    setDateLabel(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' }));
+  }, []);
   const showSidebar = true; // Always show sidebar, even for public users
 
   // Compute share URL client-side
@@ -220,7 +227,7 @@ export function PlaybookClient({ organization, outputs, isPublicView }: Playbook
   return (
     <>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link href={fontsLink} rel="stylesheet" />
 
       <div
@@ -343,6 +350,7 @@ export function PlaybookClient({ organization, outputs, isPublicView }: Playbook
               orgName={organization.name}
               logoUrl={organization.logoUrl}
               brandLogoUrl={(data.brand_logo_primary || data.brand_logo_url) && (data.brand_logo_primary || data.brand_logo_url) !== 'none' ? (data.brand_logo_primary || data.brand_logo_url) : null}
+              dateLabel={dateLabel}
             />
 
             <div className="max-w-[840px] mx-auto px-10 py-16">

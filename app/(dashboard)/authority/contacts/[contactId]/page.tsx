@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import type { AuthorityContactWarmth } from '@/types/database';
 import { ContactHeader } from '@/components/authority/contact-detail/contact-header';
 import { ContactOverviewTab } from '@/components/authority/contact-detail/contact-overview-tab';
@@ -145,7 +146,7 @@ export default function ContactDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal" />
+        <LoadingSpinner />
       </div>
     );
   }

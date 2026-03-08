@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface Contact {
   id: string;
@@ -127,7 +128,7 @@ export default function CompanyDetailTabs({ companyId, organizationId }: Company
       <div className="p-6">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal"></div>
+            <LoadingSpinner />
           </div>
         ) : (
           <>

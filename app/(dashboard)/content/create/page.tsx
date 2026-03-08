@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button, Card, PageHeader, ActionModal } from '@/components/ui';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { BrandVariablesPanel, CreativeAssetSpecs, MediaUpload, UTMBuilderModal, PostActionPopup, AIModelPicker, type UploadedFile, type PublishResult, IconPicker } from '@/components/content';
 import { DriveFilePicker } from '@/components/content/drive-file-picker';
 import { CanvaDesignPicker } from '@/components/content/canva-design-picker';
@@ -1065,7 +1066,7 @@ export default function ContentCreatePage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal" />
+        <LoadingSpinner />
       </div>
     );
   }

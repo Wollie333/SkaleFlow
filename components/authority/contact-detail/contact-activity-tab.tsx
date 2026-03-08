@@ -10,6 +10,7 @@ import {
   ArrowRightIcon,
   FunnelIcon,
 } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { cn } from '@/lib/utils';
 
 interface CorrespondenceItem {
@@ -93,7 +94,7 @@ export function ContactActivityTab({ contactId, organizationId }: ContactActivit
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-teal" />
+          <LoadingSpinner size="md" />
         </div>
       ) : filtered.length === 0 ? (
         <p className="text-sm text-stone text-center py-8">No activity recorded yet</p>

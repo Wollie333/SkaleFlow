@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PlusIcon, DocumentTextIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface Invoice {
   id: string;
@@ -153,7 +154,7 @@ export function InvoiceList({ organizationId }: InvoiceListProps) {
       {/* Table */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal"></div>
+          <LoadingSpinner />
         </div>
       ) : invoices.length === 0 ? (
         <div className="text-center py-12">

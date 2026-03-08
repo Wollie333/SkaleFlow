@@ -1,15 +1,14 @@
+/* eslint-disable @next/next/no-img-element */
+
 interface PlaybookCoverProps {
   orgName: string;
   logoUrl?: string | null;
   brandLogoUrl?: string | null;
+  dateLabel?: string;
 }
 
-export function PlaybookCover({ orgName, logoUrl, brandLogoUrl }: PlaybookCoverProps) {
+export function PlaybookCover({ orgName, logoUrl, brandLogoUrl, dateLabel }: PlaybookCoverProps) {
   const displayLogo = brandLogoUrl || logoUrl;
-  const today = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-  });
 
   return (
     <div
@@ -53,12 +52,14 @@ export function PlaybookCover({ orgName, logoUrl, brandLogoUrl }: PlaybookCoverP
         }}
       />
 
-      <p
-        className="text-[12px] tracking-[0.15em] uppercase"
-        style={{ color: 'rgba(var(--playbook-light-rgb, 240, 236, 228), 0.35)' }}
-      >
-        {today}
-      </p>
+      {dateLabel && (
+        <p
+          className="text-[12px] tracking-[0.15em] uppercase"
+          style={{ color: 'rgba(var(--playbook-light-rgb, 240, 236, 228), 0.35)' }}
+        >
+          {dateLabel}
+        </p>
+      )}
     </div>
   );
 }

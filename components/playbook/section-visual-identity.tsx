@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { PlaybookSection } from './playbook-section';
 import { PlaybookRow } from './playbook-row';
 import { getVariableDescription } from '@/config/variable-descriptions';

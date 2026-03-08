@@ -12,6 +12,7 @@ export type SubscriptionStatus = 'trial' | 'active' | 'paused' | 'cancelled' | '
 export type InvitationStatus = 'pending' | 'accepted' | 'expired' | 'cancelled';
 export type InvitationEmailStatus = 'pending' | 'sent' | 'failed' | 'delivered' | 'bounced';
 export type BrandEngineStatus = 'not_started' | 'in_progress' | 'completed';
+export type PresenceEngineStatus = 'not_started' | 'in_progress' | 'completed';
 export type PhaseStatus = 'not_started' | 'in_progress' | 'completed' | 'locked';
 export type CalendarStatus = 'draft' | 'active' | 'completed' | 'archived';
 export type ContentStatus =
@@ -29,8 +30,19 @@ export type ContentStatus =
   | 'edited'
   | 'scheduled'
   | 'published'
-  | 'failed';
+  | 'failed'
+  | 'archived';
 export type FunnelStage = 'awareness' | 'consideration' | 'conversion';
+// V3 Content Engine types
+export type CampaignStatus = 'draft' | 'active' | 'paused' | 'completed' | 'cancelled' | 'archived';
+export type CampaignObjectiveCategory = 'growth' | 'revenue' | 'launch' | 'brand' | 'community';
+export type V3Aggressiveness = 'focused' | 'committed' | 'aggressive';
+export type V3ContentFormat = 'reel' | 'static' | 'carousel' | 'text' | 'video' | 'long_video' | 'thread' | 'story';
+export type WinnerCategory = 'awareness' | 'engagement' | 'traffic' | 'conversion' | 'viral';
+export type AdjustmentTrigger = 'underperformance' | 'content_fatigue' | 'format_underperformance' | 'scheduling_gap' | 'objective_mismatch';
+export type AdjustmentStatus = 'pending' | 'approved' | 'dismissed';
+export type ContentEngineStatus = 'not_started' | 'in_progress' | 'active';
+export type V3SocialChannel = 'linkedin' | 'facebook' | 'instagram' | 'tiktok' | 'youtube' | 'x';
 export type TimeSlot = 'AM' | 'PM' | 'MID' | 'EVE';
 export type StoryBrandStage =
   | 'character'
@@ -8009,7 +8021,1096 @@ export interface Database {
           },
         ];
       };
+      // =====================================================
+      // PRESENCE ENGINE TABLES
+      // =====================================================
+      presence_platforms: {
+        Row: {
+          id: string;
+          organization_id: string;
+          platform_key: string;
+          is_active: boolean;
+          primary_goal: string | null;
+          priority_order: number;
+          existing_profile_url: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          platform_key: string;
+          is_active?: boolean;
+          primary_goal?: string | null;
+          priority_order?: number;
+          existing_profile_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          platform_key?: string;
+          is_active?: boolean;
+          primary_goal?: string | null;
+          priority_order?: number;
+          existing_profile_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "presence_platforms_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      presence_phases: {
+        Row: {
+          id: string;
+          organization_id: string;
+          phase_number: string;
+          phase_name: string;
+          platform_key: string | null;
+          is_conditional: boolean;
+          status: PhaseStatus | 'skipped';
+          started_at: string | null;
+          completed_at: string | null;
+          locked_at: string | null;
+          locked_by: string | null;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          phase_number: string;
+          phase_name: string;
+          platform_key?: string | null;
+          is_conditional?: boolean;
+          status?: PhaseStatus | 'skipped';
+          started_at?: string | null;
+          completed_at?: string | null;
+          locked_at?: string | null;
+          locked_by?: string | null;
+          sort_order: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          phase_number?: string;
+          phase_name?: string;
+          platform_key?: string | null;
+          is_conditional?: boolean;
+          status?: PhaseStatus | 'skipped';
+          started_at?: string | null;
+          completed_at?: string | null;
+          locked_at?: string | null;
+          locked_by?: string | null;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "presence_phases_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "presence_phases_locked_by_fkey";
+            columns: ["locked_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      presence_outputs: {
+        Row: {
+          id: string;
+          organization_id: string;
+          phase_id: string;
+          output_key: string;
+          output_value: Json;
+          version: number;
+          is_locked: boolean;
+          generated_from_brand: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          phase_id: string;
+          output_key: string;
+          output_value: Json;
+          version?: number;
+          is_locked?: boolean;
+          generated_from_brand?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          phase_id?: string;
+          output_key?: string;
+          output_value?: Json;
+          version?: number;
+          is_locked?: boolean;
+          generated_from_brand?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "presence_outputs_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "presence_outputs_phase_id_fkey";
+            columns: ["phase_id"];
+            isOneToOne: false;
+            referencedRelation: "presence_phases";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      presence_conversations: {
+        Row: {
+          id: string;
+          organization_id: string;
+          phase_id: string;
+          user_id: string | null;
+          messages: Json;
+          ai_model: string;
+          tokens_used: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          phase_id: string;
+          user_id?: string | null;
+          messages?: Json;
+          ai_model?: string;
+          tokens_used?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          phase_id?: string;
+          user_id?: string | null;
+          messages?: Json;
+          ai_model?: string;
+          tokens_used?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "presence_conversations_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "presence_conversations_phase_id_fkey";
+            columns: ["phase_id"];
+            isOneToOne: false;
+            referencedRelation: "presence_phases";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "presence_conversations_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      presence_profile_screenshots: {
+        Row: {
+          id: string;
+          organization_id: string;
+          platform_key: string;
+          screenshot_url: string;
+          file_name: string | null;
+          file_size: number | null;
+          uploaded_by: string | null;
+          audit_result: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          platform_key: string;
+          screenshot_url: string;
+          file_name?: string | null;
+          file_size?: number | null;
+          uploaded_by?: string | null;
+          audit_result?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          platform_key?: string;
+          screenshot_url?: string;
+          file_name?: string | null;
+          file_size?: number | null;
+          uploaded_by?: string | null;
+          audit_result?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "presence_profile_screenshots_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "presence_profile_screenshots_uploaded_by_fkey";
+            columns: ["uploaded_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      presence_playbooks: {
+        Row: {
+          id: string;
+          organization_id: string;
+          version: number;
+          generated_by: string | null;
+          file_url: string | null;
+          file_size: number | null;
+          includes_platforms: string[];
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          version?: number;
+          generated_by?: string | null;
+          file_url?: string | null;
+          file_size?: number | null;
+          includes_platforms: string[];
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          version?: number;
+          generated_by?: string | null;
+          file_url?: string | null;
+          file_size?: number | null;
+          includes_platforms?: string[];
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "presence_playbooks_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "presence_playbooks_generated_by_fkey";
+            columns: ["generated_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
+      // ==============================================
+      // V3 CONTENT ENGINE TABLES
+      // ==============================================
+      campaigns: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          objective: string;
+          objective_category: CampaignObjectiveCategory;
+          status: CampaignStatus;
+          start_date: string;
+          end_date: string | null;
+          total_posts_target: number;
+          sequence_position: number | null;
+          sequence_id: string | null;
+          ai_sequence_recommendation: Json;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          objective: string;
+          objective_category: CampaignObjectiveCategory;
+          status?: CampaignStatus;
+          start_date?: string;
+          end_date?: string | null;
+          total_posts_target?: number;
+          sequence_position?: number | null;
+          sequence_id?: string | null;
+          ai_sequence_recommendation?: Json;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          objective?: string;
+          objective_category?: CampaignObjectiveCategory;
+          status?: CampaignStatus;
+          start_date?: string;
+          end_date?: string | null;
+          total_posts_target?: number;
+          sequence_position?: number | null;
+          sequence_id?: string | null;
+          ai_sequence_recommendation?: Json;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "campaigns_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      campaign_adsets: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          organization_id: string;
+          channel: V3SocialChannel;
+          aggressiveness: V3Aggressiveness;
+          posts_per_week: number;
+          total_posts: number;
+          content_type_ratio: Json;
+          content_type_counts: Json;
+          format_ratio: Json;
+          posting_schedule: Json;
+          status: 'active' | 'paused';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          organization_id: string;
+          channel: V3SocialChannel;
+          aggressiveness?: V3Aggressiveness;
+          posts_per_week?: number;
+          total_posts?: number;
+          content_type_ratio?: Json;
+          content_type_counts?: Json;
+          format_ratio?: Json;
+          posting_schedule?: Json;
+          status?: 'active' | 'paused';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          organization_id?: string;
+          channel?: V3SocialChannel;
+          aggressiveness?: V3Aggressiveness;
+          posts_per_week?: number;
+          total_posts?: number;
+          content_type_ratio?: Json;
+          content_type_counts?: Json;
+          format_ratio?: Json;
+          posting_schedule?: Json;
+          status?: 'active' | 'paused';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "campaign_adsets_campaign_id_fkey";
+            columns: ["campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "campaigns";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "campaign_adsets_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      content_posts: {
+        Row: {
+          id: string;
+          adset_id: string;
+          campaign_id: string;
+          organization_id: string;
+          content_type: number;
+          content_type_name: string;
+          objective: string;
+          platform: string;
+          format: string;
+          placement_type: string | null;
+          topic: string | null;
+          hook: string | null;
+          hook_variations: string[] | null;
+          body: string | null;
+          cta: string | null;
+          caption: string | null;
+          hashtags: string[] | null;
+          visual_brief: string | null;
+          shot_suggestions: string | null;
+          slide_content: Json;
+          on_screen_text: Json;
+          platform_variations: Json;
+          scheduled_date: string | null;
+          scheduled_time: string | null;
+          generation_week: number | null;
+          ai_generated: boolean;
+          ai_model: string | null;
+          ai_prompt_used: string | null;
+          brand_voice_score: number | null;
+          brand_variables_used: string[] | null;
+          status: ContentStatus;
+          assigned_to: string | null;
+          approved_at: string | null;
+          approved_by: string | null;
+          review_comment: string | null;
+          rejection_reason: string | null;
+          target_url: string | null;
+          utm_parameters: Json;
+          variation_group_id: string | null;
+          is_primary_variation: boolean;
+          performance: Json;
+          is_winner: boolean;
+          winner_category: WinnerCategory | null;
+          recycled_from: string | null;
+          published_at: string | null;
+          platform_post_id: string | null;
+          post_url: string | null;
+          media_urls: string[] | null;
+          thumbnail_url: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          adset_id: string;
+          campaign_id: string;
+          organization_id: string;
+          content_type: number;
+          content_type_name: string;
+          objective: string;
+          platform: string;
+          format: string;
+          placement_type?: string | null;
+          topic?: string | null;
+          hook?: string | null;
+          hook_variations?: string[] | null;
+          body?: string | null;
+          cta?: string | null;
+          caption?: string | null;
+          hashtags?: string[] | null;
+          visual_brief?: string | null;
+          shot_suggestions?: string | null;
+          slide_content?: Json;
+          on_screen_text?: Json;
+          platform_variations?: Json;
+          scheduled_date?: string | null;
+          scheduled_time?: string | null;
+          generation_week?: number | null;
+          ai_generated?: boolean;
+          ai_model?: string | null;
+          ai_prompt_used?: string | null;
+          brand_voice_score?: number | null;
+          brand_variables_used?: string[] | null;
+          status?: ContentStatus;
+          assigned_to?: string | null;
+          approved_at?: string | null;
+          approved_by?: string | null;
+          review_comment?: string | null;
+          rejection_reason?: string | null;
+          target_url?: string | null;
+          utm_parameters?: Json;
+          variation_group_id?: string | null;
+          is_primary_variation?: boolean;
+          performance?: Json;
+          is_winner?: boolean;
+          winner_category?: WinnerCategory | null;
+          recycled_from?: string | null;
+          published_at?: string | null;
+          platform_post_id?: string | null;
+          post_url?: string | null;
+          media_urls?: string[] | null;
+          thumbnail_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          adset_id?: string;
+          campaign_id?: string;
+          organization_id?: string;
+          content_type?: number;
+          content_type_name?: string;
+          objective?: string;
+          platform?: string;
+          format?: string;
+          placement_type?: string | null;
+          topic?: string | null;
+          hook?: string | null;
+          hook_variations?: string[] | null;
+          body?: string | null;
+          cta?: string | null;
+          caption?: string | null;
+          hashtags?: string[] | null;
+          visual_brief?: string | null;
+          shot_suggestions?: string | null;
+          slide_content?: Json;
+          on_screen_text?: Json;
+          platform_variations?: Json;
+          scheduled_date?: string | null;
+          scheduled_time?: string | null;
+          generation_week?: number | null;
+          ai_generated?: boolean;
+          ai_model?: string | null;
+          ai_prompt_used?: string | null;
+          brand_voice_score?: number | null;
+          brand_variables_used?: string[] | null;
+          status?: ContentStatus;
+          assigned_to?: string | null;
+          approved_at?: string | null;
+          approved_by?: string | null;
+          review_comment?: string | null;
+          rejection_reason?: string | null;
+          target_url?: string | null;
+          utm_parameters?: Json;
+          variation_group_id?: string | null;
+          is_primary_variation?: boolean;
+          performance?: Json;
+          is_winner?: boolean;
+          winner_category?: WinnerCategory | null;
+          recycled_from?: string | null;
+          published_at?: string | null;
+          platform_post_id?: string | null;
+          post_url?: string | null;
+          media_urls?: string[] | null;
+          thumbnail_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "content_posts_adset_id_fkey";
+            columns: ["adset_id"];
+            isOneToOne: false;
+            referencedRelation: "campaign_adsets";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "content_posts_campaign_id_fkey";
+            columns: ["campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "campaigns";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "content_posts_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "content_posts_assigned_to_fkey";
+            columns: ["assigned_to"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "content_posts_approved_by_fkey";
+            columns: ["approved_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "content_posts_recycled_from_fkey";
+            columns: ["recycled_from"];
+            isOneToOne: false;
+            referencedRelation: "content_posts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      campaign_adjustments: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          adset_id: string | null;
+          organization_id: string;
+          trigger_condition: AdjustmentTrigger;
+          recommendation_text: string;
+          current_ratio: Json;
+          proposed_ratio: Json;
+          affected_post_ids: string[] | null;
+          status: AdjustmentStatus;
+          approved_at: string | null;
+          dismissed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          adset_id?: string | null;
+          organization_id: string;
+          trigger_condition: AdjustmentTrigger;
+          recommendation_text: string;
+          current_ratio?: Json;
+          proposed_ratio?: Json;
+          affected_post_ids?: string[] | null;
+          status?: AdjustmentStatus;
+          approved_at?: string | null;
+          dismissed_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          adset_id?: string | null;
+          organization_id?: string;
+          trigger_condition?: AdjustmentTrigger;
+          recommendation_text?: string;
+          current_ratio?: Json;
+          proposed_ratio?: Json;
+          affected_post_ids?: string[] | null;
+          status?: AdjustmentStatus;
+          approved_at?: string | null;
+          dismissed_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "campaign_adjustments_campaign_id_fkey";
+            columns: ["campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "campaigns";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "campaign_adjustments_adset_id_fkey";
+            columns: ["adset_id"];
+            isOneToOne: false;
+            referencedRelation: "campaign_adsets";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "campaign_adjustments_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      winner_pool: {
+        Row: {
+          id: string;
+          post_id: string;
+          campaign_id: string;
+          organization_id: string;
+          winner_category: WinnerCategory;
+          performance_snapshot: Json;
+          hook_pattern: string | null;
+          content_type: number;
+          format: string;
+          posting_time: string | null;
+          posting_day: string | null;
+          flagged_at: string;
+          amplified_to_paid: boolean;
+          paid_campaign_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          post_id: string;
+          campaign_id: string;
+          organization_id: string;
+          winner_category: WinnerCategory;
+          performance_snapshot?: Json;
+          hook_pattern?: string | null;
+          content_type: number;
+          format: string;
+          posting_time?: string | null;
+          posting_day?: string | null;
+          flagged_at?: string;
+          amplified_to_paid?: boolean;
+          paid_campaign_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          post_id?: string;
+          campaign_id?: string;
+          organization_id?: string;
+          winner_category?: WinnerCategory;
+          performance_snapshot?: Json;
+          hook_pattern?: string | null;
+          content_type?: number;
+          format?: string;
+          posting_time?: string | null;
+          posting_day?: string | null;
+          flagged_at?: string;
+          amplified_to_paid?: boolean;
+          paid_campaign_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "winner_pool_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "content_posts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "winner_pool_campaign_id_fkey";
+            columns: ["campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "campaigns";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "winner_pool_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      brand_intelligence_reports: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          organization_id: string;
+          top_pain_points: string[] | null;
+          top_messaging_angles: string[] | null;
+          brand_voice_recommendations: string | null;
+          icp_refinement_suggestions: string | null;
+          content_type_performance: Json;
+          format_performance: Json;
+          next_campaign_recommendation: Json;
+          generated_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          organization_id: string;
+          top_pain_points?: string[] | null;
+          top_messaging_angles?: string[] | null;
+          brand_voice_recommendations?: string | null;
+          icp_refinement_suggestions?: string | null;
+          content_type_performance?: Json;
+          format_performance?: Json;
+          next_campaign_recommendation?: Json;
+          generated_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          organization_id?: string;
+          top_pain_points?: string[] | null;
+          top_messaging_angles?: string[] | null;
+          brand_voice_recommendations?: string | null;
+          icp_refinement_suggestions?: string | null;
+          content_type_performance?: Json;
+          format_performance?: Json;
+          next_campaign_recommendation?: Json;
+          generated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "brand_intelligence_reports_campaign_id_fkey";
+            columns: ["campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "campaigns";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "brand_intelligence_reports_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      v3_post_analytics: {
+        Row: {
+          id: string;
+          post_id: string;
+          organization_id: string;
+          platform: string;
+          impressions: number;
+          reach: number;
+          likes: number;
+          comments: number;
+          shares: number;
+          saves: number;
+          clicks: number;
+          video_views: number;
+          engagement_rate: number;
+          follower_change: number;
+          synced_at: string;
+        };
+        Insert: {
+          id?: string;
+          post_id: string;
+          organization_id: string;
+          platform: string;
+          impressions?: number;
+          reach?: number;
+          likes?: number;
+          comments?: number;
+          shares?: number;
+          saves?: number;
+          clicks?: number;
+          video_views?: number;
+          engagement_rate?: number;
+          follower_change?: number;
+          synced_at?: string;
+        };
+        Update: {
+          id?: string;
+          post_id?: string;
+          organization_id?: string;
+          platform?: string;
+          impressions?: number;
+          reach?: number;
+          likes?: number;
+          comments?: number;
+          shares?: number;
+          saves?: number;
+          clicks?: number;
+          video_views?: number;
+          engagement_rate?: number;
+          follower_change?: number;
+          synced_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "v3_post_analytics_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "content_posts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "v3_post_analytics_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      v3_generation_batches: {
+        Row: {
+          id: string;
+          organization_id: string;
+          campaign_id: string | null;
+          adset_id: string | null;
+          user_id: string;
+          model_id: string;
+          status: GenerationBatchStatus;
+          total_items: number;
+          completed_items: number;
+          failed_items: number;
+          uniqueness_log: Json;
+          selected_brand_variables: Json;
+          creative_direction: string | null;
+          created_at: string;
+          updated_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          campaign_id?: string | null;
+          adset_id?: string | null;
+          user_id: string;
+          model_id: string;
+          status?: GenerationBatchStatus;
+          total_items?: number;
+          completed_items?: number;
+          failed_items?: number;
+          uniqueness_log?: Json;
+          selected_brand_variables?: Json;
+          creative_direction?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          completed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          campaign_id?: string | null;
+          adset_id?: string | null;
+          user_id?: string;
+          model_id?: string;
+          status?: GenerationBatchStatus;
+          total_items?: number;
+          completed_items?: number;
+          failed_items?: number;
+          uniqueness_log?: Json;
+          selected_brand_variables?: Json;
+          creative_direction?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          completed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "v3_generation_batches_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "v3_generation_batches_campaign_id_fkey";
+            columns: ["campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "campaigns";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "v3_generation_batches_adset_id_fkey";
+            columns: ["adset_id"];
+            isOneToOne: false;
+            referencedRelation: "campaign_adsets";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "v3_generation_batches_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      v3_generation_queue: {
+        Row: {
+          id: string;
+          batch_id: string;
+          post_id: string;
+          organization_id: string;
+          status: GenerationQueueStatus;
+          priority: number;
+          attempt_count: number;
+          max_attempts: number;
+          locked_at: string | null;
+          error_message: string | null;
+          created_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          batch_id: string;
+          post_id: string;
+          organization_id: string;
+          status?: GenerationQueueStatus;
+          priority?: number;
+          attempt_count?: number;
+          max_attempts?: number;
+          locked_at?: string | null;
+          error_message?: string | null;
+          created_at?: string;
+          completed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          batch_id?: string;
+          post_id?: string;
+          organization_id?: string;
+          status?: GenerationQueueStatus;
+          priority?: number;
+          attempt_count?: number;
+          max_attempts?: number;
+          locked_at?: string | null;
+          error_message?: string | null;
+          created_at?: string;
+          completed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "v3_generation_queue_batch_id_fkey";
+            columns: ["batch_id"];
+            isOneToOne: false;
+            referencedRelation: "v3_generation_batches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "v3_generation_queue_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "content_posts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "v3_generation_queue_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     Views: {};
     Functions: {
       get_brand_context: {

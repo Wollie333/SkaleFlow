@@ -15,6 +15,7 @@ import { GoogleDriveConnectionCard } from '@/components/integrations/google-driv
 import { CanvaConnectionCard } from '@/components/integrations/canva-connection-card';
 import { GmailConnectionCard } from '@/components/integrations/gmail-connection-card';
 import { AvatarUpload } from '@/components/profile/avatar-upload';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import type { SocialPlatform, Json } from '@/types/database';
 import { AiBetaTab } from '@/components/settings/ai-beta-tab';
 
@@ -615,7 +616,7 @@ export default function SettingsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal" />
+        <LoadingSpinner />
       </div>
     );
   }
@@ -1161,7 +1162,7 @@ export default function SettingsPage() {
                     </p>
                     {isLoadingCalendars ? (
                       <div className="flex items-center gap-2 text-sm text-stone">
-                        <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-teal" />
+                        <LoadingSpinner size="sm" />
                         Loading calendars…
                       </div>
                     ) : googleCalendars.length > 0 ? (

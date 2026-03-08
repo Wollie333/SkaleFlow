@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { TrashIcon, PlusIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { PageHeader } from '@/components/ui';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { TagManager } from '@/components/pipeline/tag-manager';
 import type { Database } from '@/types/database';
 
@@ -142,7 +143,7 @@ export default function PipelineSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal" />
+        <LoadingSpinner />
       </div>
     );
   }

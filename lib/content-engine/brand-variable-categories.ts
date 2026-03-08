@@ -339,3 +339,122 @@ export const VARIABLE_DISPLAY_NAMES: Record<string, string> = {
   offer_implementation_services: 'Implementation Services',
   offer_affiliate_tools: 'Affiliate & Recommended Tools',
 };
+
+// ============================================================
+// V3 STRATEGIC VARIABLE MAP
+// Maps campaign_objective × content_type → strategic variables
+// Replaces funnel × storybrand mapping for V3 campaigns
+// ============================================================
+
+type V3StrategicCombo = `${string}_type_${number}`;
+
+const V3_STRATEGIC_VARIABLE_MAP: Record<V3StrategicCombo, string[]> = {
+  // ── AWARENESS ──
+  awareness_type_5: ['icp_pains', 'icp_desires', 'content_themes', 'enemy_name', 'icp_tactic_trap'],
+  awareness_type_6: ['icp_pains', 'icp_desires', 'content_themes', 'enemy_name', 'icp_tactic_trap'],
+  awareness_type_7: ['icp_pains', 'icp_desires', 'content_themes', 'enemy_name', 'icp_tactic_trap'],
+  awareness_type_1: ['icp_emotional_triggers', 'enemy_description', 'brand_origin_story', 'icp_right_client_traits', 'offer_outcome'],
+  awareness_type_2: ['icp_emotional_triggers', 'enemy_description', 'brand_origin_story', 'icp_right_client_traits', 'beliefs_to_teach'],
+  awareness_type_3: ['content_themes', 'message_pillars', 'positioning_statement', 'icp_pains', 'brand_purpose'],
+  awareness_type_4: ['content_themes', 'message_pillars', 'beliefs_to_teach', 'icp_pains', 'brand_purpose'],
+
+  // ── AUTHORITY ──
+  authority_type_1: ['offer_outcome', 'offer_transformation_after', 'positioning_statement', 'differentiation_statement', 'competitive_landscape'],
+  authority_type_2: ['offer_outcome', 'offer_transformation_after', 'positioning_statement', 'differentiation_statement', 'competitive_landscape'],
+  authority_type_3: ['message_pillars', 'content_pillars', 'beliefs_to_teach', 'category_name', 'brand_purpose'],
+  authority_type_4: ['message_pillars', 'content_pillars', 'beliefs_to_teach', 'category_name', 'brand_purpose'],
+  authority_type_5: ['content_themes', 'message_pillars', 'positioning_statement', 'brand_origin_story', 'founder_story'],
+  authority_type_6: ['content_themes', 'positioning_statement', 'brand_origin_story', 'icp_pains', 'beliefs_to_teach'],
+  authority_type_7: ['brand_origin_story', 'founder_story', 'positioning_statement', 'competitive_landscape', 'content_themes'],
+
+  // ── LEADS ──
+  leads_type_1: ['offer_name', 'offer_outcome', 'offer_inclusions', 'lead_magnet_title', 'offer_transformation_after'],
+  leads_type_2: ['offer_name', 'offer_outcome', 'offer_inclusions', 'lead_magnet_title', 'offer_transformation_after'],
+  leads_type_3: ['offer_name', 'offer_outcome', 'offer_inclusions', 'lead_magnet_title', 'offer_transformation_after'],
+  leads_type_5: ['icp_objections', 'icp_buying_triggers', 'offer_qualification_criteria', 'lead_magnet_promise', 'conversion_strategy'],
+  leads_type_4: ['icp_objections', 'icp_buying_triggers', 'offer_qualification_criteria', 'lead_magnet_promise', 'offer_name'],
+  leads_type_6: ['icp_pains', 'lead_magnet_title', 'lead_magnet_promise', 'content_themes', 'offer_name'],
+  leads_type_7: ['icp_pains', 'lead_magnet_title', 'lead_magnet_promise', 'content_themes', 'offer_outcome'],
+
+  // ── SALES ──
+  sales_type_1: ['offer_name', 'offer_tagline', 'offer_transformation_before', 'offer_transformation_after', 'offer_inclusions'],
+  sales_type_2: ['offer_name', 'offer_tagline', 'offer_transformation_before', 'offer_transformation_after', 'offer_inclusions'],
+  sales_type_5: ['offer_objections', 'offer_qualification_criteria', 'conversion_strategy', 'conversion_funnel', 'offer_name'],
+  sales_type_3: ['offer_name', 'offer_outcome', 'conversion_strategy', 'positioning_statement', 'differentiation_statement'],
+  sales_type_4: ['offer_name', 'offer_outcome', 'conversion_strategy', 'competitive_landscape', 'offer_inclusions'],
+  sales_type_6: ['offer_name', 'offer_outcome', 'icp_buying_triggers', 'conversion_strategy', 'icp_pains'],
+  sales_type_7: ['offer_name', 'offer_outcome', 'icp_buying_triggers', 'offer_transformation_after', 'icp_pains'],
+
+  // ── PRE-LAUNCH ──
+  pre_launch_type_2: ['enemy_name', 'category_name', 'brand_purpose', 'icp_pains', 'beliefs_to_teach'],
+  pre_launch_type_4: ['enemy_name', 'category_name', 'brand_purpose', 'icp_pains', 'beliefs_to_teach'],
+  pre_launch_type_6: ['icp_pains', 'icp_desires', 'content_themes', 'enemy_name', 'brand_origin_story'],
+  pre_launch_type_7: ['icp_pains', 'icp_desires', 'content_themes', 'enemy_name', 'brand_origin_story'],
+  pre_launch_type_1: ['offer_outcome', 'brand_origin_story', 'positioning_statement', 'founder_story', 'icp_desires'],
+  pre_launch_type_3: ['category_name', 'brand_purpose', 'positioning_statement', 'message_pillars', 'beliefs_to_teach'],
+  pre_launch_type_5: ['icp_pains', 'content_themes', 'beliefs_to_teach', 'brand_purpose', 'message_pillars'],
+
+  // ── PRODUCT LAUNCH ──
+  product_launch_type_1: ['offer_name', 'offer_tagline', 'offer_outcome', 'lead_magnet_title', 'conversion_strategy'],
+  product_launch_type_2: ['offer_name', 'offer_tagline', 'offer_outcome', 'lead_magnet_title', 'conversion_strategy'],
+  product_launch_type_5: ['offer_name', 'offer_tagline', 'offer_outcome', 'lead_magnet_title', 'conversion_strategy'],
+  product_launch_type_7: ['offer_name', 'offer_outcome', 'icp_pains', 'icp_desires', 'conversion_strategy'],
+  product_launch_type_3: ['offer_name', 'offer_outcome', 'positioning_statement', 'message_pillars', 'conversion_strategy'],
+  product_launch_type_4: ['offer_name', 'offer_inclusions', 'conversion_funnel', 'icp_buying_triggers', 'positioning_statement'],
+  product_launch_type_6: ['offer_name', 'offer_outcome', 'icp_pains', 'content_themes', 'conversion_strategy'],
+
+  // ── REPOSITIONING ──
+  repositioning_type_2: ['category_name', 'differentiation_statement', 'positioning_statement', 'enemy_name', 'brand_purpose'],
+  repositioning_type_3: ['category_name', 'differentiation_statement', 'positioning_statement', 'enemy_name', 'brand_purpose'],
+  repositioning_type_4: ['category_name', 'differentiation_statement', 'positioning_statement', 'competitive_landscape', 'brand_purpose'],
+  repositioning_type_1: ['positioning_statement', 'differentiation_statement', 'offer_outcome', 'competitive_landscape', 'brand_origin_story'],
+  repositioning_type_5: ['positioning_statement', 'category_name', 'message_pillars', 'beliefs_to_teach', 'content_themes'],
+  repositioning_type_6: ['positioning_statement', 'content_themes', 'icp_pains', 'brand_purpose', 'beliefs_to_teach'],
+  repositioning_type_7: ['positioning_statement', 'content_themes', 'icp_pains', 'brand_purpose', 'beliefs_to_teach'],
+
+  // ── EDUCATION ──
+  education_type_3: ['beliefs_to_teach', 'content_themes', 'message_pillars', 'icp_internal_dialogue', 'icp_pains'],
+  education_type_4: ['beliefs_to_teach', 'content_themes', 'message_pillars', 'icp_internal_dialogue', 'icp_pains'],
+  education_type_5: ['beliefs_to_teach', 'content_themes', 'message_pillars', 'icp_internal_dialogue', 'icp_pains'],
+  education_type_1: ['beliefs_to_teach', 'offer_outcome', 'content_themes', 'positioning_statement', 'icp_pains'],
+  education_type_2: ['beliefs_to_teach', 'brand_purpose', 'message_pillars', 'positioning_statement', 'icp_pains'],
+  education_type_6: ['content_themes', 'icp_pains', 'beliefs_to_teach', 'icp_desires', 'message_pillars'],
+  education_type_7: ['content_themes', 'icp_pains', 'beliefs_to_teach', 'icp_desires', 'message_pillars'],
+
+  // ── NURTURE ──
+  nurture_type_5: ['icp_desires', 'icp_right_client_traits', 'brand_values', 'offer_affiliate_tools', 'brand_faith_positioning'],
+  nurture_type_6: ['icp_desires', 'icp_right_client_traits', 'brand_values', 'offer_affiliate_tools', 'brand_faith_positioning'],
+  nurture_type_7: ['icp_desires', 'icp_right_client_traits', 'brand_values', 'offer_affiliate_tools', 'brand_faith_positioning'],
+  nurture_type_1: ['offer_outcome', 'icp_desires', 'brand_values', 'founder_story', 'brand_origin_story'],
+  nurture_type_2: ['brand_values', 'brand_purpose', 'icp_desires', 'beliefs_to_teach', 'founder_story'],
+  nurture_type_3: ['content_themes', 'message_pillars', 'icp_desires', 'brand_values', 'brand_purpose'],
+  nurture_type_4: ['content_themes', 'message_pillars', 'icp_desires', 'brand_values', 'beliefs_to_teach'],
+};
+
+/**
+ * V3 strategic variable selector.
+ * Maps campaign_objective × content_type (1-7) → 8 core + 5 strategic variables.
+ */
+export function selectV3StrategicVariables(
+  objective: string,
+  contentType: number
+): string[] {
+  const combo: V3StrategicCombo = `${objective}_type_${contentType}`;
+  const mapped = V3_STRATEGIC_VARIABLE_MAP[combo];
+
+  if (mapped) {
+    const merged = [...CORE_CONTENT_VARIABLES];
+    for (const v of mapped) {
+      if (!merged.includes(v)) merged.push(v);
+    }
+    return merged;
+  }
+
+  // Fallback: core + random 5 from rotating pool
+  const pool = [...ROTATING_CONTENT_VARIABLES];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.abs((Date.now() * (i + 1) * 2654435761) % (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return [...CORE_CONTENT_VARIABLES, ...pool.slice(0, 5)];
+}

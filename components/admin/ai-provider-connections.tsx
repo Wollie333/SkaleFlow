@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, Badge } from '@/components/ui';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { BoltIcon, CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 interface ProviderBalance {
@@ -120,7 +121,7 @@ export function AIProviderConnections() {
     return (
       <Card className="p-6">
         <div className="flex items-center justify-center h-40">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal" />
+          <LoadingSpinner />
         </div>
       </Card>
     );

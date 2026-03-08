@@ -8,3 +8,4 @@ export { PageHeader, type PageHeaderProps, type BreadcrumbItem } from './page-he
 export { ActionModal, type ActionModalProps, type ActionModalAction } from './action-modal';
 export { UserAvatar } from './user-avatar';
 export { ToastProvider, useToastContext } from './toast';
+export { LoadingSpinner, PageLoader } from './loading-spinner';

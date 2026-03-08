@@ -6,13 +6,10 @@ import {
   ClockIcon,
   CheckCircleIcon,
   SparklesIcon,
-  FunnelIcon,
   InboxArrowDownIcon,
   CreditCardIcon,
   ArrowRightIcon,
   ExclamationCircleIcon,
-  UserGroupIcon,
-  MegaphoneIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -44,7 +41,6 @@ export default async function DashboardPage() {
 
   // Default stats
   let pendingApprovals = 0;
-  let pipelineLeads = 0;
   let scheduledPosts = 0;
   let creditsRemaining = 0;
   let creditsTotal = 0;
@@ -57,14 +53,6 @@ export default async function DashboardPage() {
     scheduled_date: string;
     status: string;
     created_at: string;
-  }> = [];
-
-  let pipelineActivity: Array<{
-    id: string;
-    event_type: string;
-    metadata: Record<string, unknown> | null;
-    created_at: string;
-    contact_name?: string;
   }> = [];
 
   let upcomingContent: Array<{
@@ -85,11 +73,9 @@ export default async function DashboardPage() {
     // Parallel queries for performance
     const [
       approvalsRes,
-      leadsRes,
       scheduledRes,
       creditsRes,
       approvalItemsRes,
-      activityRes,
       upcomingRes,
       notifRes,
       socialRes,
@@ -101,13 +87,7 @@ export default async function DashboardPage() {
         .eq('organization_id', orgId)
         .in('status', ['pending_review', 'revision_requested']),
 
-      // 2. Pipeline leads count
-      supabase
-        .from('pipeline_contacts')
-        .select('id', { count: 'exact', head: true })
-        .eq('organization_id', orgId),
-
-      // 3. Scheduled posts count
+      // 2. Scheduled posts count
       supabase
         .from('content_items')
         .select('id', { count: 'exact', head: true })
@@ -130,15 +110,7 @@ export default async function DashboardPage() {
         .order('created_at', { ascending: false })
         .limit(5),
 
-      // 6. Pipeline activity (recent 5)
-      supabase
-        .from('pipeline_activity')
-        .select('id, event_type, metadata, created_at')
-        .eq('organization_id', orgId)
-        .order('created_at', { ascending: false })
-        .limit(5),
-
-      // 7. Upcoming content (next 5 scheduled)
+      // 6. Upcoming content (next 5 scheduled)
       supabase
         .from('content_items')
         .select('id, scheduled_date, time_slot, topic, format, status, funnel_stage, platforms')
@@ -164,7 +136,6 @@ export default async function DashboardPage() {
     ]);
 
     pendingApprovals = approvalsRes.count || 0;
-    pipelineLeads = leadsRes.count || 0;
     scheduledPosts = scheduledRes.count || 0;
     unreadNotifications = notifRes.count || 0;
     connectedPlatforms = socialRes.count || 0;
@@ -176,19 +147,6 @@ export default async function DashboardPage() {
 
     approvalItems = (approvalItemsRes.data || []) as typeof approvalItems;
     upcomingContent = (upcomingRes.data || []) as typeof upcomingContent;
-
-    // Enrich pipeline activity with contact names
-    const rawActivity = (activityRes.data || []) as Array<{
-      id: string;
-      event_type: string;
-      metadata: Record<string, unknown> | null;
-      created_at: string;
-    }>;
-
-    pipelineActivity = rawActivity.map(a => ({
-      ...a,
-      contact_name: (a.metadata?.contact_name as string) || 'Contact',
-    }));
   }
 
   const isSuperAdmin = userData?.role === 'super_admin';
@@ -227,11 +185,6 @@ export default async function DashboardPage() {
               </div>
               <div className="w-px bg-cream/10" />
               <div className="text-center">
-                <div className="text-3xl font-bold text-gold">{pipelineLeads}</div>
-                <div className="text-xs text-cream/40 uppercase tracking-wider mt-1">Leads</div>
-              </div>
-              <div className="w-px bg-cream/10" />
-              <div className="text-center">
                 <div className="text-3xl font-bold text-gold">{scheduledPosts}</div>
                 <div className="text-xs text-cream/40 uppercase tracking-wider mt-1">Scheduled</div>
               </div>
@@ -241,7 +194,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Quick stat cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link href="/content/reviews">
           <Card className={`hover:border-teal/30 transition-colors cursor-pointer ${pendingApprovals > 0 ? 'border-teal/20 bg-teal/[0.02]' : 'bg-cream-warm border-stone/10'}`}>
             <div className="flex items-center justify-between mb-3">
@@ -252,16 +205,6 @@ export default async function DashboardPage() {
             </div>
             <p className="text-3xl font-bold text-charcoal">{pendingApprovals}</p>
             <p className="text-sm text-stone">Pending approvals</p>
-          </Card>
-        </Link>
-
-        <Link href="/pipeline">
-          <Card className="bg-cream-warm border-stone/10 hover:border-teal/30 transition-colors cursor-pointer">
-            <div className="flex items-center justify-between mb-3">
-              <FunnelIcon className="w-5 h-5 text-teal" />
-            </div>
-            <p className="text-3xl font-bold text-charcoal">{pipelineLeads}</p>
-            <p className="text-sm text-stone">Pipeline leads</p>
           </Card>
         </Link>
 
@@ -354,48 +297,25 @@ export default async function DashboardPage() {
           </Card>
         </div>
 
-        {/* Pipeline Activity — right 1/3 */}
+        {/* Brand Engine Status — right 1/3 */}
         <div>
           <Card>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-heading-md text-charcoal">Pipeline</h3>
-              <Link href="/pipeline" className="text-sm text-teal hover:text-teal-light font-medium flex items-center gap-1">
+              <h3 className="text-heading-md text-charcoal">Brand Engine</h3>
+              <Link href="/brand" className="text-sm text-teal hover:text-teal-light font-medium flex items-center gap-1">
                 Open <ArrowRightIcon className="w-3.5 h-3.5" />
               </Link>
             </div>
             <CardContent>
-              {pipelineActivity.length > 0 ? (
-                <div className="space-y-3">
-                  {pipelineActivity.map((activity) => (
-                    <div
-                      key={activity.id}
-                      className="flex items-start gap-3 p-2"
-                    >
-                      <div className="w-2 h-2 rounded-full bg-teal mt-1.5 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-charcoal">
-                          <span className="font-medium">{activity.contact_name}</span>
-                          {' '}
-                          <span className="text-stone">
-                            {formatEventType(activity.event_type)}
-                          </span>
-                        </p>
-                        <p className="text-xs text-stone/70 mt-0.5">
-                          {formatTimeAgo(activity.created_at)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-stone">
-                  <FunnelIcon className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p className="font-medium text-charcoal/60">No activity yet</p>
-                  <Link href="/pipeline" className="text-sm text-teal hover:text-teal-light mt-2 inline-block">
-                    Create a pipeline
-                  </Link>
-                </div>
-              )}
+              <div className="text-center py-8 text-stone">
+                <SparklesIcon className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p className="font-medium text-charcoal/60">
+                  {organization?.brand_engine_status === 'completed' ? 'Brand strategy complete' : 'Build your brand'}
+                </p>
+                <Link href="/brand" className="text-sm text-teal hover:text-teal-light mt-2 inline-block">
+                  {organization?.brand_engine_status === 'completed' ? 'View playbook' : 'Get started'}
+                </Link>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -462,28 +382,28 @@ export default async function DashboardPage() {
             <CardContent>
               <div className="space-y-2">
                 <QuickAction
-                  href="/content/create"
-                  icon={SparklesIcon}
-                  label="Create Content"
-                  description="Generate AI-powered posts"
-                />
-                <QuickAction
-                  href="/analytics"
-                  icon={MegaphoneIcon}
-                  label="View Analytics"
-                  description="Check content performance"
-                />
-                <QuickAction
-                  href="/pipeline"
-                  icon={UserGroupIcon}
-                  label="Manage Leads"
-                  description="View your sales pipeline"
-                />
-                <QuickAction
                   href="/brand"
                   icon={SparklesIcon}
                   label="Brand Engine"
                   description="Refine your brand strategy"
+                />
+                <QuickAction
+                  href="/presence"
+                  icon={SparklesIcon}
+                  label="Presence Engine"
+                  description="Manage your online presence"
+                />
+                <QuickAction
+                  href="/content/machine"
+                  icon={SparklesIcon}
+                  label="Content Engine"
+                  description="Generate AI-powered content"
+                />
+                <QuickAction
+                  href="/authority"
+                  icon={SparklesIcon}
+                  label="Authority Engine"
+                  description="Build media authority"
                 />
               </div>
             </CardContent>
@@ -547,29 +467,3 @@ function QuickAction({
   );
 }
 
-function formatEventType(type: string): string {
-  const map: Record<string, string> = {
-    contact_created: 'was added',
-    stage_changed: 'moved stage',
-    tag_added: 'was tagged',
-    tag_removed: 'tag removed',
-    email_sent: 'was emailed',
-    note_added: 'note added',
-  };
-  return map[type] || type.replace(/_/g, ' ');
-}
-
-function formatTimeAgo(dateStr: string): string {
-  const now = new Date();
-  const date = new Date(dateStr);
-  const diffMs = now.getTime() - date.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  const diffHr = Math.floor(diffMs / 3600000);
-  const diffDay = Math.floor(diffMs / 86400000);
-
-  if (diffMin < 1) return 'Just now';
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHr < 24) return `${diffHr}h ago`;
-  if (diffDay < 7) return `${diffDay}d ago`;
-  return format(date, 'MMM d');
-}

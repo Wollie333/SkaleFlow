@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface Deal {
   id: string;
@@ -138,7 +139,7 @@ export default function DealList({ organizationId, onCreateClick, initialContact
       <div className="bg-cream-warm rounded-lg border border-stone/10 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal"></div>
+            <LoadingSpinner />
           </div>
         ) : deals.length === 0 ? (
           <div className="text-center py-12 text-stone">

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { CalendarView, ContentEditor, TableView, ViewToggle, ApprovalQueue, BrandVariablesPanel, QuickCreateModal, KanbanView, GenerateWeekModal, DeleteConfirmationModal, ContentFilterBar, applyContentFilters, EMPTY_FILTERS, GenerationBatchTracker, CreateCalendarModal, type BatchStatus, type ViewMode, type ContentFilters } from '@/components/content';
 import { Button, Card, PageHeader } from '@/components/ui';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { CalendarIcon, DocumentArrowDownIcon, SparklesIcon, PlusIcon, BeakerIcon, TrashIcon, CursorArrowRaysIcon, XMarkIcon, EllipsisVerticalIcon, ChevronDownIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import { exportToCSV, downloadCSV } from '@/lib/content-engine/export';
@@ -640,7 +641,7 @@ export default function CalendarPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal" />
+        <LoadingSpinner />
       </div>
     );
   }
