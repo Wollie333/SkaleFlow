@@ -22,12 +22,19 @@ interface GenerationBatchTrackerProps {
   onCancel: () => void;
   /** Called after each item is processed — use to reload items progressively */
   onProgress?: (status: BatchStatus) => void;
+  /** Override API endpoints for v3 campaign queue (defaults to old content-item queue) */
+  statusEndpoint?: string;
+  cancelEndpoint?: string;
 }
 
 const MAX_INITIAL_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 2000;
 
-export function GenerationBatchTracker({ batchId, onComplete, onCancel, onProgress }: GenerationBatchTrackerProps) {
+export function GenerationBatchTracker({
+  batchId, onComplete, onCancel, onProgress,
+  statusEndpoint = '/api/content/generate/queue/status',
+  cancelEndpoint = cancelEndpoint,
+}: GenerationBatchTrackerProps) {
   const [status, setStatus] = useState<BatchStatus | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +69,7 @@ export function GenerationBatchTracker({ batchId, onComplete, onCancel, onProgre
 
       try {
         console.log(`[GEN-TRACKER] Fetching initial status (attempt ${retry + 1}/${MAX_INITIAL_RETRIES})...`);
-        const res = await fetch(`/api/content/generate/queue/status?batchId=${batchId}`);
+        const res = await fetch(`${statusEndpoint}?batchId=${batchId}`);
         console.log('[GEN-TRACKER] Initial status response:', res.status, res.statusText);
         if (!res.ok) {
           const errText = await res.text();
@@ -125,7 +132,7 @@ export function GenerationBatchTracker({ batchId, onComplete, onCancel, onProgre
 
       try {
         // Call with action=process — this awaits ONE AI generation on the server
-        const res = await fetch(`/api/content/generate/queue/status?batchId=${batchId}&action=process`);
+        const res = await fetch(`${statusEndpoint}?batchId=${batchId}&action=process`);
         const elapsed = Date.now() - startTime;
         console.log(`[GEN-TRACKER] Process response: ${res.status} ${res.statusText} (took ${elapsed}ms)`);
 
@@ -209,7 +216,7 @@ export function GenerationBatchTracker({ batchId, onComplete, onCancel, onProgre
     setIsCancelling(true);
     cancelledRef.current = true;
     try {
-      await fetch('/api/content/generate/queue/cancel', {
+      await fetch(cancelEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ batchId }),

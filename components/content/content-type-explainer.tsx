@@ -95,7 +95,7 @@ export function ContentTypeExplainer({ highlightTypes, onTypeClick, compact = fa
                   isExpanded
                     ? 'border-teal bg-teal/5 col-span-7 md:col-span-7'
                     : isHighlighted
-                      ? 'border-stone/10 bg-white hover:border-stone/20'
+                      ? 'border-stone/10 bg-cream-warm hover:border-stone/20'
                       : 'border-transparent bg-stone/5 opacity-50'
                 }`}
               >

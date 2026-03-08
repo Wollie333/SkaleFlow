@@ -84,7 +84,7 @@ export function HookSelector({
                 className={`w-full text-left p-3 rounded-lg border transition-all ${
                   isSelected
                     ? 'border-teal bg-teal/5 ring-1 ring-teal/20'
-                    : 'border-stone/10 bg-white hover:border-stone/20 hover:bg-stone/5'
+                    : 'border-stone/10 bg-cream-warm hover:border-stone/20 hover:bg-stone/5'
                 }`}
               >
                 <div className="flex items-start gap-3">

@@ -101,7 +101,7 @@ export function WinnerPool({ organizationId, onRecycle, onViewPost }: WinnerPool
             className={`p-3 rounded-lg border text-center transition-all ${
               categoryFilter === key
                 ? 'border-teal bg-teal/5'
-                : 'border-stone/10 bg-white hover:border-stone/20'
+                : 'border-stone/10 bg-cream-warm hover:border-stone/20'
             }`}
           >
             <div className="text-lg mb-1">{config.icon}</div>

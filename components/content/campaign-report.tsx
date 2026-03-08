@@ -267,7 +267,7 @@ export function CampaignReport({ campaignId, onGenerateReport, onExport }: Campa
 
 function StatCard({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="p-3 bg-white border border-stone/10 rounded-lg">
+    <div className="p-3 bg-cream-warm border border-stone/10 rounded-lg">
       <div className="text-[10px] text-stone uppercase tracking-wider mb-1">{label}</div>
       <div className={`text-lg font-bold ${highlight ? 'text-teal' : 'text-charcoal'}`}>
         {value}

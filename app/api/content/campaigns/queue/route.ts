@@ -6,11 +6,12 @@ import type { Database } from '@/types/database';
 export const maxDuration = 60;
 
 // GET — Poll batch status + optionally process next item
+// Returns shape compatible with GenerationBatchTracker
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const batchId = searchParams.get('batchId');
-    const action = searchParams.get('action'); // 'process' to trigger processing
+    const action = searchParams.get('action');
 
     if (!batchId) {
       return NextResponse.json({ error: 'batchId required' }, { status: 400 });
@@ -20,28 +21,68 @@ export async function GET(request: Request) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const db = supabase as unknown as import('@supabase/supabase-js').SupabaseClient<Database>;
+    let processError: string | null = null;
+
     // If action=process, process one item before returning status
     if (action === 'process') {
-      const result = await processOneV3Item(
-        supabase as unknown as import('@supabase/supabase-js').SupabaseClient<Database>,
-        batchId
-      );
-
-      const status = await getV3BatchStatus(
-        supabase as unknown as import('@supabase/supabase-js').SupabaseClient<Database>,
-        batchId
-      );
-
-      return NextResponse.json({ ...status, processed: result.processed });
+      try {
+        await processOneV3Item(db, batchId);
+      } catch (err) {
+        processError = err instanceof Error ? err.message : 'Processing failed';
+      }
     }
 
-    // Just return status
-    const status = await getV3BatchStatus(
-      supabase as unknown as import('@supabase/supabase-js').SupabaseClient<Database>,
-      batchId
-    );
+    const status = await getV3BatchStatus(db, batchId);
 
-    return NextResponse.json(status);
+    // Fetch recently completed posts for display
+    const { data: recentPosts } = await supabase
+      .from('v3_generation_queue')
+      .select('post_id')
+      .eq('batch_id', batchId)
+      .eq('status', 'completed')
+      .order('completed_at', { ascending: false })
+      .limit(3);
+
+    const recentItems: Array<{ id: string; topic: string | null; status: string }> = [];
+    if (recentPosts && recentPosts.length > 0) {
+      const postIds = recentPosts.map(r => r.post_id);
+      const { data: posts } = await supabase
+        .from('content_posts')
+        .select('id, topic, status')
+        .in('id', postIds);
+      if (posts) {
+        recentItems.push(...posts.map(p => ({ id: p.id, topic: p.topic, status: p.status })));
+      }
+    }
+
+    // Fetch failed details
+    const { data: failedItems } = await supabase
+      .from('v3_generation_queue')
+      .select('post_id, error_message')
+      .eq('batch_id', batchId)
+      .eq('status', 'failed')
+      .limit(5);
+
+    const failedDetails = failedItems?.map(f => ({
+      contentItemId: f.post_id,
+      error: f.error_message || 'Unknown error',
+    })) || [];
+
+    const total = status.totalItems || 1;
+    const percentage = Math.round(((status.completedItems + status.failedItems) / total) * 100);
+
+    return NextResponse.json({
+      batchId: status.batchId,
+      status: status.status,
+      totalItems: status.totalItems,
+      completedItems: status.completedItems,
+      failedItems: status.failedItems,
+      percentage,
+      recentItems,
+      failedDetails,
+      processError,
+    });
   } catch (err) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

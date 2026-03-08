@@ -226,7 +226,7 @@ export default function CampaignDetailPage() {
                   key={mode}
                   onClick={() => setViewMode(mode)}
                   className={`px-3 py-1.5 text-xs rounded-md capitalize transition-colors ${
-                    viewMode === mode ? 'bg-white text-charcoal shadow-sm' : 'text-stone hover:text-charcoal'
+                    viewMode === mode ? 'bg-cream-warm text-charcoal shadow-sm' : 'text-stone hover:text-charcoal'
                   }`}
                 >
                   {mode}
@@ -280,7 +280,7 @@ export default function CampaignDetailPage() {
       ) : (
         <div className="space-y-6">
           {/* Content type spectrum */}
-          <div className="bg-white border border-stone/10 rounded-xl p-4">
+          <div className="bg-cream-warm border border-stone/10 rounded-xl p-4">
             <h3 className="text-heading-sm text-charcoal mb-3">Content Type Distribution</h3>
             <ContentTypeExplainer />
           </div>
@@ -289,7 +289,7 @@ export default function CampaignDetailPage() {
           {adsets.map(adset => {
             const platform = PLATFORM_DEFAULTS[adset.channel as SocialChannel];
             return (
-              <div key={adset.id} className="bg-white border border-stone/10 rounded-xl p-4">
+              <div key={adset.id} className="bg-cream-warm border border-stone/10 rounded-xl p-4">
                 <h3 className="text-heading-sm text-charcoal mb-3">
                   {platform?.label || adset.channel} — Content Type Ratios
                 </h3>

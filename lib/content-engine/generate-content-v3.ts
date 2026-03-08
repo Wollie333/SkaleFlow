@@ -14,6 +14,8 @@ import { resolveModel, calculateCreditCost, deductCredits, getProviderAdapterFor
 import type { AIFeature } from '@/lib/ai';
 import { CORE_CONTENT_VARIABLES, selectV3StrategicVariables, VARIABLE_DISPLAY_NAMES } from './brand-variable-categories';
 import { MAX_VALIDATION_RETRIES } from './queue-config';
+import { selectV3Template, markTemplateUsed, buildTemplatePromptBlock, type V3Template } from './v3-template-service';
+import { getStyleProfile, buildStylePromptBlock } from './style-learning';
 
 // ---- Types ----
 
@@ -97,19 +99,31 @@ export async function generateV3Post(
     ? selectedBrandVariables
     : selectV3StrategicVariables(objective, contentType);
 
-  // Build prompts
+  // Select template (Objective → Content Type → Format)
+  const usedTemplateIds = previouslyGenerated
+    .map((p: any) => p.templateId)
+    .filter(Boolean) as string[];
+  const template = await selectV3Template(supabase, post.content_type, post.format, objective, usedTemplateIds);
+
+  // Get style profile for personalization
+  const styleProfile = await getStyleProfile(supabase, orgId);
+
+  // Build prompts — template-first
   const systemPrompt = buildV3SystemPrompt(
     brandContext,
     org?.name || 'Your Brand',
     effectiveVars,
-    creativeDirection
+    creativeDirection,
+    template,
+    styleProfile
   );
 
   const userPrompt = buildV3UserPrompt(
     post,
     brandContext,
     previouslyGenerated,
-    org?.name || 'Your Brand'
+    org?.name || 'Your Brand',
+    template
   );
 
   const temperature = resolvedModel.isFree ? 0.95 : 0.8;
@@ -153,12 +167,28 @@ export async function generateV3Post(
         ai_model: resolvedModel.id,
         status: 'scripted',
         updated_at: new Date().toISOString(),
+        // Template tracking
+        template_id: template?.id || null,
+        // Snapshot for style learning (compare against user edits later)
+        original_ai_output: {
+          topic: parsed.topic,
+          hook: parsed.hook_variations[0],
+          body: parsed.body,
+          cta: parsed.cta,
+          caption: parsed.caption,
+          hashtags: parsed.hashtags,
+        } as unknown as Json,
       };
 
       await supabase
         .from('content_posts')
         .update(updateData)
         .eq('id', postId);
+
+      // Track template usage
+      if (template) {
+        await markTemplateUsed(supabase, template.id).catch(() => {});
+      }
 
       // Deduct credits
       if (!resolvedModel.isFree && !usingUserKey) {
@@ -202,7 +232,9 @@ function buildV3SystemPrompt(
   brandContext: Record<string, string>,
   brandName: string,
   variables: string[],
-  creativeDirection?: string
+  creativeDirection?: string,
+  template?: V3Template | null,
+  styleProfile?: import('./style-learning').StyleProfile | null
 ): string {
   const varBlock = variables
     .filter(key => brandContext[key])
@@ -230,6 +262,16 @@ ${varBlock}
     prompt += `\n\n## Creative Direction from Founder\n${creativeDirection}`;
   }
 
+  // Template-driven structure (the core of v3)
+  if (template) {
+    prompt += `\n\n${buildTemplatePromptBlock(template)}`;
+  }
+
+  // Style learning — personalize to user's editing patterns
+  if (styleProfile && styleProfile.edit_count >= 3) {
+    prompt += `\n\n${buildStylePromptBlock(styleProfile)}`;
+  }
+
   return prompt;
 }
 
@@ -238,7 +280,8 @@ function buildV3UserPrompt(
   post: any,
   brandContext: Record<string, string>,
   previouslyGenerated: Array<{ topic: string; hook: string }>,
-  brandName: string
+  brandName: string,
+  template?: V3Template | null
 ): string {
   const contentType = CONTENT_TYPES[post.content_type as ContentTypeId];
   const objectiveConfig = CAMPAIGN_OBJECTIVES[post.objective as keyof typeof CAMPAIGN_OBJECTIVES];
@@ -247,7 +290,7 @@ function buildV3UserPrompt(
   const format = post.format;
 
   let prompt = `Generate a ${contentType.name} post for ${platformConfig?.label || platform}.
-
+${template ? `\nIMPORTANT: Follow the "${template.name}" template structure provided in the system prompt. Personalize it with the brand context — do NOT change the structure.\n` : ''}
 ## Content Type: ${contentType.name} (Type ${contentType.id})
 ${contentType.description}
 Primary outcome: ${contentType.primaryOutcome}

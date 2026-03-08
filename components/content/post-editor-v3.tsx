@@ -328,7 +328,7 @@ export function PostEditorV3({
                           updateField('slide_content', updated);
                         }}
                         rows={2}
-                        className="w-full px-2 py-1 text-sm bg-white border border-stone/10 rounded text-charcoal resize-y"
+                        className="w-full px-2 py-1 text-sm bg-cream-warm border border-stone/10 rounded text-charcoal resize-y"
                       />
                     </div>
                     <div>
@@ -341,7 +341,7 @@ export function PostEditorV3({
                           updated[idx] = { ...slide, visual: e.target.value };
                           updateField('slide_content', updated);
                         }}
-                        className="w-full px-2 py-1 text-sm bg-white border border-stone/10 rounded text-charcoal"
+                        className="w-full px-2 py-1 text-sm bg-cream-warm border border-stone/10 rounded text-charcoal"
                       />
                     </div>
                   </div>
@@ -395,7 +395,7 @@ export function PostEditorV3({
                     updateField('platform_variations', updated);
                   }}
                   rows={4}
-                  className="w-full px-2 py-1 text-sm bg-white border border-stone/10 rounded text-charcoal resize-y"
+                  className="w-full px-2 py-1 text-sm bg-cream-warm border border-stone/10 rounded text-charcoal resize-y"
                 />
               </div>
             ))}

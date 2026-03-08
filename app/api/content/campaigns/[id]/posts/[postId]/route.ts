@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { recordUserEdit } from '@/lib/content-engine/style-learning';
 
 // GET — Single post detail
 export async function GET(
@@ -50,6 +51,13 @@ export async function PATCH(
       if (body[key] !== undefined) updates[key] = body[key];
     }
 
+    // Fetch original AI output before updating (for style learning)
+    const { data: currentPost } = await supabase
+      .from('content_posts')
+      .select('original_ai_output, organization_id, ai_generated')
+      .eq('id', postId)
+      .single();
+
     const { data, error } = await supabase
       .from('content_posts')
       .update(updates)
@@ -58,6 +66,21 @@ export async function PATCH(
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Style learning: compare user edits against original AI output
+    if (currentPost?.original_ai_output && currentPost.ai_generated && currentPost.organization_id) {
+      const originalOutput = currentPost.original_ai_output as Record<string, unknown>;
+      const userEdited = {
+        topic: body.topic,
+        hook: body.hook,
+        body: body.body,
+        cta: body.cta,
+        caption: body.caption,
+      };
+      // Fire-and-forget (don't block the save response)
+      recordUserEdit(supabase, currentPost.organization_id, postId, originalOutput, userEdited).catch(() => {});
+    }
+
     return NextResponse.json({ post: data });
   } catch (err) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
