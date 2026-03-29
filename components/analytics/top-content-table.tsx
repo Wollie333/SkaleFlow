@@ -101,13 +101,13 @@ export function TopContentTable({ posts, isLoading, onPostClick }: TopContentTab
         <div className="overflow-x-auto -mx-6 px-6">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-stone/10">
-                <th className="text-left py-3 pr-4 text-stone font-medium">Content</th>
-                <th className="text-left py-3 px-3 text-stone font-medium">Platform</th>
+              <tr className="border-b border-stone/20">
+                <th className="text-left py-3 pr-4 text-charcoal font-semibold text-xs uppercase tracking-wider">Content</th>
+                <th className="text-left py-3 px-3 text-charcoal font-semibold text-xs uppercase tracking-wider">Platform</th>
                 {(['likes', 'comments', 'shares', 'impressions', 'engagementRate'] as SortKey[]).map(key => (
                   <th
                     key={key}
-                    className="text-right py-3 px-3 text-stone font-medium cursor-pointer hover:text-charcoal transition-colors select-none"
+                    className="text-right py-3 px-3 text-charcoal font-semibold text-xs uppercase tracking-wider cursor-pointer hover:text-teal transition-colors select-none"
                     onClick={() => handleSort(key)}
                   >
                     <span className="inline-flex items-center gap-1">
@@ -126,7 +126,7 @@ export function TopContentTable({ posts, isLoading, onPostClick }: TopContentTab
                   <tr
                     key={post.id}
                     className={cn(
-                      'border-b border-stone/5 hover:bg-teal/5 transition-colors cursor-pointer',
+                      'border-b border-stone/10 hover:bg-teal/5 transition-colors cursor-pointer',
                       idx === 0 && 'bg-gold/5'
                     )}
                     onClick={() => onPostClick?.(post)}
@@ -136,12 +136,12 @@ export function TopContentTable({ posts, isLoading, onPostClick }: TopContentTab
                         {idx < 3 && (
                           <span className={cn(
                             'w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0',
-                            idx === 0 ? 'bg-gold text-white' : 'bg-stone/10 text-stone'
+                            idx === 0 ? 'bg-gold text-white' : 'bg-stone/20 text-charcoal'
                           )}>
                             {idx + 1}
                           </span>
                         )}
-                        <span className="truncate text-charcoal font-medium">
+                        <span className="truncate text-charcoal font-semibold">
                           {post.topic || post.hook || 'Untitled'}
                         </span>
                       </div>
@@ -154,10 +154,10 @@ export function TopContentTable({ posts, isLoading, onPostClick }: TopContentTab
                         {config?.name || post.platform}
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-right text-charcoal">{formatCompact(post.likes)}</td>
-                    <td className="py-3 px-3 text-right text-charcoal">{formatCompact(post.comments)}</td>
-                    <td className="py-3 px-3 text-right text-charcoal">{formatCompact(post.shares)}</td>
-                    <td className="py-3 px-3 text-right text-charcoal">{formatCompact(post.impressions)}</td>
+                    <td className="py-3 px-3 text-right text-charcoal font-medium">{formatCompact(post.likes)}</td>
+                    <td className="py-3 px-3 text-right text-charcoal font-medium">{formatCompact(post.comments)}</td>
+                    <td className="py-3 px-3 text-right text-charcoal font-medium">{formatCompact(post.shares)}</td>
+                    <td className="py-3 px-3 text-right text-charcoal font-medium">{formatCompact(post.impressions)}</td>
                     <td className="py-3 px-3 text-right font-semibold text-teal">{post.engagementRate.toFixed(2)}%</td>
                     <td className="py-3 pl-2">
                       {post.postUrl && (

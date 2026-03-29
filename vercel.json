@@ -7,6 +7,10 @@
     {
       "path": "/api/content/campaigns/cron",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/content/campaigns/queue/cron",
+      "schedule": "*/15 * * * *"
     }
   ]
 }

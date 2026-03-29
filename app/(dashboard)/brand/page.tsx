@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { ImportPlaybookModal } from '@/components/brand';
 import { Button } from '@/components/ui';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { getCurrentWorkspaceClient } from '@/lib/supabase/workspace-client';
 import {
   CheckCircleIcon,
   PlayCircleIcon,
@@ -37,6 +38,7 @@ export default function BrandEnginePage() {
 
   const [phases, setPhases] = useState<Phase[]>([]);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [phasesWithData, setPhasesWithData] = useState<Set<string>>(new Set());
   const [showImportModal, setShowImportModal] = useState(false);
@@ -60,13 +62,25 @@ export default function BrandEnginePage() {
         if (cancelled) return;
         setOrganizationId(membership.organization_id);
 
+        // Get current workspace
+        const currentWorkspaceId = await getCurrentWorkspaceClient(userId, membership.organization_id);
+        if (!currentWorkspaceId) {
+          console.error('[Brand Engine] No workspace ID found');
+          return;
+        }
+        if (cancelled) return;
+        setWorkspaceId(currentWorkspaceId);
+
         const { data: phasesData, error: phasesError } = await supabase
           .from('brand_phases')
           .select('id, phase_number, phase_name, status, current_question_index')
-          .eq('organization_id', membership.organization_id)
+          .eq('workspace_id', currentWorkspaceId)
           .order('sort_order');
 
-        if (phasesError) return;
+        if (phasesError) {
+          console.error('[Brand Engine] Error loading phases:', phasesError);
+          return;
+        }
         if (cancelled) return;
 
         if (phasesData && phasesData.length > 0) {
@@ -75,7 +89,7 @@ export default function BrandEnginePage() {
           const { data: outputPhases } = await supabase
             .from('brand_outputs')
             .select('phase_id')
-            .eq('organization_id', membership.organization_id);
+            .eq('workspace_id', currentWorkspaceId);
 
           if (outputPhases) {
             setPhasesWithData(new Set(outputPhases.map(o => o.phase_id)));
@@ -107,12 +121,12 @@ export default function BrandEnginePage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reloadData = useCallback(async () => {
-    if (!organizationId) return;
+    if (!workspaceId) return;
 
     const { data: phasesData } = await supabase
       .from('brand_phases')
       .select('id, phase_number, phase_name, status, current_question_index')
-      .eq('organization_id', organizationId)
+      .eq('workspace_id', workspaceId)
       .order('sort_order');
 
     if (phasesData && phasesData.length > 0) setPhases(phasesData);
@@ -120,10 +134,10 @@ export default function BrandEnginePage() {
     const { data: outputPhases } = await supabase
       .from('brand_outputs')
       .select('phase_id')
-      .eq('organization_id', organizationId);
+      .eq('workspace_id', workspaceId);
 
     if (outputPhases) setPhasesWithData(new Set(outputPhases.map(o => o.phase_id)));
-  }, [organizationId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [workspaceId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePhaseClick = useCallback((phase: Phase) => {
     if (!isPhaseAccessible(phases, phase.id)) return;

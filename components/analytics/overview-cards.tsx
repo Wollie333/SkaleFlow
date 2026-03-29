@@ -110,12 +110,12 @@ export function OverviewCards({ data, isLoading }: OverviewCardsProps) {
             <div className={`w-10 h-10 ${card.bg} rounded-lg flex items-center justify-center`}>
               <card.icon className={`w-5 h-5 ${card.color}`} />
             </div>
-            <span className="text-sm text-stone">{card.label}</span>
+            <span className="text-sm text-stone/80 font-medium">{card.label}</span>
           </div>
           {isLoading ? (
             <div className="h-8 w-20 bg-stone/10 rounded animate-pulse" />
           ) : (
-            <p className="text-2xl font-bold text-charcoal">
+            <p className="text-2xl font-bold text-charcoal/90">
               {card.format(card.value)}
             </p>
           )}

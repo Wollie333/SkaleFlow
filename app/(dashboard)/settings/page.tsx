@@ -804,175 +804,177 @@ export default function SettingsPage() {
               )}
             </Card>
 
-            {/* Feature Access */}
-            <Card>
-              <h2 className="text-heading-md text-charcoal mb-6">Features</h2>
+            {/* Feature Access - HIDDEN */}
+            {false && (
+              <Card>
+                <h2 className="text-heading-md text-charcoal mb-6">Features</h2>
 
-              <div className="space-y-3">
-                {/* SkaleFlow Engines */}
-                <p className="text-xs font-semibold text-teal-dark uppercase tracking-wider px-1">SkaleFlow Engines</p>
+                <div className="space-y-3">
+                  {/* SkaleFlow Engines */}
+                  <p className="text-xs font-semibold text-teal-dark uppercase tracking-wider px-1">SkaleFlow Engines</p>
 
-                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
-                  <div>
-                    <h3 className="font-medium text-charcoal">Brand Engine</h3>
-                    <p className="text-sm text-stone">10-phase AI-guided brand strategy system</p>
+                  <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                    <div>
+                      <h3 className="font-medium text-charcoal">Brand Engine</h3>
+                      <p className="text-sm text-stone">10-phase AI-guided brand strategy system</p>
+                    </div>
+                    <Badge variant={organization?.brand_engine_enabled ? 'awareness' : 'conversion'}>
+                      {organization?.brand_engine_enabled ? 'Enabled' : 'Locked'}
+                    </Badge>
                   </div>
-                  <Badge variant={organization?.brand_engine_enabled ? 'awareness' : 'conversion'}>
-                    {organization?.brand_engine_enabled ? 'Enabled' : 'Locked'}
-                  </Badge>
+
+                  <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                    <div>
+                      <h3 className="font-medium text-charcoal">Content Engine</h3>
+                      <p className="text-sm text-stone">AI content generation, calendar & publishing</p>
+                    </div>
+                    <Badge variant={organization?.content_engine_enabled ? 'awareness' : 'conversion'}>
+                      {organization?.content_engine_enabled ? 'Enabled' : 'Locked'}
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                    <div>
+                      <h3 className="font-medium text-charcoal">Authority Engine</h3>
+                      <p className="text-sm text-stone">PR pipeline, media contacts & public newsroom</p>
+                    </div>
+                    <Badge variant={(isOwnerOrAdmin || userRole === 'super_admin') ? 'awareness' : 'conversion'}>
+                      {(isOwnerOrAdmin || userRole === 'super_admin') ? 'Enabled' : 'Locked'}
+                    </Badge>
+                  </div>
+
+                  {/* Content & Publishing */}
+                  <p className="text-xs font-semibold text-teal-dark uppercase tracking-wider px-1 mt-4">Content & Publishing</p>
+
+                  <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                    <div>
+                      <h3 className="font-medium text-charcoal">Content Calendar</h3>
+                      <p className="text-sm text-stone">Campaign-based scheduling with conflict prevention</p>
+                    </div>
+                    <Badge variant="awareness">Enabled</Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                    <div>
+                      <h3 className="font-medium text-charcoal">Social Media Publishing</h3>
+                      <p className="text-sm text-stone">Direct publishing to LinkedIn, Facebook, Instagram, X & TikTok</p>
+                    </div>
+                    <Badge variant="awareness">Enabled</Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                    <div>
+                      <h3 className="font-medium text-charcoal">Content Approval Workflow</h3>
+                      <p className="text-sm text-stone">Role-based review and approval for content</p>
+                    </div>
+                    <Badge variant="awareness">Enabled</Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                    <div>
+                      <h3 className="font-medium text-charcoal">Brand Playbook</h3>
+                      <p className="text-sm text-stone">Exportable brand guide styled with your identity</p>
+                    </div>
+                    <Badge variant="awareness">Enabled</Badge>
+                  </div>
+
+                  {/* AI & Credits */}
+                  <p className="text-xs font-semibold text-teal-dark uppercase tracking-wider px-1 mt-4">AI & Credits</p>
+
+                  <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                    <div>
+                      <h3 className="font-medium text-charcoal">AI Content Generation</h3>
+                      <p className="text-sm text-stone">Queue-based batch generation with model selection</p>
+                    </div>
+                    <Badge variant="awareness">Enabled</Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                    <div>
+                      <h3 className="font-medium text-charcoal">Credit System & Billing</h3>
+                      <p className="text-sm text-stone">Monthly credits, top-up packs & invoice management</p>
+                    </div>
+                    <Badge variant="awareness">Enabled</Badge>
+                  </div>
+
+                  {/* Integrations */}
+                  <p className="text-xs font-semibold text-teal-dark uppercase tracking-wider px-1 mt-4">Integrations</p>
+
+                  <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                    <div>
+                      <h3 className="font-medium text-charcoal">Google Drive</h3>
+                      <p className="text-sm text-stone">Import creative assets directly into content</p>
+                    </div>
+                    <Badge variant="awareness">Enabled</Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
+                    <div>
+                      <h3 className="font-medium text-charcoal">Google Calendar</h3>
+                      <p className="text-sm text-stone">Meeting booking with applicants</p>
+                    </div>
+                    <Badge variant="awareness">Enabled</Badge>
+                  </div>
+
+                  {/* Coming Soon */}
+                  <p className="text-xs font-semibold text-teal-dark uppercase tracking-wider px-1 mt-4">Coming Soon</p>
+
+                  <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
+                    <div>
+                      <h3 className="font-medium text-charcoal">Social Inbox</h3>
+                      <p className="text-sm text-stone">Unified inbox for comments, DMs & mentions</p>
+                    </div>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
+                    <div>
+                      <h3 className="font-medium text-charcoal">Social Listening</h3>
+                      <p className="text-sm text-stone">Brand mentions, trends & competitive reports</p>
+                    </div>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
+                    <div>
+                      <h3 className="font-medium text-charcoal">Social Analytics</h3>
+                      <p className="text-sm text-stone">Post performance, audience insights & benchmarks</p>
+                    </div>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
+                    <div>
+                      <h3 className="font-medium text-charcoal">Media Library</h3>
+                      <p className="text-sm text-stone">Hashtag vault, saved replies & competitor tracking</p>
+                    </div>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
+                    <div>
+                      <h3 className="font-medium text-charcoal">Marketing Ads</h3>
+                      <p className="text-sm text-stone">Ad campaigns, audiences & creative library</p>
+                    </div>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
+                    <div>
+                      <h3 className="font-medium text-charcoal">Sales Pipeline</h3>
+                      <p className="text-sm text-stone">CRM pipeline with automation workflows</p>
+                    </div>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
-                  <div>
-                    <h3 className="font-medium text-charcoal">Content Engine</h3>
-                    <p className="text-sm text-stone">AI content generation, calendar & publishing</p>
-                  </div>
-                  <Badge variant={organization?.content_engine_enabled ? 'awareness' : 'conversion'}>
-                    {organization?.content_engine_enabled ? 'Enabled' : 'Locked'}
-                  </Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
-                  <div>
-                    <h3 className="font-medium text-charcoal">Authority Engine</h3>
-                    <p className="text-sm text-stone">PR pipeline, media contacts & public newsroom</p>
-                  </div>
-                  <Badge variant={(isOwnerOrAdmin || userRole === 'super_admin') ? 'awareness' : 'conversion'}>
-                    {(isOwnerOrAdmin || userRole === 'super_admin') ? 'Enabled' : 'Locked'}
-                  </Badge>
-                </div>
-
-                {/* Content & Publishing */}
-                <p className="text-xs font-semibold text-teal-dark uppercase tracking-wider px-1 mt-4">Content & Publishing</p>
-
-                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
-                  <div>
-                    <h3 className="font-medium text-charcoal">Content Calendar</h3>
-                    <p className="text-sm text-stone">Campaign-based scheduling with conflict prevention</p>
-                  </div>
-                  <Badge variant="awareness">Enabled</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
-                  <div>
-                    <h3 className="font-medium text-charcoal">Social Media Publishing</h3>
-                    <p className="text-sm text-stone">Direct publishing to LinkedIn, Facebook, Instagram, X & TikTok</p>
-                  </div>
-                  <Badge variant="awareness">Enabled</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
-                  <div>
-                    <h3 className="font-medium text-charcoal">Content Approval Workflow</h3>
-                    <p className="text-sm text-stone">Role-based review and approval for content</p>
-                  </div>
-                  <Badge variant="awareness">Enabled</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
-                  <div>
-                    <h3 className="font-medium text-charcoal">Brand Playbook</h3>
-                    <p className="text-sm text-stone">Exportable brand guide styled with your identity</p>
-                  </div>
-                  <Badge variant="awareness">Enabled</Badge>
-                </div>
-
-                {/* AI & Credits */}
-                <p className="text-xs font-semibold text-teal-dark uppercase tracking-wider px-1 mt-4">AI & Credits</p>
-
-                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
-                  <div>
-                    <h3 className="font-medium text-charcoal">AI Content Generation</h3>
-                    <p className="text-sm text-stone">Queue-based batch generation with model selection</p>
-                  </div>
-                  <Badge variant="awareness">Enabled</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
-                  <div>
-                    <h3 className="font-medium text-charcoal">Credit System & Billing</h3>
-                    <p className="text-sm text-stone">Monthly credits, top-up packs & invoice management</p>
-                  </div>
-                  <Badge variant="awareness">Enabled</Badge>
-                </div>
-
-                {/* Integrations */}
-                <p className="text-xs font-semibold text-teal-dark uppercase tracking-wider px-1 mt-4">Integrations</p>
-
-                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
-                  <div>
-                    <h3 className="font-medium text-charcoal">Google Drive</h3>
-                    <p className="text-sm text-stone">Import creative assets directly into content</p>
-                  </div>
-                  <Badge variant="awareness">Enabled</Badge>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-cream-warm rounded-xl">
-                  <div>
-                    <h3 className="font-medium text-charcoal">Google Calendar</h3>
-                    <p className="text-sm text-stone">Meeting booking with applicants</p>
-                  </div>
-                  <Badge variant="awareness">Enabled</Badge>
-                </div>
-
-                {/* Coming Soon */}
-                <p className="text-xs font-semibold text-teal-dark uppercase tracking-wider px-1 mt-4">Coming Soon</p>
-
-                <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
-                  <div>
-                    <h3 className="font-medium text-charcoal">Social Inbox</h3>
-                    <p className="text-sm text-stone">Unified inbox for comments, DMs & mentions</p>
-                  </div>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
-                  <div>
-                    <h3 className="font-medium text-charcoal">Social Listening</h3>
-                    <p className="text-sm text-stone">Brand mentions, trends & competitive reports</p>
-                  </div>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
-                  <div>
-                    <h3 className="font-medium text-charcoal">Social Analytics</h3>
-                    <p className="text-sm text-stone">Post performance, audience insights & benchmarks</p>
-                  </div>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
-                  <div>
-                    <h3 className="font-medium text-charcoal">Media Library</h3>
-                    <p className="text-sm text-stone">Hashtag vault, saved replies & competitor tracking</p>
-                  </div>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
-                  <div>
-                    <h3 className="font-medium text-charcoal">Marketing Ads</h3>
-                    <p className="text-sm text-stone">Ad campaigns, audiences & creative library</p>
-                  </div>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-stone/5 rounded-xl opacity-60">
-                  <div>
-                    <h3 className="font-medium text-charcoal">Sales Pipeline</h3>
-                    <p className="text-sm text-stone">CRM pipeline with automation workflows</p>
-                  </div>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-stone bg-stone/10 px-2 py-1 rounded-full">Coming Soon</span>
-                </div>
-              </div>
-
-              {!organization?.content_engine_enabled && (
-                <p className="text-sm text-stone mt-4">
-                  Complete all Brand Engine phases to unlock the Content Engine.
-                </p>
-              )}
-            </Card>
+                {!organization?.content_engine_enabled && (
+                  <p className="text-sm text-stone mt-4">
+                    Complete all Brand Engine phases to unlock the Content Engine.
+                  </p>
+                )}
+              </Card>
+            )}
           </div>
         )}
 
@@ -1017,8 +1019,8 @@ export default function SettingsPage() {
               </Card>
             )}
 
-            {/* Google Drive Integration (org owners/admins) */}
-            {isOwnerOrAdmin && (
+            {/* Google Drive Integration (org owners/admins) - HIDDEN */}
+            {false && isOwnerOrAdmin && (
               <Card>
                 <h2 className="text-heading-md text-charcoal mb-2">Google Drive</h2>
                 <p className="text-stone text-sm mb-6">
@@ -1043,8 +1045,8 @@ export default function SettingsPage() {
               </Card>
             )}
 
-            {/* Canva Integration (owner/admin only) */}
-            {['owner', 'admin'].includes(orgRole) && (
+            {/* Canva Integration (owner/admin only) - HIDDEN */}
+            {false && ['owner', 'admin'].includes(orgRole) && (
               <Card>
                 <h2 className="text-heading-md text-charcoal mb-2">Canva</h2>
                 <p className="text-stone text-sm mb-6">
@@ -1070,32 +1072,34 @@ export default function SettingsPage() {
               </Card>
             )}
 
-            {/* Gmail Integration (all team members — per-user connection) */}
-            <Card>
-              <h2 className="text-heading-md text-charcoal mb-2">Email Integration</h2>
-              <p className="text-stone text-sm mb-6">
-                Connect your Gmail to send and sync emails with media contacts in the Authority Engine.
-              </p>
+            {/* Gmail Integration (all team members — per-user connection) - HIDDEN */}
+            {false && (
+              <Card>
+                <h2 className="text-heading-md text-charcoal mb-2">Email Integration</h2>
+                <p className="text-stone text-sm mb-6">
+                  Connect your Gmail to send and sync emails with media contacts in the Authority Engine.
+                </p>
 
-              {gmailStatus === 'connected' && (
-                <div className="mb-4 p-3 bg-teal/10 border border-teal/20 rounded-lg text-sm text-teal font-medium">
-                  Gmail connected successfully!
-                </div>
-              )}
-              {gmailStatus === 'error' && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-400">
-                  Failed to connect Gmail. {gmailErrorMessage && <span className="block mt-1 text-xs text-red-500">{gmailErrorMessage}</span>}
-                </div>
-              )}
+                {gmailStatus === 'connected' && (
+                  <div className="mb-4 p-3 bg-teal/10 border border-teal/20 rounded-lg text-sm text-teal font-medium">
+                    Gmail connected successfully!
+                  </div>
+                )}
+                {gmailStatus === 'error' && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-400">
+                    Failed to connect Gmail. {gmailErrorMessage && <span className="block mt-1 text-xs text-red-500">{gmailErrorMessage}</span>}
+                  </div>
+                )}
 
-              <GmailConnectionCard
-                connection={gmailConnection}
-                onDisconnect={handleDisconnectGmail}
-              />
-            </Card>
+                <GmailConnectionCard
+                  connection={gmailConnection}
+                  onDisconnect={handleDisconnectGmail}
+                />
+              </Card>
+            )}
 
-            {/* Google Calendar Integration (super_admin only) */}
-            {userRole === 'super_admin' && (
+            {/* Google Calendar Integration (super_admin only) - HIDDEN */}
+            {false && userRole === 'super_admin' && (
               <Card>
                 <h2 className="text-heading-md text-charcoal mb-6">Google Calendar</h2>
 

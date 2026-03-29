@@ -1,106 +1,189 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { recordUserEdit } from '@/lib/content-engine/style-learning';
+import { canEditPost } from '@/lib/permissions';
+import { trackPostChanges } from '@/lib/content-engine/revisions';
+import { logPostDeleted } from '@/lib/activity-log';
 
-// GET — Single post detail
 export async function GET(
-  request: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string; postId: string }> }
 ) {
   try {
-    const { postId } = await params;
+    const { id, postId } = await params;
+    console.log('[GET-POST] Request params:', { campaignId: id, postId });
+
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { data, error } = await supabase
+    console.log('[GET-POST] User authenticated:', user?.id);
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Try to fetch the post - don't enforce campaign_id match here as it might be incorrect from routing
+    const { data: post, error } = await supabase
       .from('content_posts')
       .select('*')
       .eq('id', postId)
       .single();
 
-    if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    return NextResponse.json({ post: data });
-  } catch (err) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.log('[GET-POST] Query result:', { found: !!post, error: error?.message, campaignMatch: post?.campaign_id === id });
+
+    if (error || !post) {
+      console.error('[GET-POST] Post not found or error:', error);
+      return NextResponse.json({ error: error?.message || 'Post not found' }, { status: 404 });
+    }
+
+    // Verify the post belongs to the campaign (soft check for logging)
+    if (post.campaign_id !== id) {
+      console.warn('[GET-POST] Post campaign mismatch:', { expected: id, actual: post.campaign_id });
+    }
+
+    console.log('[GET-POST] Returning post:', post.id);
+    return NextResponse.json({ post });
+  } catch (error) {
+    console.error('[GET-POST] Unexpected error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to fetch post' },
+      { status: 500 }
+    );
   }
 }
 
-// PATCH — Update post
 export async function PATCH(
-  request: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string; postId: string }> }
 ) {
   try {
-    const { postId } = await params;
-    const body = await request.json();
+    const { id, postId } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    // Allowlist of updatable fields
-    const allowed = [
-      'topic', 'hook', 'hook_variations', 'body', 'cta', 'caption', 'hashtags',
-      'visual_brief', 'shot_suggestions', 'slide_content', 'on_screen_text',
-      'platform_variations', 'scheduled_date', 'scheduled_time', 'status',
-      'assigned_to', 'target_url', 'utm_parameters', 'media_urls', 'thumbnail_url',
-    ];
-
-    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
-    for (const key of allowed) {
-      if (body[key] !== undefined) updates[key] = body[key];
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Fetch original AI output before updating (for style learning)
+    // Get current post state (before update) for revision tracking
     const { data: currentPost } = await supabase
       .from('content_posts')
-      .select('original_ai_output, organization_id, ai_generated')
+      .select('*, workspace_id, organization_id, assigned_to')
       .eq('id', postId)
       .single();
 
-    const { data, error } = await supabase
+    if (!currentPost) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+
+    // Check permission to edit
+    const canEdit = await canEditPost(
+      currentPost.workspace_id,
+      user.id,
+      currentPost.assigned_to
+    );
+
+    if (!canEdit) {
+      return NextResponse.json(
+        { error: 'Forbidden: No permission to edit this post' },
+        { status: 403 }
+      );
+    }
+
+    const updates = await req.json();
+
+    // Update post
+    const { data: post, error } = await supabase
       .from('content_posts')
-      .update(updates)
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', postId)
       .select()
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-    // Style learning: compare user edits against original AI output
-    if (currentPost?.original_ai_output && currentPost.ai_generated && currentPost.organization_id) {
-      const originalOutput = currentPost.original_ai_output as Record<string, unknown>;
-      const userEdited = {
-        topic: body.topic,
-        hook: body.hook,
-        body: body.body,
-        cta: body.cta,
-        caption: body.caption,
-      };
-      // Fire-and-forget (don't block the save response)
-      recordUserEdit(supabase, currentPost.organization_id, postId, originalOutput, userEdited).catch(() => {});
+    if (error || !post) {
+      console.error('[PATCH-POST] Error:', error);
+      return NextResponse.json(
+        { error: error?.message || 'Failed to update post' },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ post: data });
-  } catch (err) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    // Track changes and create revision
+    await trackPostChanges(
+      postId,
+      currentPost,
+      post,
+      user.id,
+      currentPost.workspace_id,
+      currentPost.organization_id
+    );
+
+    return NextResponse.json({ post });
+  } catch (error) {
+    console.error('[PATCH-POST] Error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to update post' },
+      { status: 500 }
+    );
   }
 }
 
-// DELETE — Remove post
 export async function DELETE(
-  request: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string; postId: string }> }
 ) {
   try {
-    const { postId } = await params;
+    const { id, postId } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    await supabase.from('content_posts').delete().eq('id', postId);
+    // Get post data before deleting for activity log
+    const { data: post } = await supabase
+      .from('content_posts')
+      .select('*, workspace_id, organization_id')
+      .eq('id', postId)
+      .single();
+
+    if (!post) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+
+    // Delete post
+    const { error } = await supabase
+      .from('content_posts')
+      .delete()
+      .eq('id', postId);
+
+    if (error) {
+      console.error('[DELETE-POST] Error:', error);
+      return NextResponse.json(
+        { error: error.message || 'Failed to delete post' },
+        { status: 500 }
+      );
+    }
+
+    // Log deletion activity
+    await logPostDeleted(
+      post.workspace_id,
+      user.id,
+      postId,
+      {
+        topic: post.topic,
+        content_type: post.content_type,
+        status: post.status,
+      }
+    );
+
     return NextResponse.json({ success: true });
-  } catch (err) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (error) {
+    console.error('[DELETE-POST] Error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to delete post' },
+      { status: 500 }
+    );
   }
 }

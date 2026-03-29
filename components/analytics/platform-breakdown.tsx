@@ -83,7 +83,7 @@ export function PlatformBreakdown({ data, isLoading }: PlatformBreakdownProps) {
                 <Badge className={cn('text-white', config.bgColor)}>
                   {config.name}
                 </Badge>
-                <span className="text-xs text-stone">
+                <span className="text-xs text-stone/80 font-medium">
                   {platform.totalPosts} post{platform.totalPosts !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -91,8 +91,8 @@ export function PlatformBreakdown({ data, isLoading }: PlatformBreakdownProps) {
               <div className="space-y-3">
                 {metricRows.map(row => (
                   <div key={row.label} className="flex justify-between">
-                    <span className="text-sm text-stone">{row.label}</span>
-                    <span className="text-sm font-semibold text-charcoal">{row.value}</span>
+                    <span className="text-sm text-stone/80">{row.label}</span>
+                    <span className="text-sm font-semibold text-charcoal/90">{row.value}</span>
                   </div>
                 ))}
               </div>

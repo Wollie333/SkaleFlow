@@ -59,9 +59,9 @@ export async function POST(request: Request) {
         .select('users!inner(email)')
         .eq('organization_id', org.id),
       serviceSupabase
-        .from('invitations')
+        .from('org_invites')
         .select('email')
-        .eq('organization_name', org.name)
+        .eq('organization_id', org.id)
         .eq('status', 'pending'),
     ]);
 
@@ -102,16 +102,19 @@ export async function POST(request: Request) {
       expiresAt.setDate(expiresAt.getDate() + 7);
 
       const { error: inviteError } = await serviceSupabase
-        .from('invitations')
+        .from('org_invites')
         .insert({
           email,
-          organization_name: org.name,
+          organization_id: org.id,
+          role,
           token,
           expires_at: expiresAt.toISOString(),
           invited_by: user.id,
+          status: 'pending',
         });
 
       if (inviteError) {
+        console.error('Failed to create invite:', inviteError);
         results.push({ email, success: false, error: 'Failed to create invitation' });
         continue;
       }
@@ -119,6 +122,7 @@ export async function POST(request: Request) {
       // Send email
       const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://skale-flow.vercel.app';
       const inviteUrl = `${origin}/invite/${token}`;
+      let emailSent = false;
       try {
         await sendTeamInviteEmail({
           to: email,
@@ -126,12 +130,20 @@ export async function POST(request: Request) {
           organizationName: org.name,
           inviteUrl,
         });
-      } catch {
+        emailSent = true;
+
+        // Mark as sent
+        await serviceSupabase
+          .from('org_invites')
+          .update({ sent_at: new Date().toISOString() })
+          .eq('token', token);
+      } catch (emailError) {
+        console.error('Failed to send email to', email, emailError);
         // Email failed but invite was created
       }
 
       invitedEmails.add(email);
-      results.push({ email, success: true });
+      results.push({ email, success: true, emailSent });
 
       // Log each invite
       logTeamActivity(org.id, user.id, 'member_invited', null, {

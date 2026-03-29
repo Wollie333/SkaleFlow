@@ -7,6 +7,7 @@ import { Button } from '@/components/ui';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PlatformSelector, ConsistencyScoreDisplay } from '@/components/presence';
 import { PRESENCE_PHASE_TEMPLATES } from '@/config/presence-phases';
+import { getCurrentWorkspaceClient } from '@/lib/supabase/workspace-client';
 import {
   CheckCircleIcon,
   PlayCircleIcon,
@@ -45,6 +46,7 @@ export default function PresenceDashboard() {
   const [phases, setPhases] = useState<PresencePhase[]>([]);
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showPlatformSelector, setShowPlatformSelector] = useState(false);
   const [consistencyScore, setConsistencyScore] = useState<number | null>(null);
@@ -64,11 +66,16 @@ export default function PresenceDashboard() {
         const orgId = membership.organization_id;
         setOrganizationId(orgId);
 
+        // Get current workspace
+        const currentWorkspaceId = await getCurrentWorkspaceClient(userId, orgId);
+        if (!currentWorkspaceId || cancelled) return;
+        setWorkspaceId(currentWorkspaceId);
+
         // Load phases
         let phasesData = (await supabase
           .from('presence_phases')
           .select('*')
-          .eq('organization_id', orgId)
+          .eq('workspace_id', currentWorkspaceId)
           .order('sort_order')).data;
 
         // Auto-create all 7 phases if none exist
@@ -77,6 +84,7 @@ export default function PresenceDashboard() {
           for (const t of templates) {
             await supabase.from('presence_phases').insert({
               organization_id: orgId,
+              workspace_id: currentWorkspaceId,
               phase_number: t.number,
               phase_name: t.name,
               platform_key: t.platformKey,
@@ -89,14 +97,14 @@ export default function PresenceDashboard() {
           phasesData = (await supabase
             .from('presence_phases')
             .select('*')
-            .eq('organization_id', orgId)
+            .eq('workspace_id', currentWorkspaceId)
             .order('sort_order')).data;
         }
 
         if (!cancelled && phasesData) setPhases(phasesData);
 
         // Load platforms
-        const platformsRes = await fetch(`/api/presence/platforms?organizationId=${membership.organization_id}`);
+        const platformsRes = await fetch(`/api/presence/platforms?organizationId=${membership.organization_id}&workspaceId=${currentWorkspaceId}`);
         if (platformsRes.ok) {
           const { platforms: platformsData } = await platformsRes.json();
           if (!cancelled) setPlatforms(platformsData || []);
@@ -127,22 +135,22 @@ export default function PresenceDashboard() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reloadData = useCallback(async () => {
-    if (!organizationId) return;
+    if (!workspaceId || !organizationId) return;
 
     const { data: phasesData } = await supabase
       .from('presence_phases')
       .select('*')
-      .eq('organization_id', organizationId)
+      .eq('workspace_id', workspaceId)
       .order('sort_order');
 
     if (phasesData) setPhases(phasesData);
 
-    const platformsRes = await fetch(`/api/presence/platforms?organizationId=${organizationId}`);
+    const platformsRes = await fetch(`/api/presence/platforms?organizationId=${organizationId}&workspaceId=${workspaceId}`);
     if (platformsRes.ok) {
       const { platforms: platformsData } = await platformsRes.json();
       setPlatforms(platformsData || []);
     }
-  }, [organizationId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [workspaceId, organizationId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePhaseClick = useCallback((phase: PresencePhase) => {
     if (phase.status === 'skipped' || phase.status === 'locked') return;

@@ -12,6 +12,7 @@ import { MAX_BATCH_FREE, MAX_BATCH_PAID, ITEMS_PER_CRON_CYCLE, LOCK_TIMEOUT_MIN 
 
 export interface V3EnqueueParams {
   organizationId: string;
+  workspaceId: string;
   campaignId: string;
   adsetId: string;
   userId: string;
@@ -37,7 +38,7 @@ export async function enqueueCampaignBatch(
   params: V3EnqueueParams,
   isSuperAdmin: boolean = false
 ): Promise<{ batchId: string; totalItems: number }> {
-  const { organizationId, campaignId, adsetId, userId, postIds, modelId, selectedBrandVariables, creativeDirection } = params;
+  const { organizationId, workspaceId, campaignId, adsetId, userId, postIds, modelId, selectedBrandVariables, creativeDirection } = params;
 
   // Enforce batch size limits
   const maxItems = isSuperAdmin ? 999 : (await isPaidOrg(supabase, organizationId) ? MAX_BATCH_PAID : MAX_BATCH_FREE);
@@ -50,6 +51,7 @@ export async function enqueueCampaignBatch(
     .from('v3_generation_batches')
     .insert({
       organization_id: organizationId,
+      workspace_id: workspaceId,
       campaign_id: campaignId,
       adset_id: adsetId,
       user_id: userId,
@@ -74,6 +76,7 @@ export async function enqueueCampaignBatch(
     batch_id: batch.id,
     post_id: postId,
     organization_id: organizationId,
+    workspace_id: workspaceId,
     status: 'pending' as const,
     priority: postIds.length - i, // higher priority for earlier posts
   }));
@@ -115,6 +118,156 @@ export async function getV3BatchStatus(
     failedItems: batch.failed_items,
     batchComplete,
   };
+}
+
+// ---- Process multiple items concurrently (for faster batch processing) ----
+
+export async function processMultipleV3Items(
+  supabase: SupabaseClient<Database>,
+  batchId: string,
+  concurrency: number = 3
+): Promise<{ processed: number; batchComplete: boolean }> {
+  // Find next N pending items
+  const { data: queueItems } = await supabase
+    .from('v3_generation_queue')
+    .select('*')
+    .eq('batch_id', batchId)
+    .eq('status', 'pending')
+    .order('priority', { ascending: false })
+    .limit(concurrency);
+
+  if (!queueItems || queueItems.length === 0) {
+    // No pending items — check if batch is done
+    await finalizeBatchIfComplete(supabase, batchId);
+    return { processed: 0, batchComplete: true };
+  }
+
+  // Lock all items
+  const now = new Date().toISOString();
+  const itemIds = queueItems.map(i => i.id);
+  await supabase
+    .from('v3_generation_queue')
+    .update({ status: 'processing', locked_at: now })
+    .in('id', itemIds);
+
+  // Update batch status to processing
+  await supabase
+    .from('v3_generation_batches')
+    .update({ status: 'processing', updated_at: now })
+    .eq('id', batchId)
+    .eq('status', 'pending');
+
+  // Load batch context
+  const { data: batch } = await supabase
+    .from('v3_generation_batches')
+    .select('*')
+    .eq('id', batchId)
+    .single();
+
+  if (!batch) {
+    return { processed: 0, batchComplete: true };
+  }
+
+  let uniquenessLog = (Array.isArray(batch.uniqueness_log) ? batch.uniqueness_log : []) as Array<{ topic: string; hook: string }>;
+  const selectedVars = batch.selected_brand_variables as string[] | null;
+
+  // Process all items concurrently
+  const results = await Promise.allSettled(
+    queueItems.map(async (queueItem) => {
+      try {
+        console.log('[QUEUE] Processing post:', queueItem.post_id);
+        const result = await generateV3Post(
+          supabase,
+          batch.organization_id,
+          batch.user_id,
+          queueItem.post_id,
+          batch.model_id,
+          uniquenessLog,
+          selectedVars,
+          batch.creative_direction || undefined
+        );
+
+        if (result.success && result.content) {
+          console.log('[QUEUE] ✓ Post generated successfully:', queueItem.post_id);
+          // Mark queue item completed
+          await supabase
+            .from('v3_generation_queue')
+            .update({ status: 'completed', completed_at: new Date().toISOString() })
+            .eq('id', queueItem.id);
+
+          // Add to uniqueness log
+          uniquenessLog = [...uniquenessLog, { topic: result.content.topic, hook: result.content.hook }];
+
+          return { success: true, queueItemId: queueItem.id };
+        } else {
+          // Handle failure
+          console.error('[QUEUE] ✗ Post generation FAILED:', queueItem.post_id);
+          console.error('[QUEUE] Error:', result.error);
+          console.error('[QUEUE] Retryable:', result.retryable);
+          const newAttempt = (queueItem.attempt_count || 0) + 1;
+          console.error('[QUEUE] Attempt:', newAttempt, '/', queueItem.max_attempts);
+
+          if (newAttempt >= queueItem.max_attempts) {
+            await supabase
+              .from('v3_generation_queue')
+              .update({ status: 'failed', attempt_count: newAttempt, error_message: result.error || 'Unknown error' })
+              .eq('id', queueItem.id);
+          } else {
+            // Retry: reset to pending
+            await supabase
+              .from('v3_generation_queue')
+              .update({ status: 'pending', attempt_count: newAttempt, locked_at: null, error_message: result.error })
+              .eq('id', queueItem.id);
+          }
+          return { success: false, failed: newAttempt >= queueItem.max_attempts };
+        }
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+        const newAttempt = (queueItem.attempt_count || 0) + 1;
+
+        await supabase
+          .from('v3_generation_queue')
+          .update({
+            status: newAttempt >= queueItem.max_attempts ? 'failed' : 'pending',
+            attempt_count: newAttempt,
+            locked_at: null,
+            error_message: errorMsg,
+          })
+          .eq('id', queueItem.id);
+
+        return { success: false, failed: newAttempt >= queueItem.max_attempts };
+      }
+    })
+  );
+
+  // Count successes and failures
+  let completedCount = 0;
+  let failedCount = 0;
+
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      if (result.value.success) {
+        completedCount++;
+      } else if (result.value.failed) {
+        failedCount++;
+      }
+    }
+  }
+
+  // Update batch counters
+  await supabase
+    .from('v3_generation_batches')
+    .update({
+      completed_items: (batch.completed_items || 0) + completedCount,
+      failed_items: (batch.failed_items || 0) + failedCount,
+      uniqueness_log: uniquenessLog as unknown as Json,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', batchId);
+
+  // Check if batch is now complete
+  const complete = await finalizeBatchIfComplete(supabase, batchId);
+  return { processed: completedCount + failedCount, batchComplete: complete };
 }
 
 // ---- Process one item in a batch (called by client polling) ----

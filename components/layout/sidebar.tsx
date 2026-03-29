@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { WorkspaceSelector } from './workspace-selector';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import {
   HomeIcon,
   SparklesIcon,
@@ -44,6 +46,7 @@ import {
   CubeIcon,
   ShareIcon,
   BookOpenIcon,
+  ClockIcon,
 } from '@heroicons/react/24/outline';
 
 interface FeaturePermissions {
@@ -160,6 +163,14 @@ const authorityNavigation: NavItem[] = [
   { name: 'Settings', href: '/authority/settings', icon: Cog6ToothIcon },
 ];
 
+const teamNavigation: NavItem[] = [
+  { name: 'Members', href: '/team', icon: UsersIcon },
+  { name: 'Permissions', href: '/team?tab=permissions', icon: LockClosedIcon },
+  { name: 'Credits', href: '/team?tab=credits', icon: CreditCardIcon },
+  { name: 'Activity Log', href: '/team?tab=activity', icon: ClockIcon },
+  { name: 'Time Tracking', href: '/team/time-tracking', icon: ChartBarIcon },
+];
+
 const adminNavigation: NavItem[] = [
   { name: 'Users', href: '/admin/users', icon: UsersIcon },
   { name: 'AI Models', href: '/admin/models', icon: SparklesIcon },
@@ -184,6 +195,17 @@ interface SidebarProps {
   notificationCount?: number;
   pendingReviewCount?: number;
   teamPermissions?: Record<string, FeaturePermissions>;
+  workspaces?: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    logo_url?: string;
+    color: string;
+    is_default: boolean;
+  }>;
+  currentWorkspaceId?: string;
+  canCreateWorkspace?: boolean;
   className?: string;
 }
 
@@ -198,9 +220,15 @@ export function Sidebar({
   notificationCount,
   pendingReviewCount,
   teamPermissions = {},
+  workspaces = [],
+  currentWorkspaceId,
+  canCreateWorkspace = false,
   className,
 }: SidebarProps) {
   const pathname = usePathname();
+
+  // NEW: Use feature access hook for tier-based gating
+  const { features, tier, loading } = useFeatureAccess();
 
   // Auto-expand sections based on current pathname
   const isSocialPath = pathname.startsWith('/social/') || pathname.startsWith('/calendar') || pathname.startsWith('/content/');
@@ -218,6 +246,7 @@ export function Sidebar({
   const [callsExpanded, setCallsExpanded] = useState(pathname.startsWith('/calls'));
   const [crmExpanded, setCrmExpanded] = useState(pathname.startsWith('/crm') || pathname.startsWith('/pipeline'));
   const [adminExpanded, setAdminExpanded] = useState(pathname.startsWith('/admin'));
+  const [teamExpanded, setTeamExpanded] = useState(pathname.startsWith('/team'));
 
   // Expand relevant sections on navigation
   useEffect(() => {
@@ -236,43 +265,48 @@ export function Sidebar({
     if (pathname.startsWith('/crm') || pathname.startsWith('/pipeline')) setCrmExpanded(true);
     if (pathname.startsWith('/admin')) setAdminExpanded(true);
     if (pathname.startsWith('/authority')) setAuthorityExpanded(true);
+    if (pathname.startsWith('/team')) setTeamExpanded(true);
   }, [pathname]);
 
   const isOwnerOrAdmin = orgRole === 'owner' || orgRole === 'admin';
   const isSuperAdmin = userRole === 'super_admin';
 
-  // Permission helpers
-  const canAccessBrandEngine = isSuperAdmin || isOwnerOrAdmin || teamPermissions?.brand_engine?.access === true;
-  const canAccessContentEngine = isSuperAdmin || isOwnerOrAdmin || (contentEngineEnabled && teamPermissions?.content_engine?.access === true);
-  const canAccessTeam = isSuperAdmin || isOwnerOrAdmin;
-  const canAccessBilling = isSuperAdmin || isOwnerOrAdmin;
-  const canAccessReviews = isSuperAdmin || isOwnerOrAdmin;
+  // SIMPLIFIED: Tier-based feature access (replaces old permission system)
+  const canAccessBrandEngine = features?.brand_engine || false;
+  const canAccessContentEngine = features?.content_engine || false;
+  const canAccessAnalytics = features?.analytics || false;
+  const canAccessTeam = features?.team || false;
+  const canAccessPipeline = features?.pipeline || false;
+  const canAccessAdCampaigns = features?.ad_campaigns || false;
+  const canAccessBilling = true; // Everyone can access billing to buy credits
+  const canAccessReviews = isOwnerOrAdmin || isSuperAdmin;
 
   // Build base navigation dynamically
   const baseNavItems: NavItem[] = [
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   ];
 
-  if (canAccessTeam) {
-    baseNavItems.push({ name: 'My Team', href: '/team', icon: UserGroupIcon });
+  // Analytics - only if tier includes it
+  if (canAccessAnalytics) {
+    baseNavItems.push({ name: 'Analytics', href: '/analytics', icon: ChartBarIcon });
   }
 
-  // SkaleFlow Engines
+  // SkaleFlow Engines (MVP: Only Brand Engine and Content Engine enabled)
   const engineItems: NavItem[] = [];
   if (canAccessBrandEngine) {
-    engineItems.push({ name: 'Brand Engine', href: '/brand', icon: SparklesIcon });
+    engineItems.push({ name: 'Brand Engine', href: '/brand', icon: SparklesIcon, disabled: false });
   }
   if (canAccessBrandEngine) {
-    engineItems.push({ name: 'Presence Engine', href: '/presence', icon: GlobeAltIcon });
+    engineItems.push({ name: 'Presence Engine', href: '/presence', icon: GlobeAltIcon, disabled: true });
   }
   if (canAccessContentEngine) {
-    engineItems.push({ name: 'Content Engine', href: '/content/machine', icon: BoltIcon });
+    engineItems.push({ name: 'Content Engine', href: '/content/machine', icon: BoltIcon, disabled: false });
   }
   if (isOwnerOrAdmin || isSuperAdmin) {
-    engineItems.push({ name: 'Ads Engine', href: '/marketing', icon: MegaphoneIcon });
+    engineItems.push({ name: 'Ads Engine', href: '/marketing', icon: MegaphoneIcon, disabled: true });
   }
   if (isOwnerOrAdmin || isSuperAdmin) {
-    engineItems.push({ name: 'Authority Engine', href: '/authority', icon: NewspaperIcon });
+    engineItems.push({ name: 'Authority Engine', href: '/authority', icon: NewspaperIcon, disabled: true });
   }
   // Social Engine moved to its own expandable section (like Ads Engine)
 
@@ -281,22 +315,33 @@ export function Sidebar({
 
   return (
     <aside className={cn("fixed left-0 top-16 bottom-0 w-60 bg-cream-warm border-r border-stone/10 flex flex-col", className)}>
+      {/* Workspace Selector */}
+      {workspaces.length > 0 && currentWorkspaceId && (
+        <WorkspaceSelector
+          workspaces={workspaces}
+          currentWorkspaceId={currentWorkspaceId}
+          canCreateWorkspace={canCreateWorkspace}
+        />
+      )}
+
       <nav className="flex-1 p-4 overflow-y-auto sidebar-scroll">
         {/* User Role / Tier Badge */}
         {userRole && (
           <div className="mb-4 px-3 py-2">
-            {userRole === 'client' && tierName ? (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-teal/15 text-teal">
-                {tierName}
+            {isSuperAdmin ? (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-gold/15 text-gold">
+                Super Admin
               </span>
-            ) : (
+            ) : tier?.name ? (
               <span className={cn(
                 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider',
-                isSuperAdmin
-                  ? 'bg-gold/15 text-gold'
-                  : 'bg-teal/15 text-teal'
+                tier.slug === 'beta' ? 'bg-purple-500/15 text-purple-700' : 'bg-teal/15 text-teal'
               )}>
-                {isSuperAdmin ? 'Super Admin' : orgRole === 'owner' ? 'Owner' : orgRole === 'admin' ? 'Admin' : orgRole === 'member' ? 'Member' : orgRole === 'viewer' ? 'Viewer' : 'Team Member'}
+                {tier.name}
+              </span>
+            ) : (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-teal/15 text-teal">
+                {orgRole === 'owner' ? 'Owner' : orgRole === 'admin' ? 'Admin' : orgRole === 'member' ? 'Member' : orgRole === 'viewer' ? 'Viewer' : 'Team Member'}
               </span>
             )}
           </div>
@@ -323,6 +368,59 @@ export function Sidebar({
               </Link>
             );
           })}
+
+          {/* My Team - Expandable Section */}
+          {canAccessTeam && (
+            <div>
+              <button
+                onClick={() => setTeamExpanded(!teamExpanded)}
+                className={cn(
+                  'w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                  pathname.startsWith('/team')
+                    ? 'bg-teal/10 text-teal'
+                    : 'text-stone hover:bg-stone/10 hover:text-teal active:scale-[0.97] active:bg-teal/5'
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <UserGroupIcon className="w-5 h-5" />
+                  My Team
+                </div>
+                <ChevronDownIcon
+                  className={cn(
+                    'w-4 h-4 transition-transform',
+                    teamExpanded && 'rotate-180'
+                  )}
+                />
+              </button>
+
+              {teamExpanded && (
+                <div className="ml-8 mt-1 space-y-1">
+                  {teamNavigation.map(item => {
+                    const isActive = pathname === item.href.split('?')[0] &&
+                      (item.href.includes('?') ?
+                        (typeof window !== 'undefined' && window.location.search === item.href.split('?')[1]) :
+                        true);
+
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={cn(
+                          'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
+                          isActive
+                            ? 'text-teal font-medium'
+                            : 'text-stone hover:text-teal'
+                        )}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        {item.name}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Reviews — hidden for now (future feature) */}
@@ -344,126 +442,65 @@ export function Sidebar({
                   : pathname === item.href || pathname.startsWith(item.href);
 
                 if (isAdsEngine) {
-                  // Ads Engine — collapsible with sub-nav (same style as Authority)
+                  // Ads Engine — collapsible with sub-nav (same style as Authority) - DISABLED FOR MVP
                   return (
-                    <div key={item.name}>
+                    <div key={item.name} className={cn(item.disabled && 'opacity-40 blur-[0.5px] pointer-events-none')}>
                       <div className="flex items-center">
-                        <Link
-                          href={item.href}
+                        <div
                           className={cn(
-                            'flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
-                            isActive
-                              ? 'bg-teal/10 text-teal'
-                              : 'text-stone hover:bg-stone/10 hover:text-teal active:scale-[0.97] active:bg-teal/5'
+                            'flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium',
+                            'text-stone cursor-not-allowed'
                           )}
                         >
                           <item.icon className="w-5 h-5" />
                           {item.name}
                           {!isSuperAdmin && <LockClosedIcon className="w-3.5 h-3.5 text-stone/40" />}
-                        </Link>
+                        </div>
                         <button
-                          onClick={() => setAdsEngineExpanded(!adsEngineExpanded)}
-                          className="p-1.5 text-stone hover:text-teal transition-colors rounded"
+                          disabled
+                          className="p-1.5 text-stone/40 cursor-not-allowed rounded"
                         >
-                          {adsEngineExpanded ? (
-                            <ChevronDownIcon className="w-4 h-4" />
-                          ) : (
-                            <ChevronRightIcon className="w-4 h-4" />
-                          )}
+                          <ChevronRightIcon className="w-4 h-4" />
                         </button>
                       </div>
-                      {adsEngineExpanded && (
-                        <div className="space-y-1 mt-1">
-                          {isSuperAdmin ? (
-                            marketingNavigation.map((sub) => {
-                              const subActive = sub.href === '/marketing'
-                                ? pathname === '/marketing'
-                                : pathname.startsWith(sub.href);
-                              return (
-                                <Link
-                                  key={sub.name}
-                                  href={sub.href}
-                                  className={cn(
-                                    'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
-                                    subActive
-                                      ? 'bg-teal/10 text-teal'
-                                      : 'text-stone hover:bg-stone/10 hover:text-teal'
-                                  )}
-                                >
-                                  <sub.icon className="w-4 h-4" />
-                                  {sub.name}
-                                </Link>
-                              );
-                            })
-                          ) : (
-                            marketingNavigation.map((sub) => (
-                              <div
-                                key={sub.name}
-                                className="flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium text-stone/40 cursor-not-allowed"
-                              >
-                                <sub.icon className="w-4 h-4" />
-                                {sub.name}
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      )}
                     </div>
                   );
                 }
 
                 if (isAuthority) {
-                  // Authority Engine — collapsible with sub-nav
+                  // Authority Engine — collapsible with sub-nav - DISABLED FOR MVP
                   return (
-                    <div key={item.name}>
+                    <div key={item.name} className={cn(item.disabled && 'opacity-40 blur-[0.5px] pointer-events-none')}>
                       <div className="flex items-center">
-                        <Link
-                          href={item.href}
+                        <div
                           className={cn(
-                            'flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
-                            isActive
-                              ? 'bg-teal/10 text-teal'
-                              : 'text-stone hover:bg-stone/10 hover:text-teal active:scale-[0.97] active:bg-teal/5'
+                            'flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium',
+                            'text-stone cursor-not-allowed'
                           )}
                         >
                           <item.icon className="w-5 h-5" />
                           {item.name}
-                        </Link>
+                        </div>
                         <button
-                          onClick={() => setAuthorityExpanded(!authorityExpanded)}
-                          className="p-1.5 text-stone hover:text-teal transition-colors rounded"
+                          disabled
+                          className="p-1.5 text-stone/40 cursor-not-allowed rounded"
                         >
-                          {authorityExpanded ? (
-                            <ChevronDownIcon className="w-4 h-4" />
-                          ) : (
-                            <ChevronRightIcon className="w-4 h-4" />
-                          )}
+                          <ChevronRightIcon className="w-4 h-4" />
                         </button>
                       </div>
-                      {authorityExpanded && (
-                        <div className="space-y-1 mt-1">
-                          {authorityNavigation.map((sub) => {
-                            const subActive = sub.href === '/authority'
-                              ? pathname === '/authority'
-                              : pathname.startsWith(sub.href);
-                            return (
-                              <Link
-                                key={sub.name}
-                                href={sub.href}
-                                className={cn(
-                                  'flex items-center gap-3 px-3 py-2 ml-6 rounded-lg text-sm font-medium transition-colors',
-                                  subActive
-                                    ? 'bg-teal/10 text-teal'
-                                    : 'text-stone hover:bg-stone/10 hover:text-teal'
-                                )}
-                              >
-                                <sub.icon className="w-4 h-4" />
-                                {sub.name}
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      )}
+                    </div>
+                  );
+                }
+
+                // Brand Engine, Presence Engine, Content Engine
+                if (item.disabled) {
+                  return (
+                    <div
+                      key={item.name}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-stone cursor-not-allowed opacity-40 blur-[0.5px] pointer-events-none"
+                    >
+                      <item.icon className="w-5 h-5" />
+                      {item.name}
                     </div>
                   );
                 }

@@ -7,6 +7,7 @@ import { MobileSidebar } from '@/components/layout/mobile-sidebar';
 import { CreditsWarningBanner } from '@/components/layout';
 import { ToastProvider } from '@/components/ui/toast';
 import { usePublishCheck } from '@/hooks/usePublishCheck';
+import { ModelProvider } from '@/contexts/model-context';
 import type { FeaturePermissions } from '@/lib/permissions';
 
 interface DashboardLayoutClientProps {
@@ -61,39 +62,41 @@ export function DashboardLayoutClient({
   }, []);
 
   return (
-    <ToastProvider>
-      <div className="min-h-screen bg-cream overflow-x-hidden">
-        {/* Header with hamburger menu callback */}
-        <Header
-          {...headerProps}
-          onMenuClick={handleMenuOpen}
-        />
-
-        {/* Desktop Sidebar - hidden below lg */}
-        <Sidebar {...sidebarProps} className="hidden lg:flex" />
-
-        {/* Mobile Sidebar - visible below lg */}
-        <MobileSidebar
-          {...sidebarProps}
-          isOpen={mobileMenuOpen}
-          onClose={handleMenuClose}
-        />
-
-        {/* Credits Warning Banner - only for super admins with low/negative balance */}
-        {creditBalance && (
-          <CreditsWarningBanner
-            totalRemaining={creditBalance.totalRemaining}
-            isSuperAdmin={creditBalance.isSuperAdmin}
+    <ModelProvider>
+      <ToastProvider>
+        <div className="min-h-screen bg-cream overflow-x-hidden">
+          {/* Header with hamburger menu callback */}
+          <Header
+            {...headerProps}
+            onMenuClick={handleMenuOpen}
           />
-        )}
 
-        {/* Main Content - responsive margin */}
-        <main className="ml-0 lg:ml-60 pt-16 min-h-screen overflow-x-hidden">
-          <div className="p-4 md:p-6 lg:p-8 max-w-full lg:max-w-[calc(100vw-15rem)]">
-            {children}
-          </div>
-        </main>
-      </div>
-    </ToastProvider>
+          {/* Desktop Sidebar - hidden below lg */}
+          <Sidebar {...sidebarProps} className="hidden lg:flex" />
+
+          {/* Mobile Sidebar - visible below lg */}
+          <MobileSidebar
+            {...sidebarProps}
+            isOpen={mobileMenuOpen}
+            onClose={handleMenuClose}
+          />
+
+          {/* Credits Warning Banner - only for super admins with low/negative balance */}
+          {creditBalance && (
+            <CreditsWarningBanner
+              totalRemaining={creditBalance.totalRemaining}
+              isSuperAdmin={creditBalance.isSuperAdmin}
+            />
+          )}
+
+          {/* Main Content - responsive margin */}
+          <main className="ml-0 lg:ml-60 pt-16 min-h-screen overflow-x-hidden">
+            <div className="p-4 md:p-6 lg:p-8 max-w-full lg:max-w-[calc(100vw-15rem)]">
+              {children}
+            </div>
+          </main>
+        </div>
+      </ToastProvider>
+    </ModelProvider>
   );
 }

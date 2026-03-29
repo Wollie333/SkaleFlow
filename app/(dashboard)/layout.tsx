@@ -2,7 +2,9 @@ import { redirect } from 'next/navigation';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { DashboardLayoutClient } from './layout-client';
 import { checkCredits } from '@/lib/ai/server';
-import type { FeaturePermissions } from '@/lib/permissions';
+import type { FeaturePermissions, Workspace } from '@/lib/permissions';
+import { getUserWorkspaces, canCreateWorkspace } from '@/lib/permissions';
+import { getCurrentWorkspace } from '@/lib/supabase/workspace-middleware';
 
 export default async function DashboardLayout({
   children,
@@ -42,6 +44,9 @@ export default async function DashboardLayout({
   let draftCount = 0;
   const orgRole = (membership?.role || null) as string | null;
   let teamPermissions: Record<string, FeaturePermissions> = {};
+  let workspaces: Workspace[] = [];
+  let currentWorkspaceId: string | undefined = undefined;
+  let canCreate = false;
 
   // Prepare promises that run regardless of org membership
   const notificationPromise = supabase
@@ -139,6 +144,17 @@ export default async function DashboardLayout({
           teamPermissions[row.feature] = (row.permissions || {}) as FeaturePermissions;
         }
       }
+
+      // Fetch workspace data
+      try {
+        workspaces = await getUserWorkspaces(orgId, user.id);
+        currentWorkspaceId = await getCurrentWorkspace(user.id, orgId);
+        const canCreateResult = await canCreateWorkspace(orgId, user.id);
+        canCreate = canCreateResult.allowed;
+      } catch (workspaceError) {
+        console.error('Error fetching workspace data:', workspaceError);
+        // Continue without workspace data - the UI will handle gracefully
+      }
     } catch (layoutError) {
       console.error('Dashboard layout query error:', layoutError);
       // Fallback: run only the essential queries (notifications)
@@ -190,6 +206,9 @@ export default async function DashboardLayout({
         notificationCount: notificationCount || 0,
         pendingReviewCount,
         teamPermissions,
+        workspaces,
+        currentWorkspaceId,
+        canCreateWorkspace: canCreate,
       }}
       creditBalance={creditBalance}
     >

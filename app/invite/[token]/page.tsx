@@ -30,8 +30,8 @@ export default function InvitePage() {
       try {
         const supabase = createClient();
         const { data, error: fetchError } = await supabase
-          .from('invitations')
-          .select('email, organization_name, status, expires_at')
+          .from('org_invites')
+          .select('email, organization_id, organizations(name), status, expires_at')
           .eq('token', token)
           .single();
 
@@ -53,9 +53,10 @@ export default function InvitePage() {
           return;
         }
 
+        const org = data.organizations as { name: string } | null;
         setInvitation({
           email: data.email,
-          organization_name: data.organization_name,
+          organization_name: org?.name || 'Unknown Organization',
         });
       } catch {
         setError('Something went wrong. Please try again.');

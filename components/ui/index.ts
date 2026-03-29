@@ -9,3 +9,4 @@ export { ActionModal, type ActionModalProps, type ActionModalAction } from './ac
 export { UserAvatar } from './user-avatar';
 export { ToastProvider, useToastContext } from './toast';
 export { LoadingSpinner, PageLoader } from './loading-spinner';
+export { ConfirmModal, useConfirmModal } from './confirm-modal';

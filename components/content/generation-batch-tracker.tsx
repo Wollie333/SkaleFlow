@@ -131,8 +131,8 @@ export function GenerationBatchTracker({
       const startTime = Date.now();
 
       try {
-        // Call with action=process — this awaits ONE AI generation on the server
-        const res = await fetch(`${statusEndpoint}?batchId=${batchId}&action=process`);
+        // Call with action=process — process ONE post at a time for sequential generation
+        const res = await fetch(`${statusEndpoint}?batchId=${batchId}&action=process&concurrency=1`);
         const elapsed = Date.now() - startTime;
         console.log(`[GEN-TRACKER] Process response: ${res.status} ${res.statusText} (took ${elapsed}ms)`);
 

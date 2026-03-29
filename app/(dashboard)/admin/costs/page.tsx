@@ -444,7 +444,7 @@ export default function AdminCostsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.byModel.map((m) => (
+                  {(data?.byModel || []).map((m) => (
                     <tr key={m.model} className="border-b border-stone/10 last:border-0">
                       <td className="px-6 py-4">
                         <span className="font-medium text-charcoal">{m.model}</span>
@@ -487,7 +487,7 @@ export default function AdminCostsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.byFeature.map((f) => (
+                  {(data?.byFeature || []).map((f) => (
                     <tr key={f.feature} className="border-b border-stone/10 last:border-0">
                       <td className="px-6 py-4 font-medium text-charcoal">
                         {FEATURE_LABELS[f.feature] || f.feature}

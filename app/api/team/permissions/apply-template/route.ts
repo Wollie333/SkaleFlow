@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { templateId, userIds } = await request.json();
+    const { templateId, userIds, workspaceId } = await request.json();
     if (!templateId || !Array.isArray(userIds) || userIds.length === 0) {
       return NextResponse.json({ error: 'templateId and userIds are required' }, { status: 400 });
     }
@@ -43,10 +43,24 @@ export async function POST(request: Request) {
 
     // Apply to each user
     for (const userId of userIds) {
+      // Apply permissions
       for (const feature of features) {
         await setTeamPermissions(orgId, userId, feature, permissions[feature]);
       }
 
+      // Create template assignment record for audit trail
+      await serviceClient
+        .from('permission_template_assignments')
+        .insert({
+          user_id: userId,
+          workspace_id: workspaceId || null,
+          organization_id: orgId,
+          template_id: template.id,
+          applied_by: user.id,
+          permissions_snapshot: permissions,
+        });
+
+      // Log activity
       logTeamActivity(orgId, user.id, 'permission_updated', userId, {
         templateId: template.id,
         templateName: template.name,

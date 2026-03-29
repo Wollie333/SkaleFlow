@@ -1,54 +1,74 @@
-import { NextResponse } from 'next/server';
-import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { isWorkspaceAdmin, isOrgOwnerOrAdmin } from '@/lib/permissions';
 
-export async function GET(request: Request) {
+// GET - Fetch activity log with filters
+export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { data: membership } = await supabase
-      .from('org_members')
-      .select('organization_id, role')
-      .eq('user_id', user.id)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get query params
+    const { searchParams } = new URL(req.url);
+    const workspaceId = searchParams.get('workspace_id');
+    const userId = searchParams.get('user_id');
+    const action = searchParams.get('action');
+    const entityType = searchParams.get('entity_type');
+    const startDate = searchParams.get('start_date');
+    const endDate = searchParams.get('end_date');
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const offset = parseInt(searchParams.get('offset') || '0');
+
+    if (!workspaceId) {
+      return NextResponse.json({ error: 'workspace_id is required' }, { status: 400 });
+    }
+
+    // Check permission
+    const { data: workspace } = await supabase
+      .from('workspaces')
+      .select('organization_id')
+      .eq('id', workspaceId)
       .single();
 
-    if (!membership || !['owner', 'admin'].includes(membership.role)) {
-      return NextResponse.json({ error: 'Only owners and admins can view activity' }, { status: 403 });
+    if (!workspace) {
+      return NextResponse.json({ error: 'Workspace not found' }, { status: 404 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action');
-    const memberId = searchParams.get('memberId');
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 50);
-    const offset = (page - 1) * limit;
+    const canView =
+      (await isWorkspaceAdmin(workspaceId, user.id)) ||
+      (await isOrgOwnerOrAdmin(workspace.organization_id, user.id));
 
-    const serviceClient = createServiceClient();
-    let query = serviceClient
+    if (!canView) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // Build query
+    let query = supabase
       .from('team_activity_log')
-      .select('*, actor:actor_id(full_name, email), target:target_user_id(full_name, email)')
-      .eq('organization_id', membership.organization_id)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+      .select('*')
+      .eq('workspace_id', workspaceId)
+      .order('created_at', { ascending: false });
 
-    if (action && action !== 'all') {
-      query = query.eq('action', action);
-    }
-    if (memberId) {
-      query = query.or(`actor_id.eq.${memberId},target_user_id.eq.${memberId}`);
-    }
+    if (userId) query = query.eq('actor_id', userId);
+    if (action) query = query.eq('action', action);
+    if (entityType) query = query.eq('entity_type', entityType);
+    if (startDate) query = query.gte('created_at', startDate);
+    if (endDate) query = query.lte('created_at', endDate);
 
-    const { data: entries, error } = await query;
+    query = query.range(offset, offset + limit - 1);
+
+    const { data: activities, error } = await query;
 
     if (error) {
-      console.error('Failed to fetch activity:', error);
-      return NextResponse.json({ error: 'Failed to fetch activity' }, { status: 500 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ entries: entries || [] });
-  } catch (error) {
-    console.error('GET /api/team/activity error:', error);
+    return NextResponse.json({ activities: activities || [] });
+  } catch (err) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

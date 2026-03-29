@@ -98,13 +98,13 @@ export function TopPostsTable({ posts, isLoading, visibleColumns, onPostClick }:
         <table className="w-full">
           <thead>
             <tr className="border-b border-stone/10">
-              <th className="text-left text-xs font-semibold text-stone uppercase tracking-wider pb-3 pr-4">Post</th>
-              <th className="text-left text-xs font-semibold text-stone uppercase tracking-wider pb-3 pr-4">Platform</th>
+              <th className="text-left text-xs font-semibold text-charcoal/70 uppercase tracking-wider pb-3 pr-4">Post</th>
+              <th className="text-left text-xs font-semibold text-charcoal/70 uppercase tracking-wider pb-3 pr-4">Platform</th>
               {columns.map(col => (
                 <th
                   key={col.key}
                   onClick={() => handleSort(col.key)}
-                  className="text-right text-xs font-semibold text-stone uppercase tracking-wider pb-3 pr-4 cursor-pointer hover:text-charcoal"
+                  className="text-right text-xs font-semibold text-charcoal/70 uppercase tracking-wider pb-3 pr-4 cursor-pointer hover:text-charcoal transition-colors"
                 >
                   {col.label}
                   {sortBy === col.key && (
@@ -127,10 +127,10 @@ export function TopPostsTable({ posts, isLoading, visibleColumns, onPostClick }:
               >
                 <td className="py-3 pr-4">
                   <div className="max-w-[200px]">
-                    <p className="text-sm font-medium text-charcoal truncate">
+                    <p className="text-sm font-semibold text-charcoal/90 truncate">
                       {post.topic || post.hook || 'Untitled'}
                     </p>
-                    <p className="text-xs text-stone">
+                    <p className="text-xs text-stone/80">
                       {new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </p>
                   </div>
@@ -143,7 +143,7 @@ export function TopPostsTable({ posts, isLoading, visibleColumns, onPostClick }:
                   </Badge>
                 </td>
                 {columns.map(col => (
-                  <td key={col.key} className="py-3 pr-4 text-right text-sm text-charcoal tabular-nums">
+                  <td key={col.key} className="py-3 pr-4 text-right text-sm text-charcoal/90 font-medium tabular-nums">
                     {col.key === 'engagementRate'
                       ? `${(post[col.key] || 0).toFixed(2)}%`
                       : (post[col.key] || 0).toLocaleString()}

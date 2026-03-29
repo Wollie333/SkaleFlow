@@ -126,12 +126,12 @@ export function PlatformOverviewCards({ platform, data, isLoading }: PlatformOve
               <div className={`w-10 h-10 ${colors.bg} rounded-lg flex items-center justify-center`}>
                 <Icon className={`w-5 h-5 ${colors.color}`} />
               </div>
-              <span className="text-sm text-stone">{LABEL_MAP[key]}</span>
+              <span className="text-sm text-stone/80 font-medium">{LABEL_MAP[key]}</span>
             </div>
             {isLoading ? (
               <div className="h-8 w-20 bg-stone/10 rounded animate-pulse" />
             ) : (
-              <p className="text-2xl font-bold text-charcoal">
+              <p className="text-2xl font-bold text-charcoal/90">
                 {formatValue(key, value)}
               </p>
             )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui';
-import { CheckCircleIcon, PauseCircleIcon, PlayIcon, XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, PauseCircleIcon, PlayIcon, XMarkIcon, PlusIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
 
 interface UserData {
   id: string;
@@ -47,6 +47,7 @@ interface UserProfileCardProps {
   onPauseSubscription?: () => void;
   onCancelSubscription?: () => void;
   onReactivateSubscription?: () => void;
+  onResendInvite?: () => void;
   actionLoading: boolean;
 }
 
@@ -83,6 +84,7 @@ export function UserProfileCard({
   onPauseSubscription,
   onCancelSubscription,
   onReactivateSubscription,
+  onResendInvite,
   actionLoading,
 }: UserProfileCardProps) {
   const badge = roleBadge[user.role] || roleBadge.client;
@@ -145,7 +147,7 @@ export function UserProfileCard({
         )}
 
         {/* Approve / Pause toggle */}
-        <div className="mt-4 pt-4 border-t border-stone/10">
+        <div className="mt-4 pt-4 border-t border-stone/10 space-y-2">
           {user.approved ? (
             <button
               onClick={onPause}
@@ -165,6 +167,18 @@ export function UserProfileCard({
               <CheckCircleIcon className="w-4 h-4 mr-1.5" />
               Approve Account
             </Button>
+          )}
+
+          {/* Resend Invite Email */}
+          {onResendInvite && (
+            <button
+              onClick={onResendInvite}
+              disabled={actionLoading}
+              className="w-full flex items-center justify-center gap-2 text-sm font-medium text-teal hover:text-teal-light bg-teal/5 hover:bg-teal/10 px-4 py-2 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <EnvelopeIcon className="w-4 h-4" />
+              {user.last_login_at ? 'Resend Access Email' : 'Send Welcome Email'}
+            </button>
           )}
         </div>
       </div>

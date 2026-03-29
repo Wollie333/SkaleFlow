@@ -283,6 +283,32 @@ export default function AdminUserDetailPage() {
     await handleAction({ role });
   };
 
+  const handleResendInvite = async () => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/resend-invite`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error || 'Failed to send invite');
+        return;
+      }
+
+      const result = await res.json();
+      if (result.emailSent) {
+        toast.success(`Welcome email sent to ${user.email}`);
+      } else {
+        toast.error('Email failed to send. Please check email configuration.');
+      }
+    } catch {
+      toast.error('Failed to send invite');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -541,6 +567,7 @@ export default function AdminUserDetailPage() {
             onPauseSubscription={() => handleAction({ action: 'pause_subscription' })}
             onCancelSubscription={() => handleAction({ action: 'cancel_subscription' })}
             onReactivateSubscription={() => handleAction({ action: 'reactivate_subscription' })}
+            onResendInvite={handleResendInvite}
             actionLoading={actionLoading}
           />
         </div>

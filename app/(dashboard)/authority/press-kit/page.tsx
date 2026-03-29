@@ -7,6 +7,7 @@ import { StoryAngleManager } from '@/components/authority/story-angle-manager';
 import { ModelSelector } from '@/components/ai/model-selector';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import { getClientModelsForFeature } from '@/lib/ai/client-models';
+import { getCurrentWorkspaceClient } from '@/lib/supabase/workspace-client';
 
 const AI_MODELS = getClientModelsForFeature('content_generation');
 
@@ -14,6 +15,7 @@ export default function AuthorityPressKitPage() {
   const supabase = createClient();
 
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [selectedModelId, setSelectedModelId] = useState(AI_MODELS[0]?.id || '');
   const [defaultPlaybookUrl, setDefaultPlaybookUrl] = useState<string>('');
   const [pressKit, setPressKit] = useState<Record<string, unknown> | null>(null);
@@ -24,7 +26,7 @@ export default function AuthorityPressKitPage() {
   const [brandData, setBrandData] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
-  // Get organization ID
+  // Get organization ID and workspace ID
   useEffect(() => {
     async function getOrg() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -34,19 +36,23 @@ export default function AuthorityPressKitPage() {
         .select('organization_id')
         .eq('user_id', user.id)
         .single();
-      if (data?.organization_id) setOrganizationId(data.organization_id);
+      if (data?.organization_id) {
+        setOrganizationId(data.organization_id);
+        const currentWorkspaceId = await getCurrentWorkspaceClient(user.id, data.organization_id);
+        if (currentWorkspaceId) setWorkspaceId(currentWorkspaceId);
+      }
     }
     getOrg();
   }, []);
 
   // Load data
   const loadData = useCallback(async () => {
-    if (!organizationId) return;
+    if (!organizationId || !workspaceId) return;
     setLoading(true);
 
     const [kitRes, anglesRes] = await Promise.all([
-      fetch(`/api/authority/press-kit?organizationId=${organizationId}`),
-      fetch(`/api/authority/story-angles?organizationId=${organizationId}`),
+      fetch(`/api/authority/press-kit?organizationId=${organizationId}&workspaceId=${workspaceId}`),
+      fetch(`/api/authority/story-angles?organizationId=${organizationId}&workspaceId=${workspaceId}`),
     ]);
 
     if (kitRes.ok) {
@@ -71,7 +77,7 @@ export default function AuthorityPressKitPage() {
       supabase
         .from('brand_outputs')
         .select('output_key, output_value')
-        .eq('organization_id', organizationId),
+        .eq('workspace_id', workspaceId),
       supabase
         .from('organizations')
         .select('slug')
@@ -92,7 +98,7 @@ export default function AuthorityPressKitPage() {
     }
 
     setLoading(false);
-  }, [organizationId]);
+  }, [organizationId, workspaceId]);
 
   useEffect(() => {
     loadData();

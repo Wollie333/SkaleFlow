@@ -142,6 +142,7 @@ export async function POST(request: Request) {
       currentQuestionIndex,
       agentBlock,
       currentOutputKeys,
+      previousMessages,
     );
 
     // Build message content (with files if attached)
@@ -412,6 +413,7 @@ function buildSystemPrompt(
   currentQuestionIndex: number,
   agentBlock: string,
   currentOutputKeys: string[],
+  previousMessages: Array<{ role: string; content: string }>,
 ): string {
   const totalQuestions = phase.questions.length;
   const currentQuestionNum = currentQuestionIndex + 1;
@@ -432,6 +434,7 @@ Unlike the Brand Engine where you extract information, in the Presence Engine yo
 - **ONE question** per message.
 - Ground ALL proposals in the user's Brand Engine outputs — their positioning, ICP, archetype, voice, and offers.
 - When the user agrees or refines, immediately output the final version as YAML.
+${previousMessages.length === 0 ? '\n⚠️ **IMPORTANT**: This is the FIRST message in this conversation. Follow the phase instructions for first message behavior — present your recommendations immediately, do not just ask questions.' : ''}
 
 ## BRAND ENGINE CONTEXT (use this to write platform-specific copy)
 ${brandContext || 'No Brand Engine data available yet — ask the user for their brand positioning.'}

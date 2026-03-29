@@ -38,62 +38,22 @@ export async function GET(request: NextRequest) {
   const prevFrom = new Date(fromDate.getTime() - periodLengthMs - 86400000).toISOString().split('T')[0];
   const prevTo = new Date(fromDate.getTime() - 86400000).toISOString().split('T')[0];
 
-  // Fetch all published posts (no platform filter — client-side filtering for tabs)
+  // Fetch ALL posts from platform_posts table (includes both SkaleFlow and external posts)
   let postsQuery = supabase
-    .from('published_posts')
-    .select(`
-      id,
-      content_item_id,
-      platform,
-      platform_post_id,
-      post_url,
-      published_at,
-      publish_status,
-      content_items!inner (
-        topic,
-        hook,
-        caption,
-        calendar_id
-      ),
-      post_analytics (
-        likes,
-        comments,
-        shares,
-        saves,
-        impressions,
-        reach,
-        clicks,
-        video_views,
-        engagement_rate,
-        synced_at
-      )
-    `)
+    .from('platform_posts')
+    .select('*')
     .eq('organization_id', orgId)
-    .eq('publish_status', 'published')
-    .gte('published_at', `${dateFrom}T00:00:00`)
-    .lte('published_at', `${dateTo}T23:59:59`)
-    .order('published_at', { ascending: false });
-
-  if (calendarId && calendarId !== 'all') {
-    postsQuery = postsQuery.eq('content_items.calendar_id', calendarId);
-  }
+    .gte('created_at_platform', `${dateFrom}T00:00:00`)
+    .lte('created_at_platform', `${dateTo}T23:59:59`)
+    .order('created_at_platform', { ascending: false });
 
   // Previous period posts query
   let prevPostsQuery = supabase
-    .from('published_posts')
-    .select(`
-      id, platform, platform_post_id, post_url, published_at, publish_status,
-      content_items!inner (topic, hook, caption, calendar_id),
-      post_analytics (likes, comments, shares, saves, impressions, reach, clicks, video_views, engagement_rate, synced_at)
-    `)
+    .from('platform_posts')
+    .select('*')
     .eq('organization_id', orgId)
-    .eq('publish_status', 'published')
-    .gte('published_at', `${prevFrom}T00:00:00`)
-    .lte('published_at', `${prevTo}T23:59:59`);
-
-  if (calendarId && calendarId !== 'all') {
-    prevPostsQuery = prevPostsQuery.eq('content_items.calendar_id', calendarId);
-  }
+    .gte('created_at_platform', `${prevFrom}T00:00:00`)
+    .lte('created_at_platform', `${prevTo}T23:59:59`);
 
   // Also fetch connected platforms for tab rendering
   const connectionsPromise = supabase
@@ -207,32 +167,16 @@ export async function GET(request: NextRequest) {
   const heatmapRaw: Array<{ day: number; hour: number; value: number }> = [];
 
   for (const post of posts || []) {
-    const analytics = (post.post_analytics as Array<{
-      likes: number;
-      comments: number;
-      shares: number;
-      saves: number;
-      impressions: number;
-      reach: number;
-      clicks: number;
-      video_views: number;
-      engagement_rate: number;
-      synced_at: string;
-    }>)?.sort((a, b) =>
-      new Date(b.synced_at).getTime() - new Date(a.synced_at).getTime()
-    )[0];
-
-    const contentItem = post.content_items as unknown as { topic: string | null; hook: string | null; caption: string | null };
-
-    const likes = analytics?.likes || 0;
-    const comments = analytics?.comments || 0;
-    const shares = analytics?.shares || 0;
-    const saves = analytics?.saves || 0;
-    const impressions = analytics?.impressions || 0;
-    const reach = analytics?.reach || 0;
-    const clicks = analytics?.clicks || 0;
-    const videoViews = analytics?.video_views || 0;
-    const engRate = analytics?.engagement_rate || 0;
+    // Platform posts have analytics directly on the row
+    const likes = post.likes || 0;
+    const comments = post.comments || 0;
+    const shares = post.shares || 0;
+    const saves = post.saves || 0;
+    const impressions = post.impressions || 0;
+    const reach = post.reach || 0;
+    const clicks = post.clicks || 0;
+    const videoViews = post.video_views || 0;
+    const engRate = post.engagement_rate || 0;
 
     totalLikes += likes;
     totalComments += comments;
@@ -248,8 +192,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Heatmap: day-of-week + hour
-    if (post.published_at) {
-      const d = new Date(post.published_at);
+    if (post.created_at_platform) {
+      const d = new Date(post.created_at_platform);
       const day = d.getDay(); // 0=Sun
       const hour = d.getHours();
       const engagement = likes + comments + shares;
@@ -257,7 +201,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Daily time series
-    const date = post.published_at ? post.published_at.split('T')[0] : '';
+    const date = post.created_at_platform ? post.created_at_platform.split('T')[0] : '';
     if (date) {
       if (!dailyData[date]) {
         dailyData[date] = {
@@ -321,12 +265,12 @@ export async function GET(request: NextRequest) {
 
     topPosts.push({
       id: post.id,
-      contentItemId: post.content_item_id,
+      contentItemId: post.content_item_id || '',
       platform: post.platform,
-      topic: contentItem?.topic || null,
-      hook: contentItem?.hook || null,
-      publishedAt: post.published_at || '',
-      postUrl: post.post_url,
+      topic: post.caption || post.message || null,
+      hook: post.message?.substring(0, 100) || null,
+      publishedAt: post.created_at_platform || '',
+      postUrl: post.platform_post_url,
       likes,
       comments,
       shares,
@@ -352,30 +296,16 @@ export async function GET(request: NextRequest) {
   let prevPostsWithAnalytics = 0;
 
   for (const post of prevPosts || []) {
-    const analytics = (post.post_analytics as Array<{
-      likes: number;
-      comments: number;
-      shares: number;
-      saves: number;
-      impressions: number;
-      reach: number;
-      clicks: number;
-      video_views: number;
-      engagement_rate: number;
-      synced_at: string;
-    }>)?.sort((a, b) =>
-      new Date(b.synced_at).getTime() - new Date(a.synced_at).getTime()
-    )[0];
-
-    const likes = analytics?.likes || 0;
-    const comments = analytics?.comments || 0;
-    const shares = analytics?.shares || 0;
-    const saves = analytics?.saves || 0;
-    const impressions = analytics?.impressions || 0;
-    const reach = analytics?.reach || 0;
-    const clicks = analytics?.clicks || 0;
-    const videoViews = analytics?.video_views || 0;
-    const engRate = analytics?.engagement_rate || 0;
+    // Platform posts have analytics directly on the row
+    const likes = post.likes || 0;
+    const comments = post.comments || 0;
+    const shares = post.shares || 0;
+    const saves = post.saves || 0;
+    const impressions = post.impressions || 0;
+    const reach = post.reach || 0;
+    const clicks = post.clicks || 0;
+    const videoViews = post.video_views || 0;
+    const engRate = post.engagement_rate || 0;
 
     prevTotalLikes += likes;
     prevTotalComments += comments;

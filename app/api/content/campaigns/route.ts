@@ -77,11 +77,24 @@ export async function POST(request: Request) {
 
     const objectiveConfig = CAMPAIGN_OBJECTIVES[objective as CampaignObjectiveId];
 
+    // Get user's default workspace
+    const { data: workspace } = await supabase
+      .from('workspaces')
+      .select('id')
+      .eq('organization_id', organizationId)
+      .eq('is_default', true)
+      .single();
+
+    if (!workspace) {
+      return NextResponse.json({ error: 'No default workspace found for organization' }, { status: 400 });
+    }
+
     // Create campaign
     const { data: campaign, error: campaignError } = await supabase
       .from('campaigns')
       .insert({
         organization_id: organizationId,
+        workspace_id: workspace.id,
         name,
         objective,
         objective_category: objectiveConfig.category,
@@ -107,20 +120,24 @@ export async function POST(request: Request) {
       const platformConfig = PLATFORM_DEFAULTS[channel];
       const aggConfig = AGGRESSIVENESS_TIERS[aggressiveness];
 
+      // Use manual override if provided, otherwise use aggressiveness tier default
+      const postsPerWeek = ch.postsPerWeek ?? aggConfig.postsPerWeek;
+
       // Calculate total posts
       const start = new Date(campaign.start_date);
       const end = campaign.end_date ? new Date(campaign.end_date) : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000);
       const weeks = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000)));
-      const totalPosts = weeks * aggConfig.postsPerWeek;
+      const totalPosts = weeks * postsPerWeek;
 
       const { data: adset } = await supabase
         .from('campaign_adsets')
         .insert({
           campaign_id: campaign.id,
           organization_id: organizationId,
+          workspace_id: workspace.id,
           channel,
           aggressiveness,
-          posts_per_week: aggConfig.postsPerWeek,
+          posts_per_week: postsPerWeek,
           total_posts: totalPosts,
           content_type_ratio: objectiveConfig.defaultRatio as unknown as Json,
           content_type_counts: {} as Json,

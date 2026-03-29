@@ -1,17 +1,18 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getV3BatchStatus, processOneV3Item } from '@/lib/content-engine/v3-queue-service';
+import { getV3BatchStatus, processOneV3Item, processMultipleV3Items } from '@/lib/content-engine/v3-queue-service';
 import type { Database } from '@/types/database';
 
-export const maxDuration = 60;
+export const maxDuration = 300; // 5 minutes for batch processing
 
-// GET — Poll batch status + optionally process next item
+// GET — Poll batch status + optionally process next item(s)
 // Returns shape compatible with GenerationBatchTracker
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const batchId = searchParams.get('batchId');
     const action = searchParams.get('action');
+    const concurrency = parseInt(searchParams.get('concurrency') || '3');
 
     if (!batchId) {
       return NextResponse.json({ error: 'batchId required' }, { status: 400 });
@@ -24,10 +25,15 @@ export async function GET(request: Request) {
     const db = supabase as unknown as import('@supabase/supabase-js').SupabaseClient<Database>;
     let processError: string | null = null;
 
-    // If action=process, process one item before returning status
+    // If action=process, process item(s) before returning status
     if (action === 'process') {
       try {
-        await processOneV3Item(db, batchId);
+        // Use concurrent processing if concurrency > 1
+        if (concurrency > 1) {
+          await processMultipleV3Items(db, batchId, Math.min(concurrency, 5));
+        } else {
+          await processOneV3Item(db, batchId);
+        }
       } catch (err) {
         processError = err instanceof Error ? err.message : 'Processing failed';
       }

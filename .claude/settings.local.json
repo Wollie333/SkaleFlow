@@ -43,7 +43,24 @@
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
       "Bash(psql:*)",
-      "Bash(npx supabase db push:*)"
+      "Bash(npx supabase db push:*)",
+      "Bash(npm run dev:http:*)",
+      "Bash(powershell -Command \"Stop-Process -Id 3500 -Force\")",
+      "Bash(powershell -Command \"Stop-Process -Id 20032 -Force\")",
+      "Bash(dir /s /b \"C:\\\\Users\\\\Wollie\\\\Desktop\\\\SkaleFlow\\\\app\\\\\\(dashboard\\)\\\\content\")",
+      "Bash(powershell -Command \"Stop-Process -Id 8064 -Force\")",
+      "Bash(npx supabase:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(git log:*)",
+      "Bash(timeout 5 tail:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(supabase --version:*)",
+      "Bash(npm --version:*)",
+      "Bash(npm install:*)",
+      "Bash(scoop --version:*)",
+      "Bash(choco:*)",
+      "Bash(export SUPABASE_ACCESS_TOKEN=sbp_43bd1480393a60886095d236dca10a549fab7be1)",
+      "Bash(node scripts/run-new-migrations.js:*)"
     ]
   }
 }

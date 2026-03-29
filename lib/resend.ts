@@ -14,7 +14,9 @@ function getResend() {
   return _resend;
 }
 
-const FROM_ADDRESS = 'SkaleFlow <noreply@manamarketing.co.za>';
+// Use Resend's onboarding domain for testing (works without verification)
+// To use your own domain, verify manamarketing.co.za in Resend Dashboard
+const FROM_ADDRESS = 'SkaleFlow <onboarding@resend.dev>';
 
 export async function sendBookingEmail({
   to,
@@ -120,7 +122,7 @@ export async function sendAutomationEmail({
   bodyHtml: string;
   fromName?: string;
 }) {
-  const from = fromName ? `${fromName} <noreply@manamarketing.co.za>` : FROM_ADDRESS;
+  const from = fromName ? `${fromName} <onboarding@resend.dev>` : FROM_ADDRESS;
 
   const { data, error } = await getResend().emails.send({
     from,

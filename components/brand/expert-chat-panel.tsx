@@ -273,19 +273,56 @@ export function ExpertChatPanel({
         )}
 
         {visibleMessages.map((message, i) => {
-          // Render separator as a visual divider
+          // Render separator as either a visual divider or welcome message
           if (message.role === 'separator') {
             const match = message.content.match(/__QUESTION_DIVIDER__Q(\d+)/);
-            const qNum = match ? match[1] : '';
-            return (
-              <div key={i} className="flex items-center gap-3 py-2 opacity-50">
-                <div className="flex-1 h-px bg-stone/20" />
-                <span className="text-[10px] text-stone/50 font-medium uppercase tracking-wider whitespace-nowrap">
-                  Question {qNum} completed
-                </span>
-                <div className="flex-1 h-px bg-stone/20" />
-              </div>
-            );
+            if (match) {
+              // Question divider
+              const qNum = match[1];
+              return (
+                <div key={i} className="flex items-center gap-3 py-2 opacity-50">
+                  <div className="flex-1 h-px bg-stone/20" />
+                  <span className="text-[10px] text-stone/50 font-medium uppercase tracking-wider whitespace-nowrap">
+                    Question {qNum} completed
+                  </span>
+                  <div className="flex-1 h-px bg-stone/20" />
+                </div>
+              );
+            } else {
+              // Welcome message - render as a styled info card
+              return (
+                <div key={i} className={cn(
+                  'rounded-xl border p-6',
+                  centered ? 'bg-teal/5 border-teal/20' : 'bg-cream-light border-stone/10'
+                )}>
+                  <div className="text-charcoal space-y-3 text-sm leading-relaxed">
+                    {message.content.split('\n\n').map((paragraph, pIdx) => {
+                      // Check if it's a bullet list
+                      if (paragraph.includes('\n- ')) {
+                        const lines = paragraph.split('\n');
+                        const title = lines[0];
+                        const bullets = lines.slice(1).filter(l => l.startsWith('- '));
+                        return (
+                          <div key={pIdx}>
+                            {title && <p className="font-semibold text-charcoal mb-2">{title.replace(/\*\*/g, '')}</p>}
+                            <ul className="space-y-1 ml-4">
+                              {bullets.map((bullet, bIdx) => (
+                                <li key={bIdx} className="text-charcoal/90">{bullet.slice(2)}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      }
+                      // Regular paragraph
+                      const content = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>');
+                      return (
+                        <p key={pIdx} className="text-charcoal/90" dangerouslySetInnerHTML={{ __html: content }} />
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            }
           }
 
           // Find if this message is before a separator (faded style)

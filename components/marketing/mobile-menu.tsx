@@ -23,7 +23,6 @@ const navLinks = [
 export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const pathname = usePathname();
   const [whatWeDoOpen, setWhatWeDoOpen] = useState(false);
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -72,39 +71,35 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             </button>
 
             {whatWeDoOpen && (
-              <div className="pl-4 pb-2 space-y-0.5">
+              <div className="pl-2 pb-2 space-y-1">
                 {featureCategories.map((category) => (
-                  <div key={category.name}>
-                    <button
-                      onClick={() =>
-                        setExpandedCategory(
-                          expandedCategory === category.name ? null : category.name
-                        )
-                      }
-                      className="w-full flex items-center justify-between py-2.5 text-[14px] font-medium text-gold/80 hover:text-gold transition-colors"
-                    >
-                      {category.name}
-                      <ChevronDownIcon
-                        className={`w-3.5 h-3.5 transition-transform ${
-                          expandedCategory === category.name ? 'rotate-180' : ''
-                        }`}
-                      />
-                    </button>
-
-                    {expandedCategory === category.name && (
-                      <div className="pl-4 pb-1 space-y-0.5">
-                        {category.features.map((feature) => (
-                          <Link
+                  <div key={category.name} className="space-y-1">
+                    {category.features.map((feature) => {
+                      // Check if feature is disabled for MVP
+                      if (feature.mvpEnabled === false) {
+                        return (
+                          <div
                             key={feature.slug}
-                            href={`/features/${feature.slug}`}
-                            onClick={onClose}
-                            className="block py-2 text-[14px] text-cream/60 hover:text-cream transition-colors"
+                            className="flex items-center gap-3 py-2.5 px-3 rounded-lg text-[14px] text-cream/70 opacity-40 blur-[0.5px] pointer-events-none cursor-not-allowed"
                           >
-                            {feature.label}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
+                            <div className="w-2 h-2 rounded-full bg-teal/40 flex-shrink-0" />
+                            <span>{feature.label}</span>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <Link
+                          key={feature.slug}
+                          href={`/features/${feature.slug}`}
+                          onClick={onClose}
+                          className="flex items-center gap-3 py-2.5 px-3 rounded-lg text-[14px] text-cream/70 hover:text-cream hover:bg-teal/5 transition-all group"
+                        >
+                          <div className="w-2 h-2 rounded-full bg-teal/40 group-hover:bg-teal flex-shrink-0" />
+                          <span>{feature.label}</span>
+                        </Link>
+                      );
+                    })}
                   </div>
                 ))}
               </div>

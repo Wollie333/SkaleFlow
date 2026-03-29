@@ -10,6 +10,7 @@ import { OverviewTabContent } from '@/components/analytics/overview-tab-content'
 import { PlatformTabContent } from '@/components/analytics/platform-tab-content';
 import { DateRangePicker, getDateFromRange, type DateRange } from '@/components/analytics/date-range-picker';
 import { ExportButton } from '@/components/analytics/export-button';
+import { SyncPostsButton } from '@/components/analytics/sync-posts-button';
 import type { AnalyticsResponse } from '@/components/analytics/types';
 import type { AudienceInsight } from '@/components/analytics/audience-insights-panel';
 import type { SocialPlatform } from '@/types/database';
@@ -162,7 +163,8 @@ export default function AnalyticsPage() {
         title="Analytics"
         subtitle="Track your content performance across platforms"
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <SyncPostsButton onSyncComplete={loadData} />
             <ExportButton dateFrom={dateFrom} dateTo={dateTo} />
             <DateRangePicker value={dateRange} onChange={setDateRange} />
           </div>

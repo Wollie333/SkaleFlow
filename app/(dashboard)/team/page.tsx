@@ -277,6 +277,25 @@ export default function MyTeamPage() {
     finally { setPermsSaving(false); }
   };
 
+  const handleApplyRole = async (userIds: string[], roleId: string) => {
+    setPermsSaving(true);
+    try {
+      const res = await fetch('/api/team/roles/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roleId, userIds }),
+      });
+      if (res.ok) {
+        await fetchPermissions();
+        toast.success('Team role applied successfully');
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to apply role');
+      }
+    } catch { toast.error('Failed to apply role'); }
+    finally { setPermsSaving(false); }
+  };
+
   const handleAllocateCredits = async (userId: string, feature: string, amount: number) => {
     const res = await fetch('/api/team/credits', {
       method: 'POST',
@@ -559,7 +578,7 @@ export default function MyTeamPage() {
           members={memberPermissions}
           onPermissionChange={handlePermissionChange}
           saving={permsSaving}
-          onApplyTemplate={handleApplyTemplate}
+          onApplyTemplate={handleApplyRole}
         />
       )}
 

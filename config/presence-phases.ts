@@ -1,4 +1,4 @@
-// Presence Engine — Phase definitions with questions, output variables, and instructions
+// Presence Engine - Phase definitions with questions, output variables, and instructions
 // Mirrors the structure of config/phases.ts (Brand Engine)
 
 import type { PlatformKey } from '@/types/presence';
@@ -27,10 +27,10 @@ export const PRESENCE_PHASE_TEMPLATES: Record<string, PresencePhaseTemplate> = {
     platformKey: null,
     isConditional: false,
     questions: [
-      'Do you agree with this recommended platform priority ranking? Any platforms to add, remove, or re-prioritise?',
-      'For each platform — what is the single primary goal? (Lead generation / brand awareness / community / sales / SEO / thought leadership)',
-      'What is your realistic posting commitment? How many hours per week can you dedicate?',
-      'Do you currently have existing profiles? Describe their current state.',
+      'Which platforms should your brand prioritize? Based on your business type, ICP, and goals - let\'s determine your platform strategy.',
+      'For each platform you\'ve selected - what is the single primary goal? (Lead generation / brand awareness / community / sales / SEO / thought leadership)',
+      'What is your realistic posting commitment? How many hours per week can you dedicate to maintaining these platforms?',
+      'Do you currently have existing profiles on these platforms? Describe their current state (active, dormant, needs optimization).',
       'What is the one impression someone should have within 10 seconds of landing on any of your profiles?',
     ],
     outputVariables: [
@@ -48,17 +48,30 @@ export const PRESENCE_PHASE_TEMPLATES: Record<string, PresencePhaseTemplate> = {
       '3': ['presence_existing_profiles'],
       '4': ['presence_north_star', 'presence_strategy_summary'],
     },
-    instructions: `You are guiding the user through Platform Strategy — the first phase of the Presence Engine.
+    instructions: `You are guiding the user through Platform Strategy - the first phase of the Presence Engine.
 
 ## Your Role
 You have access to all of the user's Brand Engine outputs. Use their brand positioning, ICP, archetype, and offers to recommend which platforms they should be active on.
+
+## RESPONSE STYLE FOR EACH QUESTION
+**For Question 1 (Platform Strategy):**
+When the user engages, immediately:
+1. Analyze their brand data (ICP, business type, positioning, archetype)
+2. Present a specific platform priority ranking (1-5 platforms)
+3. Format as: **1. Platform Name** - Clear reasoning based on their brand
+4. Then ask: "Does this align with your vision? Any platforms to add, remove, or re-prioritize?"
+
+**For all questions:**
+- Present concrete recommendations FIRST based on their brand data
+- Show options, examples, or drafts before asking for feedback
+- Never ask "what do you think?" without first showing something
 
 ## Phase Flow
 1. Present an AI-recommended platform priority ranking based on their brand, ICP, and business type
 2. Gather their primary goal for each selected platform
 3. Understand their realistic time commitment
 4. Learn about existing profiles and their current state
-5. Define the "north star" — the single impression every profile should create
+5. Define the "north star" - the single impression every profile should create
 
 ## Platform Recommendation Logic
 - B2B + thought leadership → LinkedIn first, YouTube second
@@ -85,12 +98,12 @@ presence_platform_goals: {"linkedin": "lead_generation", "instagram": "brand_awa
     platformKey: 'linkedin',
     isConditional: true,
     questions: [
-      'Here are 3 headline options I\'ve crafted for you. Which feels most accurate? What would you change?',
-      'Here\'s your full About section in StoryBrand structure. What needs refining? Any results, proof points, or personality missing?',
+      'Let\'s create your LinkedIn headline. What should communicate your authority and value in 220 characters? (I\'ll present 3 options based on your brand)',
+      'Now for your About section. What story should your profile tell? What results, proof points, or personality should we highlight? (I\'ll structure it using StoryBrand)',
       'What 3 Featured items should sit on your profile? (Lead magnet, best post, case study, media feature, website, booking link)',
-      'What is your LinkedIn connection strategy — who should you connect with and what message should you send?',
-      'What is your LinkedIn banner image concept?',
-      'Upload your current LinkedIn profile screenshot — I\'ll identify gaps and improvements.',
+      'What is your LinkedIn connection strategy - who should you connect with and what message should you send?',
+      'What concept should your LinkedIn banner communicate? (I\'ll suggest visual direction and copy)',
+      'Share your current LinkedIn profile screenshot or URL - I\'ll identify gaps and opportunities for improvement.',
     ],
     outputVariables: [
       'linkedin_headline',
@@ -156,11 +169,11 @@ linkedin_about_full: "Full about section text..."
     platformKey: 'facebook',
     isConditional: true,
     questions: [
-      'Here\'s the page name, category, and sub-category I recommend. Does this match what you want?',
-      'Here\'s your About section. What needs refining?',
+      'What should your Facebook Business Page name and category be? (I\'ll recommend the best category options for your business)',
+      'What should your About section communicate? What key message should visitors see? (I\'ll create short and full versions)',
       'What is your primary Facebook CTA button? (Book Now / Contact Us / Sign Up / Learn More / Send Message / Call Now)',
-      'What is your Facebook cover image concept?',
-      'Do you want to use Facebook Groups as part of your strategy? If yes — group name, purpose, membership criteria?',
+      'What concept should your Facebook cover image communicate? (I\'ll suggest visual direction and headline text)',
+      'Do you want to use Facebook Groups as part of your strategy? If yes - what would the group focus on and who would join?',
     ],
     outputVariables: [
       'facebook_page_name',
@@ -215,11 +228,11 @@ facebook_about_short: "255 char version..."
     platformKey: 'instagram',
     isConditional: true,
     questions: [
-      'Here are 3 bio options: authority-led, problem-led, and transformation-led. Which resonates most?',
+      'What should your Instagram bio communicate in 150 characters? (I\'ll present 3 formula options: authority-led, problem-led, and transformation-led)',
       'What is your link-in-bio strategy? Single website / Linktree / Lead magnet / Booking link? What are your top 3 links?',
       'What Story Highlights should you maintain? (About, Results, Services, FAQ, Free Resource, Behind the Scenes)',
-      'What is your Instagram username — does it match your brand name?',
-      'What is the visual grid aesthetic direction for your feed?',
+      'What should your Instagram username be - should it match your brand name exactly or be a variation?',
+      'What visual aesthetic should your Instagram feed have? (I\'ll suggest grid direction based on your brand)',
     ],
     outputVariables: [
       'instagram_bio',
@@ -278,11 +291,11 @@ instagram_bio_options: {"authority": "...", "problem": "...", "transformation": 
     platformKey: 'google_my_business',
     isConditional: true,
     questions: [
-      'Here are the top 3 category options for your business. Which is most accurate?',
-      'Here\'s a keyword-optimised GMB description. What needs changing?',
+      'What category best describes your business on Google? (I\'ll present the top 3 options based on your business type)',
+      'What should your Google Business description say? (I\'ll create a keyword-optimised version - 750 char max)',
       'What are your service areas? (Specific cities, regions, or "nationwide")',
-      'What are your business hours — or are you appointment-only / online-only?',
-      'What are the top 5 services to list with their own descriptions?',
+      'What are your business hours - or are you appointment-only / online-only?',
+      'What are the top 5 services you want to highlight on your Google Business Profile?',
     ],
     outputVariables: [
       'gmb_primary_category',
@@ -336,11 +349,11 @@ gmb_description: "750-char keyword-optimised description..."
     platformKey: null, // Handles both youtube and tiktok
     isConditional: true, // Only if youtube OR tiktok is active
     questions: [
-      'Here\'s your channel description / TikTok bio. What needs refining?',
-      'What is the channel/account name — does it match your brand name?',
-      'What are the 3–5 content categories you\'ll publish consistently?',
-      'What is your video intro formula — the hook + who you are + what they\'ll get in the first 15 seconds?',
-      'What is the channel trailer / pinned video concept?',
+      'What should your YouTube channel description or TikTok bio communicate? (I\'ll create optimised versions for each platform)',
+      'What should your channel/account name be - should it match your brand name exactly?',
+      'What are the 3-5 content categories you\'ll publish consistently on video?',
+      'What formula should your videos follow in the first 15 seconds? (hook > who you are > value promise)',
+      'What should your channel trailer or pinned video be about? (I\'ll suggest a concept)',
     ],
     outputVariables: [
       'youtube_channel_description',
@@ -401,9 +414,9 @@ tiktok_bio: "80-char bio..."
     platformKey: null,
     isConditional: false, // Always runs
     questions: [
-      'Here\'s your full cross-platform audit. Are there gaps or inconsistencies I missed?',
-      'Which platform will you prioritise first? I want to build you a 30-day activation plan.',
-      'What is the single most important thing someone should do when they land on any of your profiles?',
+      'Let me audit your cross-platform consistency. I\'ll analyze all your presence outputs and identify gaps, inconsistencies, and quick wins.',
+      'Which platform will you prioritize first for your 30-day activation plan?',
+      'What is the single most important action someone should take when they land on any of your profiles?',
     ],
     outputVariables: [
       'presence_consistency_score',
@@ -440,11 +453,11 @@ Analyse ALL presence outputs generated across Phases 1-6 and produce a comprehen
 - Tone Match (10%): Tone matches across all platforms
 
 ## Score Thresholds
-- 90-100: Excellent — Professional, consistent, client-attracting
-- 75-89: Strong — Minor gaps, quick wins available
-- 60-74: Developing — Notable inconsistencies
-- 40-59: Needs Work — Significant gaps
-- 0-39: Critical — Urgent action required
+- 90-100: Excellent - Professional, consistent, client-attracting
+- 75-89: Strong - Minor gaps, quick wins available
+- 60-74: Developing - Notable inconsistencies
+- 40-59: Needs Work - Significant gaps
+- 0-39: Critical - Urgent action required
 
 ## 30-Day Activation Plan
 Build a day-by-day plan starting with the priority platform. Include:
@@ -495,7 +508,7 @@ export function isPhaseConditionallySkipped(
   const phase = PRESENCE_PHASE_TEMPLATES[phaseNumber];
   if (!phase || !phase.isConditional) return false;
 
-  // Phase 6 is special — runs if youtube OR tiktok is active
+  // Phase 6 is special - runs if youtube OR tiktok is active
   if (phaseNumber === '6') {
     return !activePlatforms.includes('youtube') && !activePlatforms.includes('tiktok');
   }

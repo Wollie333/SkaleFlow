@@ -5,10 +5,13 @@ import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CampaignTableView } from '@/components/content/campaign-table-view';
 import { AdjustmentBanner } from '@/components/content/adjustment-banner';
-import { ContentTypeExplainer } from '@/components/content/content-type-explainer';
-import { RatioAdjuster } from '@/components/content/ratio-adjuster';
+import { GenerationBatchTracker } from '@/components/content/generation-batch-tracker';
+import { CampaignOverviewTab } from '@/components/content/campaign-overview-tab';
+import { CampaignChannelsTab } from '@/components/content/campaign-channels-tab';
+import { CampaignPostsTab } from '@/components/content/campaign-posts-tab';
+import { CreateChannelDialog } from '@/components/content/create-channel-dialog';
+import { CreatePostDialog } from '@/components/content/create-post-dialog';
 import { CAMPAIGN_OBJECTIVES, type CampaignObjectiveId, type ContentTypeRatio } from '@/config/campaign-objectives';
 import { PLATFORM_DEFAULTS, AGGRESSIVENESS_TIERS, type SocialChannel, type Aggressiveness } from '@/config/platform-defaults';
 
@@ -66,7 +69,7 @@ interface Adjustment {
   created_at: string;
 }
 
-type ViewMode = 'table' | 'insights';
+type ViewMode = 'overview' | 'channels' | 'posts';
 
 // ---- Status badge config ----
 
@@ -91,7 +94,10 @@ export default function CampaignDetailPage() {
   const [adjustments, setAdjustments] = useState<Adjustment[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [viewMode, setViewMode] = useState<ViewMode>('posts');
+  const [activeBatchId, setActiveBatchId] = useState<string | null>(null);
+  const [showCreateChannel, setShowCreateChannel] = useState(false);
+  const [showCreatePost, setShowCreatePost] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -118,12 +124,25 @@ export default function CampaignDetailPage() {
           setAdjustments(adjData.adjustments || []);
         }
       } catch { /* API not built yet */ }
+
+      // Check for in-progress batches (resume generation if user returns)
+      if (!activeBatchId) {
+        try {
+          const batchRes = await fetch(`/api/content/campaigns/${campaignId}/batches/active`);
+          if (batchRes.ok) {
+            const batchData = await batchRes.json();
+            if (batchData.batchId && (batchData.status === 'pending' || batchData.status === 'processing')) {
+              setActiveBatchId(batchData.batchId);
+            }
+          }
+        } catch { /* Endpoint may not exist yet */ }
+      }
     } catch (err) {
       console.error('Failed to fetch campaign data:', err);
     } finally {
       setLoading(false);
     }
-  }, [campaignId]);
+  }, [campaignId, activeBatchId]);
 
   useEffect(() => {
     fetchData();
@@ -132,9 +151,18 @@ export default function CampaignDetailPage() {
   async function handleGenerate() {
     setGenerating(true);
     try {
-      const res = await fetch(`/api/content/campaigns/${campaignId}/generate`, { method: 'POST' });
+      const res = await fetch(`/api/content/campaigns/${campaignId}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
       if (res.ok) {
-        // Refresh data after generation starts
+        const data = await res.json();
+        // Capture the batchId and start tracking generation
+        if (data.batchId) {
+          setActiveBatchId(data.batchId);
+        }
+        // Refresh data to show the "idea" posts
         await fetchData();
       }
     } catch (err) {
@@ -219,9 +247,9 @@ export default function CampaignDetailPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* View mode toggle */}
+            {/* Tab toggle */}
             <div className="flex bg-stone/5 rounded-lg p-0.5">
-              {(['table', 'insights'] as const).map(mode => (
+              {(['overview', 'channels', 'posts'] as const).map(mode => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
@@ -266,42 +294,80 @@ export default function CampaignDetailPage() {
         onDismiss={(id) => handleAdjustmentAction(id, 'dismissed')}
       />
 
-      {/* Main content */}
-      {viewMode === 'table' ? (
-        <CampaignTableView
-          campaignId={campaign.id}
-          campaignName={campaign.name}
-          objective={objectiveConfig?.name || campaign.objective}
+      {/* AI Generation Progress Tracker */}
+      {activeBatchId && (
+        <GenerationBatchTracker
+          batchId={activeBatchId}
+          statusEndpoint="/api/content/campaigns/queue"
+          onComplete={() => {
+            setActiveBatchId(null);
+            fetchData();
+          }}
+          onCancel={() => {
+            setActiveBatchId(null);
+            fetchData();
+          }}
+          onProgress={() => {
+            // Refresh posts progressively to show newly generated content
+            fetchData();
+          }}
+        />
+      )}
+
+      {/* Main content - Tabbed views */}
+      {viewMode === 'overview' && (
+        <CampaignOverviewTab
           adsets={adsets}
           posts={posts}
-          onPostClick={(postId) => router.push(`/content/campaigns/${campaignId}/posts/${postId}`)}
+          objectiveConfig={objectiveConfig}
+        />
+      )}
+
+      {viewMode === 'channels' && (
+        <CampaignChannelsTab
+          campaignId={campaign.id}
+          adsets={adsets}
+          posts={posts}
+          onCreateChannel={() => setShowCreateChannel(true)}
           onRefresh={fetchData}
         />
-      ) : (
-        <div className="space-y-6">
-          {/* Content type spectrum */}
-          <div className="bg-cream-warm border border-stone/10 rounded-xl p-4">
-            <h3 className="text-heading-sm text-charcoal mb-3">Content Type Distribution</h3>
-            <ContentTypeExplainer />
-          </div>
+      )}
 
-          {/* Per-adset ratio breakdown */}
-          {adsets.map(adset => {
-            const platform = PLATFORM_DEFAULTS[adset.channel as SocialChannel];
-            return (
-              <div key={adset.id} className="bg-cream-warm border border-stone/10 rounded-xl p-4">
-                <h3 className="text-heading-sm text-charcoal mb-3">
-                  {platform?.label || adset.channel} — Content Type Ratios
-                </h3>
-                <RatioAdjuster
-                  ratio={adset.content_type_ratios}
-                  onChange={() => {/* read-only in detail view */}}
-                  defaultRatio={objectiveConfig?.defaultRatio}
-                />
-              </div>
-            );
-          })}
-        </div>
+      {viewMode === 'posts' && (
+        <CampaignPostsTab
+          campaignId={campaign.id}
+          posts={posts}
+          adsets={adsets}
+          onPostClick={(postId) => router.push(`/content/campaigns/${campaignId}/posts/${postId}`)}
+          onCreatePost={() => setShowCreatePost(true)}
+          onRefresh={fetchData}
+        />
+      )}
+
+      {/* Dialogs */}
+      {showCreateChannel && (
+        <CreateChannelDialog
+          campaignId={campaign.id}
+          campaignStartDate={campaign.start_date}
+          campaignEndDate={campaign.end_date}
+          onClose={() => setShowCreateChannel(false)}
+          onSuccess={() => {
+            setShowCreateChannel(false);
+            fetchData();
+          }}
+        />
+      )}
+
+      {showCreatePost && (
+        <CreatePostDialog
+          campaignId={campaign.id}
+          adsets={adsets}
+          onClose={() => setShowCreatePost(false)}
+          onSuccess={() => {
+            setShowCreatePost(false);
+            fetchData();
+          }}
+        />
       )}
     </div>
   );

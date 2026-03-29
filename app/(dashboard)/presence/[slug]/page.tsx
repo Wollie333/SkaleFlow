@@ -50,6 +50,136 @@ interface Phase {
   current_question_index: number;
 }
 
+function getPhaseWelcomeMessage(phaseTemplate: PresencePhaseTemplate, questionIndex: number): string {
+  const phaseIntros: Record<string, string> = {
+    '1': `**Welcome to Platform Strategy!**
+
+This phase helps you select and prioritize the right platforms for your brand. We'll analyze your business type, ICP, and brand positioning to recommend where you should focus your presence efforts.
+
+**What we'll accomplish:**
+- Identify your priority platforms based on your brand and goals
+- Set clear objectives for each platform
+- Define your posting commitment and resources
+- Establish your "presence north star" - the impression you want to create
+
+${phaseTemplate.description}
+
+**Let's start with question ${questionIndex + 1}:** ${phaseTemplate.questions[questionIndex]}
+
+💬 Use the suggestions below or type your answer to begin the conversation.`,
+
+    '2': `**Welcome to LinkedIn Presence!**
+
+In this phase, we'll craft authority-first LinkedIn profile copy that positions you as a Key Person of Influence in your category. I'll present polished copy options, and you can refine them until they're perfect.
+
+**What we'll build:**
+- 3 headline options optimized for authority and searchability
+- StoryBrand-structured About section
+- Featured items strategy
+- Connection strategy and messaging
+- Banner copy and profile optimization
+
+${phaseTemplate.description}
+
+**Current question:** ${phaseTemplate.questions[questionIndex]}
+
+💬 Share your thoughts, upload a screenshot, or click the suggestions to get started.`,
+
+    '3': `**Welcome to Facebook Presence!**
+
+Let's optimize your Facebook Business Page for community building and conversions. We'll create page copy, CTA strategy, and community approach tailored to your brand.
+
+**What we'll create:**
+- Page name, category, and setup
+- Compelling About sections
+- Strategic CTA button selection
+- Cover image concept and messaging
+- Optional: Facebook Group strategy
+
+${phaseTemplate.description}
+
+**Current question:** ${phaseTemplate.questions[questionIndex]}
+
+💬 Ready when you are!`,
+
+    '4': `**Welcome to Instagram Presence!**
+
+Time to create a magnetic Instagram profile! We'll craft scroll-stopping bios, strategic link placements, and a visual direction that attracts your ideal audience.
+
+**What we'll design:**
+- 3 bio formula options (authority, problem-led, transformation)
+- Link-in-bio strategy
+- Story Highlights structure
+- Username optimization
+- Visual grid aesthetic direction
+
+${phaseTemplate.description}
+
+**Current question:** ${phaseTemplate.questions[questionIndex]}
+
+💬 Let's create your Instagram presence!`,
+
+    '5': `**Welcome to Google My Business!**
+
+We'll optimize your Google Business Profile for local search dominance. This phase focuses on category selection, keyword optimization, and service area setup.
+
+**What we'll optimize:**
+- Primary and secondary categories
+- Keyword-optimized business description
+- Service areas and coverage
+- Business hours setup
+- Top 5 services with descriptions
+
+${phaseTemplate.description}
+
+**Current question:** ${phaseTemplate.questions[questionIndex]}
+
+💬 Let's get your business found on Google!`,
+
+    '6': `**Welcome to Video Platforms!**
+
+Whether YouTube, TikTok, or both - we'll set up your video presence for consistent content and audience growth.
+
+**What we'll create:**
+- Channel/account descriptions
+- Name optimization
+- Content categories and pillars
+- Video intro formulas (hook > identity > value)
+- Trailer/pinned video concepts
+
+${phaseTemplate.description}
+
+**Current question:** ${phaseTemplate.questions[questionIndex]}
+
+💬 Ready to build your video presence?`,
+
+    '7': `**Welcome to Presence Audit & Consistency!**
+
+Final phase! We'll audit your cross-platform consistency, identify quick wins, and build a 30-day activation plan.
+
+**What we'll deliver:**
+- Full cross-platform consistency audit
+- Consistency scores by dimension
+- Gap analysis and quick wins
+- 30-day activation roadmap
+- Universal CTA strategy
+
+${phaseTemplate.description}
+
+**Current question:** ${phaseTemplate.questions[questionIndex]}
+
+💬 Let's bring it all together!`,
+  };
+
+  return phaseIntros[phaseTemplate.number] || `**Welcome to ${phaseTemplate.name}!**
+
+${phaseTemplate.description}
+
+**Current question:** ${phaseTemplate.questions[questionIndex]}
+
+💬 Share your thoughts to get started.`;
+}
+
 interface Message {
   role: 'user' | 'assistant' | 'separator';
   content: string;
@@ -114,6 +244,8 @@ export default function PresencePhasePage() {
     let cancelled = false;
 
     async function loadData(userId: string) {
+      let shouldRedirect = false;
+
       try {
         const { data: membership } = await supabase
           .from('org_members')
@@ -134,17 +266,24 @@ export default function PresencePhasePage() {
         // Auto-create all 7 phases if none exist yet
         if (!phasesData?.length) {
           const templates = Object.values(PRESENCE_PHASE_TEMPLATES);
-          for (const t of templates) {
-            await supabase.from('presence_phases').insert({
-              organization_id: orgId,
-              phase_number: t.number,
-              phase_name: t.name,
-              platform_key: t.platformKey,
-              is_conditional: t.isConditional,
-              status: 'not_started',
-              current_question_index: 0,
-              sort_order: parseInt(t.number),
-            });
+          const inserts = templates.map(t => ({
+            organization_id: orgId,
+            phase_number: t.number,
+            phase_name: t.name,
+            platform_key: t.platformKey,
+            is_conditional: t.isConditional,
+            status: 'not_started' as const,
+            current_question_index: 0,
+            sort_order: parseInt(t.number),
+          }));
+
+          const { error: insertError } = await supabase
+            .from('presence_phases')
+            .insert(inserts);
+
+          if (insertError) {
+            console.error('Failed to create presence phases:', insertError);
+            return;
           }
 
           // Re-fetch after creation
@@ -160,6 +299,7 @@ export default function PresencePhasePage() {
 
         if (!phaseTemplate) {
           router.replace('/presence');
+          shouldRedirect = true;
           return;
         }
 
@@ -167,13 +307,15 @@ export default function PresencePhasePage() {
         if (targetPhase) {
           setCurrentPhase(targetPhase as Phase);
         } else {
+          console.error('Phase not found:', { phaseNumber: phaseTemplate.number, availablePhases: phasesData.map(p => p.phase_number) });
           router.replace('/presence');
+          shouldRedirect = true;
           return;
         }
       } catch (error) {
         console.error('Presence phase: failed to load', error);
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled && !shouldRedirect) setIsLoading(false);
       }
     }
 
@@ -199,9 +341,32 @@ export default function PresencePhasePage() {
         .eq('phase_id', currentPhaseId!)
         .single();
 
-      if (!messageOperationRef.current) {
-        setMessages((conversation?.messages as unknown as Message[]) || []);
+      const existingMessages = (conversation?.messages as unknown as Message[]) || [];
+
+      // Always prepend welcome message if no conversation exists yet
+      if (phaseTemplate && currentPhase) {
+        const hasRealMessages = existingMessages.some(m => m.role !== 'separator');
+
+        if (!hasRealMessages) {
+          const welcomeMessage: Message = {
+            role: 'separator',
+            content: getPhaseWelcomeMessage(phaseTemplate, currentPhase.current_question_index ?? 0),
+            timestamp: new Date().toISOString(),
+          };
+          if (!messageOperationRef.current) {
+            setMessages([welcomeMessage, ...existingMessages]);
+          }
+        } else {
+          if (!messageOperationRef.current) {
+            setMessages(existingMessages);
+          }
+        }
+      } else {
+        if (!messageOperationRef.current) {
+          setMessages(existingMessages);
+        }
       }
+
       setPhaseCreditsUsed(conversation?.credits_used ?? 0);
 
       const phase = phases.find(p => p.id === currentPhaseId);
@@ -587,11 +752,16 @@ export default function PresencePhasePage() {
 
   const handleSuggestionClick = useCallback((action: string) => {
     if (action === '__help_me_think__') {
-      handleSendMessageRef.current("I'm not sure how to approach this. Please guide me through it step by step — use my brand data to propose something concrete that I can refine.");
+      // Phase 1, Question 1: Ask for platform recommendations
+      if (phaseTemplate?.number === '1' && currentPhase?.current_question_index === 0) {
+        handleSendMessageRef.current("Based on my brand positioning, ICP, and business type, which platforms should I prioritize? Please present a specific platform ranking with your reasoning.");
+      } else {
+        handleSendMessageRef.current("I'm not sure how to approach this. Please guide me through it step by step - use my brand data to propose something concrete that I can refine.");
+      }
     } else if (action === '__i_know_this__') {
-      // Focus chat input — handled by ExpertChatPanel
+      // Focus chat input - handled by ExpertChatPanel
     }
-  }, []);
+  }, [phaseTemplate, currentPhase]);
 
   if (isLoading) {
     return (

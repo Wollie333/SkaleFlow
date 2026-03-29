@@ -11,14 +11,31 @@ import {
   CurrencyDollarIcon,
   XCircleIcon,
   ArrowPathIcon,
+  PencilSquareIcon,
+  DocumentPlusIcon,
+  TrashIcon,
+  CheckCircleIcon,
+  XMarkIcon,
+  ChatBubbleLeftIcon,
+  AtSymbolIcon,
+  ClockIcon,
+  PhotoIcon,
+  CalendarDaysIcon,
+  ArrowUturnLeftIcon,
 } from '@heroicons/react/24/outline';
 
 interface ActivityEntry {
   id: string;
   actor_id: string;
   action: string;
+  entity_type?: string | null;
+  entity_id?: string | null;
+  workspace_id?: string | null;
   target_user_id: string | null;
   target_email: string | null;
+  duration_seconds?: number | null;
+  old_value?: Record<string, unknown> | null;
+  new_value?: Record<string, unknown> | null;
   metadata: Record<string, unknown>;
   created_at: string;
   actor?: { full_name: string | null; email: string };
@@ -34,6 +51,7 @@ const ACTION_CONFIG: Record<string, {
   iconBg: string;
   label: (entry: ActivityEntry) => string;
 }> = {
+  // Team Management Actions
   member_invited: {
     icon: EnvelopeIcon,
     iconBg: 'bg-teal/10 text-teal',
@@ -78,6 +96,89 @@ const ACTION_CONFIG: Record<string, {
     icon: ArrowPathIcon,
     iconBg: 'bg-teal/10 text-teal',
     label: (e) => `resent invitation to ${e.metadata?.email || 'someone'}`,
+  },
+
+  // Content Collaboration Actions
+  post_created: {
+    icon: DocumentPlusIcon,
+    iconBg: 'bg-blue-100 text-blue-600',
+    label: (e) => `created a new post${e.metadata?.topic ? ` about "${e.metadata.topic}"` : ''}`,
+  },
+  post_edited: {
+    icon: PencilSquareIcon,
+    iconBg: 'bg-purple-100 text-purple-600',
+    label: (e) => {
+      const fields = e.metadata?.changed_fields as string[] | undefined;
+      return `edited a post${fields && fields.length > 0 ? ` (${fields.join(', ')})` : ''}`;
+    },
+  },
+  post_deleted: {
+    icon: TrashIcon,
+    iconBg: 'bg-red-100 text-red-600',
+    label: (e) => `deleted a post${e.metadata?.topic ? ` about "${e.metadata.topic}"` : ''}`,
+  },
+
+  // Approval Workflow Actions
+  approval_granted: {
+    icon: CheckCircleIcon,
+    iconBg: 'bg-green-100 text-green-600',
+    label: (e) => `approved ${e.target?.full_name || 'a team member'}'s post`,
+  },
+  approval_denied: {
+    icon: XMarkIcon,
+    iconBg: 'bg-red-100 text-red-600',
+    label: (e) => `rejected ${e.target?.full_name || 'a team member'}'s post`,
+  },
+  revision_requested: {
+    icon: ArrowPathIcon,
+    iconBg: 'bg-amber-100 text-amber-600',
+    label: (e) => `requested revisions from ${e.target?.full_name || 'a team member'}`,
+  },
+
+  // Comment & Mention Actions
+  comment_added: {
+    icon: ChatBubbleLeftIcon,
+    iconBg: 'bg-blue-100 text-blue-600',
+    label: (e) => {
+      const isReply = e.metadata?.is_reply;
+      return `${isReply ? 'replied to a comment' : 'commented'} on a post`;
+    },
+  },
+  mention_created: {
+    icon: AtSymbolIcon,
+    iconBg: 'bg-purple-100 text-purple-600',
+    label: (e) => `mentioned ${e.target?.full_name || 'someone'} in a comment`,
+  },
+
+  // Media Actions
+  media_uploaded: {
+    icon: PhotoIcon,
+    iconBg: 'bg-green-100 text-green-600',
+    label: () => 'uploaded media to a post',
+  },
+  media_replaced: {
+    icon: PhotoIcon,
+    iconBg: 'bg-amber-100 text-amber-600',
+    label: () => 'replaced media on a post',
+  },
+  media_removed: {
+    icon: TrashIcon,
+    iconBg: 'bg-red-100 text-red-600',
+    label: () => 'removed media from a post',
+  },
+
+  // Schedule Actions
+  schedule_changed: {
+    icon: CalendarDaysIcon,
+    iconBg: 'bg-blue-100 text-blue-600',
+    label: () => 'changed the schedule for a post',
+  },
+
+  // Revision Actions
+  revision_reverted: {
+    icon: ArrowUturnLeftIcon,
+    iconBg: 'bg-purple-100 text-purple-600',
+    label: (e) => `reverted a post to revision #${e.metadata?.revision_number || '?'}`,
   },
 };
 
@@ -143,11 +244,30 @@ export function ActivityTimeline({ className }: ActivityTimelineProps) {
           className="px-3 py-1.5 border border-stone/10 rounded-lg text-charcoal bg-cream-warm text-xs focus:outline-none focus:ring-2 focus:ring-teal/20"
         >
           <option value="all">All Actions</option>
-          <option value="member_invited">Invitations</option>
-          <option value="role_changed">Role Changes</option>
-          <option value="permission_updated">Permission Changes</option>
-          <option value="credits_allocated">Credit Allocations</option>
-          <option value="member_removed">Removals</option>
+          <optgroup label="Team Management">
+            <option value="member_invited">Invitations</option>
+            <option value="role_changed">Role Changes</option>
+            <option value="permission_updated">Permission Changes</option>
+            <option value="credits_allocated">Credit Allocations</option>
+            <option value="member_removed">Removals</option>
+          </optgroup>
+          <optgroup label="Content Collaboration">
+            <option value="post_created">Post Created</option>
+            <option value="post_edited">Post Edited</option>
+            <option value="post_deleted">Post Deleted</option>
+          </optgroup>
+          <optgroup label="Approvals">
+            <option value="approval_granted">Approvals</option>
+            <option value="approval_denied">Rejections</option>
+            <option value="revision_requested">Revision Requests</option>
+          </optgroup>
+          <optgroup label="Collaboration">
+            <option value="comment_added">Comments</option>
+            <option value="mention_created">Mentions</option>
+            <option value="media_uploaded">Media Uploads</option>
+            <option value="schedule_changed">Schedule Changes</option>
+            <option value="revision_reverted">Reverts</option>
+          </optgroup>
         </select>
       </div>
 

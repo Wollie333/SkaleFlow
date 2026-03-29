@@ -4,7 +4,7 @@
  */
 
 /** Max time to wait for a single AI API call (30 seconds) */
-export const AI_TIMEOUT_MS = 30_000;
+export const AI_TIMEOUT_MS = 120_000; // 2 minutes for content generation
 
 /**
  * Race a promise against a timeout. If the promise doesn't resolve in time,

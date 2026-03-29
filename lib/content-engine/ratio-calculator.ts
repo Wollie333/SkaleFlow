@@ -12,6 +12,7 @@ export interface AdSetInput {
   id: string;
   channel: SocialChannel;
   aggressiveness: Aggressiveness;
+  postsPerWeek?: number;  // manual override from user
   contentTypeRatio?: ContentTypeRatio;  // override defaults
   formatRatio?: Record<ContentFormat, number>; // override defaults
   postingSchedule?: Record<string, string[]>;  // override defaults
@@ -64,9 +65,10 @@ function calculateAdSetSlots(
   const platformConfig = PLATFORM_DEFAULTS[adset.channel];
   const aggressiveness = AGGRESSIVENESS_TIERS[adset.aggressiveness];
 
-  // Determine total posts
+  // Determine total posts - use manual override if provided
+  const postsPerWeek = adset.postsPerWeek ?? aggressiveness.postsPerWeek;
   const totalWeeks = Math.max(1, Math.ceil(daysBetween(startDate, endDate) / 7));
-  const totalPosts = totalWeeks * aggressiveness.postsPerWeek;
+  const totalPosts = totalWeeks * postsPerWeek;
 
   // Get ratios (user override or objective default)
   const typeRatio = adset.contentTypeRatio || objectiveConfig.defaultRatio;

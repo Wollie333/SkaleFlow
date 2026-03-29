@@ -64,6 +64,13 @@ export default function CalendarPage() {
   const searchParams = useSearchParams();
   const urlCalendarId = searchParams.get('calendarId');
 
+  // Content engine integration
+  const isContentEngine = searchParams.get('source') === 'content-engine';
+  const contentEngineCampaignId = searchParams.get('campaignId');
+  const contentEngineAdsetId = searchParams.get('adsetId');
+  const contentEngineDateFrom = searchParams.get('dateFrom');
+  const contentEngineDateTo = searchParams.get('dateTo');
+
   const [items, setItems] = useState<ContentItem[]>([]);
   const [calendars, setCalendars] = useState<Calendar[]>([]);
   const [currentCalendar, setCurrentCalendar] = useState<Calendar | null>(null);
@@ -91,11 +98,21 @@ export default function CalendarPage() {
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [approvalQueueExpanded, setApprovalQueueExpanded] = useState(false);
 
+  // Campaign filter state for content engine
+  const [availableCampaigns, setAvailableCampaigns] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedCampaignFilter, setSelectedCampaignFilter] = useState<string>('all');
+
   // Apply filters to items
-  const filteredItems = useMemo(
-    () => applyContentFilters(items, contentFilters),
-    [items, contentFilters]
-  );
+  const filteredItems = useMemo(() => {
+    let filtered = applyContentFilters(items, contentFilters);
+
+    // Apply campaign filter if in content engine mode
+    if (isContentEngine && selectedCampaignFilter !== 'all') {
+      filtered = filtered.filter(item => (item as any).campaign_id === selectedCampaignFilter);
+    }
+
+    return filtered;
+  }, [items, contentFilters, isContentEngine, selectedCampaignFilter]);
 
   useEffect(() => {
     async function loadData() {
@@ -179,13 +196,128 @@ export default function CalendarPage() {
             : parsedCalendars[0];
           setCurrentCalendar(targetCalendar);
 
-          const { data: itemsData } = await supabase
-            .from('content_items')
-            .select('*')
-            .eq('calendar_id', targetCalendar.id)
-            .order('scheduled_date');
+          // Load content_posts if coming from content engine, otherwise content_items
+          if (isContentEngine) {
+            let query = supabase
+              .from('content_posts')
+              .select('*')
+              .eq('organization_id', membership.organization_id)
+              .order('created_at', { ascending: false });
 
-          setItems((itemsData || []) as ContentItem[]);
+            // Apply filters
+            if (contentEngineCampaignId) {
+              query = query.eq('campaign_id', contentEngineCampaignId);
+            }
+            if (contentEngineAdsetId) {
+              query = query.eq('adset_id', contentEngineAdsetId);
+            }
+            if (contentEngineDateFrom) {
+              query = query.gte('scheduled_date', contentEngineDateFrom);
+            }
+            if (contentEngineDateTo) {
+              query = query.lte('scheduled_date', contentEngineDateTo);
+            }
+
+            const { data: postsData, error: postsError } = await query;
+
+            console.log('[CALENDAR] Content engine posts query:', {
+              count: postsData?.length || 0,
+              filters: { contentEngineCampaignId, contentEngineAdsetId, contentEngineDateFrom, contentEngineDateTo },
+              error: postsError,
+              sample: postsData?.[0],
+            });
+
+            // Transform content_posts to match ContentItem interface
+            // Fetch media for each post and get public URLs
+            const today = new Date().toISOString().split('T')[0];
+            const transformedItems = await Promise.all((postsData || []).map(async (post) => {
+              // Fetch media for this post
+              const { data: mediaData } = await supabase
+                .from('post_media')
+                .select('file_path')
+                .eq('post_id', post.id)
+                .order('carousel_order', { ascending: true });
+
+              // Get public URLs for media files
+              const media_urls = mediaData && mediaData.length > 0
+                ? mediaData.map(m =>
+                    supabase.storage.from('content-media').getPublicUrl(m.file_path).data.publicUrl
+                  )
+                : [];
+
+              // Calculate time_slot from scheduled_time
+              let time_slot: TimeSlot = 'morning';
+              if (post.scheduled_time) {
+                const hour = parseInt(post.scheduled_time.split(':')[0]);
+                if (hour >= 12 && hour < 17) time_slot = 'afternoon';
+                else if (hour >= 17) time_slot = 'evening';
+              }
+
+              // Get the main content body
+              const bodyContent = post.body || post.video_script || post.caption || post.hook || '';
+
+              return {
+                id: post.id,
+                scheduled_date: post.scheduled_date || today,
+                scheduled_time: post.scheduled_time || null,
+                time_slot,
+                funnel_stage: 'awareness' as FunnelStage,
+                storybrand_stage: 'problem' as StoryBrandStage,
+                format: post.format,
+                // Use topic as title, fallback to hook (which is often the title)
+                topic: post.topic || post.hook || `${post.platform} ${post.format}`,
+                hook: post.hook,
+                // Store the full body content
+                script_body: bodyContent,
+                cta: post.cta,
+                // Calendar displays caption - use the main body content here
+                caption: bodyContent,
+                hashtags: post.hashtags,
+                platforms: [post.platform],
+                status: post.status as ContentStatus,
+                assigned_to: post.assigned_to,
+                media_urls,
+                filming_notes: post.visual_brief,
+                rejection_reason: post.rejection_reason,
+                review_comment: post.review_comment,
+                target_url: post.target_url,
+                utm_parameters: post.utm_parameters,
+                generation_week: post.generation_week,
+                // Store campaign_id for navigation
+                campaign_id: post.campaign_id,
+              };
+            }));
+
+            console.log('[CALENDAR] Transformed items:', {
+              count: transformedItems.length,
+              sample: transformedItems[0],
+            });
+
+            setItems(transformedItems as ContentItem[]);
+
+            // Fetch available campaigns for filter dropdown
+            const { data: campaignsData } = await supabase
+              .from('campaigns')
+              .select('id, name')
+              .eq('organization_id', membership.organization_id)
+              .order('created_at', { ascending: false });
+
+            if (campaignsData) {
+              setAvailableCampaigns(campaignsData);
+              // If campaignId filter was provided in URL, set it
+              if (contentEngineCampaignId) {
+                setSelectedCampaignFilter(contentEngineCampaignId);
+              }
+            }
+          } else {
+            const { data: itemsData } = await supabase
+              .from('content_items')
+              .select('*')
+              .eq('calendar_id', targetCalendar.id)
+              .order('scheduled_date');
+
+            setItems((itemsData || []) as ContentItem[]);
+          }
         }
 
         // Check for active generation batches
@@ -367,8 +499,14 @@ export default function CalendarPage() {
       return;
     }
     // Normal click navigates to full edit page
-    router.push(`/content/${item.id}`);
-  }, [router]);
+    if (isContentEngine) {
+      // Navigate to content engine post edit page
+      // Need to get campaign_id from the item (we stored it during transformation)
+      router.push(`/content/campaigns/${(item as any).campaign_id || 'unknown'}/posts/${item.id}`);
+    } else {
+      router.push(`/content/${item.id}`);
+    }
+  }, [router, isContentEngine]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSaveItem = async (updatedItem: any) => {
@@ -663,19 +801,59 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-3 sm:px-0">
+      {/* Back button and filter info for content engine */}
+      {isContentEngine && (
+        <div className="space-y-2">
+          <button
+            onClick={() => {
+              const params = new URLSearchParams({ tab: 'posts' });
+              if (contentEngineCampaignId) params.set('campaignId', contentEngineCampaignId);
+              if (contentEngineAdsetId) params.set('adsetId', contentEngineAdsetId);
+              router.push(`/content/machine?${params.toString()}`);
+            }}
+            className="flex items-center gap-1.5 text-xs sm:text-sm text-stone hover:text-teal transition-colors"
+          >
+            <ChevronDownIcon className="w-3 h-3 sm:w-4 sm:h-4 rotate-90" />
+            Back to Content Engine
+          </button>
+
+          {/* Filter indicator */}
+          {(contentEngineCampaignId || contentEngineAdsetId || contentEngineDateFrom || contentEngineDateTo) && (
+            <div className="flex items-center gap-2 text-xs text-stone">
+              <span className="font-medium">Filters:</span>
+              {contentEngineCampaignId && (
+                <span className="px-2 py-1 bg-teal/10 text-teal rounded-md">Campaign</span>
+              )}
+              {contentEngineAdsetId && (
+                <span className="px-2 py-1 bg-teal/10 text-teal rounded-md">Channel</span>
+              )}
+              {(contentEngineDateFrom || contentEngineDateTo) && (
+                <span className="px-2 py-1 bg-teal/10 text-teal rounded-md">
+                  {contentEngineDateFrom && new Date(contentEngineDateFrom + 'T00:00').toLocaleDateString('en-ZA', { month: 'short', day: 'numeric' })}
+                  {contentEngineDateFrom && contentEngineDateTo && ' – '}
+                  {contentEngineDateTo && new Date(contentEngineDateTo + 'T00:00').toLocaleDateString('en-ZA', { month: 'short', day: 'numeric' })}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Header */}
       <PageHeader
         icon={CalendarIcon}
-        title="Content Calendar"
-        subtitle="Plan, create, and schedule your content"
+        title={isContentEngine ? "Content Engine Calendar" : "Content Calendar"}
+        subtitle={isContentEngine ? "View your scheduled posts" : "Plan, create, and schedule your content"}
         action={
           <div className="flex items-center gap-3">
             <ViewToggle mode={viewMode} onChange={setViewMode} />
-            <Button onClick={() => setShowCreateModal(true)}>
-              <PlusIcon className="w-4 h-4 mr-2" />
-              New Calendar
-            </Button>
+            {!isContentEngine && (
+              <Button onClick={() => setShowCreateModal(true)}>
+                <PlusIcon className="w-4 h-4 mr-2" />
+                New Calendar
+              </Button>
+            )}
             {/* "..." dropdown for secondary actions */}
             <div className="relative">
               <Button
@@ -733,8 +911,8 @@ export default function CalendarPage() {
         }
       />
 
-      {/* Calendar selector — only show when there are multiple calendars */}
-      {calendars.length > 1 && (
+      {/* Calendar selector — only show when there are multiple calendars and not in content engine mode */}
+      {!isContentEngine && calendars.length > 1 && (
         calendars.length <= 4 ? (
           <div className="flex gap-2 flex-wrap">
             {calendars.map(cal => {
@@ -826,6 +1004,25 @@ export default function CalendarPage() {
               />
             </div>
           )}
+        </div>
+      )}
+
+      {/* Campaign Filter for Content Engine */}
+      {isContentEngine && availableCampaigns.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+          <label className="text-xs sm:text-sm font-medium text-stone">Campaign:</label>
+          <select
+            value={selectedCampaignFilter}
+            onChange={(e) => setSelectedCampaignFilter(e.target.value)}
+            className="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-lg border border-stone/20 bg-cream-warm text-xs sm:text-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
+          >
+            <option value="all">All Campaigns</option>
+            {availableCampaigns.map(campaign => (
+              <option key={campaign.id} value={campaign.id}>
+                {campaign.name}
+              </option>
+            ))}
+          </select>
         </div>
       )}
 

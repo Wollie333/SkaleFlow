@@ -54,6 +54,9 @@ export async function generateV3Post(
   selectedBrandVariables?: string[] | null,
   creativeDirection?: string
 ): Promise<V3GenerationResult> {
+  console.log('[V3-GEN] ========== Starting generation for post:', postId, '==========');
+  console.log('[V3-GEN] OrgId:', orgId, 'UserId:', userId);
+
   // Load brand context
   const { data: outputs } = await supabase
     .from('brand_outputs')
@@ -77,8 +80,11 @@ export async function generateV3Post(
     .single();
 
   if (!post || postError) {
+    console.error('[V3-GEN] Failed to load post:', postId, postError);
     return { success: false, error: `Post not found: ${postError?.message || 'unknown'}` };
   }
+
+  console.log('[V3-GEN] Post loaded. workspace_id:', post.workspace_id, 'status:', post.status);
 
   // Resolve AI model
   const resolvedModel = await resolveModel(orgId, 'content_generation' as AIFeature, modelOverride);
@@ -99,16 +105,11 @@ export async function generateV3Post(
     ? selectedBrandVariables
     : selectV3StrategicVariables(objective, contentType);
 
-  // Select template (Objective → Content Type → Format)
-  const usedTemplateIds = previouslyGenerated
-    .map((p: any) => p.templateId)
-    .filter(Boolean) as string[];
-  const template = await selectV3Template(supabase, post.content_type, post.format, objective, usedTemplateIds);
+  // SPEED OPTIMIZATION: Skip template/style loading for faster generation
+  const template = null;
+  const styleProfile = null;
 
-  // Get style profile for personalization
-  const styleProfile = await getStyleProfile(supabase, orgId);
-
-  // Build prompts — template-first
+  // Build prompts — simplified for speed
   const systemPrompt = buildV3SystemPrompt(
     brandContext,
     org?.name || 'Your Brand',
@@ -126,8 +127,8 @@ export async function generateV3Post(
     template
   );
 
-  const temperature = resolvedModel.isFree ? 0.95 : 0.8;
-  const maxTokens = isLongFormat(post.format) ? 6144 : isVideoFormat(post.format) ? 4096 : 3072;
+  const temperature = 0.7; // Lower for faster, more consistent responses
+  const maxTokens = 1536; // Reduced for speed
 
   // Retry loop
   let lastError = '';
@@ -139,12 +140,22 @@ export async function generateV3Post(
         messages: [{ role: 'user', content: userPrompt }],
         temperature,
         maxTokens,
-        responseFormat: 'json',
+        jsonMode: true,
       });
 
-      const parsed = parseV3Response(response.content, post.format);
+      console.log('[V3-GEN] AI response received. Text length:', response.text?.length || 0);
+
+      if (!response.text) {
+        console.error('[V3-GEN] AI returned empty text!');
+        console.error('[V3-GEN] Full response:', JSON.stringify(response, null, 2));
+        lastError = 'AI returned empty response';
+        continue;
+      }
+
+      const parsed = parseV3Response(response.text, post.format);
       if (!parsed) {
-        lastError = 'Invalid response format';
+        console.error('[V3-GEN] Failed to parse AI response. Raw text:', response.text.substring(0, 500));
+        lastError = 'Invalid response format - AI did not return valid JSON with required fields (topic, hook_variations, body, cta)';
         continue;
       }
 
@@ -180,10 +191,30 @@ export async function generateV3Post(
         } as unknown as Json,
       };
 
-      await supabase
+      console.log('[V3-GEN] Attempting to update post:', postId);
+      console.log('[V3-GEN] Update data keys:', Object.keys(updateData));
+
+      const { data: updatedPost, error: updateError } = await supabase
         .from('content_posts')
         .update(updateData)
-        .eq('id', postId);
+        .eq('id', postId)
+        .select();
+
+      if (updateError) {
+        console.error('[V3-GEN] Database update FAILED for post:', postId);
+        console.error('[V3-GEN] Error details:', JSON.stringify(updateError, null, 2));
+        console.error('[V3-GEN] Error code:', updateError.code);
+        console.error('[V3-GEN] Error message:', updateError.message);
+        return { success: false, error: `Database update failed: ${updateError.message} (code: ${updateError.code})`, retryable: true };
+      }
+
+      if (!updatedPost || updatedPost.length === 0) {
+        console.error('[V3-GEN] Update returned no rows for post:', postId);
+        console.error('[V3-GEN] This likely means RLS policy blocked the update');
+        return { success: false, error: 'Database update blocked by RLS policy - user may not have workspace access', retryable: false };
+      }
+
+      console.log('[V3-GEN] Successfully updated post:', postId, '- Topic:', parsed.topic);
 
       // Track template usage
       if (template) {
@@ -236,43 +267,19 @@ function buildV3SystemPrompt(
   template?: V3Template | null,
   styleProfile?: import('./style-learning').StyleProfile | null
 ): string {
+  // SPEED OPTIMIZATION: Ultra-minimal prompt
   const varBlock = variables
     .filter(key => brandContext[key])
-    .map(key => `**${VARIABLE_DISPLAY_NAMES[key] || key}**: ${brandContext[key]}`)
+    .map(key => `${VARIABLE_DISPLAY_NAMES[key] || key}: ${brandContext[key]}`)
     .join('\n');
 
-  let prompt = `You are an expert content strategist and copywriter for "${brandName}".
+  return `You are a copywriter for "${brandName}".
 
-## Brand Context
+Brand context:
 ${varBlock}
 
-## Rules
-1. Write in the brand's exact voice — use preferred vocabulary, avoid blacklisted words.
-2. Every post must work STANDALONE — assume zero prior context from the reader.
-3. Generate 3 different hook variations — each must stop the scroll in line 1 (text) or first 3 seconds (video).
-4. End with a CTA aligned to the campaign objective.
-5. Reference ICP pain points and language naturally.
-6. Name the enemy where contextually relevant — never forced.
-7. Mix brand + topic + reach hashtags.
-8. NEVER use generic filler ("In today's fast-paced world..."). Be specific and direct.
-9. Keep paragraphs to 1–2 lines max for social readability.
-10. Respond ONLY with valid JSON matching the required schema.`;
-
-  if (creativeDirection) {
-    prompt += `\n\n## Creative Direction from Founder\n${creativeDirection}`;
-  }
-
-  // Template-driven structure (the core of v3)
-  if (template) {
-    prompt += `\n\n${buildTemplatePromptBlock(template)}`;
-  }
-
-  // Style learning — personalize to user's editing patterns
-  if (styleProfile && styleProfile.edit_count >= 3) {
-    prompt += `\n\n${buildStylePromptBlock(styleProfile)}`;
-  }
-
-  return prompt;
+${creativeDirection ? `Direction: ${creativeDirection}\n` : ''}
+Write engaging social media posts. Generate 3 hook variations. Return valid JSON only.`;
 }
 
 function buildV3UserPrompt(
@@ -283,87 +290,27 @@ function buildV3UserPrompt(
   brandName: string,
   template?: V3Template | null
 ): string {
+  // SPEED OPTIMIZATION: Ultra-minimal prompt
   const contentType = CONTENT_TYPES[post.content_type as ContentTypeId];
-  const objectiveConfig = CAMPAIGN_OBJECTIVES[post.objective as keyof typeof CAMPAIGN_OBJECTIVES];
   const platform = post.platform as SocialChannel;
   const platformConfig = PLATFORM_DEFAULTS[platform];
-  const format = post.format;
 
-  let prompt = `Generate a ${contentType.name} post for ${platformConfig?.label || platform}.
-${template ? `\nIMPORTANT: Follow the "${template.name}" template structure provided in the system prompt. Personalize it with the brand context — do NOT change the structure.\n` : ''}
-## Content Type: ${contentType.name} (Type ${contentType.id})
-${contentType.description}
-Primary outcome: ${contentType.primaryOutcome}
+  return `Create ${contentType.name} for ${platformConfig?.label || platform} (${post.format} format).
 
-## Campaign Objective: ${objectiveConfig?.name || post.objective}
-${objectiveConfig?.description || ''}
-
-## Format: ${format}
-Platform: ${platformConfig?.label || platform}
-Caption limit: ${platformConfig?.charLimits?.caption || 2200} characters
-`;
-
-  // Format-specific instructions
-  if (format === 'carousel') {
-    prompt += `\n## Carousel Requirements
-- Slide 1: The hook — treated as a headline. Must stop the scroll.
-- Slides 2–8: One key point per slide, minimal text per slide.
-- Final slide: CTA — tell them what to do next.
-- Populate slide_content with per-slide text.
-`;
-  } else if (format === 'reel' || format === 'video') {
-    prompt += `\n## Video/Reel Requirements
-- Hook (0–3 sec): Pattern interrupt. No intros, no logos, no "hey guys".
-- Body (3–60 sec): One idea per video. Keep it moving.
-- CTA (last 5–10 sec): Tell them what to do.
-- Populate shot_suggestions and on_screen_text.
-`;
-  } else if (format === 'long_video') {
-    prompt += `\n## Long Video Requirements
-- Hook (0–15 sec): Why they should keep watching.
-- Intro (15–30 sec): What they'll learn.
-- Body: Structured sections with clear transitions.
-- CTA: What to do next.
-- Include chapter markers in on_screen_text.
-`;
-  } else if (format === 'static') {
-    prompt += `\n## Static Image Requirements
-- Populate visual_brief with: text/data for the graphic, layout suggestion, brand colour usage.
-`;
-  } else if (format === 'thread') {
-    prompt += `\n## Thread Requirements
-- First tweet: The hook — must stop the scroll.
-- Each subsequent tweet: One point, builds on the previous.
-- Final tweet: CTA + value recap.
-`;
-  }
-
-  // Uniqueness
-  if (previouslyGenerated.length > 0) {
-    prompt += `\n## Already Generated (DO NOT repeat similar topics/hooks):\n`;
-    for (const prev of previouslyGenerated.slice(-10)) {
-      prompt += `- Topic: "${prev.topic}" | Hook: "${prev.hook}"\n`;
-    }
-  }
-
-  // Response schema
-  prompt += `
-## Response Schema (JSON)
+JSON schema:
 {
-  "topic": "one-line topic summary",
-  "hook_variations": ["hook 1", "hook 2", "hook 3"],
-  "body": "main body copy or script",
-  "cta": "call to action text",
-  "caption": "social media caption (may differ from body for video)",
-  "hashtags": ["hashtag1", "hashtag2", "..."],
-  "visual_brief": "image concept for designer (null for video-only)",
-  "shot_suggestions": "filming directions (null for non-video)",
-  "slide_content": [{"slide": 1, "headline": "", "body": ""}] or null,
-  "on_screen_text": [{"timestamp": "0:03", "text": ""}] or null,
+  "topic": "string",
+  "hook_variations": ["hook1", "hook2", "hook3"],
+  "body": "main content",
+  "cta": "call to action",
+  "caption": "caption text",
+  "hashtags": ["tag1", "tag2"],
+  "visual_brief": ${post.format === 'static' ? '"description"' : 'null'},
+  "shot_suggestions": ${['reel', 'video', 'long_video'].includes(post.format) ? '"directions"' : 'null'},
+  "slide_content": ${post.format === 'carousel' ? '[{"slide": 1, "headline": "", "body": ""}]' : 'null'},
+  "on_screen_text": ${['reel', 'video', 'long_video'].includes(post.format) ? '[{"timestamp": "0:03", "text": ""}]' : 'null'},
   "brand_voice_score": 85
 }`;
-
-  return prompt;
 }
 
 // ---- Response parsing ----

@@ -36,7 +36,7 @@ export async function POST(
   try {
     const { id: campaignId } = await params;
     const body = await request.json();
-    const { channel, aggressiveness } = body;
+    const { channel, aggressiveness, postsPerWeek } = body;
 
     if (!channel) return NextResponse.json({ error: 'channel required' }, { status: 400 });
 
@@ -47,7 +47,7 @@ export async function POST(
     // Load campaign for objective + dates
     const { data: campaign } = await supabase
       .from('campaigns')
-      .select('objective, organization_id, start_date, end_date')
+      .select('objective, organization_id, workspace_id, start_date, end_date')
       .eq('id', campaignId)
       .single();
 
@@ -63,19 +63,24 @@ export async function POST(
     const end = campaign.end_date ? new Date(campaign.end_date) : new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000);
     const weeks = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000)));
 
+    // Use manual override if provided, otherwise use aggressiveness tier default
+    const finalPostsPerWeek = postsPerWeek || aggConfig.postsPerWeek;
+
     const { data: adset, error } = await supabase
       .from('campaign_adsets')
       .insert({
         campaign_id: campaignId,
         organization_id: campaign.organization_id,
+        workspace_id: campaign.workspace_id,
         channel: ch,
         aggressiveness: agg,
-        posts_per_week: aggConfig.postsPerWeek,
-        total_posts: weeks * aggConfig.postsPerWeek,
+        posts_per_week: finalPostsPerWeek,
+        total_posts: weeks * finalPostsPerWeek,
         content_type_ratio: (objectiveConfig?.defaultRatio || {}) as unknown as Json,
         content_type_counts: {} as Json,
         format_ratio: platformConfig.formatRatio as unknown as Json,
         posting_schedule: platformConfig.defaultSchedule as unknown as Json,
+        status: 'active',
       })
       .select()
       .single();

@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { InformationCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import {
   CAMPAIGN_OBJECTIVES,
   OBJECTIVE_CATEGORIES,
@@ -34,6 +35,7 @@ interface ChannelConfig {
   channel: SocialChannel;
   aggressiveness: Aggressiveness;
   enabled: boolean;
+  postsPerWeek?: number; // Manual override
 }
 
 export function CampaignWizard({
@@ -59,6 +61,7 @@ export function CampaignWizard({
   );
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ObjectiveCategory | null>(null);
+  const [showContentTypeInfo, setShowContentTypeInfo] = useState(false);
 
   const objectiveConfig = objective ? CAMPAIGN_OBJECTIVES[objective] : null;
   const enabledChannels = channels.filter(c => c.enabled);
@@ -68,7 +71,8 @@ export function CampaignWizard({
     (new Date(endDate).getTime() - new Date(startDate).getTime()) / (7 * 24 * 60 * 60 * 1000)
   ));
   const totalPosts = enabledChannels.reduce((sum, ch) => {
-    return sum + weeks * AGGRESSIVENESS_TIERS[ch.aggressiveness].postsPerWeek;
+    const postsPerWeek = ch.postsPerWeek ?? AGGRESSIVENESS_TIERS[ch.aggressiveness].postsPerWeek;
+    return sum + weeks * postsPerWeek;
   }, 0);
 
   async function handleCreate() {
@@ -88,6 +92,7 @@ export function CampaignWizard({
           channels: enabledChannels.map(c => ({
             channel: c.channel,
             aggressiveness: c.aggressiveness,
+            postsPerWeek: c.postsPerWeek,
           })),
         }),
       });
@@ -114,7 +119,15 @@ export function CampaignWizard({
   function setChannelAggressiveness(channel: SocialChannel, agg: Aggressiveness) {
     setChannels(prev =>
       prev.map(c =>
-        c.channel === channel ? { ...c, aggressiveness: agg } : c
+        c.channel === channel ? { ...c, aggressiveness: agg, postsPerWeek: undefined } : c
+      )
+    );
+  }
+
+  function setChannelPostsPerWeek(channel: SocialChannel, postsPerWeek: number) {
+    setChannels(prev =>
+      prev.map(c =>
+        c.channel === channel ? { ...c, postsPerWeek } : c
       )
     );
   }
@@ -303,29 +316,56 @@ export function CampaignWizard({
                       </div>
                       {config.enabled && (
                         <span className="text-xs text-stone">
-                          {AGGRESSIVENESS_TIERS[config.aggressiveness].postsPerWeek * weeks} posts
+                          {(config.postsPerWeek ?? AGGRESSIVENESS_TIERS[config.aggressiveness].postsPerWeek) * weeks} posts
                         </span>
                       )}
                     </div>
 
                     {config.enabled && (
-                      <div className="flex gap-2 ml-8">
-                        {(Object.entries(AGGRESSIVENESS_TIERS) as [Aggressiveness, { label: string; postsPerWeek: number; description: string }][]).map(
-                          ([key, tier]) => (
-                            <button
-                              key={key}
-                              onClick={() => setChannelAggressiveness(ch, key)}
-                              className={`flex-1 px-3 py-2 rounded-lg text-xs text-center transition-colors ${
-                                config.aggressiveness === key
-                                  ? 'bg-teal text-cream'
-                                  : 'bg-stone/5 text-stone hover:bg-stone/10'
-                              }`}
-                            >
-                              <div className="font-medium">{tier.label}</div>
-                              <div className="mt-0.5 opacity-75">{tier.postsPerWeek}/wk</div>
-                            </button>
-                          )
-                        )}
+                      <div className="ml-8 space-y-3">
+                        {/* Aggressiveness presets */}
+                        <div className="flex gap-2">
+                          {(Object.entries(AGGRESSIVENESS_TIERS) as [Aggressiveness, { label: string; postsPerWeek: number; description: string }][]).map(
+                            ([key, tier]) => (
+                              <button
+                                key={key}
+                                onClick={() => setChannelAggressiveness(ch, key)}
+                                className={`flex-1 px-3 py-2 rounded-lg text-xs text-center transition-colors ${
+                                  config.aggressiveness === key && !config.postsPerWeek
+                                    ? 'bg-teal text-cream'
+                                    : 'bg-stone/5 text-stone hover:bg-stone/10'
+                                }`}
+                              >
+                                <div className="font-medium">{tier.label}</div>
+                                <div className="mt-0.5 opacity-75">{tier.postsPerWeek}/wk</div>
+                              </button>
+                            )
+                          )}
+                        </div>
+
+                        {/* Manual override */}
+                        <div className="flex items-center gap-3">
+                          <label className="text-xs text-stone whitespace-nowrap">
+                            Or set custom:
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="14"
+                            value={config.postsPerWeek ?? ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value);
+                              if (val >= 1 && val <= 14) {
+                                setChannelPostsPerWeek(ch, val);
+                              } else if (e.target.value === '') {
+                                setChannelAggressiveness(ch, config.aggressiveness);
+                              }
+                            }}
+                            placeholder={String(AGGRESSIVENESS_TIERS[config.aggressiveness].postsPerWeek)}
+                            className="w-20 px-3 py-1.5 text-sm border border-stone/10 rounded-lg bg-white text-charcoal focus:border-teal focus:outline-none"
+                          />
+                          <span className="text-xs text-stone">posts/week</span>
+                        </div>
                       </div>
                     )}
                   </CardContent>
@@ -405,8 +445,16 @@ export function CampaignWizard({
 
               {/* Content type preview */}
               <div className="border-t border-stone/10 pt-4">
-                <span className="text-sm text-stone">AI content mix (default ratios)</span>
-                <div className="mt-2 flex gap-1 h-6 rounded overflow-hidden">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm text-stone">AI content mix (default ratios)</span>
+                  <button
+                    onClick={() => setShowContentTypeInfo(true)}
+                    className="text-stone/60 hover:text-teal transition-colors"
+                  >
+                    <InformationCircleIcon className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex gap-1 h-6 rounded overflow-hidden">
                   {([1, 2, 3, 4, 5, 6, 7] as ContentTypeId[]).map(t => {
                     const key = `type_${t}` as keyof typeof objectiveConfig.defaultRatio;
                     const pct = objectiveConfig.defaultRatio[key];
@@ -451,6 +499,64 @@ export function CampaignWizard({
             <Button onClick={handleCreate} isLoading={loading}>
               Create Campaign & Generate Content
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Content Type Info Modal */}
+      {showContentTypeInfo && (
+        <div className="fixed inset-0 bg-dark/80 flex items-center justify-center z-50 p-4" onClick={() => setShowContentTypeInfo(false)}>
+          <div className="bg-cream-warm rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-stone/10">
+              <h2 className="text-heading-md text-charcoal">Content Type Guide</h2>
+              <button
+                onClick={() => setShowContentTypeInfo(false)}
+                className="text-stone hover:text-charcoal transition-colors"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-stone">
+                The AI generates content across 7 different types, each serving a specific purpose in your marketing strategy:
+              </p>
+
+              {([1, 2, 3, 4, 5, 6, 7] as ContentTypeId[]).map(typeId => {
+                const type = CONTENT_TYPES[typeId];
+                const colors = [
+                  '', 'bg-red-400', 'bg-orange-400', 'bg-amber-400',
+                  'bg-yellow-400', 'bg-green-400', 'bg-teal', 'bg-blue-400'
+                ];
+                return (
+                  <div key={typeId} className="flex gap-3 p-3 bg-white rounded-lg border border-stone/10">
+                    <div className={`w-8 h-8 rounded-lg ${colors[typeId]} flex items-center justify-center text-white font-bold text-sm shrink-0`}>
+                      T{typeId}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold text-charcoal mb-1">{type.name}</h3>
+                      <p className="text-xs text-stone">{type.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div className="bg-teal/5 border border-teal/20 rounded-lg p-4 mt-4">
+                <h4 className="text-sm font-semibold text-charcoal mb-2">About the Ratios</h4>
+                <p className="text-xs text-stone">
+                  The default content mix is optimized for your selected objective ({objectiveConfig?.name}).
+                  The AI automatically distributes your posts across these types to create a balanced,
+                  engaging feed that achieves your goals. You can customize these ratios later if needed.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-stone/10">
+              <Button onClick={() => setShowContentTypeInfo(false)}>Got it</Button>
+            </div>
           </div>
         </div>
       )}

@@ -766,7 +766,99 @@ export const features: FeaturePageData[] = [
     },
   },
 
-  // 18. Authority Engine
+  // 18. Presence Engine
+  {
+    slug: 'presence-engine',
+    title: 'Presence Engine — Multi-Platform Visibility | SkaleFlow',
+    metaDescription: 'Build consistent brand presence across all channels. Manage social profiles, local listings, and online presence from one unified dashboard.',
+    heroLabel: 'Presence Engine',
+    heroTitle: 'Invisible Brands Don\'t Get Chosen',
+    heroSubtitle: 'You have a great product, but when prospects search for you, what do they find? Outdated profiles. Inconsistent info. Nothing at all. That\'s not a brand — that\'s a missed opportunity.',
+    emotionSection: {
+      painHeadline: 'Your brand exists, but nobody can find it. That has to change.',
+      painPoints: [
+        { icon: 'magnifying-glass', text: 'Prospects search for your business and find outdated info, broken links, or nothing at all' },
+        { icon: 'puzzle', text: 'Your brand looks different on every platform — different logos, bios, and messaging' },
+        { icon: 'map', text: 'Your Google Business Profile hasn\'t been updated in a year and reviews go unanswered' },
+        { icon: 'users', text: 'Potential customers can\'t figure out how to contact you because your info is scattered' },
+      ],
+      empathyParagraph: 'Building brand presence isn\'t about vanity. It\'s about being findable, credible, and consistent when someone is deciding whether to trust you. If your presence is fractured across platforms, you\'re losing deals before the conversation even starts.',
+    },
+    solutionIntro: 'What if you could manage your entire brand presence — social profiles, local listings, contact info, and online reputation — from one central dashboard?',
+    logicHeadline: 'One dashboard. Every platform. Total consistency.',
+    logicSection: [
+      { icon: 'globe', title: 'Unified Profile Management', description: 'Update your business name, bio, contact info, and branding across all platforms from one place.' },
+      { icon: 'squares', title: 'Multi-Platform Sync', description: 'Keep Facebook, Instagram, LinkedIn, Twitter, Google Business, and directory listings consistent.' },
+      { icon: 'map-pin', title: 'Local SEO Optimization', description: 'Optimize your Google Business Profile, manage reviews, and ensure your NAP (Name, Address, Phone) is consistent everywhere.' },
+      { icon: 'shield', title: 'Reputation Monitoring', description: 'Track reviews, mentions, and customer feedback across platforms. Respond quickly to protect your reputation.' },
+      { icon: 'eye', title: 'Presence Health Score', description: 'Get a visibility score that shows where your presence is strong and where you\'re invisible.' },
+      { icon: 'bell', title: 'Update Notifications', description: 'Get alerted when profiles need updating, reviews need responses, or listings show inconsistencies.' },
+    ],
+    benefitsHeadline: 'Be everywhere your customers are looking. Consistently.',
+    benefitsSection: [
+      { icon: 'trending', title: 'Increased Discoverability', description: 'When your presence is optimized, you show up in more searches and look credible when prospects find you.' },
+      { icon: 'shield', title: 'Brand Consistency', description: 'Every platform shows the same brand — same logo, same message, same contact details. No confusion.' },
+      { icon: 'clock', title: 'Save Hours Every Week', description: 'Stop logging into 10 different platforms to update your info. Do it once, update everywhere.' },
+    ],
+    proofSection: {
+      stat: 'Multi-platform',
+      statLabel: 'presence management — social profiles, local listings, and reputation tracking in one place',
+      quote: 'We fixed our inconsistent Google listings and saw a 40% increase in phone inquiries within 30 days.',
+      quoteAuthor: 'Founder, Local Services',
+    },
+    ctaSection: {
+      headline: 'Ready to Build a Presence That Drives Business?',
+      subtitle: 'Apply now and take control of how your brand appears online — everywhere.',
+    },
+  },
+
+  // 19. Ads Engine
+  {
+    slug: 'ads-engine',
+    title: 'Ads Engine — Paid Media Management | SkaleFlow',
+    metaDescription: 'Launch, manage, and optimize paid advertising campaigns across Google, Facebook, Instagram, and LinkedIn. AI-powered ad creation with built-in brand alignment.',
+    heroLabel: 'Ads Engine',
+    heroTitle: 'Running Ads Without a System Is Just Expensive Guessing',
+    heroSubtitle: 'You\'ve tried Facebook ads. Maybe Google. You spent money, got some clicks, maybe a lead or two. But you couldn\'t tell what worked, so you stopped. That\'s not a failure — that\'s a missing system.',
+    emotionSection: {
+      painHeadline: 'You\'ve burned money on ads. Let\'s make sure it never happens again.',
+      painPoints: [
+        { icon: 'currency', text: 'You\'ve spent thousands on ads with no clear ROI — just likes and clicks that didn\'t convert' },
+        { icon: 'chart-down', text: 'You launched a campaign, it didn\'t work immediately, so you killed it before learning anything' },
+        { icon: 'puzzle', text: 'Your ads don\'t match your brand voice and look like they were made by someone who doesn\'t know your business' },
+        { icon: 'eye-slash', text: 'You have no idea which ad drove which lead because tracking was set up wrong (or not at all)' },
+      ],
+      empathyParagraph: 'Paid ads aren\'t the problem. Running ads without a brand foundation, a testing framework, and proper tracking is the problem. The agencies that succeed with ads? They have systems. Now you do too.',
+    },
+    solutionIntro: 'What if you could launch brand-aligned ad campaigns, track every conversion, and optimize based on real data — all from the same platform that knows your brand strategy?',
+    logicHeadline: 'Ads that sound like you. Data that tells the truth.',
+    logicSection: [
+      { icon: 'sparkles', title: 'AI-Powered Ad Creation', description: 'Generate ad copy and creative concepts using your brand strategy, voice, and messaging. Every ad sounds like you.' },
+      { icon: 'squares', title: 'Multi-Platform Campaigns', description: 'Create campaigns for Google Ads, Facebook, Instagram, and LinkedIn from one dashboard.' },
+      { icon: 'target', title: 'Audience Targeting', description: 'Build and save audience segments based on demographics, interests, behaviors, and lookalike profiles.' },
+      { icon: 'chart-bar', title: 'Real-Time Performance Tracking', description: 'See impressions, clicks, conversions, and cost-per-acquisition in real-time. Know what\'s working immediately.' },
+      { icon: 'refresh', title: 'A/B Testing Framework', description: 'Test headlines, images, and copy variations systematically. Let the data decide what wins.' },
+      { icon: 'funnel', title: 'Conversion Tracking', description: 'Track leads from ad click to closed deal. Connect ad spend directly to revenue.' },
+    ],
+    benefitsHeadline: 'Spend smarter. Scale faster. Waste nothing.',
+    benefitsSection: [
+      { icon: 'currency', title: 'Better ROI', description: 'When ads are brand-aligned and properly tracked, cost-per-lead drops and conversion rates climb.' },
+      { icon: 'brain', title: 'Learn From Every Campaign', description: 'Built-in analytics show what messaging, creative, and targeting actually drives results. Scale the winners.' },
+      { icon: 'bolt', title: 'Launch Faster', description: 'AI-powered ad creation means you go from idea to live campaign in minutes, not days of back-and-forth with agencies.' },
+    ],
+    proofSection: {
+      stat: 'Cross-platform',
+      statLabel: 'ad management with brand-aligned AI generation and full conversion tracking',
+      quote: 'We finally cracked Facebook ads. The AI wrote better copy than our agency ever did — and it actually sounded like us.',
+      quoteAuthor: 'Founder, E-commerce Brand',
+    },
+    ctaSection: {
+      headline: 'Ready to Run Ads That Actually Work?',
+      subtitle: 'Apply now and get an ads engine that turns spend into revenue, not vanity metrics.',
+    },
+  },
+
+  // 20. Authority Engine
   {
     slug: 'authority-engine',
     title: 'Authority Engine — PR & Media Pipeline | SkaleFlow',

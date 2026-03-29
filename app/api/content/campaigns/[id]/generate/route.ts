@@ -64,6 +64,7 @@ export async function POST(
       id: a.id,
       channel: a.channel as SocialChannel,
       aggressiveness: a.aggressiveness as Aggressiveness,
+      postsPerWeek: a.posts_per_week, // Use actual posts_per_week from database (includes manual override)
       contentTypeRatio: a.content_type_ratio as Record<string, number> | undefined,
       formatRatio: a.format_ratio as Record<string, number> | undefined,
       postingSchedule: a.posting_schedule as Record<string, string[]> | undefined,
@@ -85,6 +86,7 @@ export async function POST(
       adset_id: slot.adsetId,
       campaign_id: campaignId,
       organization_id: campaign.organization_id,
+      workspace_id: campaign.workspace_id,
       content_type: slot.contentType,
       content_type_name: slot.contentTypeName,
       objective: campaign.objective,
@@ -113,6 +115,7 @@ export async function POST(
       supabase as unknown as import('@supabase/supabase-js').SupabaseClient<Database>,
       {
         organizationId: campaign.organization_id,
+        workspaceId: campaign.workspace_id,
         campaignId,
         adsetId: adsetId || adsets[0].id,
         userId: user.id,

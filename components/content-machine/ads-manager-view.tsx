@@ -4,7 +4,11 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
+import { useConfirmModal } from '@/components/ui';
 import { GenerationBatchTracker } from '@/components/content/generation-batch-tracker';
+import { CreateChannelDialog } from '@/components/content/create-channel-dialog';
+import { CreatePostDialog } from '@/components/content/create-post-dialog';
+import { PostStatusOverview } from '@/components/content';
 import { cn } from '@/lib/utils';
 import {
   PlusIcon,
@@ -25,6 +29,8 @@ import {
   Cog6ToothIcon,
   SparklesIcon,
   CalendarDaysIcon,
+  PhotoIcon,
+  VideoCameraIcon,
 } from '@heroicons/react/24/outline';
 
 // ─── Types ─────────────────────────────────────────────────────────────
@@ -87,6 +93,8 @@ interface Post {
   ai_generated: boolean;
   created_at: string;
   updated_at: string;
+  media_thumbnail?: string | null;
+  media_type?: string | null;
 }
 
 interface AdsManagerViewProps {
@@ -95,6 +103,10 @@ interface AdsManagerViewProps {
   generatingBatchId?: string | null;
   onGenerationComplete?: () => void;
   onGenerationCancel?: () => void;
+  initialTab?: 'campaigns' | 'adsets' | 'posts';
+  initialCampaignFilter?: string | null;
+  initialAdsetFilter?: string | null;
+  onTabChange?: (tab: 'campaigns' | 'adsets' | 'posts') => void;
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────
@@ -159,12 +171,32 @@ const CONTENT_TYPE_COLORS: Record<string, string> = {
 };
 
 // ─── Component ─────────────────────────────────────────────────────────
-export function AdsManagerView({ organizationId, onCreateCampaign, generatingBatchId, onGenerationComplete, onGenerationCancel }: AdsManagerViewProps) {
+export function AdsManagerView({
+  organizationId,
+  onCreateCampaign,
+  generatingBatchId,
+  onGenerationComplete,
+  onGenerationCancel,
+  initialTab,
+  initialCampaignFilter,
+  initialAdsetFilter,
+  onTabChange
+}: AdsManagerViewProps) {
   const router = useRouter();
+  const { confirm, modalState, ConfirmModalComponent } = useConfirmModal();
 
   // Navigation state
-  const [activeTab, setActiveTab] = useState<TabLevel>('campaigns');
-  const [drillContext, setDrillContext] = useState<DrillContext>({});
+  const [activeTab, setActiveTabInternal] = useState<TabLevel>(initialTab || 'campaigns');
+  const [drillContext, setDrillContext] = useState<DrillContext>({
+    campaignId: initialCampaignFilter || undefined,
+    adsetId: initialAdsetFilter || undefined,
+  });
+
+  // Wrapper to also call onTabChange
+  const setActiveTab = (tab: TabLevel) => {
+    setActiveTabInternal(tab);
+    if (onTabChange) onTabChange(tab);
+  };
 
   // Data
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -185,6 +217,11 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
   const [dateTo, setDateTo] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
+
+  // Create dialogs
+  const [showCreateChannel, setShowCreateChannel] = useState(false);
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [selectedCampaignForChannel, setSelectedCampaignForChannel] = useState<string | null>(null);
 
   // Close date picker on outside click
   useEffect(() => {
@@ -234,7 +271,12 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
   }
 
   function switchTab(tab: TabLevel) {
-    setDrillContext({});
+    // Meta Ads Manager behavior: preserve drill context when switching tabs
+    // Only clear context if going back to campaigns
+    if (tab === 'campaigns') {
+      setDrillContext({});
+    }
+    // Otherwise keep the campaign/adset filter active
     setActiveTab(tab);
     resetTableControls();
   }
@@ -314,7 +356,34 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
         .order('created_at', { ascending: false })
         .limit(500);
 
-      if (postData) setPosts(postData);
+      if (postData) {
+        // Fetch first media thumbnail for each post
+        const postsWithMedia = await Promise.all(
+          postData.map(async (post) => {
+            const { data: mediaData } = await supabase
+              .from('post_media')
+              .select('file_path, media_type')
+              .eq('post_id', post.id)
+              .order('carousel_order', { ascending: true })
+              .limit(1)
+              .maybeSingle();
+
+            if (mediaData) {
+              const { data: urlData } = supabase.storage
+                .from('content-media')
+                .getPublicUrl(mediaData.file_path);
+
+              return {
+                ...post,
+                media_thumbnail: urlData.publicUrl,
+                media_type: mediaData.media_type,
+              };
+            }
+            return post;
+          })
+        );
+        setPosts(postsWithMedia);
+      }
       setLastUpdated(new Date());
     } catch (err) {
       console.error('Failed to fetch data:', err);
@@ -404,6 +473,21 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
     return posts;
   }, [activeTab, campaigns, adSets, posts, drillContext]);
 
+  // Calculate post status counts for overview
+  const postStatusCounts = useMemo(() => {
+    if (activeTab !== 'posts') return { idea: 0, scripted: 0, pending_review: 0, approved: 0, scheduled: 0, published: 0 };
+
+    const relevantPosts = currentDataForCounts as Post[];
+    return {
+      idea: relevantPosts.filter(p => p.status === 'idea').length,
+      scripted: relevantPosts.filter(p => p.status === 'scripted').length,
+      pending_review: relevantPosts.filter(p => p.status === 'pending_review').length,
+      approved: relevantPosts.filter(p => p.status === 'approved').length,
+      scheduled: relevantPosts.filter(p => p.status === 'scheduled').length,
+      published: relevantPosts.filter(p => p.status === 'published').length,
+    };
+  }, [activeTab, currentDataForCounts]);
+
   // ─── Actions ─────────────────────────────────────────────────────────
   async function handleToggleCampaignStatus(id: string, currentStatus: string) {
     const newStatus = currentStatus === 'active' ? 'paused' : 'active';
@@ -423,7 +507,14 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
     const label = activeTab === 'campaigns' ? 'campaign' : activeTab === 'adsets' ? 'channel' : 'post';
-    if (!confirm(`Delete ${ids.length} ${label}${ids.length > 1 ? 's' : ''}? This cannot be undone.`)) return;
+
+    const confirmed = await confirm(
+      `Delete ${ids.length} ${label}${ids.length > 1 ? 's' : ''}?`,
+      'This action cannot be undone. All associated data will be permanently deleted.',
+      'danger'
+    );
+
+    if (!confirmed) return;
 
     const supabase = createClient();
 
@@ -514,6 +605,23 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
           )}
         </div>
         <div className="flex items-center gap-3">
+          {/* Calendar view button */}
+          <button
+            onClick={() => {
+              const params = new URLSearchParams();
+              params.set('source', 'content-engine');
+              if (drillContext.campaignId) params.set('campaignId', drillContext.campaignId);
+              if (drillContext.adsetId) params.set('adsetId', drillContext.adsetId);
+              if (dateFrom) params.set('dateFrom', dateFrom);
+              if (dateTo) params.set('dateTo', dateTo);
+              router.push(`/calendar?${params.toString()}`);
+            }}
+            className="flex items-center justify-center w-8 h-8 rounded-lg border border-stone/10 text-stone hover:border-teal/30 hover:text-teal hover:bg-teal/5 transition-colors"
+            title="Open calendar view"
+          >
+            <CalendarDaysIcon className="w-4 h-4" />
+          </button>
+
           {/* Date range picker */}
           <div className="relative" ref={datePickerRef}>
             <button
@@ -655,13 +763,21 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
                 adsets: drillContext.campaignId ? adSets.filter(a => a.campaign_id === drillContext.campaignId).length : adSets.length,
                 posts: drillContext.adsetId ? posts.filter(p => p.adset_id === drillContext.adsetId).length : drillContext.campaignId ? posts.filter(p => p.campaign_id === drillContext.campaignId).length : posts.length,
               };
+
+              // Show filter indicator when viewing filtered data
+              const isFiltered = tab === 'adsets' && drillContext.campaignId ||
+                                tab === 'posts' && (drillContext.campaignId || drillContext.adsetId);
+
               return (
                 <button key={tab} onClick={() => switchTab(tab)} className={cn(
-                  'px-4 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors border-r last:border-r-0 border-stone/10',
+                  'px-4 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors border-r last:border-r-0 border-stone/10 relative',
                   activeTab === tab ? 'bg-teal/10 text-teal' : 'text-stone hover:bg-teal/5'
                 )}>
                   {labels[tab]}
                   <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center', activeTab === tab ? 'bg-teal/15' : 'bg-stone/10')}>{counts[tab]}</span>
+                  {isFiltered && activeTab !== tab && (
+                    <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-teal rounded-full" title="Filtered view" />
+                  )}
                 </button>
               );
             })}
@@ -711,13 +827,37 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
         })}
       </div>
 
+      {/* Post Status Overview - Only show on Posts tab */}
+      {activeTab === 'posts' && (
+        <div className="px-3 sm:px-6 py-3 sm:py-4">
+          <PostStatusOverview
+            statuses={postStatusCounts}
+            onStatusClick={(status) => setStatusFilter(status)}
+          />
+        </div>
+      )}
+
       {/* Search + Action toolbar */}
       <div className="border-b border-stone/10 px-6 py-2 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Button size="sm" onClick={onCreateCampaign} className="gap-1.5 text-xs">
-            <PlusIcon className="w-3.5 h-3.5" />
-            Create
-          </Button>
+          {activeTab === 'campaigns' && (
+            <Button size="sm" onClick={onCreateCampaign} className="gap-1.5 text-xs">
+              <PlusIcon className="w-3.5 h-3.5" />
+              New Campaign
+            </Button>
+          )}
+          {activeTab === 'adsets' && (
+            <Button size="sm" onClick={() => setShowCreateChannel(true)} className="gap-1.5 text-xs">
+              <PlusIcon className="w-3.5 h-3.5" />
+              Add Channel
+            </Button>
+          )}
+          {activeTab === 'posts' && (
+            <Button size="sm" onClick={() => setShowCreatePost(true)} className="gap-1.5 text-xs">
+              <PlusIcon className="w-3.5 h-3.5" />
+              New Post
+            </Button>
+          )}
           {selectedIds.size > 0 && (
             <>
               <div className="w-px h-5 bg-stone/10" />
@@ -796,6 +936,44 @@ export function AdsManagerView({ organizationId, onCreateCampaign, generatingBat
             : `Results from ${campaigns.length} campaign${campaigns.length !== 1 ? 's' : ''}`}
         </span>
       </div>
+
+      {/* Create Channel Dialog */}
+      {showCreateChannel && (
+        <CreateChannelDialog
+          campaignId={selectedCampaignForChannel || campaigns[0]?.id || ''}
+          campaignStartDate={campaigns.find(c => c.id === selectedCampaignForChannel)?.start_date || campaigns[0]?.start_date || new Date().toISOString()}
+          campaignEndDate={campaigns.find(c => c.id === selectedCampaignForChannel)?.end_date || campaigns[0]?.end_date || null}
+          campaigns={campaigns}
+          selectedCampaignId={selectedCampaignForChannel}
+          onCampaignChange={setSelectedCampaignForChannel}
+          onClose={() => {
+            setShowCreateChannel(false);
+            setSelectedCampaignForChannel(null);
+          }}
+          onSuccess={() => {
+            setShowCreateChannel(false);
+            setSelectedCampaignForChannel(null);
+            fetchData();
+          }}
+        />
+      )}
+
+      {/* Create Post Dialog */}
+      {showCreatePost && (
+        <CreatePostDialog
+          campaignId={campaigns[0]?.id || ''}
+          campaigns={campaigns}
+          adsets={adSets}
+          onClose={() => setShowCreatePost(false)}
+          onSuccess={() => {
+            setShowCreatePost(false);
+            fetchData();
+          }}
+        />
+      )}
+
+      {/* Confirm Modal */}
+      <ConfirmModalComponent />
     </div>
   );
 }
@@ -1055,8 +1233,28 @@ function PostsTable({
               <input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => onToggleSelect(p.id)} className="rounded border-stone/20 text-teal focus:ring-teal/20" />
             </td>
             <td className="px-3 py-2.5 max-w-[280px]">
-              <div className="truncate font-medium text-teal group-hover:text-gold transition-colors">
-                {p.topic || p.hook || p.caption?.slice(0, 60) || 'Untitled post'}
+              <div className="flex items-center gap-2">
+                {/* Media thumbnail */}
+                {p.media_thumbnail ? (
+                  <div className="w-10 h-10 rounded overflow-hidden bg-stone/5 shrink-0">
+                    {p.media_type === 'video' ? (
+                      <video src={p.media_thumbnail} className="w-full h-full object-cover" />
+                    ) : (
+                      <img src={p.media_thumbnail} alt="" className="w-full h-full object-cover" />
+                    )}
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded bg-stone/5 shrink-0 flex items-center justify-center">
+                    {['reel', 'video', 'long_video'].includes(p.format) ? (
+                      <VideoCameraIcon className="w-4 h-4 text-stone/30" />
+                    ) : (
+                      <PhotoIcon className="w-4 h-4 text-stone/30" />
+                    )}
+                  </div>
+                )}
+                <div className="truncate font-medium text-teal group-hover:text-gold transition-colors">
+                  {p.topic || p.hook || p.caption?.slice(0, 60) || 'Untitled post'}
+                </div>
               </div>
             </td>
             <td className="px-3 py-2.5">

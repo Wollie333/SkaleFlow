@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { BellIcon, CheckIcon, InboxIcon, BoltIcon, Bars3Icon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
+import { BellIcon, CheckIcon, InboxIcon, BoltIcon, Bars3Icon, SunIcon, MoonIcon, ChevronUpDownIcon } from '@heroicons/react/24/outline';
 import { useTheme } from '@/components/theme-provider';
 import {
   DocumentTextIcon,
@@ -19,6 +19,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { useCreditBalance } from '@/hooks/useCreditBalance';
 import { UserAvatar } from '@/components/ui';
+import { useModel } from '@/contexts/model-context';
 import type { NotificationType } from '@/types/database';
 
 function formatTimeAgo(dateStr: string): string {
@@ -106,6 +107,9 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { balance: creditBalance } = useCreditBalance(organizationId || null);
+  const { selectedModel, setSelectedModel, availableModels, isLoading: modelsLoading } = useModel();
+  const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
+  const modelDropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -132,12 +136,15 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
+      if (modelDropdownRef.current && !modelDropdownRef.current.contains(event.target as Node)) {
+        setModelDropdownOpen(false);
+      }
     }
-    if (isOpen) {
+    if (isOpen || modelDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [isOpen]);
+  }, [isOpen, modelDropdownOpen]);
 
   const handleNotificationClick = async (notification: Notification) => {
     if (!notification.is_read) {
@@ -220,6 +227,64 @@ export function Header({ user, initialUnreadCount = 0, organizationId, draftCoun
               </span>
               <span className="sm:hidden">{creditBalance.totalRemaining.toLocaleString()} avail</span>
             </Link>
+          )}
+
+          {/* Model Selector */}
+          {availableModels.length > 0 && (
+            <div ref={modelDropdownRef} className="relative">
+              <button
+                onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal/10 text-teal hover:bg-teal/20 transition-colors"
+                disabled={modelsLoading}
+              >
+                <SparklesIcon className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">
+                  {availableModels.find(m => m.id === selectedModel)?.name || 'Select Model'}
+                </span>
+                <span className="sm:hidden">AI</span>
+                <ChevronUpDownIcon className="w-3.5 h-3.5" />
+              </button>
+
+              {modelDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-cream-warm border border-stone/10 rounded-xl shadow-2xl overflow-hidden z-[60]">
+                  <div className="px-4 py-3 border-b border-stone/10">
+                    <h3 className="text-sm font-semibold text-charcoal">AI Model</h3>
+                    <p className="text-xs text-stone mt-0.5">Select default model for generations</p>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {availableModels.map((model) => (
+                      <button
+                        key={model.id}
+                        onClick={() => {
+                          setSelectedModel(model.id);
+                          setModelDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 hover:bg-cream/50 transition-colors flex items-center justify-between ${
+                          selectedModel === model.id ? 'bg-teal/[0.05]' : ''
+                        }`}
+                      >
+                        <div className="flex-1">
+                          <p className={`text-sm ${selectedModel === model.id ? 'font-semibold text-charcoal' : 'text-charcoal/80'}`}>
+                            {model.name}
+                          </p>
+                          <p className="text-xs text-stone capitalize">{model.provider}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {model.isFree && (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+                              Free
+                            </span>
+                          )}
+                          {selectedModel === model.id && (
+                            <div className="w-2 h-2 rounded-full bg-teal" />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Theme Toggle */}

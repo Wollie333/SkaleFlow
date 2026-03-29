@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isToday, startOfWeek, endOfWeek, isSameMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, CheckCircleIcon, EyeIcon, PencilIcon, DocumentDuplicateIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PostPreviewSidebar } from './post-preview-sidebar';
 import {
   DndContext,
   DragOverlay,
@@ -96,9 +97,8 @@ function SelectablePost({
           className="rounded border-stone/30 w-3 h-3 shrink-0"
         />
         {isPublished && <CheckCircleIcon className="w-3 h-3 shrink-0 text-emerald-600" />}
-        <span className="font-medium">{item.time_slot}</span>
-        <span className="truncate flex-1">
-          {item.topic || item.format.replace(/_/g, ' ')}
+        <span className="font-medium truncate flex-1">
+          {item.topic || item.hook || item.format.replace(/_/g, ' ')}
         </span>
       </div>
     </button>
@@ -170,17 +170,19 @@ function DraggablePost({
       )}
 
       <div className="p-2 space-y-1.5">
-        {/* Header: Time + Status */}
+        {/* Header: Title + Status */}
         <div className="flex items-center justify-between gap-1">
-          <span className="text-xs font-bold text-teal">{item.time_slot}</span>
-          <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full border', getStatusColor(item.status))}>
+          <span className="text-xs font-bold text-teal truncate flex-1">
+            {item.topic || item.hook || item.format.replace(/_/g, ' ')}
+          </span>
+          <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full border shrink-0', getStatusColor(item.status))}>
             {item.status.replace('_', ' ')}
           </span>
         </div>
 
         {/* Content preview */}
         <p className="text-[11px] text-charcoal line-clamp-2 leading-tight">
-          {item.caption || item.topic || item.format.replace(/_/g, ' ')}
+          {item.caption || item.script_body || item.topic || item.format.replace(/_/g, ' ')}
         </p>
 
         {/* Metadata row */}
@@ -289,16 +291,16 @@ function DroppableDay({
     <div
       ref={selectionMode ? undefined : setNodeRef}
       className={cn(
-        'min-h-[180px] p-2 border-r border-b border-stone/5 relative group',
+        'min-h-[120px] sm:min-h-[180px] p-1 sm:p-2 border-r border-b border-stone/5 relative group',
         !isCurrentMonth && 'bg-stone/5',
         isToday(day) && 'bg-teal/5',
         !selectionMode && isOver && 'bg-teal/10 ring-2 ring-inset ring-teal/30'
       )}
     >
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-1 sm:mb-2">
         <p
           className={cn(
-            'text-sm font-medium',
+            'text-xs sm:text-sm font-medium',
             !isCurrentMonth && 'text-stone/40',
             isToday(day) && 'text-teal font-bold'
           )}
@@ -308,14 +310,14 @@ function DroppableDay({
         {!selectionMode && onAddPost && (
           <button
             onClick={() => onAddPost(day)}
-            className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-teal/10 transition-all"
+            className="opacity-0 group-hover:opacity-100 p-0.5 sm:p-1 rounded hover:bg-teal/10 transition-all"
           >
-            <PlusIcon className="w-4 h-4 text-teal" />
+            <PlusIcon className="w-3 h-3 sm:w-4 sm:h-4 text-teal" />
           </button>
         )}
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1 sm:space-y-2">
         {dayItems.slice(0, 4).map(item => (
           selectionMode && selectedIds && onToggleSelection ? (
             <SelectablePost
@@ -421,38 +423,41 @@ export function CalendarView({ items, onItemClick, onMonthChange, onMovePost, on
     >
       <div className="bg-cream-warm rounded-xl border border-stone/10 overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-stone/10 flex items-center justify-between">
-          <h2 className="text-heading-md text-charcoal">
+        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-stone/10 flex items-center justify-between">
+          <h2 className="text-base sm:text-heading-md text-charcoal">
             {format(currentMonth, 'MMMM yyyy')}
           </h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             {selectionMode && (
               <button
                 onClick={allSelected ? handleDeselectAll : handleSelectAll}
-                className="px-3 py-1 text-sm font-medium text-teal hover:bg-teal/10 rounded-lg transition-colors"
+                className="hidden sm:block px-3 py-1 text-sm font-medium text-teal hover:bg-teal/10 rounded-lg transition-colors"
               >
                 {allSelected ? 'Deselect All' : 'Select All'}
               </button>
             )}
-            <button onClick={handlePreviousMonth} className="p-2 rounded-lg hover:bg-cream transition-colors">
-              <ChevronLeftIcon className="w-5 h-5 text-stone" />
+            <button onClick={handlePreviousMonth} className="p-1.5 sm:p-2 rounded-lg hover:bg-cream transition-colors">
+              <ChevronLeftIcon className="w-4 h-4 sm:w-5 sm:h-5 text-stone" />
             </button>
             <button
               onClick={() => { setCurrentMonth(new Date()); onMonthChange?.(new Date()); }}
-              className="px-3 py-1 text-sm font-medium text-teal hover:bg-teal/10 rounded-lg transition-colors"
+              className="px-2 py-1 sm:px-3 text-xs sm:text-sm font-medium text-teal hover:bg-teal/10 rounded-lg transition-colors"
             >
               Today
             </button>
-            <button onClick={handleNextMonth} className="p-2 rounded-lg hover:bg-cream transition-colors">
-              <ChevronRightIcon className="w-5 h-5 text-stone" />
+            <button onClick={handleNextMonth} className="p-1.5 sm:p-2 rounded-lg hover:bg-cream transition-colors">
+              <ChevronRightIcon className="w-4 h-4 sm:w-5 sm:h-5 text-stone" />
             </button>
           </div>
         </div>
 
         {/* Day headers */}
         <div className="grid grid-cols-7 border-b border-stone/10">
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-            <div key={day} className="py-3 text-center text-sm font-medium text-stone">{day}</div>
+          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => (
+            <div key={day} className="py-2 sm:py-3 text-center text-xs sm:text-sm font-medium text-stone">
+              <span className="hidden sm:inline">{day}</span>
+              <span className="sm:hidden">{day.charAt(0)}</span>
+            </div>
           ))}
         </div>
 
@@ -484,24 +489,24 @@ export function CalendarView({ items, onItemClick, onMonthChange, onMovePost, on
         </div>
 
         {/* Legend */}
-        <div className="px-6 py-3 border-t border-stone/10 flex gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-green-500/10" />
-            <span className="text-xs text-stone">Awareness</span>
+        <div className="px-3 sm:px-6 py-2 sm:py-3 border-t border-stone/10 flex flex-wrap gap-2 sm:gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-green-500/10" />
+            <span className="text-[10px] sm:text-xs text-stone">Awareness</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-blue-500/10" />
-            <span className="text-xs text-stone">Consideration</span>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-blue-500/10" />
+            <span className="text-[10px] sm:text-xs text-stone">Consideration</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-orange-100" />
-            <span className="text-xs text-stone">Conversion</span>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-orange-100" />
+            <span className="text-[10px] sm:text-xs text-stone">Conversion</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-emerald-100 ring-1 ring-emerald-300" />
-            <span className="text-xs text-stone">Published</span>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-emerald-100 ring-1 ring-emerald-300" />
+            <span className="text-[10px] sm:text-xs text-stone">Published</span>
           </div>
-          <div className="ml-auto flex items-center gap-3">
+          <div className="hidden sm:flex ml-auto items-center gap-3">
             {Object.entries(PLATFORM_DOTS).map(([p, color]) => (
               <div key={p} className="flex items-center gap-1">
                 <div className={cn('w-2 h-2 rounded-full', color)} />
@@ -524,67 +529,31 @@ export function CalendarView({ items, onItemClick, onMonthChange, onMovePost, on
         )}
       </DragOverlay>
 
-      {/* Preview modal */}
+      {/* Preview sidebar */}
       {previewItem && (
-        <div className="fixed inset-0 bg-dark/50 flex items-center justify-center z-50" onClick={() => setPreviewItem(null)}>
-          <div
-            className="bg-cream-warm rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal header */}
-            <div className="sticky top-0 bg-cream-warm border-b border-stone/10 px-5 py-4 flex items-center justify-between rounded-t-2xl z-10">
-              <div className="min-w-0">
-                <h3 className="text-heading-md text-charcoal truncate">
-                  {previewItem.topic || previewItem.format.replace(/_/g, ' ')}
-                </h3>
-                <p className="text-xs text-stone mt-0.5">
-                  {format(new Date(previewItem.scheduled_date + 'T00:00:00'), 'EEE, MMM d yyyy')} &middot; {previewItem.time_slot} &middot; {previewItem.funnel_stage}
-                </p>
-              </div>
-              <button
-                onClick={() => setPreviewItem(null)}
-                className="p-1.5 rounded-lg hover:bg-stone/10 transition-colors shrink-0"
-              >
-                <XMarkIcon className="w-5 h-5 text-stone" />
-              </button>
-            </div>
-
-            {/* Preview body */}
-            <div className="p-5">
-              {previewItem.platforms.length > 0 ? (
-                <SocialPreviewTabs
-                  platforms={previewItem.platforms as SocialPlatform[]}
-                  caption={previewItem.caption || ''}
-                  hashtags={previewItem.hashtags || []}
-                  mediaUrls={(previewItem.media_urls as string[]) || []}
-                  targetUrl={previewItem.target_url || undefined}
-                />
-              ) : (
-                <div className="text-center py-10 text-stone">
-                  <EyeIcon className="w-10 h-10 mx-auto mb-3 text-stone/30" />
-                  <p className="text-sm">No platforms selected for this post.</p>
-                  <p className="text-xs mt-1">Add platforms to see a preview.</p>
-                </div>
-              )}
-            </div>
-
-            {/* Modal footer */}
-            <div className="border-t border-stone/10 px-5 py-3 flex justify-end gap-2">
-              <button
-                onClick={() => { setPreviewItem(null); onItemClick(previewItem); }}
-                className="px-4 py-2 text-sm font-medium text-teal hover:bg-teal/10 rounded-lg transition-colors"
-              >
-                Edit Post
-              </button>
-              <button
-                onClick={() => setPreviewItem(null)}
-                className="px-4 py-2 text-sm font-medium text-stone hover:bg-stone/10 rounded-lg transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <PostPreviewSidebar
+          isOpen={!!previewItem}
+          onClose={() => setPreviewItem(null)}
+          post={{
+            id: previewItem.id,
+            topic: previewItem.topic,
+            hook: previewItem.hook,
+            script_body: previewItem.script_body,
+            cta: previewItem.cta,
+            caption: previewItem.caption,
+            hashtags: previewItem.hashtags,
+            platforms: previewItem.platforms,
+            format: previewItem.format,
+            status: previewItem.status,
+            scheduled_date: previewItem.scheduled_date,
+            scheduled_time: previewItem.scheduled_time,
+            media_urls: previewItem.media_urls as string[] | undefined,
+          }}
+          onEdit={(postId) => {
+            setPreviewItem(null);
+            onItemClick(previewItem);
+          }}
+        />
       )}
 
       {/* Delete confirmation modal */}

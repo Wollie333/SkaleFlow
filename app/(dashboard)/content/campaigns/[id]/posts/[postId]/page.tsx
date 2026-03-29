@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CONTENT_TYPES, type ContentTypeId } from '@/config/content-types';
 import { PLATFORM_DEFAULTS, type SocialChannel } from '@/config/platform-defaults';
+import { MediaUploadPanel } from '@/components/content/media-upload-panel';
+import { createClient } from '@/lib/supabase/client';
 import {
   ChevronLeftIcon,
   SparklesIcon,
@@ -17,6 +19,8 @@ import {
   ArrowPathIcon,
   EyeIcon,
   HashtagIcon,
+  PhotoIcon,
+  FilmIcon,
 } from '@heroicons/react/24/outline';
 
 // ---- Types ----
@@ -25,6 +29,7 @@ interface PostData {
   id: string;
   campaign_id: string;
   adset_id: string;
+  organization_id: string;
   content_type: number;
   content_type_name: string;
   objective: string;
@@ -39,6 +44,7 @@ interface PostData {
   hashtags: string[] | null;
   visual_brief: string | null;
   shot_suggestions: string | null;
+  video_script: string | null;
   slide_content: Array<{ slide: number; headline: string; body: string }> | null;
   on_screen_text: Array<{ timestamp: string; text: string }> | null;
   brand_voice_score: number | null;
@@ -46,6 +52,14 @@ interface PostData {
   status: string;
   scheduled_date: string | null;
   scheduled_time: string | null;
+}
+
+interface MediaFile {
+  id: string;
+  media_type: 'image' | 'video' | 'carousel_image';
+  file_path: string;
+  file_name: string;
+  carousel_order?: number;
 }
 
 // ---- Status config ----
@@ -92,25 +106,50 @@ export default function PostEditorPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [activeTab, setActiveTab] = useState<'content' | 'visual' | 'slides' | 'shots'>('content');
+  const [activeTab, setActiveTab] = useState<'content' | 'visual' | 'scripts' | 'media' | 'slides' | 'shots'>('content');
   const [selectedHookIndex, setSelectedHookIndex] = useState(0);
+  const [media, setMedia] = useState<MediaFile[]>([]);
+  const [aiAssisting, setAiAssisting] = useState(false);
+  const supabase = createClient();
 
   const fetchPost = useCallback(async () => {
     try {
+      console.log('[POST-EDITOR] Fetching post:', { campaignId, postId });
       const res = await fetch(`/api/content/campaigns/${campaignId}/posts/${postId}`);
+      console.log('[POST-EDITOR] Response status:', res.status);
+
       if (res.ok) {
         const data = await res.json();
+        console.log('[POST-EDITOR] Post data received:', data);
         setPost(data.post);
         setEdited(data.post);
+      } else {
+        const errorText = await res.text();
+        console.error('[POST-EDITOR] Failed to fetch post:', res.status, errorText);
       }
     } catch (err) {
-      console.error('Failed to fetch post:', err);
+      console.error('[POST-EDITOR] Failed to fetch post:', err);
     } finally {
       setLoading(false);
     }
   }, [campaignId, postId]);
 
+  const fetchMedia = useCallback(async () => {
+    if (!post?.organization_id) return;
+    try {
+      const { data } = await supabase
+        .from('post_media')
+        .select('*')
+        .eq('post_id', postId)
+        .order('carousel_order', { ascending: true });
+      if (data) setMedia(data);
+    } catch (err) {
+      console.error('Failed to fetch media:', err);
+    }
+  }, [postId, post?.organization_id, supabase]);
+
   useEffect(() => { fetchPost(); }, [fetchPost]);
+  useEffect(() => { fetchMedia(); }, [fetchMedia]);
 
   function updateField(field: keyof PostData, value: unknown) {
     if (!edited) return;
@@ -131,6 +170,7 @@ export default function PostEditorPage() {
         caption: edited.caption,
         hashtags: edited.hashtags,
         visual_brief: edited.visual_brief,
+        video_script: edited.video_script,
         shot_suggestions: edited.shot_suggestions,
         slide_content: edited.slide_content,
         on_screen_text: edited.on_screen_text,
@@ -149,6 +189,34 @@ export default function PostEditorPage() {
       console.error('Failed to save:', err);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleAIAssist(field: 'body' | 'visual_brief' | 'video_script' | 'caption') {
+    if (!edited) return;
+    setAiAssisting(true);
+    try {
+      const res = await fetch(`/api/content/campaigns/${campaignId}/posts/${postId}/ai-assist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          field,
+          currentContent: edited[field],
+          context: {
+            topic: edited.topic,
+            platform: post?.platform,
+            format: post?.format,
+          },
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        updateField(field, data.suggestion);
+      }
+    } catch (err) {
+      console.error('AI assist failed:', err);
+    } finally {
+      setAiAssisting(false);
     }
   }
 
@@ -179,7 +247,9 @@ export default function PostEditorPage() {
   // Build tabs
   const tabs: { id: typeof activeTab; label: string; show: boolean }[] = [
     { id: 'content', label: 'Content', show: true },
+    { id: 'scripts', label: 'Scripts', show: isVideo },
     { id: 'visual', label: 'Visual Brief', show: true },
+    { id: 'media', label: 'Media', show: true },
     { id: 'slides', label: 'Slides', show: isCarousel },
     { id: 'shots', label: 'Shots & Screen Text', show: isVideo },
   ];
@@ -189,7 +259,17 @@ export default function PostEditorPage() {
       {/* Top bar */}
       <div className="flex items-center justify-between mb-4">
         <button
-          onClick={() => router.push('/content/machine')}
+          onClick={() => {
+            // Navigate back to posts tab with campaign context
+            const params = new URLSearchParams({
+              tab: 'posts',
+              campaignId: post.campaign_id,
+            });
+            if (post.adset_id) {
+              params.append('adsetId', post.adset_id);
+            }
+            router.push(`/content/machine?${params.toString()}`);
+          }}
           className="flex items-center gap-1 text-xs text-stone hover:text-teal transition-colors"
         >
           <ChevronLeftIcon className="w-3.5 h-3.5" />
@@ -260,6 +340,19 @@ export default function PostEditorPage() {
           {/* Content tab */}
           {activeTab === 'content' && (
             <div className="space-y-4">
+              {/* AI Assist Button */}
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleAIAssist('body')}
+                  disabled={aiAssisting}
+                  className="gap-1.5"
+                >
+                  <SparklesIcon className="w-3.5 h-3.5" />
+                  {aiAssisting ? 'AI Working...' : 'AI Assist'}
+                </Button>
+              </div>
               {/* Hook variations */}
               {hooks.length > 0 && (
                 <div>
@@ -334,15 +427,79 @@ export default function PostEditorPage() {
             </div>
           )}
 
+          {/* Scripts tab */}
+          {activeTab === 'scripts' && (
+            <div className="space-y-4">
+              {/* AI Assist Button */}
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleAIAssist('video_script')}
+                  disabled={aiAssisting}
+                  className="gap-1.5"
+                >
+                  <SparklesIcon className="w-3.5 h-3.5" />
+                  {aiAssisting ? 'AI Working...' : 'AI Assist'}
+                </Button>
+              </div>
+              <FieldTextarea
+                label="Video Script"
+                value={edited.video_script || ''}
+                onChange={v => updateField('video_script', v)}
+                rows={15}
+                placeholder="Full video script with dialogue, timing, and directions..."
+              />
+            </div>
+          )}
+
           {/* Visual Brief tab */}
           {activeTab === 'visual' && (
-            <FieldTextarea
-              label="Visual Brief"
-              value={edited.visual_brief || ''}
-              onChange={v => updateField('visual_brief', v)}
-              rows={12}
-              placeholder="Visual direction, mood, style, text overlays..."
-            />
+            <div className="space-y-4">
+              {/* AI Assist Button */}
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleAIAssist('visual_brief')}
+                  disabled={aiAssisting}
+                  className="gap-1.5"
+                >
+                  <SparklesIcon className="w-3.5 h-3.5" />
+                  {aiAssisting ? 'AI Working...' : 'AI Assist'}
+                </Button>
+              </div>
+              <FieldTextarea
+                label="Visual Brief"
+                value={edited.visual_brief || ''}
+                onChange={v => updateField('visual_brief', v)}
+                rows={12}
+                placeholder="Visual direction, mood, style, text overlays..."
+              />
+            </div>
+          )}
+
+          {/* Media tab */}
+          {activeTab === 'media' && post && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-3">
+                {isVideo ? (
+                  <FilmIcon className="w-4 h-4 text-stone" />
+                ) : (
+                  <PhotoIcon className="w-4 h-4 text-stone" />
+                )}
+                <h3 className="text-sm font-medium text-charcoal">
+                  {isCarousel ? 'Upload Images (up to 10)' : isVideo ? 'Upload Video' : 'Upload Image'}
+                </h3>
+              </div>
+              <MediaUploadPanel
+                postId={postId}
+                organizationId={post.organization_id}
+                format={post.format}
+                media={media}
+                onMediaChange={fetchMedia}
+              />
+            </div>
           )}
 
           {/* Slides tab */}
@@ -447,6 +604,40 @@ export default function PostEditorPage() {
               </span>
             </div>
             <div className="p-4 max-h-[500px] overflow-y-auto">
+              {/* Media preview */}
+              {media.length > 0 && (
+                <div className="mb-4">
+                  {isCarousel ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {media.slice(0, 4).map((item) => {
+                        const publicUrl = supabase.storage.from('content-media').getPublicUrl(item.file_path).data.publicUrl;
+                        return (
+                          <div key={item.id} className="aspect-square rounded-lg overflow-hidden bg-stone/5">
+                            <img src={publicUrl} alt="" className="w-full h-full object-cover" />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : media[0]?.media_type === 'video' ? (
+                    <div className="aspect-video rounded-lg overflow-hidden bg-stone/5">
+                      <video
+                        src={supabase.storage.from('content-media').getPublicUrl(media[0].file_path).data.publicUrl}
+                        controls
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="aspect-square rounded-lg overflow-hidden bg-stone/5">
+                      <img
+                        src={supabase.storage.from('content-media').getPublicUrl(media[0].file_path).data.publicUrl}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Preview content */}
               {edited.hook && (
                 <p className="text-sm font-semibold text-charcoal mb-3 leading-relaxed">
